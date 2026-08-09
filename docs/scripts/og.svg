@@ -1,0 +1,29 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="630" viewBox="0 0 1200 630">
+  <defs>
+    <radialGradient id="glow" cx="82%" cy="8%" r="75%">
+      <stop offset="0%" stop-color="#534AB7" stop-opacity="0.4" />
+      <stop offset="100%" stop-color="#534AB7" stop-opacity="0" />
+    </radialGradient>
+    <clipPath id="tile"><rect x="0" y="0" width="180" height="180" rx="42" /></clipPath>
+  </defs>
+  <rect width="1200" height="630" fill="#0a0a0b" />
+  <rect width="1200" height="630" fill="url(#glow)" />
+
+  <text x="80" y="150" font-family="Helvetica, Arial, sans-serif" font-size="34" font-weight="700" letter-spacing="4" fill="#AFA9EC">SCROLLSHEET</text>
+
+  <text x="76" y="290" font-family="Helvetica, Arial, sans-serif" font-size="88" font-weight="700" letter-spacing="-3" fill="#f6f5f3">Bottom sheets that</text>
+  <text x="76" y="390" font-family="Helvetica, Arial, sans-serif" font-size="88" font-weight="700" letter-spacing="-3" fill="#f6f5f3">feel native.</text>
+
+  <text x="80" y="450" font-family="Helvetica, Arial, sans-serif" font-size="27" fill="#a8a49c">Sheets, drawers, dialogs, side panels, toasts. One primitive.</text>
+
+  <g transform="translate(940,150)">
+    <rect x="0" y="0" width="180" height="180" rx="42" fill="#534AB7" />
+    <g clip-path="url(#tile)">
+      <rect x="19" y="64" width="142" height="130" rx="22" fill="#FFFFFF" opacity="0.3" />
+      <rect x="9" y="98" width="162" height="112" rx="22" fill="#FFFFFF" opacity="0.55" />
+      <rect x="0" y="131" width="180" height="75" rx="22" fill="#FFFFFF" />
+    </g>
+  </g>
+
+  <text x="80" y="560" font-family="Helvetica, Arial, sans-serif" font-size="24" fill="#6b6862">15.8 kB gzipped   ·   0 dependencies   ·   React 18+   ·   MIT</text>
+</svg>

@@ -1,0 +1,90 @@
+---
+/**
+ * Two-state light/dark toggle, shared by the site header (Base.astro pages)
+ * and the Starlight docs header override, so both halves of the site read
+ * and write the same `theme` localStorage key and `data-theme` attribute.
+ * A `data-theme-toggle` selector, not an id: Starlight renders a second
+ * copy of this component in its mobile menu alongside the desktop header's,
+ * both live in the DOM at once, and an id can't repeat.
+ */
+---
+
+<button class="theme-toggle" type="button" data-theme-toggle aria-label="Switch theme" title="Switch theme">
+  <svg class="theme-toggle__sun" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+    <circle cx="12" cy="12" r="4.2" stroke="currentColor" stroke-width="1.7"></circle>
+    <path
+      d="M12 2.6v2.2M12 19.2v2.2M21.4 12h-2.2M4.8 12H2.6M18.6 5.4l-1.6 1.6M7 17l-1.6 1.6M18.6 18.6L17 17M7 7 5.4 5.4"
+      stroke="currentColor"
+      stroke-width="1.7"
+      stroke-linecap="round"></path>
+  </svg>
+  <svg class="theme-toggle__moon" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+    <path
+      d="M20 14.2A8.2 8.2 0 0 1 9.8 4a8.4 8.4 0 1 0 10.2 10.2Z"
+      stroke="currentColor"
+      stroke-width="1.7"
+      stroke-linejoin="round"></path>
+  </svg>
+</button>
+
+<script>
+  // Two-state toggle. Nothing is stored until the visitor picks, so a first
+  // visit keeps following the OS. Once they pick, the choice sticks and the
+  // inline anti-FOUC script (Base.astro / the Starlight ThemeProvider
+  // override) replays it before paint on the next page, on either half of
+  // the site. Every `[data-theme-toggle]` on the page (there can be more
+  // than one: Starlight keeps a second copy in its mobile menu) is wired
+  // up and kept in sync together.
+  {
+    const root = document.documentElement;
+    const buttons = document.querySelectorAll<HTMLButtonElement>("[data-theme-toggle]");
+
+    const systemDark = window.matchMedia("(prefers-color-scheme: dark)");
+    const active = () => root.dataset.theme ?? (systemDark.matches ? "dark" : "light");
+
+    const label = () => {
+      const nextLabel = active() === "dark" ? "Switch to light theme" : "Switch to dark theme";
+      for (const button of buttons) {
+        button.setAttribute("aria-label", nextLabel);
+        button.setAttribute("title", nextLabel);
+      }
+      // theme-color is declared with prefers-color-scheme media queries, which
+      // an explicit override must beat, so drop the media-scoped tags and
+      // write one unconditional value.
+      const next = active() === "dark" ? "#0a0a0b" : "#ffffff";
+      for (const tag of document.querySelectorAll('meta[name="theme-color"]')) {
+        tag.removeAttribute("media");
+        tag.setAttribute("content", next);
+      }
+      // The hero's phone screen is a same-origin iframe with its own
+      // document, so the root override has to be stamped there too or the
+      // site goes dark around a screen that stays light. No-op on docs
+      // pages, which have no iframe.
+      for (const frame of document.querySelectorAll("iframe")) {
+        try {
+          const doc = (frame as HTMLIFrameElement).contentDocument;
+          if (doc) doc.documentElement.dataset.theme = active();
+        } catch (e) {
+          /* Cross-origin frame: not ours to theme. */
+        }
+      }
+    };
+
+    const toggle = () => {
+      const next = active() === "dark" ? "light" : "dark";
+      root.dataset.theme = next;
+      try {
+        localStorage.setItem("theme", next);
+      } catch (e) {
+        /* Private mode: the toggle still works for this page view. */
+      }
+      label();
+    };
+
+    for (const button of buttons) button.addEventListener("click", toggle);
+
+    // Only meaningful while no explicit choice is stored.
+    systemDark.addEventListener("change", label);
+    label();
+  }
+</script>

@@ -1,0 +1,83 @@
+---
+title: Install
+description: Add scrollsheet with bun, npm, pnpm, or yarn, or pull individual patterns in with the shadcn CLI.
+---
+
+import { Tabs, TabItem, FileTree, LinkCard, CardGrid } from '@astrojs/starlight/components';
+import DocExample from '../../../../components/DocExample.astro';
+
+<Tabs syncKey="pm">
+  <TabItem label="bun">
+    ```sh
+    bun add scrollsheet
+    ```
+  </TabItem>
+  <TabItem label="npm">
+    ```sh
+    npm i scrollsheet
+    ```
+  </TabItem>
+  <TabItem label="pnpm">
+    ```sh
+    pnpm add scrollsheet
+    ```
+  </TabItem>
+  <TabItem label="yarn">
+    ```sh
+    yarn add scrollsheet
+    ```
+  </TabItem>
+</Tabs>
+
+<DocExample
+  name="confirm"
+  caption="The smallest complete sheet: a title, a body, two buttons. Drag it down; it will not go."
+/>
+
+No peer dependencies beyond React and React DOM, 18 or newer.
+
+## shadcn/ui
+
+Every primitive and pattern also ships as a registry item, installable with the shadcn CLI:
+
+```sh
+bunx shadcn@latest add https://scrollsheet.dev/r/drawer.json
+bunx shadcn@latest add https://scrollsheet.dev/r/sheet.json
+bunx shadcn@latest add https://scrollsheet.dev/r/confirm.json
+bunx shadcn@latest add https://scrollsheet.dev/r/share-sheet.json
+bunx shadcn@latest add https://scrollsheet.dev/r/sidebar.json
+bunx shadcn@latest add https://scrollsheet.dev/r/toast.json
+```
+
+Or pull the same files straight off GitHub: swap `https://scrollsheet.dev/r/` for
+`https://raw.githubusercontent.com/ansumanshah/scrollsheet/main/registry/`.
+
+Each writes one file into `components/ui/`: `drawer.tsx`, `sheet.tsx`, `confirm.tsx`,
+`share-sheet.tsx`, `sidebar.tsx`, `toast.tsx`. `confirm` and `share-sheet` build on `drawer`;
+`sidebar` builds on `sheet`; the CLI pulls those in automatically.
+
+<FileTree>
+- components/
+  - ui/
+    - drawer.tsx
+    - sheet.tsx
+    - confirm.tsx
+    - share-sheet.tsx
+    - sidebar.tsx
+    - toast.tsx
+</FileTree>
+
+Already on vaul or Sonner?
+
+<CardGrid>
+  <LinkCard
+    title="Migrate from vaul"
+    description="Drop-in replacement for vaul's Drawer namespace, same props, same data-vaul-* attributes for existing CSS."
+    href="/docs/migrating/from-vaul"
+  />
+  <LinkCard
+    title="Migrate from Sonner"
+    description="Drop-in replacement for toast, useToasts, and Toaster, running on the same per-toast DOM as real Sonner, with every position, per-toast overrides, and swipe-to-dismiss."
+    href="/docs/migrating/from-sonner"
+  />
+</CardGrid>

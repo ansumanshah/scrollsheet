@@ -1,0 +1,22 @@
+{
+  "$schema": "https://ui.shadcn.com/schema/registry-item.json",
+  "name": "confirm",
+  "type": "registry:ui",
+  "title": "Confirm Drawer",
+  "description": "A destructive-action confirmation drawer built on scrollsheet's Drawer. dismissible={false} and disableDrag block swipe, backdrop tap, and Esc, so only its own two buttons can close it.",
+  "author": "Ansuman Shah <https://github.com/ansumanshah>",
+  "dependencies": [
+    "scrollsheet"
+  ],
+  "registryDependencies": [
+    "drawer"
+  ],
+  "files": [
+    {
+      "path": "registry/confirm/confirm.tsx",
+      "content": "\"use client\"\n\nimport * as React from \"react\"\n\nimport {\n  Drawer,\n  DrawerClose,\n  DrawerContent,\n  DrawerDescription,\n  DrawerTitle,\n  DrawerTrigger,\n} from \"@/components/ui/drawer\"\nimport { cn } from \"@/lib/utils\"\n\ninterface ConfirmDrawerProps {\n  trigger: React.ReactNode\n  title: string\n  description: string\n  confirmLabel?: string\n  cancelLabel?: string\n  onConfirm: () => void\n  destructive?: boolean\n}\n\n/**\n * A bottom sheet that only closes through its own buttons.\n * `dismissible={false}` blocks swipe, backdrop tap, and Esc; `disableDrag`\n * removes the drag gesture entirely. Use where an accidental swipe must\n * never confirm the action.\n */\nfunction ConfirmDrawer({\n  trigger,\n  title,\n  description,\n  confirmLabel = \"Confirm\",\n  cancelLabel = \"Cancel\",\n  onConfirm,\n  destructive = true,\n}: ConfirmDrawerProps) {\n  const [open, setOpen] = React.useState(false)\n\n  return (\n    <Drawer open={open} onOpenChange={setOpen} dismissible={false} disableDrag>\n      <DrawerTrigger asChild>{trigger}</DrawerTrigger>\n      <DrawerContent aria-label={title}>\n        <DrawerTitle>{title}</DrawerTitle>\n        <DrawerDescription>{description}</DrawerDescription>\n        <div className=\"flex flex-col gap-2 px-4 pt-4 pb-6\">\n          <button\n            type=\"button\"\n            data-scrollsheet-no-drag\n            className={cn(\n              \"h-10 rounded-lg text-sm font-medium\",\n              destructive\n                ? \"bg-destructive text-destructive-foreground\"\n                : \"bg-primary text-primary-foreground\"\n            )}\n            onClick={() => {\n              onConfirm()\n              setOpen(false)\n            }}\n          >\n            {confirmLabel}\n          </button>\n          <DrawerClose\n            className=\"static h-10 rounded-lg border text-sm font-medium no-underline hover:no-underline\"\n            data-scrollsheet-no-drag\n          >\n            {cancelLabel}\n          </DrawerClose>\n        </div>\n      </DrawerContent>\n    </Drawer>\n  )\n}\n\nexport { ConfirmDrawer, type ConfirmDrawerProps }\n",
+      "type": "registry:ui",
+      "target": "components/ui/confirm.tsx"
+    }
+  ]
+}

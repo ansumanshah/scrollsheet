@@ -1,0 +1,18 @@
+{
+  "extends": "astro/tsconfigs/strict",
+  "compilerOptions": {
+    "jsx": "react-jsx",
+    "jsxImportSource": "react",
+    "strict": true,
+    "noUncheckedIndexedAccess": true,
+    // Mirrors the vite alias in astro.config.mjs: the site reads the library
+    // from live src, so it is not a node_modules dependency here.
+    "baseUrl": ".",
+    "paths": {
+      "scrollsheet": ["../packages/scrollsheet/src/index.ts"],
+      "scrollsheet/*": ["../packages/scrollsheet/src/*"]
+    }
+  },
+  "include": [".astro/types.d.ts", "src/**/*"],
+  "exclude": ["dist"]
+}

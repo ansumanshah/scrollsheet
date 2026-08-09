@@ -1,0 +1,162 @@
+---
+title: Overview
+description: Where to start in scrollsheet's docs, one card per page, grouped the same way as the sidebar.
+---
+
+import { Card, CardGrid } from '@astrojs/starlight/components';
+import DocExample from '../../../components/DocExample.astro';
+
+One React component for bottom sheets, drawers, dialogs, side panels, and toasts. Start with
+install, or jump straight to a topic below.
+
+## Getting started
+
+<CardGrid>
+  <Card title="Install">
+    Add scrollsheet with bun, npm, pnpm, or yarn, or pull individual patterns in with the shadcn
+    CLI. [Read more](/docs/getting-started/install)
+  </Card>
+  <Card title="Anatomy">
+    The five pieces of a scrollsheet Root, Trigger, Content, Handle, Title, Description, and
+    Close, and what each one owns. [Read more](/docs/getting-started/anatomy)
+  </Card>
+</CardGrid>
+
+## Styling
+
+<CardGrid>
+  <Card title="CSS">
+    scrollsheet ships mechanics only; style the panel with a plain className like any other card.
+    [Read more](/docs/styling/css)
+  </Card>
+  <Card title="Tailwind">
+    Tailwind v4 utilities apply directly to Sheet.Content and Sheet.Handle, no plugin or config
+    required. [Read more](/docs/styling/tailwind)
+  </Card>
+</CardGrid>
+
+## Detents and control
+
+<CardGrid>
+  <Card title="Detents">
+    DetentSpec accepts full, medium, content, a fraction, or pixels, and onTravel reports progress
+    against each one. [Read more](/docs/detents-and-control/detents)
+  </Card>
+  <Card title="Imperative control">
+    actionsRef exposes open, close, and snapTo for deep links, push notifications, and any caller
+    without a prop to drill through. [Read more](/docs/detents-and-control/imperative-control)
+  </Card>
+  <Card title="Nested and morph">
+    A Sheet.Root rendered inside another sheet's content registers as a child automatically, and
+    the sheet morphs height when its content changes.
+    [Read more](/docs/detents-and-control/nested-and-morph)
+  </Card>
+</CardGrid>
+
+## Scrolling and keyboard
+
+<CardGrid>
+  <Card title="Scrollable content inside a sheet">
+    Mark an inner scroller with data-scrollsheet-nested-scroll so a swipe scrolls the list first
+    and hands off to sheet travel at the edge.
+    [Read more](/docs/scrolling-and-keyboard/scrollable-content)
+  </Card>
+  <Card title="Keyboard">
+    scrollsheet reads visualViewport and writes the on-screen keyboard inset to
+    --scrollsheet-keyboard automatically, no prop required.
+    [Read more](/docs/scrolling-and-keyboard/keyboard)
+  </Card>
+</CardGrid>
+
+## Presentation
+
+<CardGrid>
+  <Card title="Side panels">
+    side anchors a sheet to bottom, top, left, or right; left and right sheets scroll on the x
+    axis and their detents are widths. [Read more](/docs/presentation/side-panels)
+  </Card>
+  <Card title="Non-modal">
+    `modal={false}` keeps the page fully interactive behind the sheet, with no backdrop, no
+    focus trap, and no inert-ing the rest of the page. [Read more](/docs/presentation/non-modal)
+  </Card>
+  <Card title="Desktop drag">
+    Mouse pointers can grab the panel anywhere and fling it; touch and pen keep riding native
+    scroll-snap instead. [Read more](/docs/presentation/desktop-drag)
+  </Card>
+  <Card title="Desktop presentation">
+    Above 768px, bottom sheets dock right as a fixed-width drawer and side sheets square off
+    their lead edge; below it, sheets stay full-bleed.
+    [Read more](/docs/presentation/desktop-presentation)
+  </Card>
+  <Card title="Page transitions">
+    Mark your page wrapper data-scrollsheet-background and backgroundEffect scales, insets, and
+    rounds it in sync with the sheet's travel, iOS-style.
+    [Read more](/docs/presentation/page-transitions)
+  </Card>
+</CardGrid>
+
+## Toasts and motion
+
+<CardGrid>
+  <Card title="Toasts">
+    A toast is `modal={false}` plus a plain timer closing it, the same controlled open prop any
+    other sheet uses. [Read more](/docs/toasts)
+  </Card>
+  <Card title="Using scrollsheet with Motion">
+    onTravel and --scrollsheet-progress are the integration boundary for Motion or any animation
+    library that takes a plain number. [Read more](/docs/motion)
+  </Card>
+</CardGrid>
+
+## Migrating
+
+<CardGrid>
+  <Card title="Migrate from vaul">
+    Drop-in replacement for vaul's Drawer namespace, same props, same data-vaul-* attributes for
+    existing CSS. [Read more](/docs/migrating/from-vaul)
+  </Card>
+  <Card title="Migrate from Sonner">
+    Drop-in replacement for toast, useToasts, and Toaster, running on the same per-toast DOM as
+    real Sonner, with every position, per-toast overrides, and swipe-to-dismiss. [Read more](/docs/migrating/from-sonner)
+  </Card>
+</CardGrid>
+
+## Advanced
+
+<CardGrid>
+  <Card title="Shadow DOM">
+    injectStylesInto adopts the core stylesheet into a shadow root, since document.head styles
+    don't cross the boundary on their own. [Read more](/docs/advanced/shadow-dom)
+  </Card>
+  <Card title="Framework support">
+    SSR-safe by design across Next.js App Router and Pages Router, Remix, React Router v7, Astro,
+    and plain Vite. [Read more](/docs/advanced/framework-support)
+  </Card>
+</CardGrid>
+
+## Reference
+
+<CardGrid>
+  <Card title="API">
+    Full prop reference for Sheet.Root, the styling hooks on Sheet.Content, and every other named
+    export. [Read more](/docs/reference/api)
+  </Card>
+  <Card title="Accessibility">
+    Focus containment comes from the platform's own showModal(), and Sheet.Handle exposes
+    role=slider with full keyboard control once there are two or more detents.
+    [Read more](/docs/accessibility)
+  </Card>
+  <Card title="Browser support">
+    dialog and spring easing reach about 96% of browsers; the remaining ~4% get a plain
+    fixed-position modal with no drag or detents. [Read more](/docs/browser-support)
+  </Card>
+  <Card title="Which example shows which prop">
+    A table mapping every Sheet.Root prop to the example that exercises it.
+    [Read more](/docs/which-example-shows-which-prop)
+  </Card>
+</CardGrid>
+
+<DocExample
+  name="cart"
+  caption="A checkout that locks itself while it processes, then hands dismissal back when it settles."
+/>

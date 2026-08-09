@@ -1,0 +1,23 @@
+---
+title: Side panels
+description: side anchors a sheet to bottom, top, left, or right; left and right sheets scroll on the x axis and their detents are widths.
+---
+
+import DocExample from '../../../../components/DocExample.astro';
+
+```tsx
+<Sheet.Root side="right" detents={['340px']}>
+  <Sheet.Trigger>Notifications</Sheet.Trigger>
+  <Sheet.Content className="sheet">{/* ... */}</Sheet.Content>
+</Sheet.Root>
+```
+
+`side` anchors the sheet to `'bottom'` (the default), `'top'`, `'left'`, or `'right'`. Left and
+right sheets scroll on the x axis instead of y, so detents are widths, not heights. The handle's
+arrow-key axis flips to Left/Right for horizontal sides automatically, and the panel's
+`border-radius`/shadow default rounds the lead edge (the one opposite the anchored side).
+
+<DocExample
+  name="sidebar"
+  caption="It opens from the left edge here. Use Left and Right arrow keys on the handle, not Up and Down."
+/>

@@ -1,0 +1,23 @@
+{
+  "$schema": "https://ui.shadcn.com/schema/registry-item.json",
+  "name": "share-sheet",
+  "type": "registry:ui",
+  "title": "Share Drawer",
+  "description": "A share drawer built on scrollsheet's Drawer: an avatar row for recent contacts and a grid of share targets, both plain buttons you wire up yourself.",
+  "author": "Ansuman Shah <https://github.com/ansumanshah>",
+  "dependencies": [
+    "scrollsheet",
+    "lucide-react"
+  ],
+  "registryDependencies": [
+    "drawer"
+  ],
+  "files": [
+    {
+      "path": "registry/share-sheet/share-sheet.tsx",
+      "content": "\"use client\"\n\nimport { FileText, Link as LinkIcon, Mail, MessageCircle } from \"lucide-react\"\nimport type { ComponentType, ReactNode } from \"react\"\n\nimport {\n  Drawer,\n  DrawerContent,\n  DrawerHandle,\n  DrawerTitle,\n  DrawerTrigger,\n} from \"@/components/ui/drawer\"\n\ninterface SharePerson {\n  initials: string\n  name: string\n}\n\ninterface ShareApp {\n  icon: ComponentType<{ className?: string }>\n  label: string\n}\n\nconst PEOPLE: SharePerson[] = [\n  { initials: \"RA\", name: \"Rosa\" },\n  { initials: \"TM\", name: \"Theo\" },\n  { initials: \"NC\", name: \"Nadia\" },\n]\n\nconst APPS: ShareApp[] = [\n  { icon: MessageCircle, label: \"Messages\" },\n  { icon: Mail, label: \"Mail\" },\n  { icon: FileText, label: \"Notes\" },\n  { icon: LinkIcon, label: \"Copy link\" },\n]\n\n/** Avatar row for recent contacts, an app grid below, both plain buttons. */\nfunction ShareDrawer({ trigger }: { trigger: ReactNode }) {\n  return (\n    <Drawer>\n      <DrawerTrigger asChild>{trigger}</DrawerTrigger>\n      <DrawerContent aria-label=\"Share\">\n        <DrawerHandle />\n        <DrawerTitle>Share</DrawerTitle>\n        <div className=\"flex gap-4 overflow-x-auto px-4 py-4\">\n          {PEOPLE.map((person) => (\n            <button\n              type=\"button\"\n              key={person.initials}\n              className=\"flex flex-col items-center gap-1.5 text-xs\"\n            >\n              <span className=\"bg-muted flex h-12 w-12 items-center justify-center rounded-full text-sm font-medium\">\n                {person.initials}\n              </span>\n              {person.name}\n            </button>\n          ))}\n        </div>\n        <div className=\"grid grid-cols-4 gap-3 px-4 pb-6\">\n          {APPS.map((app) => (\n            <button\n              type=\"button\"\n              key={app.label}\n              className=\"flex flex-col items-center gap-1.5 text-xs\"\n            >\n              <span className=\"bg-muted flex h-12 w-12 items-center justify-center rounded-xl\">\n                <app.icon className=\"h-5 w-5\" />\n              </span>\n              {app.label}\n            </button>\n          ))}\n        </div>\n      </DrawerContent>\n    </Drawer>\n  )\n}\n\nexport { ShareDrawer }\n",
+      "type": "registry:ui",
+      "target": "components/ui/share-sheet.tsx"
+    }
+  ]
+}

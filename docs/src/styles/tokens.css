@@ -1,0 +1,127 @@
+/* ─────────────────────────────────────────────────────────────────────────
+   Design tokens: CSS custom properties.
+   Near-black / near-white, one accent, dark mode via prefers-color-scheme.
+   ───────────────────────────────────────────────────────────────────────── */
+
+:root {
+  color-scheme: light;
+
+  /* Surfaces */
+  --bg: #ffffff;
+  --bg-elevated: #ffffff;
+  --bg-inset: #f2f1ee;
+  --bg-code: #17161c;
+
+  /* Text */
+  --fg: #0c0b0a;
+  --fg-muted: #6b6862;
+  --fg-faint: #a19d95;
+
+  /* Borders */
+  --border: #e7e4de;
+  --border-strong: #d4d0c8;
+
+  /* Accent: one color, used sparingly and with intent */
+  --accent: #5a45e8;
+  --accent-fg: #ffffff;
+  --accent-soft: #efecff;
+  --accent-ring: rgb(90 69 232 / 0.35);
+
+  /* Feedback */
+  --danger: #c4392f;
+  --danger-soft: #fbe9e6;
+
+  /* Shadows: soft, warm, low-key */
+  --shadow-sm: 0 1px 2px rgb(12 11 10 / 0.06);
+  --shadow-md: 0 8px 24px -8px rgb(12 11 10 / 0.16);
+  --shadow-lg: 0 24px 64px -20px rgb(12 11 10 / 0.28);
+
+  /* Type */
+  --font-sans:
+    ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  --font-mono:
+    ui-monospace, "SF Mono", "Cascadia Code", "JetBrains Mono", Menlo, Consolas, monospace;
+
+  /* Radii */
+  --radius-sm: 8px;
+  --radius-md: 14px;
+  --radius-lg: 22px;
+  --radius-xl: 32px;
+  --radius-pill: 999px;
+
+  /* Layout */
+  --container-w: 1180px;
+  --gutter: clamp(20px, 5vw, 48px);
+
+  /* Motion (site chrome only, the library itself animates via spring to linear()) */
+  --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    color-scheme: dark;
+
+    --bg: #0a0a0b;
+    --bg-elevated: #141316;
+    --bg-inset: #18171a;
+    --bg-code: #0f0e12;
+
+    --fg: #f6f5f3;
+    --fg-muted: #a8a49c;
+    --fg-faint: #6b6862;
+
+    --border: #232226;
+    --border-strong: #313035;
+
+    --accent: #9385ff;
+    --accent-fg: #0a0a0b;
+    --accent-soft: #1c1a33;
+    --accent-ring: rgb(147 133 255 / 0.4);
+
+    --danger: #ff7a70;
+    --danger-soft: #2c1917;
+
+    --shadow-sm: 0 1px 2px rgb(0 0 0 / 0.4);
+    --shadow-md: 0 8px 24px -8px rgb(0 0 0 / 0.5);
+    --shadow-lg: 0 24px 64px -20px rgb(0 0 0 / 0.6);
+  }
+}
+
+/* Explicit overrides win over the media query in both directions, for a
+   future manual theme toggle. */
+:root[data-theme="light"] {
+  color-scheme: light;
+  --bg: #ffffff;
+  --bg-elevated: #ffffff;
+  --bg-inset: #f2f1ee;
+  --bg-code: #17161c;
+  --fg: #0c0b0a;
+  --fg-muted: #6b6862;
+  --fg-faint: #a19d95;
+  --border: #e7e4de;
+  --border-strong: #d4d0c8;
+  --accent: #5a45e8;
+  --accent-fg: #ffffff;
+  --accent-soft: #efecff;
+  --accent-ring: rgb(90 69 232 / 0.35);
+  --danger: #c4392f;
+  --danger-soft: #fbe9e6;
+}
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --bg: #0a0a0b;
+  --bg-elevated: #141316;
+  --bg-inset: #18171a;
+  --bg-code: #0f0e12;
+  --fg: #f6f5f3;
+  --fg-muted: #a8a49c;
+  --fg-faint: #6b6862;
+  --border: #232226;
+  --border-strong: #313035;
+  --accent: #9385ff;
+  --accent-fg: #0a0a0b;
+  --accent-soft: #1c1a33;
+  --accent-ring: rgb(147 133 255 / 0.4);
+  --danger: #ff7a70;
+  --danger-soft: #2c1917;
+}

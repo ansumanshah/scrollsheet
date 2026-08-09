@@ -1,0 +1,38 @@
+---
+title: Which example shows which prop
+description: A table mapping every Sheet.Root prop to the example that exercises it.
+---
+
+import { LinkCard, CardGrid } from '@astrojs/starlight/components';
+
+Every Root prop, mapped to the example that shows it working. Some run on the
+[homepage](/#examples); the rest are inline further down in these docs, linked below.
+
+| Prop | Example |
+| --- | --- |
+| `detents`, `activeDetent`, `onActiveDetentChange` | Snap heights, [Ride tracker](/docs/reference/api) |
+| `sequentialDetents`, `largestUndimmedDetent`, `onRelease`, `onOpenChangeComplete`, `themeColorDimming`, `closeThreshold` | [Ride tracker](/docs/reference/api) |
+| `actionsRef` (`open` / `close` / `snapTo`) | [Ride tracker](/docs/detents-and-control/imperative-control) |
+| `onTravel` | [Ride tracker](/docs/motion), the hero sheet |
+| `modal` | Maps, Toast, [Ride tracker](/docs/reference/api) |
+| `side` | Sides (all four), [Sidebar](/docs/presentation/side-panels) (left) |
+| `dismissible` | Cart and checkout, Non-dismissible confirm |
+| `disableDrag` | Non-dismissible confirm, [Responsive](/docs/presentation/desktop-presentation) (desktop) |
+| `handleOnly` | Profile form |
+| `backgroundEffect` | Wallet, see [Page transitions](/docs/presentation/page-transitions) |
+| `scrollbar` | [Comments](/docs/scrolling-and-keyboard/scrollable-content) |
+| `open`, `defaultOpen`, `onOpenChange` | Toast, every controlled example |
+| `nonce` | CSP note in [Styling](/docs/styling/css) |
+
+<CardGrid>
+  <LinkCard
+    title="Page transitions"
+    description="Mark your page wrapper data-scrollsheet-background and backgroundEffect scales, insets, and rounds it in sync with the sheet's travel, iOS-style."
+    href="/docs/presentation/page-transitions"
+  />
+  <LinkCard
+    title="Styling"
+    description="scrollsheet ships mechanics only; style the panel with a plain className like any other card."
+    href="/docs/styling/css"
+  />
+</CardGrid>

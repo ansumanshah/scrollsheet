@@ -1,0 +1,23 @@
+{
+  "$schema": "https://ui.shadcn.com/schema/registry-item.json",
+  "name": "sidebar",
+  "type": "registry:ui",
+  "title": "Nav Drawer",
+  "description": "A left-anchored navigation drawer built on scrollsheet's Sheet with a fixed 300px detent. Grouped nav sections plus a sign-out row, styled as a sidebar instead of a bottom sheet.",
+  "author": "Ansuman Shah <https://github.com/ansumanshah>",
+  "dependencies": [
+    "scrollsheet",
+    "lucide-react"
+  ],
+  "registryDependencies": [
+    "sheet"
+  ],
+  "files": [
+    {
+      "path": "registry/sidebar/sidebar.tsx",
+      "content": "\"use client\"\n\nimport {\n  FileText,\n  Folder,\n  LayoutGrid,\n  Link as LinkIcon,\n  LogOut,\n  MessageCircle,\n  Settings,\n  TrendingUp,\n  Users,\n} from \"lucide-react\"\nimport type { ComponentType, ReactNode } from \"react\"\n\nimport { Sheet, SheetClose, SheetContent, SheetTrigger } from \"@/components/ui/sheet\"\n\ninterface NavItem {\n  icon: ComponentType<{ className?: string }>\n  label: string\n}\n\ninterface NavSection {\n  label: string\n  items: NavItem[]\n}\n\nconst SECTIONS: NavSection[] = [\n  {\n    label: \"Workspace\",\n    items: [\n      { icon: LayoutGrid, label: \"Overview\" },\n      { icon: TrendingUp, label: \"Analytics\" },\n      { icon: Folder, label: \"Projects\" },\n    ],\n  },\n  {\n    label: \"Team\",\n    items: [\n      { icon: Users, label: \"Members\" },\n      { icon: Settings, label: \"Settings\" },\n    ],\n  },\n  {\n    label: \"Resources\",\n    items: [\n      { icon: FileText, label: \"Billing\" },\n      { icon: LinkIcon, label: \"API keys\" },\n      { icon: MessageCircle, label: \"Help and support\" },\n    ],\n  },\n]\n\n/**\n * `side=\"left\"` and a fixed `300px` detent turn the Sheet into a navigation\n * drawer instead of a right-anchored panel. The handle's arrow-key axis\n * flips to ArrowLeft/ArrowRight automatically for horizontal sides.\n */\nfunction NavDrawer({ trigger, onSignOut }: { trigger: ReactNode; onSignOut?: () => void }) {\n  return (\n    <Sheet side=\"left\" detents={[\"300px\"]}>\n      <SheetTrigger asChild>{trigger}</SheetTrigger>\n      <SheetContent aria-label=\"Navigation\" className=\"flex flex-col p-0\">\n        <nav className=\"flex-1 overflow-y-auto p-3\">\n          {SECTIONS.map((section) => (\n            <div key={section.label} className=\"mb-4\">\n              <div className=\"text-muted-foreground px-2 pb-1 text-xs font-medium\">\n                {section.label}\n              </div>\n              {section.items.map((item) => (\n                <button\n                  type=\"button\"\n                  key={item.label}\n                  className=\"hover:bg-accent flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-sm\"\n                >\n                  <item.icon className=\"h-4 w-4\" />\n                  {item.label}\n                </button>\n              ))}\n            </div>\n          ))}\n        </nav>\n        <div className=\"border-t p-3\">\n          <SheetClose\n            className=\"hover:bg-accent static flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-sm no-underline hover:no-underline\"\n            data-scrollsheet-no-drag\n            onClick={onSignOut}\n          >\n            <LogOut className=\"h-4 w-4\" />\n            Sign out\n          </SheetClose>\n        </div>\n      </SheetContent>\n    </Sheet>\n  )\n}\n\nexport { NavDrawer }\n",
+      "type": "registry:ui",
+      "target": "components/ui/sidebar.tsx"
+    }
+  ]
+}

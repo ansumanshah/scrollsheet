@@ -1,0 +1,42 @@
+---
+title: Scrollable content inside a sheet
+description: Mark an inner scroller with data-scrollsheet-nested-scroll so a swipe scrolls the list first and hands off to sheet travel at the edge.
+---
+
+import { Aside, LinkCard } from '@astrojs/starlight/components';
+import DocExample from '../../../../components/DocExample.astro';
+
+```tsx
+<Sheet.Content>
+  <div data-scrollsheet-nested-scroll style={{ overflowY: 'auto', maxHeight: 300 }}>
+    {/* a long list */}
+  </div>
+</Sheet.Content>
+```
+
+Mark an inner scroller with `data-scrollsheet-nested-scroll` and the classic conflict resolves
+itself: swiping scrolls the list, and once the list hits its top, the same swipe continues as
+sheet travel. Works under `handleOnly` and `disableDrag` too; the handoff only widens the drag
+surface while a touch that started inside the marked element is live. Any number of elements can
+carry the attribute, including ones added or removed while the sheet is open.
+
+The marked element gets the panel's own overlay scrollbar treatment too, controlled by the same
+`scrollbar` prop on `Sheet.Root`: `'overlay'` (the default) hides the native scrollbar and shows a
+thin auto-hiding thumb, `'hidden'` hides it with no thumb, `'native'` leaves it alone. Under
+`'overlay'`, scrollsheet sets `position: relative` on the marked element to anchor the thumb;
+overriding it back to `static` breaks the thumb. The other two modes leave `position` alone.
+
+<DocExample
+  name="comments"
+  caption="Scroll the list first. Only once it hits the top does the same swipe move the sheet."
+/>
+
+<Aside type="caution">
+  Not supported inside shadow roots (`scroll` does not compose across the boundary).
+</Aside>
+
+<LinkCard
+  title="Shadow DOM"
+  description="injectStylesInto adopts the core stylesheet into a shadow root, since document.head styles don't cross the boundary on their own."
+  href="/docs/advanced/shadow-dom"
+/>

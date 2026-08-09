@@ -1,0 +1,101 @@
+---
+import ExamplePreview from "./ExamplePreview";
+import { examples } from "../../../examples/index";
+
+// Examples never import examples.css themselves (see examples/index.ts); the
+// host app loads it once. index.astro already does for the homepage grid;
+// this side-effect import is what makes the same examples render styled
+// when ExamplePreview mounts one from inside a docs page instead.
+import "../../../examples/examples.css";
+
+interface Props {
+  /** Slug from examples/index.ts, e.g. "snap-heights". */
+  name: string;
+  /** One line, in the owner's voice: what to actually try. */
+  caption: string;
+}
+
+const { name, caption } = Astro.props;
+
+// Resolved at build time against the one source-of-truth array, so a typo
+// here fails the build instead of shipping a silently blank box.
+const entry = examples.find((e) => e.name === name);
+if (!entry) {
+  throw new Error(`DocExample: no example named "${name}" in examples/index.ts`);
+}
+---
+
+<div class="doc-example not-content">
+  <div class="doc-example__bar">
+    <p class="doc-example__title">{entry.title}</p>
+    <a
+      class="doc-example__link"
+      href={`https://github.com/ansumanshah/scrollsheet/blob/main/examples/${name}.tsx`}
+      target="_blank"
+      rel="noopener noreferrer"
+    >
+      Full source on GitHub ↗
+    </a>
+  </div>
+  <p class="doc-example__caption">{caption}</p>
+  <div class="doc-example__stage">
+    <ExamplePreview name={name} client:visible />
+  </div>
+</div>
+
+<style>
+  /*
+   * client:visible (not :load): the same choice index.astro already makes
+   * for this grid. A reader who never scrolls to an embed pays nothing;
+   * ExamplePreview's own manifest import pulls in all 17 example
+   * components as one shared chunk regardless of which single one a page
+   * asks for, so the real saving is deferring that chunk's fetch, not
+   * splitting it smaller.
+   */
+  .doc-example {
+    margin: 1.75rem 0;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    background: var(--bg-inset);
+    overflow: hidden;
+  }
+  .doc-example__bar {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 1rem;
+    padding: 0.75rem 1rem 0;
+  }
+  .doc-example__title {
+    margin: 0;
+    font-size: 0.78rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--fg-faint);
+  }
+  .doc-example__link {
+    flex: none;
+    font-size: 0.85rem;
+    color: var(--fg-muted);
+    text-decoration: none;
+    white-space: nowrap;
+  }
+  .doc-example__link:hover {
+    color: var(--accent);
+  }
+  .doc-example__caption {
+    margin: 0.4rem 0 0;
+    padding: 0 1rem;
+    font-size: 0.92rem;
+    line-height: 1.5;
+    color: var(--fg-muted);
+  }
+  .doc-example__stage {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 160px;
+    padding: 1.5rem 1.25rem;
+  }
+</style>

@@ -1,0 +1,20 @@
+---
+title: Non-modal
+description: modal={false} keeps the page fully interactive behind the sheet, with no backdrop, no focus trap, and no inert-ing the rest of the page.
+---
+
+import DocExample from '../../../../components/DocExample.astro';
+
+```tsx
+<Sheet.Root modal={false}>
+```
+
+`modal={false}` keeps the page behind fully interactive: no backdrop, no focus trap, no
+inert-ing the rest of the page. It renders on a `<div popover="manual">` (top layer,
+non-blocking) where the Popover API is available, falling back to a non-modal `<dialog>`
+(`.show()`) otherwise.
+
+<DocExample
+  name="maps"
+  caption="Open it, then pan or tap the map behind it. modal={false} means the page never stops responding."
+/>

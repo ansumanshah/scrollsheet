@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 96 96">
+  <title>scrollsheet</title>
+  <clipPath id="tile"><rect width="96" height="96" rx="22"/></clipPath>
+  <rect width="96" height="96" rx="22" fill="#534AB7"/>
+  <g clip-path="url(#tile)">
+    <rect x="10" y="34" width="76" height="70" rx="12" fill="#FFFFFF" opacity="0.3"/>
+    <rect x="5" y="52" width="86" height="60" rx="12" fill="#FFFFFF" opacity="0.55"/>
+    <rect x="0" y="70" width="96" height="40" rx="12" fill="#FFFFFF"/>
+  </g>
+</svg>

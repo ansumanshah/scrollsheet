@@ -1,0 +1,18 @@
+name: Feature request
+description: Suggest something scrollsheet doesn't do yet
+labels: [enhancement]
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: What are you trying to do?
+      description: The use case, not the API you'd imagine for it.
+    validations:
+      required: true
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Proposed solution
+      description: Optional — an API sketch or reference to how another library does it.
+    validations:
+      required: false

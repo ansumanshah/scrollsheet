@@ -1,0 +1,111 @@
+---
+import Header from "../components/Header.astro";
+import Footer from "../components/Footer.astro";
+import "../styles/global.css";
+
+interface Props {
+  title: string;
+  description: string;
+  /** Defaults to /og.png */
+  ogImage?: string;
+  noIndex?: boolean;
+}
+
+const { title, description, ogImage = "/og.png", noIndex = false } = Astro.props;
+
+const siteUrl = Astro.site ?? new URL("https://scrollsheet.dev");
+const canonicalURL = new URL(Astro.url.pathname, siteUrl);
+const ogImageURL = new URL(ogImage, siteUrl);
+const pageTitle = title === "scrollsheet" ? title : `${title} · scrollsheet`;
+---
+
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <title>{pageTitle}</title>
+    <meta name="description" content={description} />
+    <link rel="canonical" href={canonicalURL} />
+    {noIndex && <meta name="robots" content="noindex, nofollow" />}
+
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+    <link rel="mask-icon" href="/favicon.svg" color="#534AB7" />
+    {/*
+      These MUST stay equal to --bg in tokens.css and --ex-panel-bg in
+      examples.css. theme-color is one page-level value applied to all of the
+      browser's chrome at once, so a sheet can only match the bottom bar if
+      the sheet, the page, and this tag are the same color.
+    */}
+    <meta name="theme-color" content="#0a0a0b" media="(prefers-color-scheme: dark)" />
+    <meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)" />
+
+    <!--
+      Applies a stored theme choice before first paint. Inline and blocking on
+      purpose: a deferred module would run after the document renders, so a
+      visitor who picked light would get a dark flash on every navigation.
+      Absent a stored choice this does nothing and prefers-color-scheme wins.
+    -->
+    <script is:inline>
+      try {
+        var t = localStorage.getItem("theme");
+        if (t === "light" || t === "dark") document.documentElement.dataset.theme = t;
+      } catch (e) {
+        /* Safari private mode throws on localStorage; system theme is fine. */
+      }
+    </script>
+
+    <!-- Open Graph -->
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="scrollsheet" />
+    <meta property="og:title" content={pageTitle} />
+    <meta property="og:description" content={description} />
+    <meta property="og:url" content={canonicalURL} />
+    <meta property="og:image" content={ogImageURL} />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+
+    <!-- Twitter -->
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content={pageTitle} />
+    <meta name="twitter:description" content={description} />
+    <meta name="twitter:image" content={ogImageURL} />
+
+    <link rel="alternate" type="text/plain" title="llms.txt" href="/llms.txt" />
+    <slot name="head" />
+  </head>
+  <body>
+    <a class="skip-link" href="#main">Skip to content</a>
+    <!-- The library resolves data-scrollsheet-background document-wide,
+         first match wins — marking the whole page here means an example
+         with backgroundEffect (the gallery's Page transition) pushes the
+         REAL page back, iOS-style, not just its own little mock. The
+         example file keeps its own marker so the copied code still works
+         standalone. -->
+    <div class="site-recede" data-scrollsheet-background>
+      <Header />
+      <main id="main">
+        <slot />
+      </main>
+      <Footer />
+    </div>
+    <script>
+      // Copy-to-clipboard for install/code snippets. One listener, no
+      // framework: every [data-copy] button anywhere on the site works.
+      document.addEventListener("click", async (event) => {
+        const target = event.target;
+        if (!(target instanceof Element)) return;
+        const btn = target.closest<HTMLElement>("[data-copy]");
+        if (!btn) return;
+        const text = btn.getAttribute("data-copy") ?? "";
+        try {
+          await navigator.clipboard.writeText(text);
+          btn.setAttribute("data-copied", "true");
+          window.setTimeout(() => btn.removeAttribute("data-copied"), 1600);
+        } catch {
+          // Clipboard API unavailable (insecure context, permissions): no-op.
+        }
+      });
+    </script>
+  </body>
+</html>

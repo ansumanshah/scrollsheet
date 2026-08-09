@@ -1,0 +1,44 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    <title>scrollsheet e2e fixtures — shadow DOM</title>
+    <style>
+      html,
+      body {
+        margin: 0;
+        font-family: system-ui, sans-serif;
+        background: #f3f3f3;
+      }
+      .page {
+        padding: 24px;
+        max-width: 480px;
+        margin: 0 auto;
+      }
+      .btn {
+        padding: 10px 16px;
+        border-radius: 10px;
+        border: 1px solid #ccc;
+        background: white;
+        font-size: 15px;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="page">
+      <h1>scrollsheet e2e fixtures — shadow DOM</h1>
+      <!-- The React tree, its Sheet.Root/Trigger, and its Toaster all mount
+           INSIDE a real attachShadow({mode:'open'}) shadow root created by
+           shadow-dom.tsx, not this light-DOM host div — the host is just an
+           anchor point. Kept on its own page/route (rather than folding
+           into app.tsx's shared fixture) so the shadow boundary is the only
+           variable under test, and the platform/no-dialog-fallback.spec.ts-style
+           addInitScript tricks (deleting ShadowRoot.prototype.adoptedStyleSheets)
+           this suite needs don't have to coexist with 40+ unrelated fixtures
+           on the same document. -->
+      <div id="shadow-host"></div>
+    </div>
+    <script type="module" src="/shadow-dom.js"></script>
+  </body>
+</html>

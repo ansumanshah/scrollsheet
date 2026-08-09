@@ -1,0 +1,34 @@
+---
+/**
+ * Starlight `ThemeProvider` override. Starlight's default reads its own
+ * `starlight-theme` localStorage key; this reads the site's `theme` key
+ * instead (the same one Base.astro's inline script and ThemeToggle.astro
+ * use), so a choice made on either half of the site sticks on the other.
+ * Blocking and inline on purpose: a deferred script runs after first paint,
+ * which would flash the wrong theme on every docs navigation.
+ */
+---
+
+<script is:inline>
+  (function () {
+    var t = null;
+    try {
+      t = localStorage.getItem("theme");
+    } catch (e) {
+      /* Safari private mode throws on localStorage; fall back to the system theme. */
+    }
+    if (t !== "light" && t !== "dark") {
+      /*
+       * Starlight server-renders data-theme="dark" onto <html>, so leaving it
+       * alone strands a light-OS visitor in dark for the whole docs section
+       * while the rest of the site follows the system. Resolving the system
+       * preference here and always writing an explicit value also keeps
+       * Starlight's own [data-theme] selectors working, which a plain delete
+       * would break: Starlight is dark-first, so an absent attribute reads as
+       * dark rather than as "follow the system".
+       */
+      t = window.matchMedia("(prefers-color-scheme: light)").matches ? "light" : "dark";
+    }
+    document.documentElement.dataset.theme = t;
+  })();
+</script>

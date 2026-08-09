@@ -1,0 +1,37 @@
+---
+title: Nested and morph
+description: A Sheet.Root rendered inside another sheet's content registers as a child automatically, and the sheet morphs height when its content changes.
+---
+
+import { LinkCard } from '@astrojs/starlight/components';
+import DocExample from '../../../../components/DocExample.astro';
+
+```tsx
+<Sheet.Root>
+  <Sheet.Trigger>Open</Sheet.Trigger>
+  <Sheet.Content className="sheet">
+    {/* a Sheet.Root rendered in here just works */}
+    <Sheet.Root>
+      <Sheet.Trigger>Open child</Sheet.Trigger>
+      <Sheet.Content className="sheet">Child sheet</Sheet.Content>
+    </Sheet.Root>
+  </Sheet.Content>
+</Sheet.Root>
+```
+
+Nesting is automatic: a `Sheet.Root` rendered inside another sheet's content registers with
+the parent, which recedes and dims while the child is open. Height morphs the same way: the
+sheet springs to fit new content whenever it changes inside an open sheet. For a cross-fade
+between views instead of a resize, wrap the state update in `document.startViewTransition`
+(feature-detected, falls back to an instant swap).
+
+<DocExample
+  name="nested-drill"
+  caption="Open a file, then tap Rename. Three sheets deep, each one resizing for its own content."
+/>
+
+<LinkCard
+  title="Page transitions"
+  description="Mark your page wrapper data-scrollsheet-background and backgroundEffect scales, insets, and rounds it in sync with the sheet's travel, iOS-style."
+  href="/docs/presentation/page-transitions"
+/>

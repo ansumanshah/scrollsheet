@@ -1,0 +1,62 @@
+---
+title: Keyboard
+description: scrollsheet reads visualViewport and writes the on-screen keyboard inset to --scrollsheet-keyboard automatically, no prop required.
+---
+
+import DocExample from '../../../../components/DocExample.astro';
+
+```tsx
+<Sheet.Content className="sheet">
+  <input placeholder="Card number" />
+  {/* stays clear of the on-screen keyboard automatically */}
+</Sheet.Content>
+```
+
+iOS resizes `visualViewport`, not the layout viewport, when the keyboard opens. scrollsheet
+listens to it and writes the inset to `--scrollsheet-keyboard`, no prop required. The panel
+overdraws about 120vh past its bottom edge, so a stale frame never shows a gap while the
+keyboard pushes the content up.
+
+A sheet resting at a short peek detent has no room to show a field the keyboard covers, so
+`keyboardExpands` on `Sheet.Root` promotes to the tallest detent the moment the keyboard
+actually appears, and restores the peek detent when it closes, unless a drag or a controlled
+change moved the sheet in between. The gate is a measured nonzero inset, never focus alone: a
+desktop click into an input expands nothing.
+
+Top, left, and right sheets are pinned to their edge, so the panel itself never moves for the
+keyboard. Their content still can, though: the same inset becomes bottom clearance on
+`[data-scrollsheet-body]` plus `scroll-padding` on the panel, so a focused field near the
+bottom of a side drawer scrolls clear instead of sitting under the keyboard.
+
+<DocExample
+  name="profile-form"
+  caption="On a phone, focus a field near the bottom and watch the sheet make room for the keyboard."
+/>
+
+## Full-height content
+
+`<Sheet.Content fill>` stretches the body to the panel (flex column) so a fixed header plus an
+independently scrolling list needs no CSS chain of your own:
+
+```tsx
+<Sheet.Content fill className="sheet">
+  <div className="search">{/* fixed */}</div>
+  <div className="results">{/* flex: 1; min-height: 0; overflow-y: auto */}</div>
+</Sheet.Content>
+```
+
+The list then sizes to whatever the sheet has left, including when the keyboard caps the panel
+at the visual viewport. `fill` is off by default because it changes how the `content` detent
+measures: with it on, the detent and content-morph both read the content's natural size across
+all of the body's children (margins included) instead of the body's own stretched box.
+
+Doing it by hand instead, same result:
+
+```css
+.sheet { display: flex; flex-direction: column; }
+.sheet [data-scrollsheet-body] { display: flex; flex-direction: column; flex: 1; min-height: 0; }
+.sheet .results { flex: 1; min-height: 0; overflow-y: auto; }
+```
+
+`[data-scrollsheet-body]` is the wrapper the library already renders around your content; `fill`
+just sets these two rules for you off one attribute.

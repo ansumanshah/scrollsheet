@@ -1,0 +1,224 @@
+/* Styled widget defaults — the handle pill (every variant) and the
+   self-closing Close button. Generated CORE_CSS is core.css plus this
+   file (scripts/gen-css.ts); split only for the 1500-line file cap.
+   Same conventions: :where() for looks a consumer className restyles,
+   normal specificity for capabilities (hit areas). */
+
+/* Cosmetic defaults below — :where() so a className on Sheet.Handle can
+   override at normal specificity regardless of this stylesheet's (lazy,
+   first-open) injection order relative to the consumer's own CSS. */
+.scrollsheet-handle::before {
+  /* 44px hit area — left at normal specificity, not a "look" to override. */
+  content: "";
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  width: max(100%, 44px);
+  height: 44px;
+}
+:where(.scrollsheet-handle) {
+  display: block;
+  height: 5px;
+  width: 44px;
+  margin: 8px auto;
+  padding: 0;
+  border: none;
+  border-radius: 999px;
+  background: var(--scrollsheet-handle, rgb(0 0 0 / 0.2));
+  cursor: grab;
+  position: relative;
+  outline: none;
+  /* Same two-layer shape as the focus-visible ring below, just transparent —
+     so the ring transitions in on color alone (no sudden spread jump) and
+     the "off" state costs nothing visually. */
+  box-shadow:
+    0 0 0 2px transparent,
+    0 0 0 calc(2px + var(--scrollsheet-focus-ring-width, 2px)) transparent;
+  transition:
+    transform 180ms var(--scrollsheet-ease),
+    background 180ms ease,
+    box-shadow 150ms ease;
+}
+:where(.scrollsheet-handle:hover) {
+  background: var(--scrollsheet-handle-hover, rgb(0 0 0 / 0.32));
+}
+:where(.scrollsheet-handle:active) {
+  transform: scaleX(1.3);
+  cursor: grabbing;
+}
+/* Dark-mode default: the panel's own default background flips to #1c1c1e
+   (above), so a translucent-black handle would nearly disappear on it —
+   flip to translucent white. A consumer's own --scrollsheet-handle(-hover)
+   override still wins in either scheme, unchanged. */
+@media (prefers-color-scheme: dark) {
+  :where(.scrollsheet-handle) {
+    background: var(--scrollsheet-handle, rgb(255 255 255 / 0.32));
+  }
+  :where(.scrollsheet-handle:hover) {
+    background: var(--scrollsheet-handle-hover, rgb(255 255 255 / 0.46));
+  }
+}
+/* Handle variant="floating": overlays full-bleed content (maps, photos)
+   instead of taking flow space at the top. Anchored to the panel (the
+   nearest positioned ancestor — the body deliberately isn't one).
+   `translate`, not `transform`: the base :active rule's scaleX lives on
+   `transform` and must keep composing with the centering. */
+:where(.scrollsheet-handle[data-scrollsheet-handle-variant="floating"]) {
+  position: absolute;
+  top: 8px;
+  left: 50%;
+  translate: -50% 0;
+  margin: 0;
+  z-index: 1;
+}
+
+/* Handle variant="outside": the pill floats in the backdrop above the
+   sheet's top edge, at the CANVAS layer (Handle portals it there — the
+   panel's overflow clip would swallow it; a canvas child scrolls 1:1 with
+   the panel). Offset = the panel's anchored-edge math: box top sits
+   inset + keyboard + kb-hang + max-detent above the canvas bottom.
+   --scrollsheet-ib is measure()'s canvas-scoped mirror of the PANEL-scoped
+   --scrollsheet-inset-bottom (desktop dock, consumer detached cards),
+   which never inherits to this sibling. Bottom sheets only. */
+:where(.scrollsheet-canvas > .scrollsheet-handle[data-scrollsheet-handle-variant="outside"]) {
+  position: absolute;
+  left: 50%;
+  translate: -50% 0;
+  bottom: calc(
+    var(--scrollsheet-ib, 0px) + var(--scrollsheet-keyboard, 0px) +
+      var(--scrollsheet-kb-hang, 0px) + var(--scrollsheet-max-detent, 0px) + 10px
+  );
+  margin: 0;
+  /* Sits on the dimmed backdrop, not the panel surface — solid enough to
+     read there in either scheme. */
+  background: var(--scrollsheet-handle, rgb(255 255 255 / 0.8));
+}
+/* The canvas position is the pill's FINAL resting spot from the first
+   frame, while the panel is still animating in (or out) — hidden for those
+   legs so it never hovers over an empty backdrop. */
+.scrollsheet-dialog:not([data-scrollsheet-state="open"])
+  .scrollsheet-canvas
+  > .scrollsheet-handle[data-scrollsheet-handle-variant="outside"] {
+  opacity: 0;
+  transition: opacity 120ms ease;
+}
+/* Non-modal: dialog and track are pointer-events:none (see above) — the
+   pill, like the panel, opts back in; touch-action for the same reason
+   the panel carries it (the engine owns the gesture). */
+.scrollsheet-dialog[data-scrollsheet-modal="false"]
+  .scrollsheet-handle[data-scrollsheet-handle-variant="outside"] {
+  pointer-events: auto;
+  touch-action: none;
+}
+
+/* Self-closing <Sheet.Close /> default: ✕ top-right of the panel. All
+   :where() — a consumer className restyles at normal specificity. */
+:where(.scrollsheet-close) {
+  position: absolute;
+  top: 12px;
+  inset-inline-end: 12px;
+  z-index: 1;
+  display: grid;
+  place-items: center;
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  border: none;
+  border-radius: 999px;
+  background: var(--scrollsheet-close-bg, rgb(0 0 0 / 0.06));
+  color: var(--scrollsheet-close-color, rgb(0 0 0 / 0.55));
+  cursor: pointer;
+  outline: none;
+  box-shadow:
+    0 0 0 2px transparent,
+    0 0 0 calc(2px + var(--scrollsheet-focus-ring-width, 2px)) transparent;
+  transition:
+    background 150ms ease,
+    color 150ms ease,
+    box-shadow 150ms ease;
+}
+.scrollsheet-close::before {
+  /* 44px hit area — normal specificity, a capability, not a "look". */
+  content: "";
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  width: 44px;
+  height: 44px;
+}
+:where(.scrollsheet-close:hover) {
+  background: var(--scrollsheet-close-bg-hover, rgb(0 0 0 / 0.1));
+  color: var(--scrollsheet-close-color-hover, rgb(0 0 0 / 0.75));
+}
+@media (prefers-color-scheme: dark) {
+  :where(.scrollsheet-close) {
+    background: var(--scrollsheet-close-bg, rgb(255 255 255 / 0.09));
+    color: var(--scrollsheet-close-color, rgb(255 255 255 / 0.62));
+  }
+  :where(.scrollsheet-close:hover) {
+    background: var(--scrollsheet-close-bg-hover, rgb(255 255 255 / 0.14));
+    color: var(--scrollsheet-close-color-hover, rgb(255 255 255 / 0.85));
+  }
+}
+:where(.scrollsheet-close:focus-visible) {
+  outline: none;
+  box-shadow:
+    0 0 0 2px transparent,
+    0 0 0 calc(2px + var(--scrollsheet-focus-ring-width, 2px))
+      var(--scrollsheet-focus-ring, rgb(99 102 241 / 0.6));
+}
+
+/* Keyboard-only ring — never on mouse click, only :focus-visible. Themeable
+   via --scrollsheet-focus-ring(-width); :where() so a consumer can restyle
+   at normal specificity. */
+:where(.scrollsheet-handle:focus-visible) {
+  outline: none;
+  box-shadow:
+    0 0 0 2px transparent,
+    0 0 0 calc(2px + var(--scrollsheet-focus-ring-width, 2px))
+      var(--scrollsheet-focus-ring, rgb(99 102 241 / 0.6));
+}
+/* Vertical pill for left/right sheets. */
+.scrollsheet-dialog[data-scrollsheet-side="left"] .scrollsheet-handle::before,
+.scrollsheet-dialog[data-scrollsheet-side="right"] .scrollsheet-handle::before {
+  width: 44px;
+  height: max(100%, 44px);
+}
+.scrollsheet-dialog[data-scrollsheet-side="left"] :where(.scrollsheet-handle),
+.scrollsheet-dialog[data-scrollsheet-side="right"] :where(.scrollsheet-handle) {
+  width: 5px;
+  height: 44px;
+  margin: auto 8px;
+}
+.scrollsheet-dialog[data-scrollsheet-side="left"] :where(.scrollsheet-handle:active),
+.scrollsheet-dialog[data-scrollsheet-side="right"] :where(.scrollsheet-handle:active) {
+  transform: scaleY(1.3);
+}
+
+/* Forced colors (Windows High Contrast) — must sit AFTER the base rules
+   above: both sides are zero-specificity (:where), so source order decides.
+   Rationale for the technique is with the main block in core.css: box-shadow
+   is discarded outright, translucent backgrounds flatten into the forced
+   Canvas, and a real outline is the only focus ring that survives. */
+@media (forced-colors: active) {
+  :where(.scrollsheet-handle) {
+    background: ButtonBorder;
+    box-shadow: none;
+  }
+  :where(.scrollsheet-handle:focus-visible) {
+    box-shadow: none;
+    outline: 2px solid Highlight;
+  }
+  :where(.scrollsheet-close) {
+    background: Canvas;
+    color: ButtonText;
+    border: 1px solid ButtonBorder;
+    box-shadow: none;
+  }
+  :where(.scrollsheet-close:focus-visible) {
+    box-shadow: none;
+    outline: 2px solid Highlight;
+  }
+}

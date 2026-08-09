@@ -1,0 +1,83 @@
+---
+title: Browser support
+description: dialog and spring easing reach about 96% of browsers; the remaining ~4% get a plain fixed-position modal with no drag or detents.
+---
+
+import { Aside, LinkCard } from '@astrojs/starlight/components';
+
+<div className="table-scroll">
+
+| Browser | Spring easing | Compositor-driven backdrop dim + `--scrollsheet-progress` |
+| --- | --- | --- |
+| Chrome / Edge | 113+ | 115+ |
+| Safari | 17.2+ | 26+ |
+| Firefox | 112+ | behind a flag, see below |
+
+</div>
+
+<Aside type="caution" title="Below the version floor">
+  Safari 16.4–17.1 parses `<dialog>` but not CSS `linear()`, so the spring falls back to a plain
+  ease-out at the same duration. `scrollend` falls back to a ~120ms debounced scroll-silence check
+  where unsupported.
+</Aside>
+
+<Aside type="caution" title="Scroll-driven animation gaps">
+  The backdrop dim and `--scrollsheet-progress` run as CSS scroll-driven animations
+  (`animation-timeline: scroll()`), off the main thread, on engines that support them —
+  feature-detected once and stamped `data-scrollsheet-sda` on the dialog. Firefox has it behind
+  a flag as of mid-2026; Safari 17.2–25 has the spring but not scroll-driven animations. Below
+  that compositor floor, the same values update every frame from `onTravel`'s own JS write
+  instead. Two pieces stay JS-driven on every engine regardless: a stacked sheet's parent-panel
+  recede (a sibling top-layer `<dialog>`, not a descendant the track's timeline can reach) and
+  `backgroundEffect` (its target sits outside the dialog entirely).
+</Aside>
+
+<Aside type="caution" title="Close-request routing">
+  Where `dialog.closedBy` exists (Chrome/Edge 134+, Firefox 141+), a modal sheet sets `closedby`
+  to `closerequest` when `escapeDismissible` is on, `none` when it's off — Esc and the Android
+  back gesture route through the platform's own close-request machinery, not scrollsheet's
+  manual handling. Never `closedby="any"`: `.scrollsheet-dialog` always covers the full
+  viewport, so there's no "outside the dialog" region for a native light-dismiss to detect; it
+  would only double-fire against the existing backdrop-click handling. Engines without
+  `closedBy` (Safari, as of this writing) keep the manual Esc/backdrop dismissal unchanged.
+  Non-modal sheets (`modal={false}`) get no platform close watcher for free, so a dismissible
+  one creates its own via `CloseWatcher` (Chrome 126+, Firefox 149+, touch-primary devices only) so Android
+  back closes it instead of navigating the page. On those devices Esc is also a platform close
+  signal, and non-modal Esc is deliberately scoped to focus inside the sheet so a desktop
+  watcher would steal the page's Esc. Real-device verification on that path is still pending.
+</Aside>
+
+## Without `<dialog>`
+
+<div className="table-scroll prop-table">
+
+| ~4% of browsers (Opera Mini, old in-app WebViews, iOS ≤15.3) | |
+| --- | --- |
+| You get | A fixed-position modal: backdrop, tap-to-close, Escape, focus moved into the panel on open and restored to the trigger on close, body scroll locked. Panel sizes to content up to 85% of the viewport, then scrolls internally |
+| Gone | Detents, drag, the enter/exit animation, the top layer (panel portals to `<body>` with a max `z-index` instead of a guarantee), the native focus trap. `Sheet.Handle` renders nothing |
+| Still works | Every `--scrollsheet-*` theming variable (`-bg`, `-fg`, `-radius`, `-shadow`, `-backdrop`, safe-area) resolves the same way. `isSupported()` reports which path a browser takes |
+
+</div>
+
+The trade against libraries that portal a plain `<div>` (vaul, react-modal-sheet): their full
+gesture experience reaches these browsers and ours does not, on the bet that the top layer is
+worth more on the 96% than the gestures are on the 4%.
+
+Want your own UI for that ~4% instead of the built-in fallback? Check `isSupported()`
+client-side, after mount, so server and client agree on the first render:
+
+```tsx
+import { Sheet, isSupported } from 'scrollsheet';
+
+const [supported, setSupported] = useState(false);
+useEffect(() => setSupported(isSupported()), []);
+
+if (!supported) return <LegacyModal open={open} onClose={onClose} />;
+return <Sheet.Root open={open} onOpenChange={onClose}>...</Sheet.Root>;
+```
+
+<LinkCard
+  title="API reference"
+  description="Full prop reference for Sheet.Root, the styling hooks on Sheet.Content, and every other named export."
+  href="/docs/reference/api"
+/>

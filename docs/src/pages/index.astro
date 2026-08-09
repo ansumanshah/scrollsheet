@@ -1,0 +1,451 @@
+---
+import Base from "../layouts/Base.astro";
+import ExampleCard from "../components/ExampleCard.astro";
+import ExamplePreview from "../components/ExamplePreview";
+import HeroShowcase from "../components/HeroShowcase";
+
+import { examples, exampleGroups } from "../../../examples/index";
+import "../../../examples/examples.css";
+import { BUNDLE_SIZES } from "../lib/bundle-sizes.generated";
+
+// Raw text for the example gallery's "Styles" tab: the exact, unmodified
+// shared stylesheet and icon set every example imports, so copying it
+// alongside a card's Code tab is enough to run that example standalone.
+import examplesCssRaw from "../../../examples/examples.css?raw";
+import iconsRaw from "../../../examples/icons.tsx?raw";
+import { scopeCssToExample, scopeIconsToExample } from "../lib/scope-css";
+
+import mapsCode from "../../../examples/maps.tsx?raw";
+import cartCode from "../../../examples/cart.tsx?raw";
+import profileFormCode from "../../../examples/profile-form.tsx?raw";
+import toastCode from "../../../examples/toast.tsx?raw";
+import lightboxCode from "../../../examples/lightbox.tsx?raw";
+import walletCode from "../../../examples/wallet.tsx?raw";
+import sidesCode from "../../../examples/sides.tsx?raw";
+import snapHeightsCode from "../../../examples/snap-heights.tsx?raw";
+import confirmCode from "../../../examples/confirm.tsx?raw";
+import nestedCode from "../../../examples/nested.tsx?raw";
+
+const CODE: Record<string, string> = {
+  maps: mapsCode,
+  cart: cartCode,
+  "profile-form": profileFormCode,
+  toast: toastCode,
+  lightbox: lightboxCode,
+  wallet: walletCode,
+  sides: sidesCode,
+  "snap-heights": snapHeightsCode,
+  confirm: confirmCode,
+  nested: nestedCode,
+};
+
+/*
+ * The homepage shows a curated slice, not the full registry: enough
+ * distinct capabilities to scan in one screen without scrolling through
+ * near-duplicates. Everything cut here still lives in examples/, still
+ * ships with its own DocExample demo on the docs page that covers the
+ * prop it exercises (see which-example-shows-which-prop.mdx), and is
+ * still importable on its own — only this grid got smaller.
+ */
+const HOMEPAGE_EXAMPLES = [
+  "confirm",
+  "snap-heights",
+  "profile-form",
+  "sides",
+  "nested",
+  "lightbox",
+  "toast",
+  "wallet",
+  "maps",
+  "cart",
+];
+
+const homepageExamples = HOMEPAGE_EXAMPLES.map((name) => {
+  const entry = examples.find((e) => e.name === name);
+  if (!entry) throw new Error(`Homepage: no example named "${name}" in examples/index.ts`);
+  return entry;
+});
+
+/*
+ * Comparison data lives here, one row per DIMENSION, so the four libraries
+ * can never drift out of alignment the way four hand-written <ul>s did (the
+ * old markup had size third in one card and fourth in another, which made
+ * scanning a single dimension across the row impossible).
+ * `win` marks where a competitor genuinely beats us; stating that outright
+ * is worth more than a clean sweep nobody believes.
+ */
+/*
+ * The Styles tab used to ship all of examples.css (37 kB) and all of
+ * icons.tsx on every card, so copying a 40-line component handed you a
+ * thousand lines of CSS for two dozen unrelated examples. Scoped per example
+ * instead: only the rules and glyphs that example actually references.
+ */
+const SCOPED: Record<string, { css: string; icons: string }> = Object.fromEntries(
+  Object.entries(CODE).map(([name, source]) => [
+    name,
+    {
+      css: scopeCssToExample(examplesCssRaw, source),
+      icons: scopeIconsToExample(iconsRaw, source),
+    },
+  ]),
+);
+
+const INSTALL = [
+  { id: "bun", cmd: "bun add scrollsheet" },
+  { id: "npm", cmd: "npm i scrollsheet" },
+  { id: "pnpm", cmd: "pnpm add scrollsheet" },
+  { id: "yarn", cmd: "yarn add scrollsheet" },
+];
+
+/*
+ * Version floors match the Browser support section in docs.mdx, which is the
+ * source of truth for them; the dates are the caniuse release dates for those
+ * exact versions. Every card carries the same four things in the same order,
+ * so they can be read down the column: what the sheet uses it for, when it
+ * became available, which versions, and what happens without it. That last
+ * line is the one a reader is actually deciding on.
+ */
+const PLATFORM = [
+  {
+    name: "<dialog>, top layer",
+    use: "Stacking, without a z-index to manage",
+    since: "Every engine, Mar 2022",
+    versions: "Chrome 37, Safari 15.4, Firefox 98",
+    without: "Plain modal. No gestures.",
+  },
+  {
+    name: "CSS scroll-snap",
+    use: "The gesture engine, no JS in the loop",
+    since: "Every engine, Jul 2019",
+    versions: "Chrome 69, Safari 11, Firefox 68",
+    without: "Nothing. It ships wherever <dialog> does.",
+  },
+  {
+    name: "linear() easing",
+    use: "The spring curve",
+    since: "Every engine, Dec 2023",
+    versions: "Chrome 113, Safari 17.2, Firefox 112",
+    without: "Ease-out, same duration.",
+  },
+  {
+    name: "Scroll-driven animations",
+    use: "Backdrop dim off the main thread",
+    since: "Chrome Jul 2023, Safari Sep 2025",
+    versions: "Chrome 115, Safari 26, Firefox behind a flag",
+    without: "Same values, written from JS each frame.",
+  },
+  {
+    name: "dialog.closedBy",
+    use: "Close requests handled by the platform",
+    since: "Chrome Mar 2025, Firefox Jul 2025",
+    versions: "Chrome 134, Firefox 141, not in Safari",
+    without: "Esc and backdrop close the manual way.",
+  },
+  {
+    name: "CloseWatcher",
+    use: "Android back button on non-modal sheets",
+    since: "Chrome Jun 2024, Firefox Mar 2026",
+    versions: "Chrome 126, Firefox 149, Safari preview only",
+    without: "Non-modal sheets ignore the back gesture.",
+  },
+];
+
+
+const COMPARE_LIBS = ["scrollsheet", "vaul", "Silk", "react-modal-sheet"];
+const COMPARE_ROWS: {
+  label: string;
+  values: string[];
+  best?: number;
+  win?: number[];
+  note?: string;
+}[] = [
+  {
+    label: "Shipped size, gzip",
+    values: [`${Math.round(BUNDLE_SIZES.index.gzipKb)} kB`, "22 kB", "40 kB", "52 kB"],
+    best: 0,
+  },
+  {
+    label: "With toasts, gzip",
+    values: [
+      `${BUNDLE_SIZES.all.gzipKb.toFixed(1)} kB`,
+      "30.3 kB with sonner",
+      "40 kB",
+      "62 kB with sonner",
+    ],
+    best: 0,
+    note: "JS bundles, measured identically (esbuild, minified, react external, gzip): our whole surface in one import against vaul 1.1.2 plus sonner 2.0.8. Stylesheets on top of each: 5.3 kB ours, 1.0 kB vaul's style.css, zero for sonner (embedded). Totals 30.7 against 31.3.",
+  },
+  {
+    label: "Runtime dependencies",
+    values: ["0", "Radix Dialog", "0", "Motion (peer)"],
+    best: 0,
+  },
+  {
+    label: "Last release",
+    values: ["active", "Dec 2024", "active", "active"],
+  },
+  {
+    label: "Toasts",
+    values: ["yes, sonner drop-in", "no", "yes", "no"],
+    best: 0,
+    note: "One package for both. It matches sonner's API, so an existing Toaster keeps working.",
+  },
+  {
+    label: "Lightbox",
+    values: ["yes", "no", "yes", "no"],
+    best: 0,
+  },
+  {
+    label: "Native <dialog>, top layer",
+    values: ["yes", "no", "no", "no"],
+    best: 0,
+    note: "The top layer always paints above the page, whatever your z-index. The browser traps focus and blocks clicks behind it.",
+  },
+  {
+    label: "Gesture engine",
+    values: ["native scroll", "pointer events", "native scroll", "Motion drag"],
+  },
+  {
+    label: "Browsers without <dialog> (~4%)",
+    values: ["plain modal, no gestures", "full support", "full support", "full support"],
+    win: [1, 2, 3],
+    note: "The one place the others win. They render a plain <div>, so their gestures keep working where ours fall back to a static modal.",
+  },
+  {
+    label: "License",
+    values: ["MIT, free", "MIT, free", "paid for the full set", "MIT, free"],
+  },
+];
+
+const title = "scrollsheet: native bottom sheets and drawers for React";
+const description = `One React primitive for bottom sheets, drawers, modal dialogs, side panels, and toasts. Built on <dialog> and CSS scroll-snap. ${Math.round(BUNDLE_SIZES.index.gzipKb)} kB gzipped, zero dependencies.`;
+---
+
+<Base title={title} description={description}>
+  <section class="container hero">
+    <div>
+      <h1>Native dialog. Native scrolling.</h1>
+      <p class="hero-lede">
+        One React component for bottom sheets, drawers, dialogs, side panels, and
+        toasts. {Math.round(BUNDLE_SIZES.index.gzipKb)}&nbsp;kB gzipped, zero runtime
+        dependencies, MIT licensed.
+      </p>
+      <div class="hero-actions">
+        <div class="install" id="install">
+          <div class="install-tabs" role="tablist" aria-label="Package manager">
+            {INSTALL.map((pm, i) => (
+              <button
+                type="button"
+                role="tab"
+                id={`pm-tab-${pm.id}`}
+                aria-controls="install-cmd"
+                aria-selected={i === 0 ? "true" : "false"}
+                tabindex={i === 0 ? undefined : -1}
+                data-cmd={pm.cmd}
+              >
+                {pm.id}
+              </button>
+            ))}
+          </div>
+          <div class="install-box">
+            <span id="install-cmd" role="tabpanel" aria-labelledby="pm-tab-bun">
+              <span class="prompt">$</span><code>{INSTALL[0]!.cmd}</code>
+            </span>
+            <button
+              class="copy-btn"
+              type="button"
+              data-copy={INSTALL[0]!.cmd}
+              aria-label="Copy install command"
+            >
+              <svg viewBox="0 0 20 20" fill="none" aria-hidden="true">
+                <rect x="7" y="7" width="10" height="10" rx="2" stroke="currentColor" stroke-width="1.6"/>
+                <path d="M4 13H3.5A1.5 1.5 0 0 1 2 11.5v-8A1.5 1.5 0 0 1 3.5 2h8A1.5 1.5 0 0 1 13 3.5V4" stroke="currentColor" stroke-width="1.6"/>
+              </svg>
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="hero-stage">
+      <div class="phone-frame" id="hero-phone-frame">
+        <div class="phone-frame-notch"></div>
+        <iframe
+          class="phone-frame-iframe"
+          title="Live scrollsheet demo"
+          src="about:blank"
+          data-src="/embed/hero"
+          loading="lazy"
+        ></iframe>
+      </div>
+      {/*
+        Below 980px there's no room for the phone frame beside the copy, and
+        drawing a phone frame around a visitor's actual phone is absurd
+        anyway — their own screen is the device. Same component as the
+        frame's iframe, mounted directly with no frame and no iframe chrome,
+        so the sheets it opens are real, full-size, and drawn against the
+        real viewport instead of a boxed-in preview. client:visible so it
+        never ships to the desktop visitor who gets the phone frame instead.
+      */}
+      <div class="hero-inline-demo">
+        <HeroShowcase client:visible bottomSheetDetents={[0.5, "full"]} />
+      </div>
+    </div>
+  </section>
+
+  <script>
+    // Package-manager tabs. The command text and the copy button's payload
+    // are the same string, so the button can never copy a command the
+    // visitor is not looking at.
+    {
+      const tabs = [
+        ...document.querySelectorAll<HTMLButtonElement>('.install-tabs [role="tab"]'),
+      ];
+      const code = document.querySelector<HTMLElement>("#install-cmd code");
+      const copy = document.querySelector<HTMLButtonElement>(".install .copy-btn");
+
+      const select = (tab: HTMLButtonElement) => {
+        const cmd = tab.dataset.cmd;
+        if (!cmd || !code || !copy) return;
+        for (const other of tabs) {
+          other.setAttribute("aria-selected", String(other === tab));
+          other.tabIndex = other === tab ? 0 : -1;
+        }
+        code.textContent = cmd;
+        copy.dataset.copy = cmd;
+        document.getElementById("install-cmd")?.setAttribute("aria-labelledby", tab.id);
+      };
+
+      for (const tab of tabs) {
+        tab.addEventListener("click", () => select(tab));
+        // Roving tabindex: a tablist is one tab stop, arrows move within it.
+        tab.addEventListener("keydown", (event) => {
+          const step = event.key === "ArrowRight" ? 1 : event.key === "ArrowLeft" ? -1 : 0;
+          if (!step) return;
+          event.preventDefault();
+          const next = tabs[(tabs.indexOf(tab) + step + tabs.length) % tabs.length];
+          if (next) {
+            select(next);
+            next.focus();
+          }
+        });
+      }
+    }
+  </script>
+
+  <script>
+    // The phone frame only makes sense once there's room for it beside the
+    // copy (matches the .hero two-column breakpoint in home.css). Below
+    // that, .hero-inline-demo takes over via CSS and this never fires, so
+    // the iframe's own bundle and the library it loads never ship to a
+    // visitor who already has a real phone to try the gesture on.
+    const frame = document.getElementById("hero-phone-frame");
+    const iframe = frame?.querySelector<HTMLIFrameElement>(".phone-frame-iframe");
+    const mql = window.matchMedia("(min-width: 980px)");
+    const sync = () => {
+      if (!iframe) return;
+      if (mql.matches && iframe.src === "about:blank") {
+        const src = iframe.dataset.src;
+        if (src) iframe.src = src;
+      }
+    };
+    sync();
+    mql.addEventListener("change", sync);
+  </script>
+
+  <section class="container section" aria-labelledby="compare-heading">
+    <div class="section-head">
+      <h2 id="compare-heading">How it stacks up</h2>
+      <p>Four libraries doing the same job, including where the others win.</p>
+    </div>
+    <div class="compare-scroll">
+      <table class="compare-table">
+        <thead>
+          <tr>
+            <th scope="col"><span class="visually-hidden">Dimension</span></th>
+            {COMPARE_LIBS.map((lib, i) => (
+              <th scope="col" class={i === 0 ? "compare-col-us" : undefined}>{lib}</th>
+            ))}
+          </tr>
+        </thead>
+        <tbody>
+          {COMPARE_ROWS.map((row) => (
+            <tr>
+              <th scope="row">
+                {row.label}
+                {row.note && <span class="compare-note">{row.note}</span>}
+              </th>
+              {row.values.map((value, i) => (
+                <td
+                  data-lib={COMPARE_LIBS[i]}
+                  class={[
+                    i === 0 ? "compare-col-us" : "",
+                    row.best === i ? "is-best" : "",
+                    row.win?.includes(i) ? "is-win" : "",
+                  ].filter(Boolean).join(" ") || undefined}
+                >
+                  {value}
+                </td>
+              ))}
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <section class="container section" aria-labelledby="platform-heading">
+    <div class="section-head">
+      <h2 id="platform-heading">What it runs on</h2>
+      <p>Each feature degrades on its own. None of them take the sheet down with it.</p>
+    </div>
+    <ul class="platform-grid">
+      {
+        PLATFORM.map((item) => (
+          <li class="platform-card">
+            <code>{item.name}</code>
+            <p class="platform-card__use">{item.use}</p>
+            <p class="platform-card__since">{item.since}</p>
+            <p class="platform-card__versions">{item.versions}</p>
+            <p class="platform-card__without">
+              <span>Without it</span>
+              {item.without}
+            </p>
+          </li>
+        ))
+      }
+    </ul>
+  </section>
+
+  <section class="container section" id="examples" aria-labelledby="examples-heading">
+    <div class="section-head">
+      <h2 id="examples-heading">Examples</h2>
+      <p>
+        Every preview runs the real package. Open Code on any card for the source — more
+        patterns live throughout the docs.
+      </p>
+    </div>
+
+    <div class="examples-grid">
+      {
+        homepageExamples.map((entry) => {
+          const group = exampleGroups.find((g) => g.id === entry.group);
+          return (
+            <ExampleCard
+              slug={entry.name}
+              title={entry.title}
+              description={entry.description}
+              groupTitle={group?.title ?? ""}
+              code={CODE[entry.name] ?? ""}
+              examplesCss={SCOPED[entry.name]?.css ?? ""}
+              iconsCode={SCOPED[entry.name]?.icons ?? ""}
+            >
+              <ExamplePreview name={entry.name} client:visible />
+            </ExampleCard>
+          );
+        })
+      }
+    </div>
+  </section>
+
+</Base>

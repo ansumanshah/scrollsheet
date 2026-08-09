@@ -1,0 +1,46 @@
+---
+title: Anatomy
+description: The five pieces of a scrollsheet Root, Trigger, Content, Handle, Title, Description, and Close, and what each one owns.
+---
+
+import { LinkCard } from '@astrojs/starlight/components';
+import DocExample from '../../../../components/DocExample.astro';
+
+```tsx
+import { Sheet } from 'scrollsheet';
+import 'scrollsheet/styles.css';
+
+<Sheet.Root>
+  <Sheet.Trigger>Open</Sheet.Trigger>
+  <Sheet.Content>
+    <Sheet.Handle />
+    <Sheet.Title>Title</Sheet.Title>
+    <Sheet.Description>Description</Sheet.Description>
+    <Sheet.Close>Done</Sheet.Close>
+  </Sheet.Content>
+</Sheet.Root>
+```
+
+The stylesheet import is once per app, same as vaul's `style.css`. Bundler can't handle CSS
+imports? Use `scrollsheet/auto` — see [Styling](/docs/styling/css).
+
+`Sheet.*` is client-only: state, event handlers, real DOM. In Next.js App Router, add
+`'use client'` to the file that renders it — see [Framework support](/docs/advanced/framework-support)
+for what breaks if you don't.
+
+`Sheet.Root` owns state and renders nothing itself. `Sheet.Trigger` opens it on click; skip it and
+drive `open`/`onOpenChange` yourself for a fully controlled sheet. `Sheet.Content` is the
+`<dialog>`, backdrop, scroll track, and panel together. The rest are optional, each wiring one
+piece of behavior onto a plain element: `Sheet.Handle`, `Sheet.Title`, `Sheet.Description`, and
+`Sheet.Close`. Full shape of each in [Other exports](/docs/reference/api#other-exports).
+
+<DocExample
+  name="confirm"
+  caption="Try swiping down, tapping outside, or hitting Esc. Only the two buttons actually close this one."
+/>
+
+<LinkCard
+  title="API reference"
+  description="Full prop reference for Sheet.Root, the styling hooks on Sheet.Content, and every other named export."
+  href="/docs/reference/api"
+/>

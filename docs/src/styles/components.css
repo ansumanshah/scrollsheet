@@ -1,0 +1,571 @@
+/* ─────────────────────────────────────────────────────────────────────────
+   Shared components: header, footer, buttons, badges, install box, cards
+   ───────────────────────────────────────────────────────────────────────── */
+
+/* ── Site header ─────────────────────────────────────────────────────── */
+
+.site-header {
+  position: sticky;
+  top: 0;
+  z-index: 40;
+  background: color-mix(in oklab, var(--bg) 88%, transparent);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  border-bottom: 1px solid var(--border);
+}
+
+.site-header__inner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  height: 64px;
+}
+
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-weight: 700;
+  font-size: 1.05rem;
+  letter-spacing: -0.01em;
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+.brand svg {
+  width: 26px;
+  height: 26px;
+  flex: none;
+}
+
+/*
+ * Three-part header: brand, navigation, actions. The nav sits in the middle
+ * column so the links are not jammed against the GitHub link and the CTA —
+ * a single right-hand run of seven items read as one undifferentiated blob.
+ */
+.site-header__inner {
+  justify-content: flex-start;
+}
+
+.site-nav {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  margin-inline: auto;
+}
+
+.site-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+/* Separates the actions from the nav without drawing a hard rule. */
+.site-actions::before {
+  content: "";
+  width: 1px;
+  height: 20px;
+  background: var(--border);
+  margin-inline-end: 4px;
+}
+
+.theme-toggle {
+  appearance: none;
+  border: 0;
+  background: none;
+  color: var(--fg-muted);
+  width: 34px;
+  height: 34px;
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  transition: color 140ms var(--ease-out), background 140ms var(--ease-out);
+}
+
+.theme-toggle:hover {
+  color: var(--fg);
+  background: var(--bg-inset);
+}
+
+.theme-toggle svg {
+  width: 18px;
+  height: 18px;
+}
+
+/*
+ * The icon shows the DESTINATION, matching the button's label: a moon while
+ * the page is light ("Switch to dark theme"), a sun while it is dark. Driven
+ * entirely by CSS so the correct glyph is painted with the first frame,
+ * rather than after a script has run.
+ */
+.theme-toggle__sun {
+  display: none;
+}
+.theme-toggle__moon {
+  display: block;
+}
+
+:root[data-theme="dark"] .theme-toggle__sun {
+  display: block;
+}
+:root[data-theme="dark"] .theme-toggle__moon {
+  display: none;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme]) .theme-toggle__sun {
+    display: block;
+  }
+  :root:not([data-theme]) .theme-toggle__moon {
+    display: none;
+  }
+}
+
+.site-nav a {
+  display: inline-flex;
+  align-items: center;
+  padding: 8px 12px;
+  border-radius: var(--radius-sm);
+  font-size: 0.92rem;
+  font-weight: 550;
+  text-decoration: none;
+  color: var(--fg-muted);
+  transition: color 140ms var(--ease-out), background 140ms var(--ease-out);
+}
+
+.site-nav a:hover {
+  color: var(--fg);
+  background: var(--bg-inset);
+}
+
+.site-nav a[aria-current="page"],
+.site-nav a.active {
+  color: var(--fg);
+}
+
+/* GitHub link: always visible, icon-only under 640px where the label would
+   push the row past the viewport. */
+.site-nav-github {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 8px 10px;
+  border-radius: var(--radius-sm);
+  color: var(--fg-muted);
+  text-decoration: none;
+  transition: color 140ms var(--ease-out), background 140ms var(--ease-out);
+}
+.site-nav-github:hover {
+  color: var(--fg);
+  background: var(--bg-inset);
+}
+.site-nav-github svg {
+  width: 19px;
+  height: 19px;
+  flex: none;
+}
+.site-nav-github span {
+  display: none;
+  font-size: 0.92rem;
+  font-weight: 550;
+}
+@media (min-width: 640px) {
+  .site-nav-github span {
+    display: inline;
+  }
+}
+
+/* Tighten padding and gaps on narrow screens so the row cannot overflow
+   off-screen (body has overflow-x: hidden, so overflow here means
+   unreachable, not just cramped). */
+@media (max-width: 480px) {
+  .site-header__inner {
+    gap: 8px;
+  }
+  .site-nav {
+    gap: 0;
+  }
+  .site-nav a {
+    padding-inline: 7px;
+  }
+  .site-nav-github {
+    padding-inline: 6px;
+  }
+}
+
+/* Tightening alone was not enough: the wordmark costs about 90px, and the
+   docs header carries a search control the marketing header does not, so the
+   last nav link still landed past the viewport edge at every common phone
+   width. Drop to the logo mark and the whole row fits; the link keeps its
+   accessible name from aria-label. */
+/* Breakpoints here are measured, not guessed. The four links need about 314px
+   at full type and 258px tightened; the actions cluster is 86px on the
+   marketing header and 106px on the docs header, and the wordmark costs 98px.
+   Below 768px the row cannot seat the wordmark and all four links at once. */
+@media (max-width: 767px) {
+  .brand__word {
+    display: none;
+  }
+  .site-nav a {
+    font-size: 0.84rem;
+    padding-inline: 5px;
+  }
+  /* The docs header additionally carries a search control and Starlight's
+     menu button, so even tightened type does not fit. Those links move into
+     the menu that button opens (see starlight/MobileMenuFooter.astro). The
+     marketing header has no menu to move them to, so there they stay. */
+  .site-header--docs .site-nav {
+    display: none;
+  }
+}
+
+/* Safety valve. Longer labels, a larger default font size, or another header
+   control would put the row back over the edge, and overflow-x: hidden on
+   body would make those links unreachable rather than merely clipped. Let the
+   nav scroll instead, with the bar hidden so it never reads as a scrollbar
+   inside the header.
+
+   The mask is the honest part: below about 430px four links genuinely do not
+   fit next to the logo and the actions, so the row fades at its trailing edge
+   to read as scrollable rather than as text that got cut off. The mask only
+   paints while the content actually overflows its box. */
+.site-nav {
+  overflow-x: auto;
+  scrollbar-width: none;
+  overscroll-behavior-inline: contain;
+}
+.site-nav::-webkit-scrollbar {
+  display: none;
+}
+
+/* A plain static mask, not a scroll-timeline one. Safari is the primary
+   target here and does not support animation-timeline, so a scroll-linked
+   fade would degrade to no fade at all on the device that needs it most.
+   Scoped to the width band where the links genuinely cannot all fit. */
+@media (max-width: 519px) {
+  .site-header:not(.site-header--docs) .site-nav {
+    mask-image: linear-gradient(to right, #000 80%, transparent 100%);
+  }
+}
+
+/* The GitHub label is 64px and the docs header is the tighter of the two, so
+   it stays icon-only until the row has room for it alongside four links. */
+@media (max-width: 899px) {
+  .site-header--docs .site-nav-github span {
+    display: none;
+  }
+}
+
+/* ── Footer ──────────────────────────────────────────────────────────── */
+
+.site-footer {
+  border-top: 1px solid var(--border);
+  margin-top: clamp(64px, 10vw, 120px);
+  padding-block: 40px;
+}
+
+.site-footer__inner {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  color: var(--fg-muted);
+  font-size: 0.9rem;
+}
+
+.site-footer a {
+  text-decoration: none;
+  color: var(--fg-muted);
+}
+.site-footer a:hover {
+  color: var(--fg);
+}
+
+.footer-links {
+  display: flex;
+  gap: 20px;
+  flex-wrap: wrap;
+}
+
+/* ── Buttons ─────────────────────────────────────────────────────────── */
+
+.btn {
+  appearance: none;
+  border: 1px solid var(--border-strong);
+  background: var(--bg-elevated);
+  color: var(--fg);
+  border-radius: var(--radius-sm);
+  padding: 11px 18px;
+  font-size: 0.95rem;
+  font-weight: 600;
+  line-height: 1;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  text-decoration: none;
+  transition: transform 120ms var(--ease-out), border-color 120ms, background 120ms;
+}
+.btn:hover {
+  border-color: var(--fg-faint);
+}
+.btn:active {
+  transform: scale(0.97);
+}
+
+.btn-primary {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: var(--accent-fg);
+}
+.btn-primary:hover {
+  filter: brightness(1.06);
+  border-color: var(--accent);
+}
+
+.btn-ghost {
+  background: transparent;
+  border-color: transparent;
+}
+.btn-ghost:hover {
+  background: var(--bg-inset);
+  border-color: transparent;
+}
+
+.btn-lg {
+  padding: 14px 22px;
+  font-size: 1rem;
+  border-radius: var(--radius-md);
+}
+
+.btn-block {
+  width: 100%;
+  justify-content: center;
+}
+
+/* ── Badges ──────────────────────────────────────────────────────────── */
+
+.badge-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 7px 13px;
+  border-radius: var(--radius-pill);
+  border: 1px solid var(--border);
+  background: var(--bg-elevated);
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: var(--fg-muted);
+  letter-spacing: 0.01em;
+}
+
+.badge strong {
+  color: var(--fg);
+  font-weight: 700;
+}
+
+.badge-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--accent);
+  flex: none;
+}
+
+/* ── Install command ─────────────────────────────────────────────────── */
+
+/* Package-manager picker sitting on top of the install command. */
+.install {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  max-width: 100%;
+}
+
+.install-tabs {
+  display: flex;
+  gap: 2px;
+  padding: 3px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  align-self: flex-start;
+}
+
+.install-tabs button {
+  appearance: none;
+  border: 0;
+  background: none;
+  color: var(--fg-muted);
+  font: inherit;
+  font-family: var(--font-mono);
+  font-size: 0.8rem;
+  padding: 4px 10px;
+  border-radius: calc(var(--radius-sm) - 3px);
+  cursor: pointer;
+  transition: color 120ms var(--ease-out), background 120ms var(--ease-out);
+}
+
+.install-tabs button:hover {
+  color: var(--fg);
+}
+
+.install-tabs button[aria-selected="true"] {
+  color: var(--fg);
+  background: var(--bg-inset);
+}
+
+.install-box {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  background: var(--bg-code);
+  color: #e8e6f0;
+  border-radius: var(--radius-md);
+  padding: 14px 14px 14px 20px;
+  font-family: var(--font-mono);
+  font-size: 0.92rem;
+  max-width: 100%;
+  overflow-x: auto;
+}
+
+.install-box .prompt {
+  color: #7a768a;
+  user-select: none;
+  margin-right: 8px;
+}
+
+.install-box code {
+  color: #e8e6f0;
+  white-space: pre;
+}
+
+.copy-btn {
+  appearance: none;
+  border: 1px solid rgb(255 255 255 / 0.14);
+  background: rgb(255 255 255 / 0.06);
+  color: #cfccdb;
+  border-radius: var(--radius-sm);
+  width: 34px;
+  height: 34px;
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: background 120ms, color 120ms;
+}
+.copy-btn:hover {
+  background: rgb(255 255 255 / 0.12);
+  color: #fff;
+}
+.copy-btn svg {
+  width: 15px;
+  height: 15px;
+}
+.copy-btn[data-copied="true"] {
+  color: #7fe3a3;
+}
+
+/* Shared floating copy button, positioned over any wrapped code block
+   (example cards' Code/Styles tabs, docs prose fenced blocks). */
+.code-block {
+  position: relative;
+}
+.code-block > .copy-btn--floating {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  z-index: 1;
+  /* Long code lines scroll under the button; an opaque blurred chip keeps
+     that from reading as a collision. Code blocks are always dark. */
+  background: rgb(28 26 38 / 0.78);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+}
+
+/* ── Generic surface card ───────────────────────────────────────────── */
+
+.card {
+  background: var(--bg-elevated);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: clamp(20px, 3vw, 28px);
+}
+
+/* ── Section scaffolding ─────────────────────────────────────────────── */
+
+.section {
+  padding-block: clamp(56px, 9vw, 104px);
+}
+
+.section-head {
+  max-width: 640px;
+  margin-bottom: clamp(28px, 4vw, 44px);
+}
+
+.eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.8rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--accent);
+  margin-bottom: 12px;
+}
+
+.section-head h2 {
+  font-size: clamp(1.6rem, 3.2vw, 2.3rem);
+  margin-bottom: 10px;
+}
+
+.section-head p {
+  color: var(--fg-muted);
+  font-size: 1.05rem;
+}
+
+
+/* Mobile header: five nav links plus the GitHub icon exceed a 390px viewport
+   and were widening the whole page (document scrollWidth 485px at 390px), so
+   every section inherited a horizontal scroll. The nav scrolls inside its own
+   track instead. Nothing is hidden; the brand holds its position. */
+@media (max-width: 639px) {
+  .site-header__inner {
+    gap: 10px;
+  }
+  .brand {
+    flex: none;
+  }
+  .site-nav {
+    min-width: 0;
+    overflow-x: auto;
+    overscroll-behavior-x: contain;
+    scrollbar-width: none;
+    padding-right: 28px;
+    /* Fade the clipped edge so the nav reads as scrollable, not broken;
+       trailing padding lets the last link scroll clear of the fade. */
+    -webkit-mask-image: linear-gradient(to right, #000 calc(100% - 24px), transparent);
+    mask-image: linear-gradient(to right, #000 calc(100% - 24px), transparent);
+  }
+  .site-nav::-webkit-scrollbar {
+    display: none;
+  }
+  .site-nav a {
+    flex: none;
+    padding: 8px 9px;
+    font-size: 0.86rem;
+  }
+}

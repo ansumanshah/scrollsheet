@@ -1,0 +1,344 @@
+/* ─────────────────────────────────────────────────────────────────────────
+   Docs shell: sidebar + prose
+   ───────────────────────────────────────────────────────────────────────── */
+
+.docs-shell {
+  display: grid;
+  gap: 0;
+  padding-block: clamp(32px, 5vw, 48px) 80px;
+}
+
+/* Cap the reading column at prose width and center the column+toc pair;
+   an uncapped 1fr leaves a dead zone between 74ch prose and the toc. */
+@media (min-width: 980px) {
+  .docs-shell {
+    grid-template-columns: minmax(0, 760px) 200px;
+    gap: clamp(48px, 6vw, 88px);
+    justify-content: center;
+  }
+}
+
+/* ── Right-side "on this page" anchor list (desktop only) ─────────────── */
+
+.docs-toc {
+  display: none;
+}
+
+@media (min-width: 980px) {
+  .docs-toc {
+    display: block;
+    position: sticky;
+    top: 88px;
+    align-self: start;
+    max-height: calc(100vh - 110px);
+    overflow-y: auto;
+  }
+}
+
+.docs-toc .docs-sidebar-title {
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--fg-faint);
+  margin-bottom: 8px;
+  padding-inline: 10px;
+}
+
+.docs-toc a {
+  display: block;
+  padding: 7px 10px;
+  border-radius: var(--radius-sm);
+  font-size: 0.88rem;
+  color: var(--fg-muted);
+  text-decoration: none;
+  transition: background 120ms, color 120ms;
+}
+.docs-toc a:hover {
+  color: var(--fg);
+  background: var(--bg-inset);
+}
+
+/* ── Mobile jump list: horizontal-scrolling anchor pills ──────────────── */
+
+.docs-mobile-toc {
+  display: flex;
+  gap: 8px;
+  overflow-x: auto;
+  margin-bottom: 28px;
+  padding-bottom: 4px;
+  padding-right: 32px;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+  /* Right-edge fade signals there are more pills off-screen; the trailing
+     padding lets the last pill scroll clear of the fade. */
+  -webkit-mask-image: linear-gradient(to right, #000 calc(100% - 28px), transparent);
+  mask-image: linear-gradient(to right, #000 calc(100% - 28px), transparent);
+}
+.docs-mobile-toc::-webkit-scrollbar {
+  display: none;
+}
+@media (min-width: 980px) {
+  .docs-mobile-toc {
+    display: none;
+  }
+}
+.docs-mobile-toc a {
+  flex: none;
+  white-space: nowrap;
+  border: 1px solid var(--border-strong);
+  background: var(--bg-elevated);
+  color: var(--fg-muted);
+  border-radius: var(--radius-pill);
+  padding: 7px 14px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.docs-content {
+  min-width: 0;
+}
+
+.docs-header {
+  margin-bottom: 32px;
+  padding-bottom: 24px;
+  border-bottom: 1px solid var(--border);
+}
+
+.docs-header .eyebrow {
+  margin-bottom: 10px;
+}
+
+.docs-header h1 {
+  font-size: clamp(1.8rem, 3.4vw, 2.5rem);
+  margin-bottom: 10px;
+}
+
+.docs-header p {
+  color: var(--fg-muted);
+  font-size: 1.05rem;
+  max-width: 60ch;
+}
+
+/* ── Prose ───────────────────────────────────────────────────────────── */
+
+.prose {
+  max-width: 74ch;
+}
+
+.prose > * + * {
+  margin-top: 1.3em;
+}
+
+.prose h2 {
+  font-size: 1.5rem;
+  margin-top: 2.4em;
+  padding-top: 0.2em;
+  scroll-margin-top: 90px;
+}
+.prose h2:first-child {
+  margin-top: 0;
+}
+
+.prose h3 {
+  font-size: 1.15rem;
+  margin-top: 2em;
+  scroll-margin-top: 90px;
+}
+
+.prose p,
+.prose li {
+  color: var(--fg-muted);
+  line-height: 1.7;
+  font-size: 1rem;
+}
+
+.prose strong {
+  color: var(--fg);
+  font-weight: 650;
+}
+
+.prose ul,
+.prose ol {
+  padding-left: 1.4em;
+}
+.prose ul {
+  list-style: disc;
+}
+.prose ol {
+  list-style: decimal;
+}
+.prose li + li {
+  margin-top: 0.5em;
+}
+
+.prose a {
+  color: var(--accent);
+  text-decoration: underline;
+  text-decoration-color: color-mix(in oklab, var(--accent) 40%, transparent);
+  text-underline-offset: 3px;
+}
+.prose a:hover {
+  text-decoration-color: var(--accent);
+}
+
+.prose code {
+  background: var(--bg-inset);
+  border: 1px solid var(--border);
+  padding: 0.12em 0.42em;
+  border-radius: 6px;
+  font-size: 0.86em;
+}
+
+.prose pre {
+  border-radius: var(--radius-md);
+  padding: 18px 20px !important;
+  font-size: 0.86rem !important;
+  line-height: 1.65 !important;
+  overflow-x: auto;
+  border: 1px solid var(--border);
+}
+.prose pre code {
+  background: none;
+  border: none;
+  padding: 0;
+  font-size: inherit;
+}
+
+/* Copy button injected next to each fenced block (see Docs.astro); keeps
+   the first line of code clear of the floating button. */
+.prose .code-block pre {
+  padding-right: 54px !important;
+}
+
+.prose hr {
+  border: none;
+  border-top: 1px solid var(--border);
+  margin: 2.6em 0;
+}
+
+.prose blockquote {
+  margin: 0;
+  padding: 14px 18px;
+  background: var(--bg-inset);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  color: var(--fg-muted);
+  font-style: italic;
+}
+
+.prose table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.9rem;
+}
+.prose th,
+.prose td {
+  text-align: left;
+  padding: 10px 14px;
+  border-bottom: 1px solid var(--border);
+  vertical-align: top;
+}
+.prose thead th {
+  color: var(--fg-muted);
+  font-weight: 600;
+  font-size: 0.78rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+.prose .table-scroll {
+  border: 1px solid var(--border);
+  margin-top: 1.3em;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+/* Bare markdown tables can't shrink below their content min-width; below
+   the desktop shell they scroll in place instead of widening the page. */
+@media (max-width: 979px) {
+  .prose > table,
+  .prose :not(.table-scroll) > table {
+    display: block;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+}
+.prose .table-scroll table {
+  min-width: 560px;
+}
+.prose .table-scroll th,
+.prose .table-scroll td {
+  border-bottom: 1px solid var(--border);
+}
+
+/* ── Callouts ────────────────────────────────────────────────────────── */
+
+/* The uppercase accent title carries the callout's identity; the border
+   stays quiet and only tints toward danger on warnings. */
+.callout {
+  border: 1px solid color-mix(in oklab, var(--accent) 22%, var(--border));
+  background: var(--bg-inset);
+  border-radius: var(--radius-md);
+  padding: 16px 18px;
+  font-size: 0.94rem;
+}
+.callout p {
+  margin: 0;
+  color: var(--fg);
+}
+.callout p + p {
+  margin-top: 0.6em;
+}
+.callout-title {
+  font-weight: 700;
+  font-size: 0.8rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--accent);
+  margin-bottom: 6px;
+  display: block;
+}
+.callout-warn {
+  border-color: color-mix(in oklab, var(--danger) 30%, var(--border));
+}
+.callout-warn .callout-title {
+  color: var(--danger);
+}
+
+/* ── API reference tables ───────────────────────────────────────────── */
+
+.api-block {
+  margin-top: 1.3em;
+}
+.api-block h3 {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  font-family: var(--font-mono);
+  font-size: 1.05rem;
+}
+.api-kind {
+  font-family: var(--font-sans);
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--fg-faint);
+  background: var(--bg-inset);
+  border: 1px solid var(--border);
+  padding: 2px 8px;
+  border-radius: var(--radius-pill);
+}
+
+.prop-table code {
+  white-space: normal;
+  overflow-wrap: break-word;
+}
+.prop-table .prop-name {
+  color: var(--fg);
+  font-weight: 650;
+}
+.prop-table .prop-default {
+  color: var(--fg-faint);
+}

@@ -1,0 +1,16 @@
+---
+interface Props {
+  size?: number;
+}
+const { size = 26 } = Astro.props;
+const uid = Math.random().toString(36).slice(2, 8);
+---
+<svg width={size} height={size} viewBox="0 0 96 96" aria-hidden="true">
+  <clipPath id={`tile-${uid}`}><rect width="96" height="96" rx="22" /></clipPath>
+  <rect width="96" height="96" rx="22" fill="#534AB7"></rect>
+  <g clip-path={`url(#tile-${uid})`}>
+    <rect x="10" y="34" width="76" height="70" rx="12" fill="#FFFFFF" opacity="0.3"></rect>
+    <rect x="5" y="52" width="86" height="60" rx="12" fill="#FFFFFF" opacity="0.55"></rect>
+    <rect x="0" y="70" width="96" height="40" rx="12" fill="#FFFFFF"></rect>
+  </g>
+</svg>

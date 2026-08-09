@@ -1,0 +1,23 @@
+{
+  "name": "react-native-scrollsheet",
+  "version": "0.0.0",
+  "description": "Reserved for the React Native build of scrollsheet. Not implemented yet — use the web package `scrollsheet` today.",
+  "license": "MIT",
+  "author": "Ansuman Shah <ansumanshah@gmail.com>",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/ansumanshah/scrollsheet.git",
+    "directory": "packages/react-native-scrollsheet"
+  },
+  "homepage": "https://scrollsheet.dev",
+  "bugs": "https://github.com/ansumanshah/scrollsheet/issues",
+  "keywords": [
+    "react-native",
+    "bottom-sheet",
+    "scrollsheet"
+  ],
+  "type": "module",
+  "files": [
+    "README.md"
+  ]
+}

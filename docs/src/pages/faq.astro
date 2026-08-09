@@ -1,0 +1,164 @@
+---
+import Base from "../layouts/Base.astro";
+import { BUNDLE_SIZES } from "../lib/bundle-sizes.generated";
+
+const indexGzip = BUNDLE_SIZES.index.gzipKb.toFixed(2);
+const indexBrotli = BUNDLE_SIZES.index.brotliKb.toFixed(2);
+
+interface FaqItem {
+  id: string;
+  question: string;
+  answerHtml: string;
+  answerText: string;
+}
+
+// Every answer here is checked against the repo (README, package.json,
+// src/, scripts/check-size.ts output) before it's written down. See
+// .claude/memory.md for the verification pass. Keep it that way: don't
+// add a claim here you haven't confirmed against source.
+const faqs: FaqItem[] = [
+  {
+    id: "why-not-vaul",
+    question: "Why use this instead of vaul?",
+    answerHtml: `vaul carried the React drawer ecosystem for two years: 37 million downloads a week, last released in December 2024. scrollsheet drags via the browser's own scroll engine instead of simulating the gesture with pointer events, and renders a real native <code>&lt;dialog&gt;</code> instead of a portal, at ${indexGzip} kB gzipped against vaul's Radix Dialog dependency tree. Full breakdown in the <a href="/#compare-heading">comparison table</a>.`,
+    answerText: `vaul carried the React drawer ecosystem for two years: 37 million downloads a week, last released in December 2024. scrollsheet drags via the browser's own scroll engine instead of simulating the gesture with pointer events, and renders a real native dialog instead of a portal, at ${indexGzip} kB gzipped against vaul's Radix Dialog dependency tree.`,
+  },
+  {
+    id: "how-big",
+    question: "How big is it, really?",
+    answerHtml: `${indexGzip} kB gzipped, ${indexBrotli} kB brotli, the bundled and minified size with React external, from <code>bun run size</code> against the current build. Zero runtime dependencies: <code>react</code> and <code>react-dom</code> are peer dependencies only, both <code>&gt;=18</code>. See <a href="/docs/getting-started/install">Install</a>.`,
+    answerText: `${indexGzip} kB gzipped, ${indexBrotli} kB brotli, the bundled and minified size with React external. Zero runtime dependencies: react and react-dom are peer dependencies only, both 18 or newer.`,
+  },
+  {
+    id: "app-router-rsc",
+    question: "Does it work with Next.js App Router and React Server Components?",
+    answerHtml: `Yes. Every module that touches state or the DOM opens with <code>"use client"</code>, including <code>Sheet.Root</code>, <code>Content</code>, <code>Handle</code>, <code>Trigger</code>, and both compat layers (vaul, sonner). Render <code>&lt;Sheet.Root&gt;</code> from a Server Component like any other client component; React draws the boundary for you.`,
+    answerText:
+      "Yes. Every module that touches state or the DOM opens with a use client directive, including Root, Content, Handle, Trigger, and both compat layers. Render Sheet.Root from a Server Component like any other client component.",
+  },
+  {
+    id: "tailwind",
+    question: "Does it work with Tailwind?",
+    answerHtml: `Yes, Tailwind v4 out of the box: no plugin, no config. Utilities on <code>className</code> apply directly because the mechanics stylesheet only wins where it must (position, transform) and sits in zero-specificity <code>:where()</code> rules everywhere else. See <a href="/docs/styling/tailwind">Tailwind</a>.`,
+    answerText:
+      "Yes, Tailwind v4 out of the box: no plugin, no config. Utilities on className apply directly because the mechanics stylesheet only wins where it must, position and transform, and sits in zero-specificity where rules everywhere else.",
+  },
+  {
+    id: "accessibility",
+    question: "How accessible is it?",
+    answerHtml: `Modal focus containment comes from the platform's own <code>showModal()</code>, not a JS focus trap. With two or more detents, <code>Sheet.Handle</code> exposes <code>role="slider"</code> with <code>aria-valuemin</code>/<code>-valuemax</code>/<code>-valuenow</code>/<code>-valuetext</code>; Up/Down (or Left/Right on side sheets) move between stops, Home and End jump to the ends. See <a href="/docs/reference/api">API</a>.`,
+    answerText:
+      "Modal focus containment comes from the platform's own showModal, not a JS focus trap. With two or more detents, Sheet.Handle exposes role slider with aria-valuemin, valuemax, valuenow and valuetext; arrow keys move between stops, Home and End jump to the ends.",
+  },
+  {
+    id: "browser-support",
+    question: "Which browsers does it support?",
+    answerHtml: `Spring easing works from Chrome 113, Safari 17.2, and Firefox 112. The compositor-driven backdrop fade needs Chrome/Edge 115+ or Safari 26+; Firefox has it implemented but still behind a flag. Below Safari 15.4 there's no <code>&lt;dialog&gt;</code> at all, so the sheet falls back to a plain fixed-position modal: backdrop, tap-to-close, Escape, no detents or drag. Full matrix in <a href="/docs/browser-support">Browser support</a>.`,
+    answerText:
+      "Spring easing works from Chrome 113, Safari 17.2, and Firefox 112. The compositor-driven backdrop fade needs Chrome or Edge 115 or newer, or Safari 26 or newer; Firefox has it implemented but still behind a flag. Below Safari 15.4 there's no dialog element at all, so the sheet falls back to a plain fixed-position modal with a backdrop, tap-to-close, and Escape, but no detents or drag.",
+  },
+  {
+    id: "migrate-from-vaul",
+    question: "Can I migrate from vaul without rewriting?",
+    answerHtml: `Mostly. <code>import { Drawer } from 'scrollsheet'</code> maps the same <code>Drawer.*</code> namespace onto <code>Sheet.*</code>: <code>snapPoints</code>, <code>direction</code>, <code>modal={false}</code>, <code>shouldScaleBackground</code>, and more all map to real features. Props that only existed to fight the page, like scroll-lock or portal containers, warn once in dev; Radix <code>Dialog.Content</code>-only props like <code>onPointerDownOutside</code> have no equivalent and are stripped. Full mapping in <a href="/docs/migrating/from-vaul">Migrate from vaul</a>.`,
+    answerText:
+      "Mostly. Importing Drawer from scrollsheet maps the same Drawer namespace onto Sheet, and props like snapPoints, direction, modal false, and shouldScaleBackground map to real features. Props that only existed to fight the page, like scroll-lock or portal containers, warn once in dev; Radix Dialog.Content only props such as onPointerDownOutside have no equivalent and are stripped.",
+  },
+  {
+    id: "migrate-from-sonner",
+    question: "Can I migrate from Sonner without rewriting?",
+    answerHtml: `Mostly. <code>import { toast, Toaster } from 'scrollsheet'</code> is a drop-in for the same <code>toast</code> and <code>Toaster</code>, including <code>.success()</code>/<code>.error()</code>/<code>.custom()</code>/<code>.promise()</code> and <code>toasterId</code>-scoped toasters, running on the same per-toast DOM and positioning real Sonner uses. Your existing <code>useSonner()</code> calls and <code>.sonner-toast</code> CSS keep working unchanged; new code can call the same hook as <code>useToasts()</code> instead. v1 gaps: <code>theme</code> and <code>richColors</code> aren't implemented yet. Full mapping in <a href="/docs/migrating/from-sonner">Migrate from Sonner</a>.`,
+    answerText:
+      "Mostly. Importing toast and Toaster from scrollsheet is a drop-in for the same toast and Toaster, including success, error, custom, promise, and toasterId-scoped toasters, running on the same per-toast DOM and positioning real Sonner uses. Existing useSonner calls and .sonner-toast CSS keep working unchanged; new code can call the same hook as useToasts instead. v1 gaps: theme and richColors aren't implemented yet.",
+  },
+  {
+    id: "snap-points",
+    question: "Does it support snap points?",
+    answerHtml: `They're called detents, Apple's term. Accepted forms: <code>'full'</code>, <code>'medium'</code>, <code>'content'</code> (natural height), a fraction in <code>(0, 1]</code>, or a pixel string like <code>'320px'</code>. See <a href="/docs/detents-and-control/detents">Detents</a>.`,
+    answerText:
+      "They're called detents. Accepted forms are full, medium, content for natural height, a fraction between 0 and 1, or a pixel string like 320px.",
+  },
+  {
+    id: "ios-keyboard",
+    question: "Does it handle the iOS keyboard?",
+    answerHtml: `Yes, automatically. iOS resizes <code>visualViewport</code>, not the layout viewport, when the keyboard opens; scrollsheet listens and writes the inset to <code>--scrollsheet-keyboard</code>, and the panel overdraws about 120vh past its bottom edge so a stale frame never shows a gap. See <a href="/docs/scrolling-and-keyboard/keyboard">Keyboard</a>.`,
+    answerText:
+      "Yes, automatically. iOS resizes visualViewport, not the layout viewport, when the keyboard opens; scrollsheet listens and writes the inset to a CSS variable, and the panel overdraws past its bottom edge so a stale frame never shows a gap.",
+  },
+  {
+    id: "shadow-dom",
+    question: "Does it work inside a Shadow DOM?",
+    answerHtml: `Rendering works, since the native dialog's top layer is document-level rather than shadow-scoped. The one thing you handle yourself: the auto-injected mechanics styles land in <code>document.head</code>, which a shadow root doesn't see, so call <code>injectStylesInto(shadowRoot)</code> before any <code>Sheet.Content</code> inside it opens. See <a href="/docs/advanced/shadow-dom">Shadow DOM</a>.`,
+    answerText:
+      "Rendering works, since the native dialog's top layer is document-level rather than shadow-scoped. The auto-injected mechanics styles land in document.head, which a shadow root doesn't see, so call injectStylesInto(shadowRoot) before any Sheet.Content inside it opens.",
+  },
+  {
+    id: "maintained",
+    question: "Is it maintained, and by whom?",
+    answerHtml: `Yes. scrollsheet is built by Ansuman Shah under the NoodleApps studio name, MIT-licensed, currently at v1.0.0-beta.1. Source and issues at <a href="https://github.com/ansumanshah/scrollsheet" target="_blank" rel="noreferrer">github.com/ansumanshah/scrollsheet</a>.`,
+    answerText:
+      "Yes. scrollsheet is built by Ansuman Shah under the NoodleApps studio name, MIT licensed, currently at version 1.0.0-beta.1.",
+  },
+];
+
+const jsonLd = {
+  "@context": "https://schema.org",
+  "@type": "FAQPage",
+  mainEntity: faqs.map((item) => ({
+    "@type": "Question",
+    name: item.question,
+    acceptedAnswer: {
+      "@type": "Answer",
+      text: item.answerText,
+    },
+  })),
+};
+---
+
+<Base
+  title="FAQ"
+  description="Answers on scrollsheet's real bundle size, browser support, Tailwind, Next.js App Router, accessibility, and migrating from vaul."
+>
+  <Fragment slot="head">
+    <script type="application/ld+json" set:html={JSON.stringify(jsonLd)} />
+  </Fragment>
+
+  <div class="container docs-shell">
+    <div class="docs-content">
+      <nav class="docs-mobile-toc" aria-label="Jump to question">
+        {faqs.map((item) => <a href={`#${item.id}`}>{item.question}</a>)}
+      </nav>
+
+      <div class="docs-header">
+        <p class="eyebrow">FAQ</p>
+        <h1>Frequently asked questions</h1>
+        <p>Short answers, checked against the source. Longer detail lives in the docs links below.</p>
+      </div>
+
+      <div class="prose faq-list">
+        {
+          faqs.map((item) => (
+            <section id={item.id} class="faq-item">
+              <h2>{item.question}</h2>
+              <p set:html={item.answerHtml} />
+            </section>
+          ))
+        }
+      </div>
+    </div>
+
+    <aside class="docs-toc" aria-label="On this page">
+      <p class="docs-sidebar-title">Questions</p>
+      {faqs.map((item) => <a href={`#${item.id}`}>{item.question}</a>)}
+    </aside>
+  </div>
+</Base>
+
+<style>
+  .faq-item h2 {
+    font-size: 1.15rem;
+  }
+  .faq-item h2:first-child {
+    margin-top: 0;
+  }
+</style>

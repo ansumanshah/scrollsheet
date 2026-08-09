@@ -1,0 +1,430 @@
+---
+// Minimal standalone page loaded inside the hero's phone-frame <iframe>.
+// No site nav, no footer, no Base layout. An iframe is a real viewport,
+// which is the only way to show a live, draggable, position:fixed sheet
+// constrained to a phone-sized box (a plain div cannot contain it).
+import "../../styles/tokens.css";
+import "../../styles/base.css";
+import HeroShowcase from "../../components/HeroShowcase";
+
+const title = "scrollsheet demo";
+---
+
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <meta name="robots" content="noindex, nofollow" />
+    <title>{title}</title>
+    <!--
+      Same storage key and same pre-paint timing as Base.astro. This page is
+      standalone (no Base layout), so without it the phone screen would keep
+      following the OS while the surrounding site follows the toggle. The
+      parent stamps later changes directly, since it is same-origin.
+    -->
+    <script is:inline>
+      try {
+        var t = localStorage.getItem("theme");
+        if (t === "light" || t === "dark") document.documentElement.dataset.theme = t;
+      } catch (e) {
+        /* Private mode; fall through to prefers-color-scheme. */
+      }
+    </script>
+    <style is:global>
+      /*
+       * is:global: Sheet.Content renders into the dialog's own top-layer
+       * box, not as a DOM child of .embed-page, so Astro's per-file scoped
+       * selectors (which only tag elements literally written below) would
+       * never match it. Kept self-contained here rather than importing the
+       * site's examples/examples.css, which carries styling for all 17
+       * other example patterns this page has no use for.
+       */
+      /*
+       * The frame's island pill is drawn by the parent page over the top of
+       * this iframe, and env(safe-area-inset-top) is 0 in a desktop iframe,
+       * so nothing here would know to avoid it. Declaring the library's own
+       * safe-area variable is the handler: every top, left and right panel
+       * already pads itself by it, exactly as it would on real hardware.
+       * The bottom sheet is untouched by design, and instead stops at a
+       * detent below the pill (see MAX_DETENT in HeroShowcase).
+       */
+      :root {
+        --scrollsheet-safe-area-top: 44px;
+      }
+      body {
+        min-height: 100dvh;
+        background: var(--bg-inset);
+      }
+      .embed-page {
+        min-height: 100dvh;
+        display: flex;
+        align-items: flex-end;
+        justify-content: center;
+      }
+      /*
+       * A plausible app screen behind the sheet. The point of the frame is
+       * to show a sheet sitting over something, so a labelled grey void
+       * undersells it: with real rows behind it, the panel reads as a sheet
+       * rather than as a card floating on nothing.
+       */
+      .hs-app {
+        position: fixed;
+        inset: 0;
+        /* Top padding clears the frame's island pill (home.css draws it over
+           the top of this screen), the way a real status bar would. */
+        padding: 56px 14px 0;
+        overflow-y: auto;
+      }
+      .hs-app-bar {
+        display: flex;
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 2px;
+        margin: 0 4px 12px;
+      }
+      .hs-app-bar h1 {
+        font-size: 1.35rem;
+        letter-spacing: -0.02em;
+        margin: 0;
+      }
+      .hs-app-bar span {
+        font-size: 0.78rem;
+        color: var(--fg-faint);
+      }
+      /* Each row opens one surface, so they are real buttons, not decoration. */
+      .hs-row {
+        appearance: none;
+        border: 0;
+        background: none;
+        width: 100%;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        padding: 10px 4px;
+        border-bottom: 1px solid var(--border);
+        color: inherit;
+        font: inherit;
+        text-align: left;
+        cursor: pointer;
+        border-radius: 10px;
+      }
+      .hs-row:hover {
+        background: var(--bg-inset);
+      }
+      .hs-thumb {
+        flex: none;
+        width: 36px;
+        height: 36px;
+        border-radius: 10px;
+        opacity: 0.9;
+      }
+      .hs-thumb--sheet {
+        background: linear-gradient(135deg, var(--accent), #a78bfa);
+      }
+      .hs-thumb--drawer {
+        background: linear-gradient(135deg, #f0a868, #e4735c);
+      }
+      .hs-thumb--dialog {
+        background: linear-gradient(135deg, #4fa89b, #2f6f6a);
+      }
+      .hs-thumb--nested {
+        background: linear-gradient(135deg, #6c8ff0, #3f5bd0);
+      }
+      .hs-thumb--toast {
+        background: linear-gradient(135deg, #d9a441, #b3762a);
+      }
+      .hs-row-text {
+        display: flex;
+        flex-direction: column;
+        gap: 2px;
+        min-width: 0;
+      }
+      .hs-row-label {
+        font-size: 0.92rem;
+        font-weight: 550;
+      }
+      .hs-row-hint {
+        font-size: 0.76rem;
+        color: var(--fg-faint);
+      }
+      .hs-close {
+        position: absolute;
+        top: 12px;
+        right: 12px;
+        width: 28px;
+        height: 28px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        border: 0;
+        border-radius: 999px;
+        background: var(--bg-inset);
+        color: var(--fg-muted);
+        cursor: pointer;
+      }
+      .hs-close svg {
+        width: 15px;
+        height: 15px;
+      }
+      .hs-actions {
+        display: flex;
+        gap: 8px;
+        margin-top: 18px;
+      }
+      .hs-btn {
+        flex: 1;
+        appearance: none;
+        border: 1px solid var(--border);
+        background: var(--bg-inset);
+        color: var(--fg);
+        font: inherit;
+        font-size: 0.88rem;
+        padding: 9px 12px;
+        border-radius: 10px;
+        cursor: pointer;
+      }
+      .hs-btn--danger {
+        background: var(--danger);
+        border-color: var(--danger);
+        color: #fff;
+      }
+      .demo-panel.demo-panel--side {
+        border-radius: 0;
+      }
+      /*
+       * Header row for the side sheet: close leads, title follows, in
+       * normal flow. That in-flow placement is what makes it side-agnostic
+       * for free — a left/top/right panel all render this at their own
+       * logical start with zero position math, unlike an absolutely
+       * positioned corner button would need.
+       */
+      .hs-drawer-header {
+        display: flex;
+        align-items: center;
+        gap: 2px;
+        padding: 4px 22px 0;
+      }
+      .hs-drawer-title {
+        margin: 0;
+        font-size: 1.15rem;
+      }
+      .hs-drawer-close {
+        flex: none;
+        /* 44px hit target without shoving the header's visual rhythm over:
+           the button box grows via negative margin, the icon inside it
+           stays put. */
+        width: 44px;
+        height: 44px;
+        margin: -10px 0 -10px -12px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        border: 0;
+        border-radius: 999px;
+        background: none;
+        color: var(--fg-muted);
+        cursor: pointer;
+      }
+      .hs-drawer-close:hover {
+        background: var(--bg-inset);
+      }
+      .hs-drawer-close svg {
+        width: 18px;
+        height: 18px;
+      }
+      /*
+       * A dialog should read as a card sitting in the middle of the screen,
+       * not as a sheet welded to the bottom edge. The inset custom
+       * properties are the library's own recipe for that: they pull the
+       * panel in from all four sides, so it floats with a margin.
+       */
+      .demo-panel.demo-panel--dialog {
+        border-radius: 16px;
+        --scrollsheet-inset-x: 18px;
+        --scrollsheet-inset-bottom: 150px;
+        /* No Sheet.Handle in this one, so .demo-panel's 8px handle
+           allowance is dead air above a card with nothing to balance it
+           against. demo-panel-body's own top padding takes over below. */
+        padding-top: 0;
+      }
+      .demo-panel--dialog .demo-panel-body {
+        padding-top: 24px;
+      }
+      .hs-menu {
+        list-style: none;
+        margin: 6px 0 0;
+        padding: 0;
+        display: flex;
+        flex-direction: column;
+      }
+      .hs-menu li {
+        padding: 11px 2px;
+        font-size: 0.9rem;
+        border-bottom: 1px solid var(--border);
+      }
+      .hs-menu li:last-child {
+        border-bottom: 0;
+      }
+      .hs-note {
+        margin-top: 14px !important;
+        font-size: 0.76rem !important;
+        color: var(--fg-faint) !important;
+      }
+      /*
+       * Real "Share" sheet content (not filler): a target row plus a link
+       * row give the nested demo's parent enough natural height that the
+       * scaled/dimmed recede under its child is actually visible above and
+       * beside it, instead of the child covering it edge to edge.
+       */
+      .hs-share-targets {
+        display: flex;
+        gap: 10px;
+        margin: 18px 0 0;
+        overflow-x: auto;
+      }
+      .hs-share-target {
+        appearance: none;
+        border: 0;
+        background: none;
+        flex: none;
+        width: 64px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 6px;
+        padding: 4px 0;
+        color: inherit;
+        font: inherit;
+        cursor: pointer;
+      }
+      .hs-share-icon {
+        width: 52px;
+        height: 52px;
+        border-radius: 999px;
+        background: var(--bg-inset);
+        color: var(--fg-muted);
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+      }
+      .hs-share-icon svg {
+        width: 22px;
+        height: 22px;
+      }
+      .hs-share-target-label {
+        font-size: 0.72rem;
+        color: var(--fg-muted);
+        text-align: center;
+      }
+      .hs-link-row {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        margin-top: 16px;
+        padding: 10px 12px;
+        border-radius: 12px;
+        background: var(--bg-inset);
+      }
+      .hs-link-row svg {
+        flex: none;
+        width: 16px;
+        height: 16px;
+        color: var(--fg-muted);
+      }
+      .hs-link-url {
+        flex: 1;
+        min-width: 0;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+        font-size: 0.85rem;
+      }
+      .hs-link-copy {
+        flex: none;
+        appearance: none;
+        border: 0;
+        background: var(--bg-elevated);
+        color: var(--accent);
+        font: inherit;
+        font-size: 0.8rem;
+        font-weight: 600;
+        padding: 6px 12px;
+        border-radius: 8px;
+        cursor: pointer;
+      }
+      .hs-link-row + .hs-btn {
+        margin-top: 18px;
+      }
+
+      .demo-panel {
+        background: var(--bg-elevated);
+        border-radius: 20px 20px 0 0;
+        box-shadow: var(--shadow-lg);
+        color: var(--fg);
+        /*
+         * The tallest detent stops below the frame's island pill (see the
+         * detents prop), so this only needs normal breathing room. The
+         * handle is lightened because at the tallest detent it sits close to
+         * the island and the two otherwise read as one dark smudge.
+         */
+        padding-top: 8px;
+        --scrollsheet-handle: rgb(0 0 0 / 0.13);
+        --scrollsheet-handle-hover: rgb(0 0 0 / 0.22);
+      }
+      @media (prefers-color-scheme: dark) {
+        .demo-panel {
+          --scrollsheet-handle: rgb(255 255 255 / 0.2);
+          --scrollsheet-handle-hover: rgb(255 255 255 / 0.32);
+        }
+      }
+      :root[data-theme="dark"] .demo-panel {
+        --scrollsheet-handle: rgb(255 255 255 / 0.2);
+        --scrollsheet-handle-hover: rgb(255 255 255 / 0.32);
+      }
+      :root[data-theme="light"] .demo-panel {
+        --scrollsheet-handle: rgb(0 0 0 / 0.13);
+        --scrollsheet-handle-hover: rgb(0 0 0 / 0.22);
+      }
+      .demo-panel-body {
+        padding: 4px 22px 28px;
+      }
+      .demo-panel-body h2 {
+        font-size: 1.15rem;
+        margin: 6px 0 8px;
+      }
+      .demo-panel-body p {
+        color: var(--fg-muted);
+        line-height: 1.5;
+        margin-bottom: 16px;
+        font-size: 0.94rem;
+      }
+      .demo-panel-list {
+        list-style: none;
+        margin: 4px 0 0;
+        padding: 0;
+        display: flex;
+        flex-direction: column;
+        gap: 11px;
+      }
+      .demo-panel-list li {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        font-size: 0.9rem;
+        color: var(--fg);
+      }
+      .demo-panel-list svg {
+        flex: none;
+        width: 16px;
+        height: 16px;
+        color: var(--accent);
+      }
+    </style>
+  </head>
+  <body>
+    <div class="embed-page">
+      <HeroShowcase client:load autoOpen />
+    </div>
+  </body>
+</html>

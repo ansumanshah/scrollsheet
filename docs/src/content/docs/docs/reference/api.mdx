@@ -1,0 +1,156 @@
+---
+title: API
+description: Full prop reference for Sheet.Root, the styling hooks on Sheet.Content, and every other named export.
+---
+
+import DocExample from '../../../../components/DocExample.astro';
+
+<DocExample
+  name="ride-tracker"
+  caption="Tap a stop button or drag the handle. This one example touches most of the props below."
+/>
+
+## Sheet.Root
+
+### Open state
+
+<div className="table-scroll prop-table">
+
+| Prop | Type | Default |
+| --- | --- | --- |
+| `open` | `boolean` | controlled |
+| `defaultOpen` | `boolean` | `false` |
+| `onOpenChange` | `(open: boolean) => void` | |
+| `onOpenChangeComplete` | `(open: boolean) => void` | fires when the transition visually finishes |
+| `actionsRef` | `React.Ref<SheetActions>` | `open()` / `close()` / `snapTo(detent)` |
+
+</div>
+
+### Detents
+
+<div className="table-scroll prop-table">
+
+| Prop | Type | Default |
+| --- | --- | --- |
+| `detents` | `readonly DetentSpec[]` | `['content']` |
+| `activeDetent` | `DetentSpec` | controlled |
+| `onActiveDetentChange` | `(detent: DetentSpec) => void` | |
+| `sequentialDetents` | `boolean` | `false` |
+
+</div>
+
+### Dismissal
+
+<div className="table-scroll prop-table">
+
+| Prop | Type | Default |
+| --- | --- | --- |
+| `dismissible` | `boolean` | `true` |
+| `escapeDismissible` | `boolean` | `dismissible` |
+| `backdropDismissible` | `boolean` | `dismissible` |
+| `closeThreshold` | `number` (0-1) | `0.5` |
+
+</div>
+
+### Presentation
+
+<div className="table-scroll prop-table">
+
+| Prop | Type | Default |
+| --- | --- | --- |
+| `side` | `'bottom' \| 'top' \| 'left' \| 'right'` | `'bottom'` |
+| `modal` | `boolean` | `true` |
+| `backgroundEffect` | `'scale' \| 'parallax' \| 'none'` | `'scale'` for a full-height mobile bottom sheet opened from inside the marked wrapper, else off |
+| `backgroundRef` | `React.RefObject<HTMLElement \| null>` | targets `backgroundEffect` directly, skipping the `data-scrollsheet-background` query |
+| `scrollbar` | `'overlay' \| 'hidden' \| 'native'` | `'overlay'` |
+| `largestUndimmedDetent` | `DetentSpec` | dims across the full range |
+| `handleOnly` | `boolean` | `false` |
+| `disableDrag` | `boolean` | `false` |
+
+</div>
+
+### Interaction and other
+
+<div className="table-scroll prop-table">
+
+| Prop | Type | Default |
+| --- | --- | --- |
+| `onTravel` | `(revealedPx: number, progress: number, info: TravelInfo) => void` | |
+| `onRelease` | `(event: PointerEvent, willRemainOpen: boolean) => void` | |
+| `keyboardExpands` | `boolean` | `false` |
+| `nonce` | `string` | |
+| `themeColorDimming` | `boolean` | `false` |
+
+</div>
+
+## Sheet.Content styling hooks
+
+### Data attributes
+
+<div className="table-scroll prop-table">
+
+| Attribute | Where | Values |
+| --- | --- | --- |
+| `data-scrollsheet-state` | `<dialog>` | `pre` \| `opening` \| `open` \| `closing` |
+| `data-scrollsheet-side` | `<dialog>` | `bottom` \| `top` \| `left` \| `right` |
+| `data-scrollsheet-modal` | `<dialog>` | `"false"` when `modal={false}`, absent otherwise |
+| `data-scrollsheet-scrollbar` | `<dialog>` | `overlay` \| `hidden` \| `native` |
+| `data-scrollsheet-at-max` | `<dialog>` | present at tallest detent |
+| `data-scrollsheet-behind` | `<dialog>` | present while a child sheet is open |
+| `data-scrollsheet-dragging` | `<dialog>` | present during a desktop drag |
+| `data-scrollsheet-handle-only` | `<dialog>` | present when `handleOnly` |
+| `data-scrollsheet-disable-drag` | `<dialog>` | present when `disableDrag` |
+| `data-scrollsheet-detached` | `<dialog>` | present once `--scrollsheet-inset-bottom` is set (the inset-card recipe) |
+| `data-scrollsheet-sda` | `<dialog>` | present once CSS scroll-driven animations own the backdrop dim + `--scrollsheet-progress`, see [Browser support](/docs/browser-support) |
+| `data-scrollsheet-fill` | panel and body | present when `fill` |
+| `data-scrollsheet-no-drag` | anywhere | opts an element out of desktop drag |
+| `data-scrollsheet-backdrop` | backdrop element | present on the built-in backdrop, for restyling it |
+| `.scrollsheet-top-chrome` | status-bar strip | rendered with `themeColorDimming`: a slice of backdrop pinned to the top edge, already at its target dim when the dialog opens. iOS Safari colors the status-bar area by sampling the page once at open and never again, so this strip is what keeps that area in sync with the dim. Restyle or `display: none` it from your own CSS; it inherits `--scrollsheet-backdrop` |
+| `data-scrollsheet-scrollbar` | injected thumb | marks the library-created `.scrollsheet-scrollbar` div on a nested scroller |
+
+</div>
+
+### CSS custom properties
+
+<div className="table-scroll prop-table">
+
+| Property | Where | Values |
+| --- | --- | --- |
+| `--scrollsheet-progress` | backdrop element | `0`–`1`, same value as `onTravel`. Set on the backdrop, not the dialog, so read it there (siblings don't inherit) |
+| `--scrollsheet-stack-progress` | parent panel | `0`–`1`, set while a child sheet is open. Read it in your own CSS to replace the built-in scale + dim recede with something else |
+| `--scrollsheet-max-detent` | `<dialog>` | tallest resolved detent, px |
+| `--scrollsheet-keyboard` | `<dialog>` | on-screen-keyboard inset, px |
+| `--scrollsheet-backdrop` | panel (set by you) | any CSS color |
+| `--scrollsheet-handle` / `-handle-hover` | panel (set by you) | handle pill color, resting / hover |
+| `--scrollsheet-safe-area` | panel (set by you) | usually `env(safe-area-inset-bottom)` |
+| `--scrollsheet-radius` | panel (set by you) | corner radius, default `16px` |
+| `--scrollsheet-bg` | panel (set by you) | panel background color |
+| `--scrollsheet-shadow` | panel (set by you) | panel `box-shadow` |
+| `--scrollsheet-inset-x` / `-top` / `-bottom` / `-left` / `-right` / `-y` | panel (set by you) | px offsets for the "inset card" recipe (`-x`/`-y` are the cross-axis inset for bottom/top and left/right sheets) |
+| `--scrollsheet-scrollbar-width` / `-color` | panel (set by you) | overlay scrollbar thumb, default `4px`; also styles nested-scroller thumbs |
+| `--scrollsheet-focus-ring` / `-width` | handle (set by you) | keyboard focus ring on `Sheet.Handle` |
+
+</div>
+
+## Other exports
+
+<div className="table-scroll prop-table">
+
+| Export | Extends / type |
+| --- | --- |
+| `Sheet.Content` | `<div>`, the `<dialog>`, backdrop, scroll track, and panel together. `aria-label` sets the accessible name when there's no `Sheet.Title`. `fill` stretches the body to the panel for full-height inner-scroll layouts (see [Full-height content](/docs/scrolling-and-keyboard/keyboard#full-height-content)) |
+| `Sheet.Trigger` | `<button>`, opens on click. `asChild` renders your own element instead |
+| `Sheet.Handle` | `<button>`, drag grip; arrows/Home/End move detents, announces as a slider with 2+ detents. `asChild` supported |
+| `Sheet.Title` / `Sheet.Description` | `<h2>` / `<p>`, auto-wires `aria-labelledby` / `aria-describedby` |
+| `Sheet.Close` | `<button>`, closes on click. `asChild` supported |
+| `DetentSpec` | `'full' \| 'medium' \| 'content' \| number \| ${number}px` |
+| `Side` | `'bottom' \| 'top' \| 'left' \| 'right'` |
+| `SheetActions` | `{ open(): void; close(): void; snapTo(detent: DetentSpec): void }` |
+| `spring(config?)` | `{ stiffness, damping, mass, velocity, restDelta }` → `{ easing, durationMs }` |
+| `isSupported()` | `() => boolean`, false on the ~4% of browsers with no `<dialog>`, where the sheet falls back to a plain modal (see [Without `<dialog>`](/docs/browser-support#without-dialog)) |
+| `Drawer` | vaul-compatible namespace mapped onto `Sheet.*`: `Root`, `Trigger`, `Portal`, `Overlay`, `Content`, `Handle`, `Title`, `Description`, `Close` (`NestedRoot` is an alias of `Root`). See [Migrate from vaul](/docs/migrating/from-vaul) |
+| `Toaster`, `toast`, `useToasts` | Toast exports on their own per-toast DOM (no `Sheet.Root` involved): all six positions with per-toast overrides, hide-not-evict overflow, swipe-to-dismiss. Sonner-compatible too — `useSonner`, `toasterId`, and existing `.sonner-toast` CSS all keep working. See [Migrate from Sonner](/docs/migrating/from-sonner) |
+| `injectStylesInto(root, nonce?)` | `(root: ShadowRoot, nonce?: string) => void`, adopts the core stylesheet into a shadow root. See [Shadow DOM](/docs/advanced/shadow-dom) |
+| `injectToastStylesInto(root, nonce?)` | Same signature, for the toast stylesheet. A sibling export, not folded into `injectStylesInto` |
+
+</div>

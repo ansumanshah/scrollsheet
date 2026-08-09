@@ -1,0 +1,16 @@
+node_modules/
+dist/
+*.log
+.DS_Store
+.claude/
+test-results/
+playwright-report/
+blob-report/
+playwright/.cache/
+docs/public/r/
+docs/public/llms.txt
+.playwright-mcp/
+
+# Copied into the package at build time so npm renders them; root files are the source.
+packages/scrollsheet/README.md
+packages/scrollsheet/LICENSE

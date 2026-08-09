@@ -1,0 +1,30 @@
+# scrollsheet
+
+One primitive for bottom sheets, drawers, modal dialogs, side panels, and toasts.
+
+> Bottom sheets for React that feel native. One primitive for bottom sheets, drawers, modal dialogs, side panels, and toasts, built on `<dialog>` and CSS scroll-snap. Zero dependencies, ~<!--size:index.gzip:0-->19<!--/size--> kB gzipped, React 18+, MIT licensed.
+
+scrollsheet renders a real `<dialog>` in the browser's top layer and drives its drag gesture
+with a native `scroll-snap-type: y mandatory` container instead of a pointer-event physics
+simulation. Detents (resting heights) are scroll-snap stops; open/close/travel animation is a
+damped spring compiled to a CSS `linear()` timing function at build time; enter/exit runs as an
+interruptible Web Animations leg (grab a sheet mid-open, reopen mid-close, and it bends from
+where it is, carrying velocity). Five components: `Sheet.Root`, `Sheet.Trigger`,
+`Sheet.Content`, `Sheet.Handle`, `Sheet.Title` / `Sheet.Description` / `Sheet.Close`.
+`Trigger`, `Close`, and `Handle` take `asChild` to render your own element with the behavior
+merged in. A multi-detent `Handle` exposes slider semantics (role, value, arrow/Home/End keys).
+Ships a drop-in vaul compatibility layer (`Drawer`) for migrating off vaul,
+and a drop-in Sonner layer (`toast`, `useSonner`, `Toaster`) for migrating
+off Sonner, both exported from the same entry and tree-shaken out unless imported.
+
+## Docs
+
+- [Docs](https://scrollsheet.dev/docs): Install, the styling model, detents, keyboard handling, desktop drag, nesting and content morph, migrating from vaul, migrating from Sonner, browser support, and the full API reference. One page per topic.
+
+## Optional
+
+- [Homepage & examples gallery](https://scrollsheet.dev/): Live, editable demos, basic sheet, detents, multi-view with content morph, nested sheets, inset card, long list with scroll handoff, non-dismissible confirm, custom backdrop, keyboard sheet, desktop drag.
+- [GitHub repository](https://github.com/ansumanshah/scrollsheet): Source, issues, and the shadcn/ui registry entry.
+- [npm package](https://www.npmjs.com/package/scrollsheet): Install and version history.
+- [Changelog](https://scrollsheet.dev/changelog): Release notes, generated from the repo's CHANGELOG.md.
+- [Full docs text](https://scrollsheet.dev/llms-full.txt): The docs page above as plain text, for models that can't crawl.

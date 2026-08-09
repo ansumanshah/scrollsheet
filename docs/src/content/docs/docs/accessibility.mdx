@@ -1,0 +1,26 @@
+---
+title: Accessibility
+description: Focus containment comes from the platform's own showModal(), and Sheet.Handle exposes role=slider with full keyboard control once there are two or more detents.
+---
+
+import { LinkCard } from '@astrojs/starlight/components';
+import DocExample from '../../../components/DocExample.astro';
+
+Modal focus containment comes from the platform's own `showModal()`, not a JS focus trap: opening
+a sheet moves focus onto the panel container so mobile keyboards don't pop unasked, and closing it
+returns focus to the trigger. Put a native `autofocus` on a field inside `Sheet.Content` when you
+want the keyboard to come up right away instead.
+
+With two or more `detents`, `Sheet.Handle` exposes `role="slider"` with the matching
+`aria-valuemin`/`-valuemax`/`-valuenow`/`-valuetext`, and moves between stops with Up/Down (or
+Left/Right on side sheets), Home, and End. `Sheet.Title` and `Sheet.Description` wire
+`aria-labelledby`/`aria-describedby` onto the dialog automatically whenever you render them.
+
+<DocExample
+  name="snap-heights"
+  caption="Tab to the handle, then press Up, Down, Home, or End to jump straight to 35%, 70%, or full."
+/>
+
+Short version in the [FAQ: How accessible is it?](/faq#accessibility).
+
+<LinkCard title="FAQ: How accessible is it?" href="/faq#accessibility" />

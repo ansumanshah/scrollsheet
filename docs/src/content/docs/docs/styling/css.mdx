@@ -1,0 +1,69 @@
+---
+title: Styling
+description: scrollsheet ships mechanics only; style the panel with a plain className like any other card.
+---
+
+import { Aside } from '@astrojs/starlight/components';
+import DocExample from '../../../../components/DocExample.astro';
+import { BUNDLE_SIZES } from '../../../../lib/bundle-sizes.generated';
+
+```css
+.sheet {
+  background: white;
+  border-radius: 16px 16px 0 0;
+  box-shadow: 0 -8px 40px rgb(0 0 0 / 0.16);
+}
+```
+
+scrollsheet ships mechanics only (position, transform, scroll-snap, backdrop, focus
+containment) in `scrollsheet/styles.css` — import it once next to your components, the same
+convention vaul uses. The `className` on `Sheet.Content` lands on the panel, so style it like
+any card.
+
+<DocExample
+  name="wallet"
+  caption="Open it and step through menu, key, and remove. One className, no default sheet look."
+/>
+
+## Zero-config entry
+
+No bundler CSS handling, Shadow DOM, or a strict CSP? Import from `scrollsheet/auto` instead:
+the same components with the stylesheet embedded, injected the first time a sheet opens. Sheets
+only render after JS runs (a native `dialog` is `display:none` until opened), so runtime
+injection cannot flash unstyled content.
+
+```tsx
+import { Sheet } from "scrollsheet/auto";
+```
+
+The embed costs {BUNDLE_SIZES.auto.gzipKb.toFixed(1)} kB gzip for `Sheet` against the default
+entry's {BUNDLE_SIZES.index.gzipKb.toFixed(1)}. Toasts on the default entry need both files:
+`scrollsheet/styles.css` and `scrollsheet/toast.css`. Never mix the two entries in one app;
+you would bundle every component twice.
+
+<Aside type="tip">
+  For CSP with the `auto` entry, pass `nonce` to `Sheet.Root`. Shadow DOM injection
+  (`injectStylesInto`) also needs the `auto` entry; the default entry has no stylesheet to
+  inject.
+</Aside>
+
+## Toast styling
+
+`Toaster` renders each card as `.scrollsheet-toast` (icon: `.scrollsheet-toast-icon`, body:
+`.scrollsheet-toast-body`, title: `.scrollsheet-toast-title`, description:
+`.scrollsheet-toast-description`, actions: `.scrollsheet-toast-action` /
+`.scrollsheet-toast-cancel` / `.scrollsheet-toast-close`) and reads its layout knobs from
+`--scrollsheet-toast-*` custom properties — `--scrollsheet-toast-gap`,
+`--scrollsheet-toast-offset`, `--scrollsheet-toast-mobile-offset`. Override either the same way
+you'd style any card:
+
+```css
+.scrollsheet-toast {
+  border-radius: 12px;
+}
+```
+
+Arrived with an existing Sonner integration? Its `import { toast, Toaster } from 'scrollsheet'`
+compat layer also stamps the matching `sonner-*` class and `data-sonner-*` attribute on every
+element, so your existing `.sonner-toast {}` CSS keeps matching unmodified. See
+[Migrate from Sonner](/docs/migrating/from-sonner).

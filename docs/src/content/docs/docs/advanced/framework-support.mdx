@@ -1,0 +1,39 @@
+---
+title: Framework support
+description: SSR-safe by design across Next.js App Router and Pages Router, Remix, React Router v7, Astro, and plain Vite.
+---
+
+import { Aside } from '@astrojs/starlight/components';
+
+scrollsheet is SSR-safe by design, not by special-casing. The dialog only exists once JS runs on
+the client: it's gated behind a mount flag that starts `false` and flips in a `useEffect`, so the
+server render and the first client render before hydration finishes produce identical markup, no
+dialog, just your trigger.
+
+<div className="table-scroll">
+
+| Framework | Works out of the box | Notes |
+| --- | --- | --- |
+| Next.js App Router | Yes, with `'use client'` | See the caveat below: the file that renders `<Sheet.Root>` needs the directive too, not just scrollsheet's own. |
+| Next.js Pages Router | Yes | No RSC boundary to worry about; `"use client"` is inert but harmless. |
+| Remix / React Router v7 | Yes | Same SSR + hydration shape scrollsheet already handles. |
+| Astro | Yes | See the caveat below. |
+| Vite (SPA, no SSR) | Yes | `renderToString` never runs, so this is the simplest case. |
+
+</div>
+
+<Aside type="caution" title="Next.js App Router">
+  `Sheet.Root`, `Sheet.Trigger`, and the rest are interactive: state, event handlers, real DOM
+  refs. They only run in a Client Component. scrollsheet's own `"use client"` banner on every
+  dist chunk is not enough by itself — a Server Component that imports `Sheet` and renders
+  `<Sheet.Root>` gets one opaque client reference for the whole `Sheet` object, so `Sheet.Root`
+  reads as `undefined` there and React throws `Element type is invalid`. Add `'use client'` to
+  the top of whatever file renders it, the same rule as any other interactive component in App
+  Router.
+</Aside>
+
+<Aside type="caution" title="Astro caveat">
+  An island only hydrates if you give it a `client:*` directive (`client:load`, `client:idle`,
+  `client:visible`, etc.). Put one on whatever component renders your `Sheet.Trigger`, same as
+  any interactive Astro component; the mount gate works identically whichever one you pick.
+</Aside>

@@ -1,0 +1,94 @@
+/* Maps Starlight's own --sl-color- palette onto this site's tokens
+   (tokens.css), so the docs pages read as the same product instead of
+   Starlight's default indigo/gray theme. Only the underlying palette
+   variables are overridden: white, black, the gray scale, the accent
+   scale. Starlight derives every semantic variable (--sl-color-bg,
+   --sl-color-text, etc) from those, so overriding the palette alone
+   re-themes the whole site.
+
+   Three separate blocks, not one comma-grouped selector: a grouped
+   root plus root-data-theme rule here was silently dropped by the
+   build's CSS minifier instead of applied. Repeating the same
+   declarations per selector avoids whatever that was. */
+
+:root {
+  --sl-color-white: var(--fg);
+  --sl-color-gray-1: var(--fg);
+  --sl-color-gray-2: var(--fg-muted);
+  --sl-color-gray-3: var(--fg-muted);
+  --sl-color-gray-4: var(--fg-faint);
+  --sl-color-gray-5: var(--border-strong);
+  --sl-color-gray-6: var(--border);
+  --sl-color-black: var(--bg);
+  --sl-color-accent-low: var(--accent-soft);
+  --sl-color-accent: var(--accent);
+  --sl-color-accent-high: var(--accent);
+  --sl-color-bg-nav: var(--bg);
+  --sl-color-bg-sidebar: var(--bg);
+  --sl-color-bg-inline-code: var(--bg-inset);
+  --sl-font: var(--font-sans);
+  --sl-font-mono: var(--font-mono);
+
+  /* Starlight derives the left nav's divider and the right nav's divider
+     from two different hairline variables. We remap --sl-color-gray-6 to
+     --border above (covers the right divider's --sl-color-hairline), but
+     --sl-color-hairline-shade (the left divider) derives from
+     --sl-color-black in dark mode, which we've remapped to --bg -- an
+     invisible border. This is theme-independent (--border already resolves
+     per theme), so one declaration covers both light and dark. */
+  --sl-color-hairline-shade: var(--border);
+
+  /* Starlight's own heading scale (h1 42px desktop / 35px mobile, down to
+     h4 20-24px) is sized for marketing pages. One flat value at every
+     viewport reads as dense reference material instead, and there's no
+     reason for headings to grow on a technical docs site. */
+  --sl-text-h1: 1.875rem; /* 30px */
+  --sl-text-h2: 1.375rem; /* 22px */
+  --sl-text-h3: 1.125rem; /* 18px */
+  --sl-text-h4: 1rem; /* 16px */
+
+  /* Recolors note/tip/caution/danger asides (Starlight derives every
+     lightness stop for both themes from these four hue primitives) onto
+     this site's own accent and danger hues instead of Starlight's stock
+     blue/purple/orange/red. */
+  --sl-hue-blue: 248;
+  --sl-hue-purple: 248;
+  --sl-hue-orange: 4;
+  --sl-hue-red: 4;
+}
+
+:root[data-theme="light"] {
+  --sl-color-white: var(--fg);
+  --sl-color-gray-1: var(--fg);
+  --sl-color-gray-2: var(--fg-muted);
+  --sl-color-gray-3: var(--fg-muted);
+  --sl-color-gray-4: var(--fg-faint);
+  --sl-color-gray-5: var(--border-strong);
+  --sl-color-gray-6: var(--border);
+  --sl-color-black: var(--bg);
+  --sl-color-accent-low: var(--accent-soft);
+  --sl-color-accent: var(--accent);
+  --sl-color-accent-high: var(--accent);
+  --sl-color-bg-nav: var(--bg);
+  --sl-color-bg-sidebar: var(--bg);
+  --sl-color-bg-inline-code: var(--bg-inset);
+  --sl-color-hairline-shade: var(--border);
+}
+
+:root[data-theme="dark"] {
+  --sl-color-white: var(--fg);
+  --sl-color-gray-1: var(--fg);
+  --sl-color-gray-2: var(--fg-muted);
+  --sl-color-gray-3: var(--fg-muted);
+  --sl-color-gray-4: var(--fg-faint);
+  --sl-color-gray-5: var(--border-strong);
+  --sl-color-gray-6: var(--border);
+  --sl-color-black: var(--bg);
+  --sl-color-accent-low: var(--accent-soft);
+  --sl-color-accent: var(--accent);
+  --sl-color-accent-high: var(--accent);
+  --sl-color-bg-nav: var(--bg);
+  --sl-color-bg-sidebar: var(--bg);
+  --sl-color-bg-inline-code: var(--bg-inset);
+  --sl-color-hairline-shade: var(--border);
+}

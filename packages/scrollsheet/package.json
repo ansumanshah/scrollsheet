@@ -1,0 +1,74 @@
+{
+  "name": "scrollsheet",
+  "version": "1.0.0-beta.1",
+  "publishConfig": {
+    "tag": "beta"
+  },
+  "description": "The bottom sheet that scrolls. Native-feeling React drawer built on <dialog> and CSS scroll-snap. Zero dependencies.",
+  "license": "MIT",
+  "author": "Ansuman Shah <ansumanshah@gmail.com>",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/ansumanshah/scrollsheet.git",
+    "directory": "packages/scrollsheet"
+  },
+  "homepage": "https://github.com/ansumanshah/scrollsheet#readme",
+  "bugs": "https://github.com/ansumanshah/scrollsheet/issues",
+  "keywords": [
+    "react",
+    "bottom-sheet",
+    "bottomsheet",
+    "drawer",
+    "sheet",
+    "modal",
+    "dialog",
+    "vaul",
+    "vaul-alternative",
+    "snap-points",
+    "detents",
+    "scroll-snap",
+    "ios-sheet",
+    "swipeable",
+    "mobile",
+    "bottom-sheet-react",
+    "toast",
+    "sonner",
+    "sonner-alternative",
+    "notification",
+    "snackbar",
+    "side-panel",
+    "sidebar",
+    "non-modal",
+    "react-drawer",
+    "react-bottom-sheet"
+  ],
+  "type": "module",
+  "sideEffects": [
+    "**/*.css"
+  ],
+  "files": [
+    "dist"
+  ],
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.mts",
+      "import": "./dist/index.mjs"
+    },
+    "./auto": {
+      "types": "./dist/auto/index.d.mts",
+      "import": "./dist/auto/index.mjs"
+    },
+    "./motion": {
+      "types": "./dist/motion.d.mts",
+      "import": "./dist/motion.mjs"
+    },
+    "./styles.css": "./dist/styles.css",
+    "./toast.css": "./dist/toast.css"
+  },
+  "main": "./dist/index.mjs",
+  "types": "./dist/index.d.mts",
+  "peerDependencies": {
+    "react": ">=18",
+    "react-dom": ">=18"
+  }
+}

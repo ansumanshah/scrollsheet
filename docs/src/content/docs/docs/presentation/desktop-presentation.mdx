@@ -1,0 +1,17 @@
+---
+title: Desktop presentation
+description: Above 768px, bottom sheets dock right as a fixed-width drawer and side sheets square off their lead edge; below it, sheets stay full-bleed.
+---
+
+import DocExample from '../../../../components/DocExample.astro';
+
+Above 768px the defaults change shape: bottom sheets dock to the right edge as a drawer-width column (640px max, 24px margin), and side sheets square off their lead edge. Below 768px, sheets stay full-bleed mobile style.
+
+<DocExample
+  name="responsive"
+  caption="Resize the window past 720px, then reopen it. Same sheet, now a centered dialog."
+/>
+
+All of it is default styling, not behavior. `--scrollsheet-max-inline` and `--scrollsheet-desktop-margin` tune the column: set `--scrollsheet-desktop-margin: 0px` with `--scrollsheet-max-inline: none` to restore full-bleed. `--scrollsheet-radius` reclaims the rounded edge on desktop side sheets.
+
+One more lever, all viewports: `--scrollsheet-travel: none` on your content class switches the enter/exit travel off: the sheet appears and disappears in place, phase callbacks still firing. For sheets whose entrance something else carries: the gallery's Lightbox sets it only when the browser can morph the thumbnail into the viewer with the View Transitions API, so the morph is the one entrance story.

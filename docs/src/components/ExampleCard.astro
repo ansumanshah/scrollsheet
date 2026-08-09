@@ -1,0 +1,120 @@
+---
+import { Code } from "astro:components";
+import type { CodeLanguage } from "astro";
+
+interface Props {
+  slug: string;
+  title: string;
+  description: string;
+  /** Display title of the group this example belongs to. */
+  groupTitle: string;
+  code: string;
+  /** Only the examples.css rules THIS example references (docs/src/lib/scope-css.ts). */
+  examplesCss: string;
+  /** Only the icons.tsx glyphs THIS example imports. Empty when it imports none. */
+  iconsCode: string;
+  lang?: CodeLanguage;
+}
+
+const {
+  slug,
+  title,
+  description,
+  groupTitle,
+  code,
+  examplesCss,
+  iconsCode,
+  lang = "tsx",
+} = Astro.props;
+
+// What actually lands on the clipboard for the Styles tab: both files,
+// unmodified, so pasting them next to the copied component is enough to
+// run it standalone. The two <Code> blocks below render them separately
+// (for readable syntax highlighting); this string is what data-copy sends.
+const stylesClipboard = iconsCode
+  ? `/* styles.css */\n${examplesCss}\n\n// icons.tsx\n${iconsCode}`
+  : `/* styles.css */\n${examplesCss}`;
+
+// Backtick spans in a description render as inline code — odd indexes
+// after this split are the code segments.
+const descriptionParts = description.split("`");
+---
+
+<!-- The radios sit at the article root so their :checked state can reach
+     both the switcher labels (in the head) and the panels (in .tabs)
+     through sibling selectors alone — the tabs stay zero-JS. -->
+<article class="example-card" id={slug}>
+  <input
+    type="radio"
+    class="tab-radio tab-radio-preview"
+    name={`tabs-${slug}`}
+    id={`${slug}-preview`}
+    checked
+  />
+  <input type="radio" class="tab-radio tab-radio-code" name={`tabs-${slug}`} id={`${slug}-code`} />
+  <div class="example-card__head">
+    <p class="example-card__group">{groupTitle}</p>
+    <div class="tab-list" role="tablist">
+      <label for={`${slug}-preview`}>Preview</label>
+      <label for={`${slug}-code`}>Code</label>
+    </div>
+    <h3>{title}</h3>
+  </div>
+  <div class="tabs">
+    <div class="tab-panel tab-panel-preview" data-example={slug}>
+      <p class="example-card__desc">
+        {descriptionParts.map((part, i) => (i % 2 === 1 ? <code>{part}</code> : part))}
+      </p>
+      <slot />
+    </div>
+    <div class="tab-panel tab-panel-code">
+      <p class="example-card__file-label">{slug}.tsx</p>
+      <div class="code-block">
+        <button
+          class="copy-btn copy-btn--floating"
+          type="button"
+          data-copy={code}
+          aria-label={`Copy ${title} code`}
+        >
+          <svg viewBox="0 0 20 20" fill="none" aria-hidden="true">
+            <rect x="7" y="7" width="10" height="10" rx="2" stroke="currentColor" stroke-width="1.6"></rect>
+            <path
+              d="M4 13H3.5A1.5 1.5 0 0 1 2 11.5v-8A1.5 1.5 0 0 1 3.5 2h8A1.5 1.5 0 0 1 13 3.5V4"
+              stroke="currentColor"
+              stroke-width="1.6"></path>
+          </svg>
+        </button>
+        <Code code={code} lang={lang} theme="vitesse-dark" />
+      </div>
+      <p class="example-card__file-label">styles.css</p>
+      <p class="example-card__styles-note">
+        Only the rules this example uses. Save it next to the component and it runs standalone.
+      </p>
+      <div class="code-block">
+        <button
+          class="copy-btn copy-btn--floating"
+          type="button"
+          data-copy={stylesClipboard}
+          aria-label="Copy examples.css and icons.tsx"
+        >
+          <svg viewBox="0 0 20 20" fill="none" aria-hidden="true">
+            <rect x="7" y="7" width="10" height="10" rx="2" stroke="currentColor" stroke-width="1.6"></rect>
+            <path
+              d="M4 13H3.5A1.5 1.5 0 0 1 2 11.5v-8A1.5 1.5 0 0 1 3.5 2h8A1.5 1.5 0 0 1 13 3.5V4"
+              stroke="currentColor"
+              stroke-width="1.6"></path>
+          </svg>
+        </button>
+        <Code code={examplesCss} lang="css" theme="vitesse-dark" />
+        {
+          iconsCode && (
+            <>
+              <p class="example-card__file-label">icons.tsx</p>
+              <Code code={iconsCode} lang="tsx" theme="vitesse-dark" />
+            </>
+          )
+        }
+      </div>
+    </div>
+  </div>
+</article>

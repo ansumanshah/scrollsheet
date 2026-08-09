@@ -1,0 +1,44 @@
+---
+title: Toasts
+description: A toast is modal={false} plus a plain timer closing it, the same controlled open prop any other sheet uses.
+---
+
+import { LinkCard } from '@astrojs/starlight/components';
+import DocExample from '../../../components/DocExample.astro';
+
+```tsx
+const [open, setOpen] = useState(false);
+
+useEffect(() => {
+  if (!open) return;
+  const timer = setTimeout(() => setOpen(false), 4000);
+  return () => clearTimeout(timer);
+}, [open]);
+
+<Sheet.Root modal={false} open={open} onOpenChange={setOpen} detents={['content']}>
+```
+
+A toast is just `modal={false}` plus a plain timer closing it, the same controlled `open` any
+other sheet uses.
+
+<DocExample
+  name="toast"
+  caption="Open it and wait four seconds. The timer closes it, no button required."
+/>
+
+Migrating an existing Sonner integration instead of writing this by hand?
+
+```diff
+- import { toast, Toaster } from 'sonner';
++ import { toast, Toaster } from 'scrollsheet';
+```
+
+scrollsheet's Sonner compat layer is a drop-in for `toast()`/`Toaster`, its own architecture
+matching real Sonner's per-toast DOM and positioning rather than this Sheet-based pattern. See
+[Migrate from Sonner](/docs/migrating/from-sonner).
+
+<LinkCard
+  title="Migrate from Sonner"
+  description="Drop-in replacement for toast, useToasts, and Toaster, running on the same per-toast DOM as real Sonner, with every position, per-toast overrides, and swipe-to-dismiss."
+  href="/docs/migrating/from-sonner"
+/>

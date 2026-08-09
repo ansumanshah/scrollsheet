@@ -1,0 +1,19 @@
+{
+  "$schema": "https://ui.shadcn.com/schema/registry-item.json",
+  "name": "sheet",
+  "type": "registry:ui",
+  "title": "Sheet",
+  "description": "A shadcn/ui sheet (side panel) built on scrollsheet instead of Radix Dialog. Same Sheet/SheetTrigger/SheetContent/SheetHeader/SheetFooter/SheetTitle/SheetDescription/SheetClose API, backed by a native <dialog> in the top layer with drag-to-dismiss on every edge. `side` lives on <Sheet> (the root) rather than SheetContent. Zero runtime dependencies beyond scrollsheet itself.",
+  "author": "Ansuman Shah <https://github.com/ansumanshah>",
+  "dependencies": [
+    "scrollsheet"
+  ],
+  "files": [
+    {
+      "path": "registry/sheet/sheet.tsx",
+      "content": "\"use client\"\n\nimport * as React from \"react\"\nimport { Sheet as ScrollSheet, type DetentSpec } from \"scrollsheet\"\n\nimport { cn } from \"@/lib/utils\"\n\n// shadcn's sheet puts `side` on SheetContent; scrollsheet anchors the whole\n// root, so it lives here. Defaults to the right edge like shadcn's sheet.\nfunction Sheet({\n  side = \"right\",\n  ...props\n}: React.ComponentProps<typeof ScrollSheet.Root>) {\n  return <ScrollSheet.Root data-slot=\"sheet\" side={side} {...props} />\n}\n\nfunction SheetTrigger({\n  ...props\n}: React.ComponentProps<typeof ScrollSheet.Trigger>) {\n  return <ScrollSheet.Trigger data-slot=\"sheet-trigger\" {...props} />\n}\n\nfunction SheetContent({\n  className,\n  children,\n  ...props\n}: React.ComponentProps<typeof ScrollSheet.Content>) {\n  return (\n    <ScrollSheet.Content\n      data-slot=\"sheet-content\"\n      className={cn(\"bg-background shadow-lg\", className)}\n      {...props}\n    >\n      {children}\n    </ScrollSheet.Content>\n  )\n}\n\nfunction SheetHeader({ className, ...props }: React.ComponentProps<\"div\">) {\n  return (\n    <div\n      data-slot=\"sheet-header\"\n      className={cn(\"flex flex-col gap-1.5 p-4\", className)}\n      {...props}\n    />\n  )\n}\n\nfunction SheetFooter({ className, ...props }: React.ComponentProps<\"div\">) {\n  return (\n    <div\n      data-slot=\"sheet-footer\"\n      className={cn(\"mt-auto flex flex-col gap-2 p-4\", className)}\n      {...props}\n    />\n  )\n}\n\nfunction SheetTitle({\n  className,\n  ...props\n}: React.ComponentProps<typeof ScrollSheet.Title>) {\n  return (\n    <ScrollSheet.Title\n      data-slot=\"sheet-title\"\n      className={cn(\"text-foreground font-semibold\", className)}\n      {...props}\n    />\n  )\n}\n\nfunction SheetDescription({\n  className,\n  ...props\n}: React.ComponentProps<typeof ScrollSheet.Description>) {\n  return (\n    <ScrollSheet.Description\n      data-slot=\"sheet-description\"\n      className={cn(\"text-muted-foreground text-sm\", className)}\n      {...props}\n    />\n  )\n}\n\nfunction SheetClose({\n  className,\n  ...props\n}: React.ComponentProps<typeof ScrollSheet.Close>) {\n  return (\n    <ScrollSheet.Close\n      data-slot=\"sheet-close\"\n      className={cn(\n        \"text-foreground/70 hover:text-foreground absolute top-4 right-4 text-sm underline-offset-4 hover:underline\",\n        className\n      )}\n      {...props}\n    />\n  )\n}\n\nexport {\n  Sheet,\n  SheetTrigger,\n  SheetContent,\n  SheetHeader,\n  SheetFooter,\n  SheetTitle,\n  SheetDescription,\n  SheetClose,\n  type DetentSpec,\n}\n",
+      "type": "registry:ui",
+      "target": "components/ui/sheet.tsx"
+    }
+  ]
+}

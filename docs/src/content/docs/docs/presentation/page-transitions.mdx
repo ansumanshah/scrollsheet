@@ -1,0 +1,51 @@
+---
+title: Page transitions
+description: Mark your page wrapper data-scrollsheet-background and backgroundEffect scales, insets, and rounds it in sync with the sheet's travel, iOS-style.
+---
+
+import { Aside, LinkCard } from '@astrojs/starlight/components';
+
+```tsx
+<div data-scrollsheet-background>{/* your page content */}</div>
+
+<Sheet.Root backgroundEffect="scale" detents={['full']}>
+```
+
+Mark your page wrapper `data-scrollsheet-background`, then `backgroundEffect="scale"` scales,
+insets, and rounds it in sync with the sheet's own travel, an iOS-style card transition. Paired
+with a `'full'` detent, a sheet becomes a full-screen page that pushes the page behind it back
+like a stack. `'parallax'` shifts the wrapper instead of scaling it. Read
+`--scrollsheet-stack-progress` on a parent sheet's own panel for the equivalent effect between
+nested sheets.
+
+Mark the wrapper and a full-height bottom sheet gets `'scale'` on its own, with no prop: that is
+how the platform presents a sheet covering the screen. The default only fires when the sheet was
+opened from inside that wrapper, so a page hosting several independent sheets never moves the
+wrong one. Desktop drawers dock beside the page and leave it alone, and `'none'` opts out.
+
+<Aside type="caution" title="One caveat">
+  The wrapper's transform makes it the containing block for any `position: fixed` descendant, so
+  a fixed element inside it (a floating action button, a cookie bar) gets scaled and shifted
+  along with the page. Keep such elements outside the marked wrapper.
+</Aside>
+
+`backgroundRef` targets the wrapper directly instead of the `data-scrollsheet-background` query,
+for a wrapper you'd rather not stamp an attribute onto, or two sheets on the same page whose
+document-wide query could otherwise collide:
+
+```tsx
+const pageRef = useRef<HTMLDivElement>(null);
+
+<div ref={pageRef}>{/* your page content, no attribute needed */}</div>
+
+<Sheet.Root backgroundEffect="scale" backgroundRef={pageRef} detents={['full']}>
+```
+
+It skips the marker lookup and its ownership check entirely: an explicit ref is unambiguous
+about which element it means.
+
+<LinkCard
+  title="Nested and morph"
+  description="A Sheet.Root rendered inside another sheet's content registers as a child automatically, and the sheet morphs height when its content changes."
+  href="/docs/detents-and-control/nested-and-morph"
+/>

@@ -1,0 +1,58 @@
+---
+title: Migrate from vaul
+description: Drop-in replacement for vaul's Drawer namespace, same props, same data-vaul-* attributes for existing CSS.
+---
+
+import { Aside, LinkCard } from '@astrojs/starlight/components';
+import DocExample from '../../../../components/DocExample.astro';
+
+```diff
+- import { Drawer } from 'vaul';
+- import 'vaul/style.css';
++ import { Drawer } from 'scrollsheet';
++ import 'scrollsheet/styles.css';
+```
+
+Drop-in: same `Drawer.*` namespace, translated onto `Sheet.*`. Nesting is automatic: no
+separate `NestedRoot`.
+
+<DocExample
+  name="sidebar"
+  caption="Open the drawer and click through its sections. Same Drawer.* import, same markup."
+/>
+
+<div className="table-scroll prop-table">
+
+| vaul API | Maps to |
+| --- | --- |
+| `snapPoints`, `activeSnapPoint`, `direction` (all 4 edges), `modal={false}`, `onAnimationEnd`, `onClose`, `fadeFromIndex`, `handleOnly`, `snapToSequentialPoint`, `onRelease`, `preventCycle` (on `Drawer.Handle`), `asChild` | A real feature, 1:1 |
+| `shouldScaleBackground` | `backgroundEffect`; your `[data-vaul-drawer-wrapper]` is picked up automatically |
+| `closeThreshold` | A real feature; the adapter converts conventions (vaul counts the drag away, scrollsheet counts what remains), so vaul's `0.25` default keeps its feel. Only live when `snapPoints` is unset, matching vaul |
+| `onOpenStart` / `onCloseStart` | `onOpenChange` (fires at the state flip) |
+| `onOpenEnd` / `onCloseEnd` | `onOpenChangeComplete(open)` (fires once the transition visually finishes) |
+
+</div>
+
+<Aside type="caution" title="One deliberate accuracy divergence">
+  `onRelease`'s second argument is the real open/closed outcome here (`true` only when the sheet
+  stays open). Real vaul always passes `true` when `snapPoints` is set, even on a release that
+  dismisses the drawer.
+</Aside>
+
+`data-vaul-drawer`, `-direction`, and `-snap-points` still land on `Drawer.Content`;
+`data-vaul-handle` on `Drawer.Handle`, so CSS written against vaul's selectors keeps matching.
+`Title`, `Description`, and `Close` get no vaul-branded attribute.
+
+<Aside type="caution" title="Known gaps">
+  Props that existed to fight the page (scroll-lock, portal containers, manual keyboard handling,
+  `fixed`) are unnecessary here and warn once in dev. Radix `Dialog.Content`-only props with no
+  equivalent (`onPointerDownOutside`, `onOpenAutoFocus`, `onEscapeKeyDown`, `onCloseAutoFocus`,
+  `onInteractOutside`, `onFocusOutside`, `forceMount`) are stripped before they reach the DOM.
+  `Drawer.Overlay` renders nothing. The backdrop is automatic.
+</Aside>
+
+<LinkCard
+  title="Migrate from Sonner"
+  description="Drop-in replacement for toast, useToasts, and Toaster, running on the same per-toast DOM as real Sonner, with every position, per-toast overrides, and swipe-to-dismiss."
+  href="/docs/migrating/from-sonner"
+/>

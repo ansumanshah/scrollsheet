@@ -1,0 +1,8 @@
+{
+  "semi": true,
+  "singleQuote": false,
+  "printWidth": 100,
+  "ignorePatterns": [
+    "src/internal/core-css.generated.ts"
+  ]
+}

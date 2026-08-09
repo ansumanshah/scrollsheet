@@ -1,0 +1,175 @@
+/* ─────────────────────────────────────────────────────────────────────────
+   The docs.css versions of these rules are scoped to `.prose` (the old
+   Docs.astro layout, still used by faq.astro and changelog.astro).
+   Starlight wraps page content in `.sl-markdown-content` instead, so the
+   same rules are repeated here unscoped from any particular ancestor:
+   `.table-scroll`/`.prop-table` are unique enough class names to not need
+   the extra qualifier.
+
+   Several rules below counter-declare a Starlight default rather than
+   editing it at the source: base.css carries a handful of plain, unlayered
+   resets (body font, p margin, a color) written for the marketing pages,
+   and an unlayered rule always beats a layered one regardless of
+   specificity -- so those resets silently cancel the equivalent rules
+   Starlight ships inside `@layer starlight.*`. base.css is a shared file
+   outside this stylesheet's remit, so the fix lives here instead, on the
+   real Starlight selector, at a specificity/inheritance that wins on its
+   own merits.
+   ───────────────────────────────────────────────────────────────────────── */
+
+/* ── Body copy ───────────────────────────────────────────────────────── */
+
+.sl-markdown-content {
+  font-size: 0.9375rem; /* 15px, deliberately tighter than Starlight's own 16px */
+  line-height: 1.65;
+}
+
+/* Restores the gap above a <p> that follows another block; base.css's
+   `p { margin: 0 }` zeroes it (every other sibling pairing is unaffected). */
+.sl-markdown-content :not(a, strong, em, del, span, input, code, br) + p:not(:where(.not-content *)) {
+  margin-top: var(--sl-content-gap-y);
+}
+
+/* A hyphen is a valid line-break point under standard text-breaking rules
+   independent of overflow-wrap, so an inline code token like
+   "share-sheet.tsx" splits after the hyphen even on ample width. Making the
+   chip an atomic inline-block moves it to the next line whole; the
+   inherited overflow-wrap: break-word still steps in for any single token
+   too wide for even a fresh line to hold. */
+.sl-markdown-content :is(p, li, td, th, dd, dt) code:not(:where(.not-content *)) {
+  display: inline-block;
+  max-width: 100%;
+  vertical-align: bottom;
+}
+
+/* ── Right "on this page" rail ──────────────────────────────────────── */
+
+.right-sidebar-panel starlight-toc a {
+  color: var(--fg-muted);
+}
+.right-sidebar-panel starlight-toc a:hover {
+  color: var(--fg);
+}
+.right-sidebar-panel starlight-toc a[aria-current="true"] {
+  color: var(--accent);
+  font-weight: 600;
+  box-shadow: inset 2px 0 0 var(--accent);
+}
+.right-sidebar::-webkit-scrollbar {
+  display: none;
+}
+
+/* TwoColumnContent's own width formula pours 100% of leftover row width
+   into this column; on a page with a short TOC that leftover is empty
+   gutter. Capping at the sidebar's own floor width (which the inner nav
+   column is already sized to) removes the growth without narrowing
+   anything the TOC needs. */
+.right-sidebar-container {
+  max-width: var(--sl-sidebar-width);
+}
+
+/* ── Left nav ────────────────────────────────────────────────────────── */
+
+.sidebar-pane {
+  scrollbar-width: thin;
+  scrollbar-color: var(--border-strong) transparent;
+}
+.sidebar-pane::-webkit-scrollbar {
+  width: 8px;
+}
+.sidebar-pane::-webkit-scrollbar-thumb {
+  background: var(--border-strong);
+  border-radius: 999px;
+}
+
+.sidebar-content .group-label {
+  font-size: 0.8rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--fg-faint);
+}
+
+/* ── Tables ──────────────────────────────────────────────────────────── */
+
+.table-scroll {
+  background: var(--bg-inset);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-md);
+  margin-top: 1.3em;
+  overflow-x: auto;
+  overflow-y: hidden;
+  -webkit-overflow-scrolling: touch;
+}
+
+/* Starlight's own table reset (display: block; overflow: auto) turns every
+   table into a second, nested scroll box; cancelling it here leaves
+   .table-scroll as the only scrollable edge. */
+.table-scroll table {
+  display: table;
+  overflow: visible;
+  width: 100%;
+  min-width: 560px;
+}
+
+.table-scroll th,
+.table-scroll td {
+  border-bottom: 1px solid var(--border);
+}
+
+/* Starlight zeroes the first/last cell's outer padding assuming the table
+   bleeds to the page edge; restore it now that the table sits in a
+   bordered, backgrounded box instead. */
+.table-scroll th:first-child,
+.table-scroll td:first-child {
+  padding-inline-start: 16px;
+}
+.table-scroll th:last-child,
+.table-scroll td:last-child {
+  padding-inline-end: 16px;
+}
+
+.prop-table code {
+  white-space: normal;
+  overflow-wrap: break-word;
+}
+.prop-table .prop-name {
+  color: var(--fg);
+  font-weight: 650;
+}
+.prop-table .prop-default {
+  color: var(--fg-faint);
+}
+
+/* ── Asides, code frames, file trees, tabs: one rounded-corner family ─── */
+
+.starlight-aside {
+  border-radius: var(--radius-md);
+}
+
+.frame .header {
+  border-radius: var(--radius-md) var(--radius-md) 0 0;
+}
+.frame pre {
+  border-radius: 0 0 var(--radius-md) var(--radius-md);
+}
+
+starlight-file-tree {
+  border-radius: var(--radius-md);
+  overflow: hidden;
+}
+
+.tab > [role="tab"] {
+  color: var(--fg-muted);
+}
+.tab > [role="tab"][aria-selected="true"] {
+  color: var(--fg);
+}
+
+/* Expressive Code publishes --ec-frm-inlBtnFg for the copy button's icon, but
+   nothing applies it to the button itself, so the icon fell back to the UA
+   default (black) on an always-dark code frame. The frame is dark in both
+   themes because the site pins one Shiki theme, so this is unconditional. */
+.expressive-code .copy button {
+  color: var(--ec-frm-inlBtnFg);
+}

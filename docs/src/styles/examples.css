@@ -1,0 +1,575 @@
+/* ─────────────────────────────────────────────────────────────────────────
+   Example card: zero-JS radio tabs (Preview / Code)
+   ───────────────────────────────────────────────────────────────────────── */
+
+.example-card {
+  position: relative;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  background: var(--bg-elevated);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  /* Anchor-chip deep links land clear of the sticky header. */
+  scroll-margin-top: 84px;
+  /* No transform on hover: a transformed ancestor becomes the containing
+     block for position:fixed, which would re-anchor non-modal demo sheets
+     rendered inside the card. Border + shadow only. */
+  transition: border-color 160ms var(--ease-out), box-shadow 160ms var(--ease-out);
+}
+.example-card:hover {
+  border-color: var(--border-strong);
+  box-shadow: var(--shadow-md);
+}
+
+.example-card__head {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  column-gap: 12px;
+  padding: 16px 20px 14px;
+}
+
+.example-card__group {
+  grid-column: 1;
+  grid-row: 1;
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--fg-faint);
+  margin: 0 0 4px;
+}
+
+.example-card__head h3 {
+  grid-column: 1;
+  grid-row: 2;
+  font-size: 1.05rem;
+  letter-spacing: -0.01em;
+  margin: 0;
+}
+
+/* The description opens the stage: what this is, above what it opens (the
+   silhouette) and how to try it (the trigger). */
+.example-card__desc {
+  align-self: stretch;
+  position: relative;
+  z-index: 1;
+  color: var(--fg-muted);
+  /* A clear step below the 1.05rem title — at 0.9rem the two competed. The
+     taller line height keeps rhythm steady around the inline code chips. */
+  font-size: 0.86rem;
+  line-height: 1.6;
+  margin: 0 0 16px;
+}
+/* The banner silhouette hangs from this stage's top right — the text
+   wraps clear of it. */
+.tab-panel-preview[data-example="alert-banner"] .example-card__desc {
+  padding-right: min(46%, 232px);
+}
+
+/* Key props and values in a description read as what they are: code —
+   quiet chips that never fracture mid-token at a line break. */
+.example-card__desc code {
+  font-size: 0.84em;
+  padding: 0.06em 0.34em;
+  background: var(--bg-inset);
+  border: 1px solid var(--border);
+  border-radius: 5px;
+  color: var(--fg);
+  white-space: nowrap;
+}
+
+.tabs {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+}
+
+.tab-radio {
+  position: absolute;
+  opacity: 0;
+  pointer-events: none;
+  width: 1px;
+  height: 1px;
+}
+
+/* The switcher sits beside the title, right-aligned. Kept visually smaller
+   than any demo trigger: chrome must not outweigh the content it frames. */
+.tab-list {
+  grid-column: 2;
+  grid-row: 1 / 3;
+  align-self: start;
+  justify-self: end;
+  display: inline-flex;
+  gap: 2px;
+  padding: 2px;
+  background: var(--bg-inset);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-pill);
+}
+
+.tab-list label {
+  cursor: pointer;
+  padding: 3px 10px;
+  border-radius: var(--radius-pill);
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: var(--fg-muted);
+  transition: color 120ms var(--ease-out), background 120ms var(--ease-out);
+  user-select: none;
+}
+
+.tab-list label:hover {
+  color: var(--fg);
+}
+
+.tab-radio-preview:focus-visible ~ .example-card__head .tab-list label[for$="-preview"],
+.tab-radio-code:focus-visible ~ .example-card__head .tab-list label[for$="-code"] {
+  outline: 2px solid var(--accent);
+  outline-offset: 1px;
+}
+
+.tab-radio-preview:checked ~ .example-card__head .tab-list label[for$="-preview"],
+.tab-radio-code:checked ~ .example-card__head .tab-list label[for$="-code"] {
+  color: var(--fg);
+  background: var(--bg-elevated);
+  box-shadow: var(--shadow-sm);
+}
+
+.tab-panel {
+  display: none;
+  border-top: 1px solid var(--border);
+}
+
+/* Higher specificity than .tab-panel-preview's own layout rule below, and
+   applied last for source-order safety too. display is only ever set here,
+   never on the unconditional .tab-panel-preview/-code/-styles rules, so a
+   panel never shows while its radio is unchecked regardless of rule order. */
+.tab-radio-preview:checked ~ .tabs .tab-panel-preview {
+  display: flex;
+}
+.tab-radio-code:checked ~ .tabs .tab-panel-code {
+  display: block;
+}
+
+.tab-panel-preview {
+  position: relative;
+  padding: 28px 22px;
+  min-height: 190px;
+}
+/* A stage whose demo is just a trigger button doesn't earn 190px of air.
+   The trigger anchors bottom-left; a quiet silhouette of what it opens —
+   sheet, drawer, dialog, banner, or toast — rises from the matching edge.
+   The silhouette's geometry comes entirely from --sil-* vars set per slug
+   on the stage element, so the shape rules never fight the base rule's
+   specificity. */
+.tab-panel-preview:has(.ex-trigger, .demo-trigger):not(
+    [data-example="lightbox"],
+    [data-example="ride-tracker"],
+    [data-example="maps"]
+  ) {
+  min-height: 148px;
+  padding: 20px 22px 22px;
+  flex-direction: column;
+  align-items: var(--stage-align, flex-start);
+  /* Description at the top, trigger at the bottom, silhouette between. */
+  justify-content: space-between;
+}
+/* Triggers paint above the positioned silhouette. */
+.tab-panel-preview :is(.ex-trigger, .demo-trigger) {
+  position: relative;
+  z-index: 1;
+}
+.tab-panel-preview:has(.ex-trigger, .demo-trigger):not(
+    [data-example="lightbox"],
+    [data-example="ride-tracker"],
+    [data-example="maps"]
+  )::before {
+  content: "";
+  position: absolute;
+  top: var(--sil-top, auto);
+  right: var(--sil-right, 20px);
+  bottom: var(--sil-bottom, -1px);
+  left: var(--sil-left, auto);
+  width: var(--sil-w, 44%);
+  max-width: var(--sil-max-w, 220px);
+  height: var(--sil-h, 72px);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--sil-radius, 14px 14px 0 0);
+  box-shadow: var(--shadow-md);
+  /*
+   * A flat --bg-elevated card with only a border reads as an empty box, not
+   * a sheet — indistinguishable from a rendering failure. The pill layer
+   * (a drag handle) and the detail layer (skeleton content lines, or a
+   * status dot for the toast) are what make it read as a miniature UI.
+   * Both are background layers so they inherit the corner rounding and
+   * need no extra element; edges that meet the stage sit 1px past it so
+   * their border line hides under the card edge.
+   */
+  background:
+    var(
+      --sil-pill,
+      linear-gradient(var(--border-strong), var(--border-strong)) no-repeat top 8px center / 34px
+        4px
+    ),
+    var(
+      --sil-detail,
+      linear-gradient(var(--border-strong), var(--border-strong)) no-repeat 18px 24px / 56% 6px,
+      linear-gradient(var(--border), var(--border)) no-repeat 18px 38px / 38% 6px
+    ),
+    var(--bg-elevated);
+}
+/* Drawers peek from the edge their sheet is anchored to; a left drawer
+   mirrors the stage so the trigger sits clear on the right. The detail
+   layer stands in for menu rows (stacked, not side by side — the box is
+   only 58px wide) instead of the handle pill, since neither drawer has one. */
+.tab-panel-preview[data-example="sidebar"],
+/* A top banner hangs from the stage's top edge; its one line of text sits
+   above the pill, which rides the bottom edge instead of the top. */
+.tab-panel-preview[data-example="alert-banner"] {
+  --sil-top: -1px;
+  --sil-bottom: auto;
+  --sil-h: 46px;
+  --sil-radius: 0 0 14px 14px;
+  --sil-pill: linear-gradient(var(--border-strong), var(--border-strong)) no-repeat bottom 8px
+    center / 34px 4px;
+  --sil-detail: linear-gradient(var(--border-strong), var(--border-strong)) no-repeat 18px 12px /
+    60% 6px;
+}
+/* Floating card and dialog shapes: detached, all corners, no pill (neither
+   drags). A title line over a shorter body line reads as a confirm/detail
+   card instead of a blank one. */
+.tab-panel-preview[data-example="wallet"],
+.tab-panel-preview[data-example="confirm"],
+.tab-panel-preview[data-example="responsive"] {
+  --sil-bottom: 26px;
+  --sil-h: 64px;
+  --sil-w: 40%;
+  --sil-max-w: 190px;
+  --sil-radius: 14px;
+  --sil-pill: none;
+  --sil-detail: linear-gradient(var(--border-strong), var(--border-strong)) no-repeat 16px 18px /
+      60% 7px,
+    linear-gradient(var(--border), var(--border)) no-repeat 16px 34px / 40% 6px;
+}
+/* The toast is a small pill riding low, styled as a status dot next to one
+   line of message text rather than an empty pill. */
+.tab-panel-preview[data-example="toast"] {
+  --sil-bottom: 22px;
+  --sil-h: 40px;
+  --sil-w: 150px;
+  --sil-radius: 10px;
+  --sil-pill: none;
+  --sil-detail: radial-gradient(circle, var(--accent) 68%, transparent 70%) no-repeat 14px 15px /
+      10px 10px,
+    linear-gradient(var(--border-strong), var(--border-strong)) no-repeat 32px 17px / 52% 6px;
+}
+.tab-panel-preview {
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  background-color: var(--bg-inset);
+  /* The stage door: a quiet glow along the bottom edge, where sheets
+     rise from. */
+  background-image: radial-gradient(
+    90% 75% at 50% 110%,
+    color-mix(in oklab, var(--accent) 10%, transparent),
+    transparent 72%
+  );
+  flex: 1;
+}
+
+
+/* One Code tab: component, then the scoped styles.css (and icons when the
+   example imports any). It overlays the preview stage at the stage's exact
+   height — switching to Code never changes the card's footprint — and the
+   whole panel scrolls vertically without scrollbar chrome. */
+.tab-panel-code {
+  position: absolute;
+  inset: 0;
+  overflow-y: auto;
+  scrollbar-width: none;
+  background: var(--bg-code);
+  padding: 16px 20px;
+}
+.tab-panel-code::-webkit-scrollbar {
+  display: none;
+}
+
+.tab-panel-code pre {
+  margin: 0 !important;
+  padding: 16px 18px !important;
+  font-size: 0.82rem !important;
+  line-height: 1.6 !important;
+  overflow-x: auto;
+  background: transparent !important;
+  border: 1px solid rgb(255 255 255 / 0.08);
+  border-radius: var(--radius-sm);
+}
+
+.example-card__styles-note {
+  color: var(--fg-faint);
+  font-size: 0.82rem;
+  line-height: 1.5;
+  margin: 0 0 10px;
+}
+
+.example-card__file-label {
+  color: #cfccdb;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  margin: 18px 0 8px;
+}
+.example-card__file-label:first-of-type {
+  margin-top: 0;
+}
+
+/* ── Demo triggers & shared sheet visuals (consumer-owned styling) ─────
+   scrollsheet ships mechanics only; every visual below (radius, shadow,
+   color) is plain CSS authored for this site, same as any consumer app
+   would write for their own sheets. */
+
+.demo-trigger {
+  appearance: none;
+  border: 1px solid var(--border-strong);
+  background: var(--bg-elevated);
+  color: var(--fg);
+  border-radius: var(--radius-sm);
+  padding: 11px 20px;
+  font-size: 0.92rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: transform 120ms var(--ease-out), border-color 120ms;
+}
+.demo-trigger:hover {
+  border-color: var(--accent);
+}
+.demo-trigger:active {
+  transform: scale(0.97);
+}
+
+.demo-note {
+  color: var(--fg-faint);
+  font-size: 0.82rem;
+  margin-top: 10px;
+  text-align: center;
+  max-width: 32ch;
+}
+
+.demo-panel {
+  background: var(--bg-elevated);
+  border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+  box-shadow: var(--shadow-lg);
+  color: var(--fg);
+}
+
+.demo-panel-inset {
+  left: 12px;
+  right: 12px;
+  bottom: 12px;
+  border-radius: var(--radius-xl);
+  box-shadow: var(--shadow-lg);
+  background: var(--bg-elevated);
+  color: var(--fg);
+}
+
+.demo-panel-body {
+  padding: 4px 22px 28px;
+}
+
+.demo-panel-pad {
+  padding: 26px;
+}
+
+.demo-panel h2 {
+  font-size: 1.2rem;
+  margin: 6px 0 8px;
+}
+
+.demo-panel-pad h2 {
+  font-size: 1.1rem;
+  margin: 0 0 14px;
+}
+
+.demo-panel p {
+  color: var(--fg-muted);
+  line-height: 1.55;
+  margin-bottom: 16px;
+}
+
+.demo-row {
+  padding: 12px 0;
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-size: 0.95rem;
+}
+
+.demo-row-avatar {
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  background: var(--accent-soft);
+  color: var(--accent);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  font-size: 0.85rem;
+  flex: none;
+}
+
+.demo-menu-item {
+  display: block;
+  width: 100%;
+  text-align: left;
+  appearance: none;
+  border: none;
+  background: var(--bg-inset);
+  color: var(--fg);
+  border-radius: var(--radius-md);
+  padding: 15px 16px;
+  font-size: 0.98rem;
+  font-weight: 550;
+  margin-bottom: 8px;
+  cursor: pointer;
+}
+.demo-menu-item:hover {
+  background: var(--border);
+}
+.demo-menu-cancel {
+  background: transparent;
+  border: 1px solid var(--border-strong);
+}
+.demo-menu-danger {
+  background: var(--danger-soft);
+  color: var(--danger);
+}
+
+.demo-hint-list {
+  margin: 0 0 16px;
+  padding-left: 18px;
+  color: var(--fg-muted);
+  line-height: 1.7;
+}
+
+.demo-input {
+  display: block;
+  width: 100%;
+  appearance: none;
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-sm);
+  padding: 13px 14px;
+  font-size: 1rem;
+  margin-bottom: 14px;
+  background: var(--bg);
+  color: var(--fg);
+  font-family: inherit;
+}
+.demo-input:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 1px;
+}
+
+.demo-swatches {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 16px;
+}
+.demo-swatch {
+  width: 30px;
+  height: 30px;
+  border-radius: 8px;
+  border: 2px solid transparent;
+  cursor: pointer;
+}
+.demo-swatch[aria-pressed="true"] {
+  border-color: var(--fg);
+}
+
+.demo-detent-readout {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: var(--bg-inset);
+  border-radius: var(--radius-pill);
+  padding: 6px 12px;
+  font-family: var(--font-mono);
+  font-size: 0.82rem;
+  margin-bottom: 16px;
+}
+.demo-detent-readout strong {
+  color: var(--accent);
+}
+
+.demo-confirm-icon {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  background: var(--danger-soft);
+  color: var(--danger);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 14px;
+}
+
+.demo-actions {
+  display: flex;
+  gap: 10px;
+  margin-top: 4px;
+}
+.demo-actions .btn {
+  flex: 1;
+  justify-content: center;
+}
+
+.demo-badge-live {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--fg-faint);
+}
+.demo-badge-live .badge-dot {
+  animation: pulse 1.8s ease-in-out infinite;
+}
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.35; }
+}
+
+/* Mobile: the stage is narrow and the silhouette eats real width — the
+   description and trigger must never run under it. Smaller type, a
+   narrower silhouette, and a right carve-out on any stage that draws one. */
+@media (max-width: 719px) {
+  .example-card__desc {
+    font-size: 0.8rem;
+    line-height: 1.5;
+    margin-bottom: 12px;
+  }
+  .tab-panel-preview:has(.ex-trigger, .demo-trigger):not(
+      [data-example="lightbox"],
+      [data-example="ride-tracker"],
+      [data-example="maps"]
+    ) {
+    --sil-w: 34%;
+    --sil-max-w: 150px;
+  }
+  .tab-panel-preview:has(.ex-trigger, .demo-trigger):not(
+      [data-example="lightbox"],
+      [data-example="ride-tracker"],
+      [data-example="maps"]
+    )
+    .example-card__desc {
+    padding-right: 36%;
+  }
+}

@@ -1,0 +1,20 @@
+{
+  "$schema": "https://ui.shadcn.com/schema/registry-item.json",
+  "name": "toast",
+  "type": "registry:ui",
+  "title": "Toast Stack",
+  "description": "A toast notification built directly on scrollsheet's Sheet: modal={false} keeps the page interactive, a content detent re-measures on every message swap, and useToastQueue manages the queue.",
+  "author": "Ansuman Shah <https://github.com/ansumanshah>",
+  "dependencies": [
+    "scrollsheet",
+    "lucide-react"
+  ],
+  "files": [
+    {
+      "path": "registry/toast/toast.tsx",
+      "content": "\"use client\"\n\nimport * as React from \"react\"\nimport { Check } from \"lucide-react\"\nimport { Sheet } from \"scrollsheet\"\n\nimport { cn } from \"@/lib/utils\"\n\ninterface ToastMessage {\n  title: string\n  description: string\n}\n\n/**\n * Toasts are consumer state, not a library concept: a queue in useState,\n * `modal={false}` so the page stays interactive, and one sheet that stays\n * open while the queue drains. Swapping the message re-measures the\n * `content` detent, so height changes animate through the built-in morph.\n */\nfunction useToastQueue(duration = 3200) {\n  const [queue, setQueue] = React.useState<ToastMessage[]>([])\n  const current = queue[0]\n\n  React.useEffect(() => {\n    if (current === undefined) return\n    const timer = setTimeout(() => setQueue((q) => q.slice(1)), duration)\n    return () => clearTimeout(timer)\n  }, [current, duration])\n\n  return {\n    queue,\n    push: (message: ToastMessage) => setQueue((q) => [...q, message]),\n    dismiss: () => setQueue((q) => q.slice(1)),\n    clear: () => setQueue([]),\n  }\n}\n\nfunction ToastStack({\n  queue,\n  onDismiss,\n  onClear,\n  className,\n}: {\n  queue: ToastMessage[]\n  onDismiss: () => void\n  onClear: () => void\n  className?: string\n}) {\n  const current = queue[0]\n\n  return (\n    <Sheet.Root\n      modal={false}\n      open={queue.length > 0}\n      onOpenChange={(open) => {\n        if (!open) onClear()\n      }}\n      detents={[\"content\"]}\n    >\n      <Sheet.Content\n        className={cn(\n          \"bg-background flex items-center gap-3 rounded-xl border p-3 shadow-lg\",\n          className\n        )}\n        aria-label=\"Notification\"\n      >\n        <span className=\"bg-primary text-primary-foreground flex h-8 w-8 shrink-0 items-center justify-center rounded-full\">\n          <Check className=\"h-4 w-4\" />\n        </span>\n        <div className=\"flex-1\">\n          <div className=\"text-sm font-medium\">{current?.title}</div>\n          <div className=\"text-muted-foreground text-xs\">{current?.description}</div>\n        </div>\n        <button\n          type=\"button\"\n          className=\"text-sm font-medium underline-offset-4 hover:underline\"\n          onClick={onDismiss}\n        >\n          Undo\n        </button>\n      </Sheet.Content>\n    </Sheet.Root>\n  )\n}\n\nexport { ToastStack, useToastQueue, type ToastMessage }\n",
+      "type": "registry:ui",
+      "target": "components/ui/toast.tsx"
+    }
+  ]
+}

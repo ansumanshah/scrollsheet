@@ -1,0 +1,216 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+# Least-privilege default. The deploy job publishes through Cloudflare's own
+# API token, so it needs no extra GitHub scopes beyond reading the artifact.
+permissions:
+  contents: read
+
+# Supersede a PR's in-flight run when it gets another push. Never cancel a
+# push-to-main run: that is the one that can be mid-deploy, which is also why
+# the deploy job pins its own cancel-in-progress to false.
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: oven-sh/setup-bun@v2
+      # setup-bun caches only the bun BINARY, never the packages — without
+      # this every job refetches the whole tree from npm on every run.
+      - id: bun-cache-dir
+        run: echo "path=$(bun pm cache)" >> "$GITHUB_OUTPUT"
+      - name: Cache bun packages
+        uses: actions/cache@v6
+        with:
+          path: ${{ steps.bun-cache-dir.outputs.path }}
+          key: ${{ runner.os }}-bun-${{ hashFiles('bun.lock') }}
+          restore-keys: ${{ runner.os }}-bun-
+      # docs/ is the other workspace and none of its deps are needed here;
+      # --filter keeps this job on the library's own dependency set.
+      - run: bun install --frozen-lockfile --filter=scrollsheet
+      - run: bun run typecheck
+      # Build before test: tests/unit/use-client.test.ts guards the "use
+      # client" banner by reading dist/*.mjs, which only exists post-build.
+      - run: bun run build
+      - run: bun run test
+      - run: bun run size
+      - run: bun run pack:check
+
+  # The peer floor is react >=18, but bun.lock pins 19 and every other job
+  # installs from it — so without this leg nothing would catch a regression
+  # in the React 18 branch of internal/slot.tsx's ref reading. Under React 18
+  # `props.ref` is a getter that always returns undefined, which breaks refs
+  # silently at runtime rather than failing a typecheck.
+  #
+  # --no-save keeps the downgrade out of bun.lock, so the pinned 19 install
+  # every other job depends on is untouched.
+  react18:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: oven-sh/setup-bun@v2
+      - id: bun-cache-dir
+        run: echo "path=$(bun pm cache)" >> "$GITHUB_OUTPUT"
+      - name: Cache bun packages
+        uses: actions/cache@v6
+        with:
+          path: ${{ steps.bun-cache-dir.outputs.path }}
+          key: ${{ runner.os }}-bun-${{ hashFiles('bun.lock') }}
+          restore-keys: ${{ runner.os }}-bun-
+      - run: bun install --frozen-lockfile
+      # Build while React 19 is still installed (the dts emit reads the
+      # pinned @types/react); the dist/*.mjs files the use-client unit guard
+      # reads are React-version-independent, so building pre-downgrade is
+      # safe and keeps that test runnable here.
+      - run: bun run build
+      - run: bun add --no-save react@18 react-dom@18 @types/react@18 @types/react-dom@18
+      - name: Confirm the downgrade actually took
+        run: |
+          version=$(bun --print "require('react/package.json').version")
+          echo "react in node_modules: $version"
+          case "$version" in
+            18.*) ;;
+            *) echo "expected React 18, got $version"; exit 1 ;;
+          esac
+      - run: bun run test
+
+  # One job per Playwright project so webkit/firefox run alongside chromium
+  # instead of after it. playwright.config.ts pins workers to 1 under CI, so
+  # multiple --project flags in a single job run each test one at a time —
+  # measured locally with CI=1 forced, chromium-mobile alone (154 tests) took
+  # ~5 minutes this way, not the ~30s a multi-worker local run suggests.
+  # Splitting across matrix jobs can't remove that per-project floor (workers
+  # is still 1 inside each job — that setting lives in playwright.config.ts,
+  # outside this file), but it does parallelize the four projects against
+  # each other across separate GitHub-hosted runners instead of summing them
+  # in one job, and each job now installs only the one browser engine it
+  # needs. tests/e2e/fixtures/ bundles straight from ../../src (see serve.ts),
+  # never the built package, so this job does not need `bun run build` first.
+  e2e:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - project: chromium-mobile
+            browser: chromium
+          - project: chromium-desktop
+            browser: chromium
+          - project: webkit-mobile
+            browser: webkit
+          - project: firefox-desktop
+            browser: firefox
+    steps:
+      - uses: actions/checkout@v7
+      - uses: oven-sh/setup-bun@v2
+      - id: bun-cache-dir
+        run: echo "path=$(bun pm cache)" >> "$GITHUB_OUTPUT"
+      - name: Cache bun packages
+        uses: actions/cache@v6
+        with:
+          path: ${{ steps.bun-cache-dir.outputs.path }}
+          key: ${{ runner.os }}-bun-${{ hashFiles('bun.lock') }}
+          restore-keys: ${{ runner.os }}-bun-
+      - run: bun install --frozen-lockfile --filter=scrollsheet
+      - name: Cache Playwright browser binaries
+        uses: actions/cache@v6
+        with:
+          path: ~/.cache/ms-playwright
+          # --with-deps still runs every time (it also installs OS-level apt
+          # packages, which this cache does not cover) but it skips
+          # redownloading a browser binary that's already present at the
+          # version this key resolves to.
+          key: ${{ runner.os }}-playwright-${{ matrix.browser }}-${{ hashFiles('bun.lock') }}
+          # A lockfile bump that does not move playwright still invalidates the
+          # exact key; the prefix restores the old binaries so `playwright
+          # install` re-downloads only what actually changed.
+          restore-keys: ${{ runner.os }}-playwright-${{ matrix.browser }}-
+      - run: bunx playwright install --with-deps ${{ matrix.browser }}
+      - run: bun run test:e2e -- --project=${{ matrix.project }}
+
+  docs:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: oven-sh/setup-bun@v2
+      - id: bun-cache-dir
+        run: echo "path=$(bun pm cache)" >> "$GITHUB_OUTPUT"
+      - name: Cache bun packages
+        uses: actions/cache@v6
+        with:
+          path: ${{ steps.bun-cache-dir.outputs.path }}
+          key: ${{ runner.os }}-bun-${{ hashFiles('bun.lock') }}
+          restore-keys: ${{ runner.os }}-bun-
+      - run: bun install --frozen-lockfile
+      # No --filter here: this is the one job that needs both workspaces.
+      # Build first, because the site aliases scrollsheet/styles.css straight
+      # to packages/scrollsheet/dist, so it has to exist before the site builds.
+      - run: bun run build
+      - run: bun run --cwd docs typecheck
+      - run: bun run --cwd docs build
+      - name: Cache Playwright browser binaries
+        uses: actions/cache@v6
+        with:
+          path: ~/.cache/ms-playwright
+          key: ${{ runner.os }}-playwright-chromium-${{ hashFiles('bun.lock') }}
+          restore-keys: ${{ runner.os }}-playwright-chromium-
+      - run: bunx playwright install --with-deps chromium
+      - run: bunx playwright test -c playwright.site.config.ts
+      # Only needed on the branch the deploy job actually publishes from —
+      # skip it on PRs so forked/branch runs don't spend time uploading an
+      # artifact nothing will consume. docs/astro.config.mjs has no `base`,
+      # so this is the root-relative build the deploy job expects.
+      - name: Upload site artifact
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        uses: actions/upload-artifact@v6
+        with:
+          name: docs-dist
+          path: docs/dist
+          retention-days: 1
+
+  # Publishes docs/dist (built and smoke-tested by the `docs` job above) to
+  # Cloudflare Pages, project `scrollsheet`, serving scrollsheet.dev.
+  #
+  # Direct upload rather than Cloudflare's own Git integration: that
+  # integration needs the Cloudflare GitHub App authorised against this repo
+  # through the dashboard, and it would rebuild the site on Cloudflare's
+  # runners with none of the gates below. Uploading the artifact this
+  # workflow already built and smoke-tested keeps one build and one set of
+  # tests in front of everything that ships.
+  #
+  # `needs` on all three test jobs means a red check/e2e/docs run blocks the
+  # deploy outright — there is no path to publish without green tests first.
+  # Gated on push-to-main (excludes pull_request entirely, including from
+  # forks) and on running in this repo rather than a fork's own copy.
+  deploy:
+    needs: [check, e2e, docs]
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main' && github.repository == 'ansumanshah/scrollsheet'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    concurrency:
+      group: pages-deploy
+      cancel-in-progress: false
+    environment:
+      name: production
+      url: https://scrollsheet.dev
+    steps:
+      - name: Download site artifact
+        uses: actions/download-artifact@v6
+        with:
+          name: docs-dist
+          path: docs/dist
+      - name: Publish to Cloudflare Pages
+        uses: cloudflare/wrangler-action@v3
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          command: pages deploy docs/dist --project-name=scrollsheet --branch=main

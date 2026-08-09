@@ -1,0 +1,67 @@
+---
+/**
+ * Starlight `MobileMenuFooter` override. The default renders Starlight's own
+ * `<ThemeSelect />`, which expects a global `StarlightThemeProvider` object
+ * that the default `ThemeProvider` component defines, but this site
+ * overrides `ThemeProvider` with a minimal anti-FOUC script that doesn't
+ * define it (see ThemeProvider.astro), so the default ThemeSelect throws.
+ * Swap in the same ThemeToggle used everywhere else instead, so the mobile
+ * menu's theme control is the identical mechanism, not a second one.
+ */
+import ThemeToggle from "../ThemeToggle.astro";
+import { isCurrentNav, nav } from "../../lib/site-nav";
+
+const { pathname } = Astro.url;
+---
+
+{/*
+  The header's own nav is hidden on narrow docs screens, where the row cannot
+  fit the wordmark, four links, search, theme, GitHub and Starlight's menu
+  button at once. These links are the only remaining path to the rest of the
+  site there, so they belong in the menu the button opens.
+*/}
+<nav class="mobile-site-nav" aria-label="Site">
+  {
+    nav.map((item) => (
+      <a href={item.href} aria-current={isCurrentNav(pathname, item) ? "page" : undefined}>
+        {item.label}
+      </a>
+    ))
+  }
+</nav>
+
+<div class="mobile-preferences sl-flex">
+  <ThemeToggle />
+</div>
+
+<style>
+  @layer starlight.core {
+    .mobile-site-nav {
+      display: flex;
+      flex-direction: column;
+      gap: 0.25rem;
+      padding: 0.5rem 0;
+      border-top: 1px solid var(--sl-color-gray-6);
+    }
+    .mobile-site-nav a {
+      padding: 0.4rem 0;
+      color: var(--sl-color-gray-2);
+      text-decoration: none;
+      font-size: var(--sl-text-base);
+    }
+    .mobile-site-nav a:hover {
+      color: var(--sl-color-white);
+    }
+    .mobile-site-nav a[aria-current="page"] {
+      color: var(--sl-color-text-accent);
+      font-weight: 600;
+    }
+    .mobile-preferences {
+      justify-content: flex-end;
+      flex-wrap: wrap;
+      border-top: 1px solid var(--sl-color-gray-6);
+      column-gap: 1rem;
+      padding: 0.5rem 0;
+    }
+  }
+</style>

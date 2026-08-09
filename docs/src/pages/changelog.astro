@@ -1,0 +1,61 @@
+---
+import Base from "../layouts/Base.astro";
+import { createMarkdownProcessor } from "@astrojs/markdown-remark";
+
+// Renders the repo-root CHANGELOG.md, the single source of truth for
+// release notes, so this page can never drift from what actually shipped.
+// Uses Astro's own markdown processor (the same one astro.config.mjs's
+// `markdown` block configures) rather than a hand-rolled parser.
+import changelogRaw from "../../../CHANGELOG.md?raw";
+
+const processor = await createMarkdownProcessor({
+  gfm: true,
+  syntaxHighlight: "shiki",
+  shikiConfig: { theme: "vitesse-dark" },
+});
+// Drop the leading "# Changelog" line: the page chrome below already
+// renders that as the <h1>, so keeping it would duplicate the title.
+const changelogBody = changelogRaw.replace(/^#\s+Changelog\s*\n/, "");
+
+// Show only the latest release inline. The full history lives in
+// CHANGELOG.md itself, one click away, so this page stays short instead
+// of growing without bound as releases accumulate.
+const releaseHeadings = [...changelogBody.matchAll(/^## .*$/gm)];
+const latestRelease =
+  releaseHeadings.length > 1
+    ? changelogBody.slice(releaseHeadings[0].index, releaseHeadings[1].index)
+    : changelogBody;
+const { code: changelogHtml } = await processor.render(latestRelease);
+
+const changelogUrl = "https://github.com/ansumanshah/scrollsheet/blob/main/CHANGELOG.md";
+---
+
+<Base
+  title="Changelog"
+  description="Latest release notes for scrollsheet, generated from the repo's CHANGELOG.md."
+>
+  <div class="container changelog-shell">
+    <div class="docs-header">
+      <p class="eyebrow">Changelog</p>
+      <h1>Changelog</h1>
+      <p>
+        Latest release below. Full history at
+        <a href={changelogUrl} target="_blank" rel="noreferrer">CHANGELOG.md</a>.
+      </p>
+    </div>
+    <div class="prose" set:html={changelogHtml} />
+    <p class="changelog-more">
+      <a href={changelogUrl} target="_blank" rel="noreferrer">See the full changelog on GitHub</a>
+    </p>
+  </div>
+</Base>
+
+<style>
+  .changelog-shell {
+    max-width: 74ch;
+    padding-block: clamp(32px, 5vw, 48px) 80px;
+  }
+  .changelog-more {
+    margin-top: 24px;
+  }
+</style>

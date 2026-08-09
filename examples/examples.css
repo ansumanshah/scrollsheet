@@ -1,0 +1,1890 @@
+/* ─────────────────────────────────────────────────────────────────────────
+   Shared example styling. Imported once by each app (playground/site) so
+   every example in this directory looks the same everywhere it runs, without
+   any example .tsx importing anything but "scrollsheet" and "react".
+
+   Self-contained token set (--ex-*), namespaced so it never collides with a
+   host app's own design tokens. scrollsheet itself ships a real default
+   look for the panel (background/radius/shadow, see src/internal/styles.ts).
+   Everything below styles the *content* inside it, plus a few panel
+   variants (inset card, toast) that intentionally override that default.
+   ───────────────────────────────────────────────────────────────────────── */
+
+:root {
+  /* The edge-attached panel surface. Deliberately equal to the host page's
+     own background so that a bottom sheet, the page behind it, and the
+     page's <meta name="theme-color"> are all one color: theme-color is a
+     single page-level value that browsers apply to every piece of chrome at
+     once, so the only way the bottom bar can match the sheet AND the top bar
+     match the page is for the sheet and the page to agree. Detached panels
+     (.ex-panel-inset) keep --ex-bg-elevated: they float above the page and
+     never touch the viewport edge, so they still need to read as raised. */
+  --ex-panel-bg: #ffffff;
+  --ex-bg-elevated: #ffffff;
+  --ex-bg-inset: #f5f5f4;
+  --ex-fg: #1c1917;
+  --ex-fg-muted: #57534e;
+  --ex-fg-faint: #78716c;
+  --ex-border: #e7e5e4;
+  --ex-border-strong: #d6d3d1;
+  --ex-accent: #5a45e8;
+  --ex-accent-fg: #ffffff;
+  --ex-accent-soft: #efecff;
+  --ex-danger: #c4392f;
+  --ex-danger-soft: #fbe9e6;
+  --ex-success: #15803d;
+  --ex-success-soft: #e8f5ec;
+  --ex-shadow-sm: 0 1px 2px rgb(12 11 10 / 0.08);
+  --ex-shadow-md: 0 8px 24px -8px rgb(12 11 10 / 0.2);
+  --ex-shadow-lg: 0 24px 64px -20px rgb(12 11 10 / 0.32);
+  --ex-radius-sm: 8px;
+  --ex-radius-md: 14px;
+  --ex-radius-lg: 22px;
+  --ex-radius-xl: 32px;
+  --ex-radius-pill: 999px;
+  --ex-font-mono: ui-monospace, "SF Mono", "Cascadia Code", Menlo, Consolas, monospace;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --ex-panel-bg: #0a0a0b;
+    --ex-bg-elevated: #1c1c1e;
+    --ex-bg-inset: #222225;
+    --ex-fg: #f4f4f5;
+    --ex-fg-muted: #a1a1aa;
+    --ex-fg-faint: #71717a;
+    --ex-border: #303033;
+    --ex-border-strong: #3f3f46;
+    --ex-accent: #9385ff;
+    --ex-accent-fg: #0a0a0b;
+    --ex-accent-soft: #23204a;
+    --ex-danger: #ff7a70;
+    --ex-danger-soft: #2c1917;
+    --ex-success: #4ade80;
+    --ex-success-soft: #12271a;
+    --ex-shadow-sm: 0 1px 2px rgb(0 0 0 / 0.4);
+    --ex-shadow-md: 0 8px 24px -8px rgb(0 0 0 / 0.5);
+    --ex-shadow-lg: 0 24px 64px -20px rgb(0 0 0 / 0.6);
+  }
+}
+
+/* An explicit theme choice must beat the media query in BOTH directions.
+   A host that offers a theme toggle sets data-theme on the root element,
+   and without these two blocks the examples keep following the OS instead:
+   a dark-OS visitor who picks light gets a light page around sheets that
+   stay dark. The tokens are restated rather than shared because a media
+   query and a plain selector cannot be combined into one rule. */
+:root[data-theme="light"] {
+  --ex-panel-bg: #ffffff;
+  --ex-bg-elevated: #ffffff;
+  --ex-bg-inset: #f5f5f4;
+  --ex-fg: #1c1917;
+  --ex-fg-muted: #57534e;
+  --ex-fg-faint: #78716c;
+  --ex-border: #e7e5e4;
+  --ex-border-strong: #d6d3d1;
+  --ex-accent: #5a45e8;
+  --ex-accent-fg: #ffffff;
+  --ex-accent-soft: #efecff;
+  --ex-danger: #c4392f;
+  --ex-danger-soft: #fbe9e6;
+  --ex-success: #15803d;
+  --ex-success-soft: #e8f5ec;
+  --ex-shadow-sm: 0 1px 2px rgb(12 11 10 / 0.08);
+  --ex-shadow-md: 0 8px 24px -8px rgb(12 11 10 / 0.2);
+  --ex-shadow-lg: 0 24px 64px -20px rgb(12 11 10 / 0.32);
+}
+
+:root[data-theme="dark"] {
+  --ex-panel-bg: #0a0a0b;
+  --ex-bg-elevated: #1c1c1e;
+  --ex-bg-inset: #222225;
+  --ex-fg: #f4f4f5;
+  --ex-fg-muted: #a1a1aa;
+  --ex-fg-faint: #71717a;
+  --ex-border: #303033;
+  --ex-border-strong: #3f3f46;
+  --ex-accent: #9385ff;
+  --ex-accent-fg: #0a0a0b;
+  --ex-accent-soft: #23204a;
+  --ex-danger: #ff7a70;
+  --ex-danger-soft: #2c1917;
+  --ex-success: #4ade80;
+  --ex-success-soft: #12271a;
+  --ex-shadow-sm: 0 1px 2px rgb(0 0 0 / 0.4);
+  --ex-shadow-md: 0 8px 24px -8px rgb(0 0 0 / 0.5);
+  --ex-shadow-lg: 0 24px 64px -20px rgb(0 0 0 / 0.6);
+}
+
+/* ── Triggers & generic buttons ─────────────────────────────────────────── */
+
+.ex-trigger {
+  appearance: none;
+  border: 1px solid var(--ex-border-strong);
+  background: var(--ex-bg-elevated);
+  color: var(--ex-fg);
+  border-radius: var(--ex-radius-sm);
+  padding: 11px 20px;
+  font-size: 0.92rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: border-color 120ms ease, transform 120ms ease;
+}
+.ex-trigger:hover {
+  border-color: var(--ex-accent);
+}
+.ex-trigger:active {
+  transform: scale(0.97);
+}
+
+.ex-btn {
+  appearance: none;
+  border: 1px solid var(--ex-border-strong);
+  background: var(--ex-bg-elevated);
+  color: var(--ex-fg);
+  border-radius: var(--ex-radius-sm);
+  padding: 11px 16px;
+  font-size: 0.92rem;
+  font-weight: 600;
+  cursor: pointer;
+  font-family: inherit;
+}
+.ex-btn:hover {
+  border-color: var(--ex-accent);
+}
+.ex-btn-primary {
+  background: var(--ex-accent);
+  border-color: var(--ex-accent);
+  color: var(--ex-accent-fg);
+}
+.ex-btn-primary:hover {
+  filter: brightness(1.06);
+  border-color: var(--ex-accent);
+}
+.ex-btn-danger {
+  background: var(--ex-danger);
+  border-color: var(--ex-danger);
+  color: #fff;
+}
+.ex-btn-block {
+  display: block;
+  width: 100%;
+  text-align: center;
+}
+.ex-btn:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.ex-actions {
+  display: flex;
+  gap: 10px;
+  margin-top: 4px;
+}
+.ex-actions .ex-btn {
+  flex: 1;
+  justify-content: center;
+}
+
+/* ── Panel content wrappers ──────────────────────────────────────────────
+   Sheet.Content carries .ex-panel (or .ex-panel-inset); a body wrapper
+   inside supplies the padding, since the handle sits outside it. */
+
+.ex-panel {
+  background: var(--ex-panel-bg);
+  color: var(--ex-fg);
+}
+
+.ex-panel-inset {
+  --scrollsheet-inset-x: 12px;
+  --scrollsheet-inset-bottom: 12px;
+  border-radius: var(--ex-radius-xl);
+  box-shadow: var(--ex-shadow-lg);
+  background: var(--ex-bg-elevated);
+  color: var(--ex-fg);
+}
+
+.ex-panel-body {
+  padding: 4px 22px 28px;
+}
+
+.ex-panel-pad {
+  padding: 26px;
+}
+
+.ex-panel-body h2,
+.ex-panel-pad h2 {
+  font-size: 1.2rem;
+  margin: 6px 0 8px;
+}
+.ex-panel-pad h2 {
+  font-size: 1.1rem;
+  margin: 0 0 14px;
+}
+.ex-panel-body p,
+.ex-panel-pad p {
+  color: var(--ex-fg-muted);
+  line-height: 1.55;
+  margin: 0 0 16px;
+}
+
+.ex-note {
+  color: var(--ex-fg-faint);
+  font-size: 0.82rem;
+  margin-top: 10px;
+  text-align: center;
+  max-width: 34ch;
+}
+
+/* ── Generic rows ────────────────────────────────────────────────────────── */
+
+.ex-row {
+  padding: 12px 0;
+  border-bottom: 1px solid var(--ex-border);
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-size: 0.95rem;
+}
+.ex-row:last-child {
+  border-bottom: none;
+}
+.ex-row-body {
+  flex: 1;
+  min-width: 0;
+}
+.ex-row-title {
+  font-weight: 600;
+}
+.ex-row-sub {
+  color: var(--ex-fg-muted);
+  font-size: 0.85rem;
+}
+.ex-avatar {
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  background: var(--ex-accent-soft);
+  color: var(--ex-accent);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  font-size: 0.85rem;
+  flex: none;
+}
+
+/* ── Form fields ─────────────────────────────────────────────────────────── */
+
+.ex-field {
+  margin-bottom: 14px;
+}
+.ex-label {
+  display: block;
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: var(--ex-fg-muted);
+  margin-bottom: 6px;
+}
+.ex-input,
+.ex-textarea {
+  display: block;
+  width: 100%;
+  appearance: none;
+  border: 1px solid var(--ex-border-strong);
+  border-radius: var(--ex-radius-sm);
+  padding: 12px 14px;
+  font-size: 1rem;
+  background: var(--ex-bg-elevated);
+  color: var(--ex-fg);
+  font-family: inherit;
+}
+.ex-textarea {
+  resize: vertical;
+}
+.ex-input:focus-visible,
+.ex-textarea:focus-visible {
+  outline: 2px solid var(--ex-accent);
+  outline-offset: 1px;
+}
+
+/* ── Menu list (wallet) ──────────────────────────────────────────────────── */
+
+.ex-menu-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  text-align: left;
+  appearance: none;
+  border: none;
+  background: var(--ex-bg-inset);
+  color: var(--ex-fg);
+  border-radius: var(--ex-radius-md);
+  padding: 14px 16px;
+  font-size: 0.98rem;
+  font-weight: 550;
+  margin-bottom: 8px;
+  cursor: pointer;
+  font-family: inherit;
+}
+.ex-menu-item:hover {
+  background: var(--ex-border);
+}
+.ex-menu-item:last-child {
+  margin-bottom: 0;
+}
+.ex-menu-cancel {
+  background: transparent;
+  border: 1px solid var(--ex-border-strong);
+}
+.ex-menu-danger {
+  background: var(--ex-danger-soft);
+  color: var(--ex-danger);
+}
+.ex-hint-list {
+  margin: 0 0 16px;
+  padding-left: 18px;
+  color: var(--ex-fg-muted);
+  line-height: 1.7;
+}
+
+/* Each view's rows rise and fade in on mount, staggered by position, so
+   switching views (menu -> key -> remove) reads as a step forward instead of
+   the new content just popping in under the sheet's own height spring.
+   transform/opacity only; timed off the library's own spring easing/duration
+   (set on .scrollsheet-dialog, inherited here) so it matches the sheet's
+   motion instead of inventing a second one. */
+.ex-wallet-view > * {
+  animation: ex-wallet-in var(--scrollsheet-dur, 280ms) var(--scrollsheet-ease, ease) both;
+}
+.ex-wallet-view > *:nth-child(1) {
+  animation-delay: 0ms;
+}
+.ex-wallet-view > *:nth-child(2) {
+  animation-delay: 40ms;
+}
+.ex-wallet-view > *:nth-child(3) {
+  animation-delay: 80ms;
+}
+.ex-wallet-view > *:nth-child(4) {
+  animation-delay: 120ms;
+}
+@keyframes ex-wallet-in {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .ex-wallet-view > * {
+    animation: none;
+  }
+}
+
+/* ── Confirm icon ────────────────────────────────────────────────────────── */
+
+.ex-confirm-icon {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  background: var(--ex-danger-soft);
+  color: var(--ex-danger);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 14px;
+}
+
+/* ── Music player ────────────────────────────────────────────────────────── */
+
+.ex-player-mini {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  appearance: none;
+  border: none;
+  background: transparent;
+  color: var(--ex-fg);
+  padding: 10px 20px 18px;
+  cursor: pointer;
+  font-family: inherit;
+  text-align: left;
+}
+.ex-album-art {
+  flex: none;
+  width: 44px;
+  height: 44px;
+  border-radius: var(--ex-radius-sm);
+  background: linear-gradient(135deg, var(--ex-accent), #ff8fb3);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+  font-size: 1.1rem;
+}
+.ex-album-art-lg {
+  width: 100%;
+  aspect-ratio: 1;
+  border-radius: var(--ex-radius-md);
+  font-size: 3rem;
+  margin-bottom: 18px;
+}
+.ex-player-mini-info {
+  flex: 1;
+  min-width: 0;
+}
+.ex-player-mini-title {
+  font-weight: 600;
+  font-size: 0.92rem;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.ex-player-mini-artist {
+  color: var(--ex-fg-muted);
+  font-size: 0.8rem;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.ex-play-icon {
+  flex: none;
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  background: var(--ex-accent);
+  color: var(--ex-accent-fg);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.ex-progress-track {
+  height: 4px;
+  border-radius: var(--ex-radius-pill);
+  background: var(--ex-border);
+  margin-bottom: 18px;
+  overflow: hidden;
+}
+.ex-progress-fill {
+  height: 100%;
+  background: var(--ex-accent);
+  border-radius: inherit;
+}
+.ex-transport {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 22px;
+  margin-bottom: 22px;
+}
+.ex-transport-btn {
+  appearance: none;
+  border: none;
+  background: transparent;
+  color: var(--ex-fg);
+  cursor: pointer;
+  padding: 6px;
+}
+.ex-play-btn {
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  background: var(--ex-accent);
+  color: var(--ex-accent-fg);
+  border: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+}
+.ex-track {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 0;
+  border-bottom: 1px solid var(--ex-border);
+  font-size: 0.9rem;
+}
+.ex-track:last-child {
+  border-bottom: none;
+}
+.ex-track-body {
+  flex: 1;
+  min-width: 0;
+}
+.ex-track-name {
+  font-weight: 600;
+}
+.ex-track.is-playing .ex-track-name {
+  color: var(--ex-accent);
+}
+.ex-track-artist {
+  color: var(--ex-fg-muted);
+  font-size: 0.82rem;
+}
+.ex-track-duration {
+  color: var(--ex-fg-faint);
+  font-size: 0.82rem;
+  font-family: var(--ex-font-mono);
+}
+
+/* ── Maps ────────────────────────────────────────────────────────────────── */
+
+.ex-map-wrap {
+  position: relative;
+  width: 100%;
+  max-width: 380px;
+  /* Same height as .ex-ride-map-card: the two live/non-modal previews sit
+     next to each other and read as one pair only if their canvases match. */
+  height: 200px;
+  border-radius: var(--ex-radius-md);
+  overflow: hidden;
+  box-shadow: var(--ex-shadow-sm);
+}
+.ex-map {
+  position: absolute;
+  inset: 0;
+  background:
+    linear-gradient(135deg, rgb(90 69 232 / 0.14), transparent 60%),
+    repeating-linear-gradient(0deg, var(--ex-border) 0 1px, transparent 1px 64px),
+    repeating-linear-gradient(90deg, var(--ex-border) 0 1px, transparent 1px 64px),
+    var(--ex-bg-inset);
+}
+.ex-map-street {
+  position: absolute;
+  font-size: 0.68rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  color: var(--ex-fg-faint);
+  text-transform: uppercase;
+  pointer-events: none;
+}
+.ex-map-pin {
+  position: absolute;
+  top: 46%;
+  left: 48%;
+  width: 16px;
+  height: 16px;
+  border-radius: 50% 50% 50% 0;
+  background: var(--ex-accent);
+  transform: rotate(-45deg);
+  box-shadow: 0 2px 6px rgb(0 0 0 / 0.3);
+}
+.ex-map-search {
+  /* The search field never scrolls: the results list below owns its own
+     overflow instead, which holds on every engine (sticky inside a
+     toggling-overflow panel is flaky on iOS Safari). */
+  background: var(--ex-bg-elevated);
+  /* Clear of the Handle's 44px hit box: with the input flush under the
+     pill, iPhone touch adjustment snaps taps aimed at the field's top half
+     onto the handle button — the sheet cycles detents and the keyboard
+     never opens. 16px puts the whole field outside the snap contest. */
+  margin-top: 16px;
+  padding-bottom: 12px;
+  margin-bottom: 4px;
+}
+/* Flex column down the panel so the results list is sized by what's left
+   after the search row — exactly the sheet's remaining height, keyboard or
+   not — instead of a hardcoded vh guess that either clips short or leaves
+   dead space when the keyboard caps the panel at the visual viewport. The
+   chain passes through the library's [data-scrollsheet-body] wrapper (a
+   documented hook); the library can't stretch it by default because the
+   'content' detent measures that wrapper's natural height. */
+.ex-map-panel {
+  display: flex;
+  flex-direction: column;
+}
+.ex-map-panel [data-scrollsheet-body] {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
+}
+.ex-map-panel .ex-panel-body {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
+}
+.ex-map-results-scroll {
+  overflow-y: auto;
+  overscroll-behavior: auto;
+  flex: 1;
+  min-height: 0;
+}
+.ex-map-results {
+  padding-bottom: 8px;
+}
+.ex-map-result {
+  padding: 12px 0;
+  border-bottom: 1px solid var(--ex-border);
+}
+.ex-map-result:last-child {
+  border-bottom: none;
+}
+.ex-map-result-name {
+  font-weight: 600;
+  font-size: 0.95rem;
+}
+.ex-map-result-meta {
+  color: var(--ex-fg-muted);
+  font-size: 0.82rem;
+  margin-top: 2px;
+}
+
+/* ── Cart ────────────────────────────────────────────────────────────────── */
+
+.ex-cart-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 0;
+  border-bottom: 1px solid var(--ex-border);
+}
+.ex-cart-thumb {
+  flex: none;
+  width: 44px;
+  height: 44px;
+  border-radius: var(--ex-radius-sm);
+  background: var(--ex-thumb-color, var(--ex-accent-soft));
+}
+.ex-cart-info {
+  flex: 1;
+  min-width: 0;
+}
+.ex-cart-name {
+  font-weight: 600;
+  font-size: 0.92rem;
+}
+.ex-cart-qty {
+  color: var(--ex-fg-muted);
+  font-size: 0.8rem;
+}
+.ex-cart-price {
+  font-family: var(--ex-font-mono);
+  font-size: 0.9rem;
+  flex: none;
+}
+.ex-cart-summary {
+  padding-top: 14px;
+  margin-top: 4px;
+}
+.ex-cart-summary-row {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.88rem;
+  color: var(--ex-fg-muted);
+  margin-bottom: 6px;
+}
+.ex-cart-total {
+  display: flex;
+  justify-content: space-between;
+  font-weight: 700;
+  font-size: 1.02rem;
+  margin: 10px 0 18px;
+}
+.ex-spinner {
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  border: 2px solid rgb(255 255 255 / 0.4);
+  border-top-color: #fff;
+  display: inline-block;
+  margin-right: 8px;
+  animation: ex-spin 700ms linear infinite;
+  vertical-align: -3px;
+}
+@keyframes ex-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* ── Comments ────────────────────────────────────────────────────────────── */
+
+/* No nested scroller here: the sheet's panel is the scroll container (the
+   overlay scrollbar rides it), so the list just flows — a max-height +
+   overflow of its own would trap 26 of the 30 comments inside a 340px
+   inner box and leave the rest of the panel blank. */
+.ex-comment-list {
+  min-width: 0;
+}
+.ex-comment {
+  display: flex;
+  gap: 10px;
+  padding: 12px 0;
+  border-bottom: 1px solid var(--ex-border);
+}
+.ex-comment:last-child {
+  border-bottom: none;
+}
+.ex-comment-avatar {
+  width: 30px;
+  height: 30px;
+  font-size: 0.76rem;
+}
+.ex-comment-body {
+  flex: 1;
+  min-width: 0;
+}
+.ex-comment-name {
+  font-weight: 600;
+  font-size: 0.86rem;
+}
+.ex-comment-meta {
+  color: var(--ex-fg-faint);
+  font-weight: 400;
+  font-size: 0.76rem;
+  margin-left: 6px;
+}
+.ex-comment-text {
+  color: var(--ex-fg-muted);
+  font-size: 0.88rem;
+  line-height: 1.5;
+  margin-top: 2px;
+}
+
+/* ── Filters (legacy styles, shared radios/checkboxes) ──────────────────────────────────────────────────────── */
+
+.ex-filter-group {
+  margin-bottom: 22px;
+}
+.ex-filter-title {
+  font-size: 0.78rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--ex-fg-faint);
+  margin-bottom: 10px;
+}
+.ex-filter-option {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 0;
+  font-size: 0.92rem;
+  cursor: pointer;
+}
+.ex-checkbox {
+  width: 17px;
+  height: 17px;
+  accent-color: var(--ex-accent);
+}
+
+/* ── Toast ───────────────────────────────────────────────────────────────── */
+
+.ex-toast-panel {
+  --scrollsheet-inset-x: 16px;
+  --scrollsheet-inset-bottom: 16px;
+  /* The panel is only a positioning shell here: the visible card is
+     .ex-toast-card inside it, so the stacked ghosts have a parent to sit
+     behind within the panel's own overflow clip. Top room is reserved for
+     the ghosts to peek out of. */
+  margin: 0 auto;
+  max-width: 380px;
+  padding: 14px 0 0;
+  background: transparent;
+  box-shadow: none;
+  border-radius: 0;
+}
+
+.ex-toast-stack {
+  position: relative;
+}
+
+/* Sonner's collapsed stack: each queued toast behind the front one sits
+   slightly higher and slightly narrower, so depth reads at a glance without
+   showing their content. */
+.ex-toast-ghost {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 0;
+  height: 100%;
+  border: 1px solid var(--ex-border);
+  border-radius: 8px;
+  background: var(--ex-bg-elevated);
+  box-shadow: 0 4px 12px rgb(0 0 0 / 0.1);
+}
+.ex-toast-ghost-1 {
+  transform: translateY(-7px) scale(0.955);
+}
+.ex-toast-ghost-2 {
+  transform: translateY(-14px) scale(0.91);
+  opacity: 0.85;
+}
+
+/* Sonner's card: 8px radius, 1px border, 16px padding, 13px text, and a
+   soft 4/12 shadow rather than a heavy elevation. */
+.ex-toast-card {
+  position: relative;
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 16px;
+  border: 1px solid var(--ex-border);
+  border-radius: 8px;
+  background: var(--ex-bg-elevated);
+  box-shadow: 0 4px 12px rgb(0 0 0 / 0.1);
+  font-size: 13px;
+}
+.ex-toast-icon {
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 18px;
+  height: 18px;
+  margin-top: 1px;
+  border-radius: 50%;
+  background: var(--ex-success);
+  color: #fff;
+}
+.ex-toast-icon svg {
+  width: 12px;
+  height: 12px;
+}
+.ex-toast-copy {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.ex-toast-title {
+  font-size: 13px;
+  font-weight: 500;
+  line-height: 1.35;
+  color: var(--ex-fg);
+}
+.ex-toast-desc {
+  font-size: 13px;
+  line-height: 1.4;
+  color: #3f3f3f;
+}
+.ex-toast-action {
+  flex: none;
+  height: 24px;
+  padding: 0 8px;
+  border: none;
+  border-radius: 4px;
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+  color: var(--ex-bg-elevated);
+  background: var(--ex-fg);
+}
+.ex-toast-action:hover {
+  opacity: 0.9;
+}
+
+@media (prefers-color-scheme: dark) {
+  .ex-toast-desc {
+    color: hsl(0deg 0% 91%);
+  }
+}
+
+/* ── Alert banner ───────────────────────────────────────────────────────── */
+
+.ex-alert-panel {
+  background: var(--ex-bg-elevated);
+  color: var(--ex-fg);
+  border-bottom: 1px solid var(--ex-border);
+}
+.ex-alert-body {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 16px 20px;
+}
+.ex-alert-icon {
+  flex: none;
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  background: var(--ex-danger-soft);
+  color: var(--ex-danger);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  font-size: 0.9rem;
+}
+
+/* ── Responsive recipe ──────────────────────────────────────────────────── */
+
+.ex-panel-responsive {
+  background: var(--ex-bg-elevated);
+  color: var(--ex-fg);
+}
+@media (min-width: 720px) {
+  .ex-panel-responsive {
+    max-width: 420px;
+    margin: 0 auto;
+    border-radius: var(--ex-radius-lg);
+    box-shadow: var(--ex-shadow-lg);
+  }
+}
+
+/* ── Ride tracker (kitchen sink) ────────────────────────────────────────── */
+
+.ex-ride-header {
+  transition: opacity 120ms linear;
+}
+.ex-ride-stops {
+  display: flex;
+  gap: 8px;
+  margin: 4px 0 16px;
+}
+.ex-ride-stops .ex-btn[aria-pressed="true"] {
+  border-color: var(--ex-accent);
+  color: var(--ex-accent);
+}
+.ex-ride-route {
+  display: grid;
+  gap: 10px;
+  margin-bottom: 16px;
+}
+.ex-ride-stop {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 14px;
+  background: var(--ex-bg-inset);
+  border-radius: var(--ex-radius-md);
+  font-weight: 550;
+}
+.ex-ride-pin {
+  display: grid;
+  place-items: center;
+  color: var(--ex-accent);
+}
+
+/* ── Page transition (backgroundEffect showcase) ────────────────────────── */
+
+.ex-page-wrap {
+  border-radius: var(--ex-radius-lg);
+  overflow: hidden;
+  /* The rounded clip exists for the recede effect; at rest it was shaving
+     the trigger's corners. Inset the content clear of the corner curves
+     without growing the footprint. */
+  padding: 8px;
+  margin: -8px;
+}
+.ex-page-mock {
+  padding: 16px;
+  background: var(--ex-bg-inset);
+  border-radius: var(--ex-radius-lg);
+  margin-bottom: 12px;
+}
+.ex-page-actions {
+  display: flex;
+  gap: 8px;
+  margin-top: 12px;
+}
+.ex-page-actions .ex-btn[aria-pressed="true"] {
+  border-color: var(--ex-accent);
+  color: var(--ex-accent);
+}
+
+/* ── Sidebar (nav drawer) ───────────────────────────────────────────────── */
+
+.ex-sidebar-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 18px 20px;
+  background: var(--ex-bg-inset);
+}
+.ex-sidebar-body {
+  padding: 14px 12px;
+}
+.ex-sidebar-group {
+  margin-bottom: 18px;
+}
+.ex-sidebar-group .ex-filter-title {
+  padding: 0 10px;
+}
+.ex-sidebar-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  appearance: none;
+  border: none;
+  background: transparent;
+  color: var(--ex-fg);
+  text-align: left;
+  font-size: 0.95rem;
+  font-weight: 550;
+  font-family: inherit;
+  padding: 10px;
+  border-radius: var(--ex-radius-sm);
+  cursor: pointer;
+}
+.ex-sidebar-item:hover {
+  background: var(--ex-bg-inset);
+}
+.ex-sidebar-item svg {
+  color: var(--ex-fg-muted);
+  font-size: 1.05rem;
+}
+.ex-sidebar-footer {
+  padding: 12px;
+  border-top: 1px solid var(--ex-border);
+}
+
+/* ── rich: music ─────────────────────────────────────────────────────── */
+
+/* Full player: the base section's .ex-album-art was a flat gradient behind
+   a glyph; TrackArt now fills it edge to edge, so it needs to clip to the
+   existing radius instead of just centering an icon inside it. */
+.ex-album-art {
+  overflow: hidden;
+}
+/* The base section pins .ex-album-art to 44x44 — with height still set,
+   the -lg variant's aspect-ratio never engages and the art collapses to a
+   full-width 44px strip. Height must go back to auto for the square to
+   come from aspect-ratio. */
+.ex-album-art-lg {
+  height: auto;
+}
+.ex-track-art {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+/* Elapsed/total readout under the bar. Overriding the base section's 18px
+   .ex-progress-track margin here (rather than fighting it with a negative
+   margin) keeps the times snug against the bar, with the times row itself
+   carrying the breathing room before the transport controls. */
+.ex-progress-track {
+  margin-bottom: 6px;
+}
+.ex-progress-times {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 20px;
+  color: var(--ex-fg-faint);
+  font-size: 0.78rem;
+  font-family: var(--ex-font-mono);
+}
+
+.ex-up-next-label {
+  margin-bottom: 8px;
+  color: var(--ex-fg-faint);
+  font-size: 0.76rem;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+/* Up-next rows: the base .ex-track was a plain div; it is a button now
+   (tap to make it the current track), so it needs the usual button reset
+   plus a slot for the new thumbnail in place of the old index number. */
+.ex-track-list .ex-track {
+  width: 100%;
+  appearance: none;
+  border: none;
+  background: transparent;
+  font-family: inherit;
+  color: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+.ex-track-list .ex-track:hover .ex-track-name {
+  color: var(--ex-accent);
+}
+.ex-track-thumb {
+  display: block;
+  flex: none;
+  width: 34px;
+  height: 34px;
+  border-radius: var(--ex-radius-sm);
+  overflow: hidden;
+}
+
+/* Docked mini bar. 12px + the 44px album art + 12px is 68px, which is
+   exactly the docked detent the mini-player pattern uses: keep the two in step or a
+   band of bare panel shows under the row. The detent cannot be 'content'
+   here, because this sheet swaps its body for the full player once
+   expanded and 'content' would then resolve to the same height as 'full',
+   leaving nothing to drag back down to. */
+.ex-player-mini {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 18px;
+}
+/* A docked player bar is not a floating card, so it opts out of the
+   desktop margin every bottom sheet gets at >=768px and stays flush to the
+   viewport edge. Zeroing the safe-area pad keeps the docked slice exactly
+   the detent height on a notched device, where the panel's own bottom
+   padding would otherwise eat into the row. */
+.ex-player-panel {
+  --scrollsheet-desktop-margin: 0px;
+  --scrollsheet-safe-area: 0px;
+}
+/* Two buttons, not one: a play control that really toggles play/pause
+   can't sit inside the row's own expand button (buttons can't nest), so
+   the expand tap target and the play control are siblings here. */
+.ex-player-mini-tap {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex: 1;
+  min-width: 0;
+  appearance: none;
+  border: none;
+  background: transparent;
+  color: inherit;
+  padding: 0;
+  font-family: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+/* Title and artist are inline <span>s inside the tap button — without a
+   column here they run together on one line. */
+.ex-player-mini-info {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+.ex-play-icon {
+  appearance: none;
+  border: none;
+  cursor: pointer;
+}
+
+/* ── rich: comments ─────────────────────────────────────────────────────── */
+
+.ex-comment-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin: 6px 0 14px;
+}
+.ex-comment-toolbar h2 {
+  margin: 0;
+}
+.ex-comment-sort {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex: none;
+  appearance: none;
+  border: 1px solid var(--ex-border-strong);
+  background: var(--ex-bg-elevated);
+  color: var(--ex-fg-muted);
+  border-radius: var(--ex-radius-pill);
+  padding: 6px 12px 6px 10px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  font-family: inherit;
+  cursor: pointer;
+}
+.ex-comment-sort:hover {
+  border-color: var(--ex-accent);
+  color: var(--ex-fg);
+}
+.ex-comment-sort svg {
+  font-size: 0.95rem;
+}
+
+.ex-comment-reply {
+  margin-left: 40px;
+  margin-top: 12px;
+  padding-top: 0;
+  border-bottom: none;
+}
+.ex-comment-reply .ex-comment-avatar {
+  width: 24px;
+  height: 24px;
+  font-size: 0.68rem;
+}
+.ex-comment-reply .ex-comment-name {
+  font-size: 0.82rem;
+}
+.ex-comment-reply .ex-comment-text {
+  font-size: 0.84rem;
+}
+
+.ex-comment-actions {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  margin-top: 6px;
+  margin-left: -6px;
+}
+.ex-comment-action {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  appearance: none;
+  border: none;
+  background: transparent;
+  color: var(--ex-fg-faint);
+  font-family: inherit;
+  font-size: 0.78rem;
+  font-weight: 600;
+  padding: 6px;
+  border-radius: var(--ex-radius-sm);
+  cursor: pointer;
+}
+.ex-comment-action:hover {
+  color: var(--ex-fg);
+  background: var(--ex-bg-inset);
+}
+.ex-comment-action svg {
+  font-size: 0.95rem;
+}
+
+.ex-comment-photo {
+  margin: 8px 0 0;
+  border-radius: var(--ex-radius-md);
+  overflow: hidden;
+  border: 1px solid var(--ex-border);
+}
+.ex-comment-photo img {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+.ex-comment-photo figcaption {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  padding: 8px 10px;
+  background: var(--ex-bg-inset);
+}
+
+/* ── rich: full-screen ─────────────────────────────────────────────────────── */
+
+.ex-article-cover {
+  aspect-ratio: 800 / 220;
+  overflow: hidden;
+}
+.ex-article-cover svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+.ex-article-byline {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 14px 0 18px;
+}
+/* Classic editorial pull quote: hairlines above and below, not a side bar. */
+.ex-pull-quote {
+  margin: 4px 0 20px;
+  padding: 12px 2px;
+  border-top: 1px solid var(--ex-border-strong);
+  border-bottom: 1px solid var(--ex-border-strong);
+  font-size: 1.05rem;
+  font-weight: 600;
+  font-style: italic;
+  color: var(--ex-fg);
+  line-height: 1.5;
+}
+
+/* ── rich: nested ─────────────────────────────────────────────────────── */
+
+.ex-settings-list {
+  margin-top: 4px;
+}
+.ex-settings-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  appearance: none;
+  border: none;
+  border-bottom: 1px solid var(--ex-border);
+  background: transparent;
+  color: var(--ex-fg);
+  text-align: left;
+  font-size: 0.95rem;
+  font-weight: 550;
+  font-family: inherit;
+  padding: 13px 2px;
+  cursor: pointer;
+}
+.ex-settings-row:last-child {
+  border-bottom: none;
+}
+.ex-settings-row:hover {
+  background: var(--ex-bg-inset);
+}
+.ex-settings-row-danger {
+  color: var(--ex-danger);
+}
+.ex-settings-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 30px;
+  border-radius: var(--ex-radius-sm);
+  background: var(--ex-accent-soft);
+  color: var(--ex-accent);
+  flex: none;
+  font-size: 1rem;
+}
+.ex-settings-row-danger .ex-settings-icon {
+  background: var(--ex-danger-soft);
+  color: var(--ex-danger);
+}
+.ex-settings-label {
+  flex: 1;
+  min-width: 0;
+}
+.ex-settings-value {
+  color: var(--ex-fg-muted);
+  font-size: 0.85rem;
+  font-weight: 500;
+}
+.ex-settings-chevron {
+  color: var(--ex-fg-faint);
+  font-size: 0.85rem;
+  flex: none;
+}
+
+.ex-theme-grid {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 16px;
+}
+.ex-theme-card {
+  position: relative;
+  flex: 1;
+  appearance: none;
+  border: 2px solid var(--ex-border);
+  background: var(--ex-bg-inset);
+  border-radius: var(--ex-radius-md);
+  padding: 10px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  font-family: inherit;
+}
+.ex-theme-card.is-selected {
+  border-color: var(--ex-accent);
+}
+.ex-theme-swatch {
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  width: 100%;
+  height: 44px;
+  padding-bottom: 8px;
+  border-radius: var(--ex-radius-sm);
+  border: 1px solid var(--ex-border-strong);
+}
+.ex-theme-swatch-dot {
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+}
+.ex-theme-name {
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: var(--ex-fg);
+}
+.ex-theme-card.is-selected .ex-theme-name {
+  color: var(--ex-accent);
+}
+.ex-theme-check {
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: var(--ex-accent);
+  color: var(--ex-accent-fg);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.6rem;
+}
+
+/* ── rich: nested (reminders at a partial parent detent) ────────────────── */
+
+.ex-reminder-dot {
+  flex: none;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  margin-top: 3px;
+}
+.ex-reminder-overflow {
+  flex: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  appearance: none;
+  border: none;
+  background: transparent;
+  color: var(--ex-fg-faint);
+  border-radius: var(--ex-radius-sm);
+  cursor: pointer;
+}
+.ex-reminder-overflow:hover {
+  background: var(--ex-bg-inset);
+  color: var(--ex-fg);
+}
+
+/* ── rich: ride ─────────────────────────────────────────────────────── */
+
+/* Same grid-and-gradient backdrop as .ex-map (Map search): the two examples
+   sit in the same gallery group, and matching the canvas is most of what
+   makes this one read as a card instead of an illustration. */
+.ex-ride-map-card {
+  position: relative;
+  width: 100%;
+  max-width: 380px;
+  height: 200px;
+  border-radius: var(--ex-radius-md);
+  overflow: hidden;
+  box-shadow: var(--ex-shadow-sm);
+  margin-bottom: 4px;
+  background:
+    linear-gradient(135deg, rgb(90 69 232 / 0.14), transparent 60%),
+    repeating-linear-gradient(0deg, var(--ex-border) 0 1px, transparent 1px 64px),
+    repeating-linear-gradient(90deg, var(--ex-border) 0 1px, transparent 1px 64px),
+    var(--ex-bg-inset);
+}
+.ex-ride-map {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+.ex-ride-map-route-glow {
+  fill: none;
+  stroke: var(--ex-accent);
+  stroke-width: 10;
+  stroke-linecap: round;
+  opacity: 0.16;
+}
+.ex-ride-map-route {
+  fill: none;
+  stroke: var(--ex-accent);
+  stroke-width: 3;
+  stroke-linecap: round;
+  stroke-dasharray: 1 9;
+}
+.ex-ride-map-pin {
+  filter: drop-shadow(0 2px 3px rgb(0 0 0 / 0.25));
+}
+.ex-ride-map-pin-pickup {
+  color: var(--ex-accent);
+}
+.ex-ride-map-pin-drop {
+  color: var(--ex-fg-muted);
+}
+.ex-ride-driver {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 14px;
+  margin-bottom: 14px;
+  background: var(--ex-bg-inset);
+  border-radius: var(--ex-radius-md);
+}
+.ex-ride-driver-body {
+  flex: 1;
+  min-width: 0;
+}
+.ex-ride-driver-rating {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  margin-top: 2px;
+  color: var(--ex-fg-muted);
+  font-size: 0.85rem;
+}
+.ex-ride-driver-star {
+  width: 13px;
+  height: 13px;
+  flex: none;
+}
+.ex-ride-plate {
+  flex: none;
+  font-family: var(--ex-font-mono);
+  font-size: 0.76rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  padding: 5px 9px;
+  border: 1px solid var(--ex-border-strong);
+  border-radius: var(--ex-radius-sm);
+  background: var(--ex-bg-elevated);
+  color: var(--ex-fg-muted);
+}
+
+/* ── Lightbox (thumbnail grid + paging viewer) ──────────────────────────── */
+
+.ex-lb-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 6px;
+  padding: 12px;
+}
+.ex-lb-thumb {
+  position: relative;
+  aspect-ratio: 1;
+  padding: 0;
+  border: none;
+  border-radius: 10px;
+  overflow: hidden;
+  cursor: pointer;
+  background: none;
+  transition: transform 120ms ease;
+}
+.ex-lb-thumb:hover {
+  transform: scale(1.04);
+}
+.ex-lb-thumb-img {
+  width: 100%;
+  height: 100%;
+  display: block;
+  object-fit: cover;
+}
+
+.ex-lb-panel {
+  display: flex;
+  flex-direction: column;
+  padding: 0;
+  background: #000;
+  --scrollsheet-safe-area: 0px;
+}
+/* The library wraps Content's children in its own [data-scrollsheet-body]
+   div (a block box sized by content, since the 'content' detent measures
+   its natural height) — .ex-lb-track's own flex:1 does nothing unless that
+   wrapper is a flex column too, or the track settles to its image's
+   intrinsic aspect ratio instead of the panel's full height. */
+.ex-lb-panel [data-scrollsheet-body] {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
+}
+/* Desktop: present as a centered lightbox card instead of the library's
+   default right-docked drawer. Two library levers, no new API:
+   --scrollsheet-inset-bottom (already read by measure() to flag the sheet
+   data-scrollsheet-detached, which centers it vertically for a single
+   detents={['full']} panel for free) plus overriding the dock's left/right/
+   width back to a max-width + auto-margin center, the same recipe core.css's
+   own top-side desktop rule uses. Only correct for a single ['full'] detent
+   with disableDrag, exactly what this example uses — a shorter detent stays
+   bottom-anchored inside the floating region instead of centering, since the
+   panel's near edge is fixed and only its far edge moves. */
+@media (min-width: 768px) {
+  .ex-lb-panel {
+    --scrollsheet-inset-bottom: var(--scrollsheet-desktop-margin, 24px);
+    left: var(--scrollsheet-inset-x, 0px);
+    right: var(--scrollsheet-inset-x, 0px);
+    width: auto;
+    max-width: min(480px, calc(100% - 2 * var(--scrollsheet-desktop-margin, 24px)));
+    margin-inline: auto;
+  }
+  /* The card hugs the photo instead of standing full-viewport-tall with
+     dead space under it. Doubled class outranks the injected core rule's
+     height (same specificity would lose on source order — core.css loads
+     after this file). It stays anchored to the floating region's bottom
+     edge — the panel's coordinate space is the canvas (viewport plus
+     detent runway), so viewport-centering tricks land in the wrong space.
+     Safe only because this sheet is single-['full']-detent with
+     disableDrag: nothing reads the panel height for snap math. */
+  .ex-panel.ex-lb-panel {
+    height: fit-content;
+    max-height: calc(100% - 2 * var(--scrollsheet-desktop-margin, 24px));
+  }
+}
+/* Horizontal scroll-snap paging track: swipes get browser momentum and
+   snap natively. Axis-orthogonal to the sheet's own vertical engine, so the
+   browser arbitrates the two gestures with no JS. */
+.ex-lb-track {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  overflow-x: auto;
+  overscroll-behavior-x: contain;
+  scroll-snap-type: x mandatory;
+  scrollbar-width: none;
+}
+.ex-lb-track::-webkit-scrollbar {
+  display: none;
+}
+.ex-lb-slide {
+  flex: 0 0 100%;
+  min-width: 100%;
+  display: flex;
+  scroll-snap-align: center;
+}
+/* While a shot is zoomed (or a pinch is in flight) the track stops paging,
+   so horizontal pans stay inside the photo. */
+.ex-lb-track[data-zoomed] {
+  overflow-x: hidden;
+}
+/* Zoom scroller: pinch and double-tap set only the inner box's size; a
+   zoomed shot pans with the browser's own two-axis scroll. pan-x pan-y
+   without the pinch-zoom token keeps two-finger input out of the browser's
+   page zoom and delivers it as pointer events instead. */
+.ex-lb-zoom {
+  flex: 1;
+  min-width: 0;
+  min-height: 0;
+  overflow: hidden;
+  touch-action: pan-x pan-y;
+  cursor: zoom-in;
+  scrollbar-width: none;
+}
+.ex-lb-zoom::-webkit-scrollbar {
+  display: none;
+}
+.ex-lb-zoom[data-zoomed] {
+  overflow: auto;
+  cursor: zoom-out;
+}
+.ex-lb-zoom-sizer {
+  width: 100%;
+  height: 100%;
+}
+.ex-lb-full {
+  width: 100%;
+  height: 100%;
+  display: block;
+  object-fit: cover;
+}
+/* Thumbnail-to-viewer morph (View Transitions API, progressive). The
+   custom properties come from lightbox.tsx's MORPH_SPRING — a linear()
+   spring curve, the same shape the sheet's own open/close travel uses,
+   instead of a hand-picked cubic-bezier that would only ease at one end.
+   The fallback values are the pre-spring cubic-bezier, in case that
+   <style> tag is ever missing (JS disabled, or this rule copied out on
+   its own): a one-sided ease is still better than no easing at all. */
+::view-transition-group(ex-lb-shot) {
+  animation-duration: var(--ex-lb-morph-dur, 280ms);
+  animation-timing-function: var(--ex-lb-morph-ease, cubic-bezier(0.16, 1, 0.3, 1));
+}
+/* While the morph carries the entrance, the sheet's own slide-in would
+   tell a second story — the class is only applied when the browser can
+   actually morph, so non-supporting browsers keep the travel. */
+.ex-lb-morph {
+  --scrollsheet-travel: none;
+}
+/* Top/bottom chrome bars: named view-transition targets, scoped to
+   .ex-lb-morph so non-supporting browsers fall back to a plain mount (no
+   view-transition-name, no animation, chrome just appears with the sheet's
+   own travel). Both bars only ever exist on one side of a transition —
+   mounted with the viewer, gone with the grid — so unlike the photo's
+   MORPH_NAME handoff there's no name collision to manage in JS; the CSS
+   scoping is enough. `pointer-events: none` on the bar and `auto` on its
+   children keeps the gradient strip from stealing taps meant for the photo
+   underneath, the same footprint the two controls had before they shared
+   a wrapper. */
+.ex-lb-morph .ex-lb-topbar {
+  view-transition-name: ex-lb-topbar;
+}
+.ex-lb-morph .ex-lb-caption {
+  view-transition-name: ex-lb-bottombar;
+}
+/* Entrance: starts a beat after the photo (30% of its duration) and
+   finishes before it (60% long, ending at 90%) — chrome materializes
+   around a subject already mid-flight instead of racing it. Exit: no
+   delay, under half the duration — chrome should clear fast, not linger
+   while the photo shrinks back to its thumbnail. Same spring curve as the
+   photo morph on the way in for one consistent character; a plain ease-in
+   on the way out is fine since nothing is being watched leave. */
+@keyframes ex-lb-bar-in-top {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+}
+@keyframes ex-lb-bar-out-top {
+  to {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+}
+@keyframes ex-lb-bar-in-bottom {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+}
+@keyframes ex-lb-bar-out-bottom {
+  to {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+}
+::view-transition-new(ex-lb-topbar) {
+  animation: ex-lb-bar-in-top calc(var(--ex-lb-morph-dur, 280ms) * 0.6)
+    var(--ex-lb-morph-ease, cubic-bezier(0.16, 1, 0.3, 1)) calc(var(--ex-lb-morph-dur, 280ms) * 0.3) both;
+}
+::view-transition-old(ex-lb-topbar) {
+  animation: ex-lb-bar-out-top calc(var(--ex-lb-morph-dur, 280ms) * 0.4) ease-in both;
+}
+::view-transition-new(ex-lb-bottombar) {
+  animation: ex-lb-bar-in-bottom calc(var(--ex-lb-morph-dur, 280ms) * 0.6)
+    var(--ex-lb-morph-ease, cubic-bezier(0.16, 1, 0.3, 1)) calc(var(--ex-lb-morph-dur, 280ms) * 0.3) both;
+}
+::view-transition-old(ex-lb-bottombar) {
+  animation: ex-lb-bar-out-bottom calc(var(--ex-lb-morph-dur, 280ms) * 0.4) ease-in both;
+}
+/* The bar itself: full-width, top-anchored gradient matte (mirrors
+   .ex-lb-caption's own gradient, flipped) so the close button and counter
+   stay legible over a bright photo. Padding clears the safe-area inset
+   directly — .ex-lb-panel zeroes the library's own safe-area handling for
+   a full-bleed photo, so nothing else insets this for a notch/Dynamic
+   Island. */
+.ex-lb-topbar {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: calc(14px + env(safe-area-inset-top, 0px)) 14px 28px;
+  background: linear-gradient(rgb(0 0 0 / 0.55), rgb(0 0 0 / 0));
+  pointer-events: none;
+}
+.ex-lb-topbar > * {
+  pointer-events: auto;
+}
+.ex-lb-close {
+  display: grid;
+  place-items: center;
+  width: 34px;
+  height: 34px;
+  border: none;
+  border-radius: 50%;
+  color: #fff;
+  background: rgb(0 0 0 / 0.45);
+  cursor: pointer;
+}
+.ex-lb-close:hover {
+  background: rgb(0 0 0 / 0.6);
+}
+.ex-lb-count {
+  padding: 4px 10px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-variant-numeric: tabular-nums;
+  color: #fff;
+  background: rgb(0 0 0 / 0.45);
+}
+.ex-lb-nav {
+  position: absolute;
+  top: 50%;
+  z-index: 1;
+  translate: 0 -50%;
+  display: grid;
+  place-items: center;
+  width: 40px;
+  height: 40px;
+  border: none;
+  border-radius: 50%;
+  color: #fff;
+  background: rgb(0 0 0 / 0.4);
+  cursor: pointer;
+}
+.ex-lb-nav:hover {
+  background: rgb(0 0 0 / 0.6);
+}
+.ex-lb-nav:disabled {
+  opacity: 0.35;
+  cursor: default;
+}
+.ex-lb-nav:disabled:hover {
+  background: rgb(0 0 0 / 0.4);
+}
+.ex-lb-prev {
+  left: 12px;
+}
+.ex-lb-next {
+  right: 12px;
+}
+.ex-lb-caption {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  padding: 18px 20px calc(18px + env(safe-area-inset-bottom, 0px));
+  background: linear-gradient(rgb(0 0 0 / 0), rgb(0 0 0 / 0.6));
+  color: #fff;
+}
+.ex-lb-caption .ex-row-sub {
+  color: rgb(255 255 255 / 0.75);
+}
+
+/* Collapse control on the expanded player. Sits over the artwork's top-left
+   the way a real player's dismiss chevron does, with a 44px target. The
+   wrapper is what makes the offsets land on the artwork's own corner. */
+.ex-player-art {
+  position: relative;
+}
+.ex-player-collapse {
+  position: absolute;
+  top: 12px;
+  left: 12px;
+  z-index: 1;
+  width: 36px;
+  height: 36px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  border-radius: 999px;
+  background: rgb(0 0 0 / 0.45);
+  color: #fff;
+  cursor: pointer;
+}
+.ex-player-collapse::before {
+  content: "";
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 44px;
+  height: 44px;
+  transform: translate(-50%, -50%);
+}
+.ex-player-collapse svg {
+  width: 20px;
+  height: 20px;
+}
+
+/* Four-sides example: the variant row. */
+.ex-side-row {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.ex-side-row .ex-btn {
+  text-transform: capitalize;
+}
+
+/* Mobile: triggers and buttons drop to a tighter, native-feeling size. */
+@media (max-width: 719px) {
+  .ex-trigger,
+  .ex-btn {
+    padding: 8px 14px;
+    font-size: 0.88rem;
+  }
+}

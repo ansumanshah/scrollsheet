@@ -1,0 +1,34 @@
+---
+title: Tailwind
+description: Tailwind v4 utilities apply directly to Sheet.Content and Sheet.Handle, no plugin or config required.
+---
+
+import DocExample from '../../../../components/DocExample.astro';
+
+```tsx
+<Sheet.Content className="bg-white shadow-2xl dark:bg-zinc-900">
+  <Sheet.Handle className="bg-zinc-300 dark:bg-zinc-600" />
+</Sheet.Content>
+```
+
+Utilities apply directly: no plugin, no config, works with Tailwind v4 out of the box.
+
+<DocExample
+  name="snap-heights"
+  caption="Drag to the tallest of the three stops — that's the data-scrollsheet-at-max state the in-* variant below targets."
+/>
+
+Set the library's own variables with arbitrary properties, or in your stylesheet:
+
+```tsx
+<Sheet.Content className="[--scrollsheet-radius:24px] [--scrollsheet-backdrop:rgb(0_0_0/0.6)]" />
+```
+
+State attributes live on the `<dialog>` ancestor, so match them with v4's `in-*` variant:
+
+```tsx
+<Sheet.Content className="in-data-[scrollsheet-at-max]:rounded-none" />
+```
+
+The mechanics stylesheet only wins where it must (position, transform). Everything visual sits
+in zero-specificity `:where()` rules, so a Tailwind utility always overrides it.

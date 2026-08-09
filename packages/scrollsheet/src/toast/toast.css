@@ -1,0 +1,430 @@
+/*
+ * The toast layer's own card look. Its neutral names
+ * (.scrollsheet-toast*, data-scrollsheet-toaster, --scrollsheet-toast-*) are
+ * the only ones THIS stylesheet targets — a parallel sonner-* class,
+ * data-sonner-* attribute, and --sonner-* token fallback ride on every
+ * element too (see shell/toast-row.tsx and shell/toaster-shell.tsx), purely
+ * so a migrant's own existing `.sonner-toast {}` / `[data-sonner-*]` /
+ * `var(--sonner-gap)` CSS keeps matching — this file never needs to know
+ * that vocabulary exists. scripts/gen-css.ts minifies this into
+ * toast-css.generated.ts (the string the shim injects), mirroring
+ * src/internal/core.css's own pipeline. Scoped entirely under
+ * [data-scrollsheet-toaster]/.scrollsheet-* selectors so importing the toast
+ * layer can never restyle an unrelated Sheet.Root elsewhere in the same
+ * page.
+ *
+ * v1 renders the static light card real Sonner ships by default (its own
+ * `theme` prop defaults to 'light', not 'system' — an OS-dark-mode-tracking
+ * card would be a real behavior mismatch, not a compatible default). Forced
+ * dark/system theming is a v1.1 follow-up, not attempted here.
+ *
+ * No Sheet dependency: the Toaster shell portals a bare `<section>`/`<ol>`
+ * straight to `document.body` (see shell/toaster-shell.tsx) — nothing here
+ * shares a selector, a class, or a specificity fight with core.css or a
+ * Sheet.Root elsewhere on the page.
+ */
+
+/* Shared card chrome, reused by every .scrollsheet-toast regardless of
+   position or motion state — border/radius/fill/shadow only, no position or
+   transform baked in here (that's the per-toast positioning block below). */
+.scrollsheet-toast {
+  border: 1px solid rgb(0 0 0 / 0.08);
+  border-radius: 8px;
+  background: #fff;
+  box-shadow: 0 4px 12px rgb(0 0 0 / 0.1);
+}
+
+/* 16px padding, 13px text — Sonner's own default look (the shared card
+   chrome — radius, border, fill, shadow — is factored out above). */
+.scrollsheet-toast {
+  position: relative;
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 16px;
+  font-size: 13px;
+  color: #18181b;
+  font-family:
+    ui-sans-serif,
+    system-ui,
+    -apple-system,
+    "Segoe UI",
+    sans-serif;
+}
+.scrollsheet-toast[data-scrollsheet-custom] {
+  padding: 0;
+  border: none;
+  background: none;
+  box-shadow: none;
+}
+
+.scrollsheet-toast-icon {
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 18px;
+  height: 18px;
+  margin-top: 1px;
+  border-radius: 50%;
+  font-size: 11px;
+  line-height: 1;
+  color: #fff;
+  background: #6b7280;
+}
+.scrollsheet-toast-icon[data-type="success"] {
+  background: #22c55e;
+}
+.scrollsheet-toast-icon[data-type="error"] {
+  background: #ef4444;
+}
+.scrollsheet-toast-icon[data-type="warning"] {
+  background: #f59e0b;
+}
+.scrollsheet-toast-icon[data-type="info"] {
+  background: #3b82f6;
+}
+.scrollsheet-toast-icon[data-type="loading"] {
+  background: transparent;
+}
+.scrollsheet-toast-spinner {
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  border: 2px solid rgb(0 0 0 / 0.15);
+  border-top-color: rgb(0 0 0 / 0.55);
+  animation: scrollsheet-toast-spin 0.6s linear infinite;
+}
+@keyframes scrollsheet-toast-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .scrollsheet-toast-spinner {
+    animation-duration: 1.6s;
+  }
+}
+
+.scrollsheet-toast-body {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.scrollsheet-toast-title {
+  font-size: 13px;
+  font-weight: 500;
+  line-height: 1.35;
+}
+.scrollsheet-toast-description {
+  font-size: 13px;
+  line-height: 1.4;
+  color: rgb(0 0 0 / 0.6);
+}
+
+.scrollsheet-toast-actions {
+  flex: none;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.scrollsheet-toast-action,
+.scrollsheet-toast-cancel {
+  height: 24px;
+  padding: 0 8px;
+  border: none;
+  border-radius: 4px;
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+}
+.scrollsheet-toast-action {
+  color: #fff;
+  background: #18181b;
+}
+.scrollsheet-toast-cancel {
+  color: #18181b;
+  background: rgb(0 0 0 / 0.06);
+}
+.scrollsheet-toast-close {
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 20px;
+  height: 20px;
+  padding: 0;
+  border: none;
+  border-radius: 50%;
+  background: transparent;
+  color: rgb(0 0 0 / 0.5);
+  font-size: 14px;
+  line-height: 1;
+  cursor: pointer;
+}
+.scrollsheet-toast-close:hover {
+  background: rgb(0 0 0 / 0.06);
+}
+
+/*
+ * ── Positioning, stacking, and motion ──────────────────────────────────────
+ * The shell's own <section> (packages/scrollsheet/src/toast/shell/
+ * toaster-shell.tsx) carries data-react-aria-top-layer verbatim — real
+ * Sonner's own marker attribute, kept for react-aria consumers' own overlay
+ * bookkeeping — but nothing below keys off it; there's no coexisting DOM
+ * shape left to disambiguate from, so these selectors target
+ * [data-scrollsheet-toaster]/.scrollsheet-toast directly.
+ *
+ * Reuses .scrollsheet-toast/-icon/-body/-title/-description/-actions/
+ * -action/-cancel/-close/-spinner's existing look declarations verbatim
+ * (border/background/shadow/padding/font/colors, all defined above with no
+ * position/transform baked into them) — only the outer card's own position
+ * and motion state is added here, ported from real Sonner's own
+ * [data-sonner-toast] rules (~/code/references/sonner/src/styles.css) onto
+ * this file's neutral class name and un-prefixed attribute names
+ * (data-mounted, not data-sonner-mounted — see the port design notes on
+ * why).
+ */
+[data-scrollsheet-toaster] {
+  position: fixed;
+  z-index: 2147483647;
+  width: min(
+    356px,
+    calc(100vw - 2 * var(--scrollsheet-toast-offset, var(--sonner-offset, 24px)))
+  );
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  outline: none;
+  transition: transform 400ms ease;
+}
+[data-scrollsheet-toaster][data-x-position="right"] {
+  right: var(--scrollsheet-toast-offset, var(--sonner-offset, 24px));
+}
+[data-scrollsheet-toaster][data-x-position="left"] {
+  left: var(--scrollsheet-toast-offset, var(--sonner-offset, 24px));
+}
+[data-scrollsheet-toaster][data-x-position="center"] {
+  left: 50%;
+  transform: translateX(-50%);
+}
+[data-scrollsheet-toaster][data-y-position="top"] {
+  top: var(--scrollsheet-toast-offset, var(--sonner-offset, 24px));
+}
+[data-scrollsheet-toaster][data-y-position="bottom"] {
+  bottom: var(--scrollsheet-toast-offset, var(--sonner-offset, 24px));
+}
+
+/* Cumulative-height stacking, per row — --scrollsheet-toast-stack-offset/
+   -toasts-before/-front-height are written per row by ToastRow
+   (packages/scrollsheet/src/toast/shell/toast-row.tsx), sourced from
+   use-toast-heights.ts's per-row ResizeObserver, never a shared panel-height
+   concept the way the old Sheet.Content 'content' detent was.
+   --scrollsheet-toast-lift/-y are pure internal relay variables (which sign
+   convention this position uses, this state's resting transform) — never
+   set by a consumer, so unlike the tokens above they're a straight rename
+   with no sonner-name fallback to preserve. */
+/*
+ * touch-action:none (not the old horizontal-only path's pan-y) — the
+ * default swipeDirections table below enables BOTH axes for every corner
+ * position (top-left -> [top,left], etc.), only a *-center position is
+ * y-only, so the browser can't be handed ownership of either axis the way
+ * pan-y let it own vertical page scroll for the old, horizontal-only hook.
+ * Safe here specifically because a row is position:absolute inside a
+ * position:fixed overlay, never in-flow scrollable page content — there's
+ * no legitimate "drag this element to scroll the page" behavior to give up
+ * (real Sonner uses the same value, styles.css:88).
+ */
+.scrollsheet-toast {
+  --scrollsheet-toast-lift: -1;
+  --scrollsheet-toast-y: translateY(100%);
+  position: absolute;
+  left: 0;
+  right: 0;
+  opacity: 0;
+  transform: var(--scrollsheet-toast-y);
+  transition:
+    transform 250ms,
+    opacity 250ms,
+    height 250ms;
+  touch-action: none;
+  box-sizing: border-box;
+  overflow-wrap: anywhere;
+}
+.scrollsheet-toast[data-y-position="top"] {
+  top: 0;
+  --scrollsheet-toast-lift: 1;
+  --scrollsheet-toast-y: translateY(-100%);
+}
+.scrollsheet-toast[data-y-position="bottom"] {
+  bottom: 0;
+  --scrollsheet-toast-lift: -1;
+  --scrollsheet-toast-y: translateY(100%);
+}
+.scrollsheet-toast[data-mounted] {
+  --scrollsheet-toast-y: translateY(0);
+  opacity: 1;
+}
+/* Collapsed, non-front: real content stays in the DOM (hide-not-evicted —
+   no ghost placeholder) but its own chrome is hidden via opacity:0 below,
+   exactly matching real Sonner's own collapsed-card treatment — the visible
+   "recede" cue is the blank card shape enlarging/shifting, not its content. */
+.scrollsheet-toast[data-expanded="false"][data-front="false"] {
+  --scrollsheet-toast-y: translateY(
+      calc(
+        var(--scrollsheet-toast-lift) * var(--scrollsheet-toast-gap, var(--sonner-gap, 14px)) *
+          var(--scrollsheet-toast-toasts-before, var(--sonner-toasts-before, 0))
+      )
+    )
+    scale(
+      calc(
+        -1 *
+          (1 + var(--scrollsheet-toast-toasts-before, var(--sonner-toasts-before, 0)) * 0.05)
+      )
+    );
+  height: var(--scrollsheet-toast-front-height, var(--sonner-front-height, auto));
+  overflow: hidden;
+}
+.scrollsheet-toast[data-expanded="false"][data-front="false"] > * {
+  opacity: 0;
+}
+.scrollsheet-toast[data-mounted][data-expanded="true"] {
+  --scrollsheet-toast-y: translateY(
+    calc(var(--scrollsheet-toast-lift) * var(--scrollsheet-toast-stack-offset, var(--sonner-stack-offset, 0px)))
+  );
+  height: var(--scrollsheet-toast-initial-height, var(--sonner-initial-height, auto));
+}
+/* Hidden past visibleToasts — still mounted, still timing, just not this
+   frame's interactive slot (hide-not-evicted's whole point). */
+.scrollsheet-toast[data-visible="false"] {
+  opacity: 0;
+  pointer-events: none;
+}
+.scrollsheet-toast[data-removed] {
+  pointer-events: none;
+}
+.scrollsheet-toast[data-removed][data-front="true"] {
+  --scrollsheet-toast-y: translateY(calc(var(--scrollsheet-toast-lift) * -100%));
+  opacity: 0;
+}
+.scrollsheet-toast[data-removed][data-front="false"][data-expanded="true"] {
+  --scrollsheet-toast-y: translateY(
+    calc(
+      var(--scrollsheet-toast-lift) * var(--scrollsheet-toast-stack-offset, var(--sonner-stack-offset, 0px)) +
+        var(--scrollsheet-toast-lift) * -100%
+    )
+  );
+  opacity: 0;
+}
+.scrollsheet-toast[data-removed][data-front="false"][data-expanded="false"] {
+  --scrollsheet-toast-y: translateY(40%);
+  opacity: 0;
+}
+
+/*
+ * Swipe-to-dismiss: 2-axis, direction-locked, dampened against a disallowed
+ * direction — packages/scrollsheet/src/toast/shell/use-toast-swipe.ts writes
+ * --scrollsheet-toast-swipe-x/-y and the data-swiping/data-swiped/
+ * data-swipe-out/data-swipe-direction attributes directly (no React state
+ * per move), adapted from real Sonner's own
+ * [data-sonner-toast][data-swiping='true'] contract
+ * (~/code/references/sonner/src/styles.css:349-428) onto this shell's
+ * neutral token convention and unprefixed attribute names.
+ */
+.scrollsheet-toast[data-swiping="true"] {
+  transform: var(--scrollsheet-toast-y)
+    translateY(var(--scrollsheet-toast-swipe-y, var(--sonner-swipe-y, 0px)))
+    translateX(var(--scrollsheet-toast-swipe-x, var(--sonner-swipe-x, 0px)));
+  transition: none;
+}
+.scrollsheet-toast[data-swiped="true"] {
+  user-select: none;
+  -webkit-user-select: none;
+}
+/*
+ * Release past the threshold/velocity trigger. One parameterized keyframe
+ * handles all four directions via two independent sign variables, each 0
+ * unless its own axis is the one actually locked — a one-formula-both-
+ * directions simplification, extended to X and Y independently instead of
+ * real Sonner's four separately-named keyframes (styles.css:382-428).
+ */
+.scrollsheet-toast[data-swipe-out="true"] {
+  animation: scrollsheet-toast-swipe-out 200ms ease-out forwards;
+}
+.scrollsheet-toast[data-swipe-direction="left"] {
+  --scrollsheet-toast-swipe-out-x: -1;
+}
+.scrollsheet-toast[data-swipe-direction="right"] {
+  --scrollsheet-toast-swipe-out-x: 1;
+}
+.scrollsheet-toast[data-swipe-direction="up"] {
+  --scrollsheet-toast-swipe-out-y: -1;
+}
+.scrollsheet-toast[data-swipe-direction="down"] {
+  --scrollsheet-toast-swipe-out-y: 1;
+}
+@keyframes scrollsheet-toast-swipe-out {
+  from {
+    transform: var(--scrollsheet-toast-y)
+      translateY(var(--scrollsheet-toast-swipe-y, var(--sonner-swipe-y, 0px)))
+      translateX(var(--scrollsheet-toast-swipe-x, var(--sonner-swipe-x, 0px)));
+    opacity: 1;
+  }
+  to {
+    transform: var(--scrollsheet-toast-y)
+      translateY(
+        calc(
+          var(--scrollsheet-toast-swipe-y, var(--sonner-swipe-y, 0px)) +
+            var(--scrollsheet-toast-swipe-out-y, var(--sonner-swipe-out-y, 0)) * 100%
+        )
+      )
+      translateX(
+        calc(
+          var(--scrollsheet-toast-swipe-x, var(--sonner-swipe-x, 0px)) +
+            var(--scrollsheet-toast-swipe-out-x, var(--sonner-swipe-out-x, 0)) * 100%
+        )
+      );
+    opacity: 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  [data-scrollsheet-toaster],
+  .scrollsheet-toast {
+    transition: none !important;
+    animation: none !important;
+  }
+}
+
+/* Full-bleed breakpoint — CSS-only, no JS/matchMedia/ResizeObserver
+   listener. --scrollsheet-toast-mobile-offset (16px) is a separate token
+   from --scrollsheet-toast-offset (24px desktop), matching real Sonner's
+   own VIEWPORT_OFFSET/MOBILE_VIEWPORT_OFFSET split — "full-bleed" here means
+   card width tracks the viewport minus this gutter, not literal
+   edge-to-edge. */
+@media (max-width: 600px) {
+  [data-scrollsheet-toaster] {
+    right: var(--scrollsheet-toast-mobile-offset, var(--sonner-mobile-offset, 16px));
+    left: var(--scrollsheet-toast-mobile-offset, var(--sonner-mobile-offset, 16px));
+    width: 100%;
+  }
+  [data-scrollsheet-toaster] .scrollsheet-toast {
+    left: 0;
+    right: 0;
+    width: calc(100% - var(--scrollsheet-toast-mobile-offset, var(--sonner-mobile-offset, 16px)) * 2);
+  }
+  [data-scrollsheet-toaster][data-x-position="left"] {
+    left: var(--scrollsheet-toast-mobile-offset, var(--sonner-mobile-offset, 16px));
+  }
+  [data-scrollsheet-toaster][data-y-position="bottom"] {
+    bottom: var(--scrollsheet-toast-mobile-offset, var(--sonner-mobile-offset, 16px));
+  }
+  [data-scrollsheet-toaster][data-y-position="top"] {
+    top: var(--scrollsheet-toast-mobile-offset, var(--sonner-mobile-offset, 16px));
+  }
+  [data-scrollsheet-toaster][data-x-position="center"] {
+    left: var(--scrollsheet-toast-mobile-offset, var(--sonner-mobile-offset, 16px));
+    right: var(--scrollsheet-toast-mobile-offset, var(--sonner-mobile-offset, 16px));
+    transform: none;
+  }
+}

@@ -1,0 +1,19 @@
+{
+  "$schema": "https://ui.shadcn.com/schema/registry-item.json",
+  "name": "drawer",
+  "type": "registry:ui",
+  "title": "Drawer",
+  "description": "A shadcn/ui drawer built on scrollsheet instead of vaul. Same Drawer/DrawerTrigger/DrawerContent/DrawerTitle/DrawerDescription/DrawerClose API you already know, plus DrawerHandle, but backed by a native <dialog> and CSS scroll-snap instead of pointer-event gesture simulation. Zero runtime dependencies beyond scrollsheet itself.",
+  "author": "Ansuman Shah <https://github.com/ansumanshah>",
+  "dependencies": [
+    "scrollsheet"
+  ],
+  "files": [
+    {
+      "path": "registry/drawer/drawer.tsx",
+      "content": "\"use client\"\n\nimport * as React from \"react\"\nimport { Sheet, type DetentSpec } from \"scrollsheet\"\n\nimport { cn } from \"@/lib/utils\"\n\nfunction Drawer({ ...props }: React.ComponentProps<typeof Sheet.Root>) {\n  return <Sheet.Root data-slot=\"drawer\" {...props} />\n}\n\nfunction DrawerTrigger({\n  ...props\n}: React.ComponentProps<typeof Sheet.Trigger>) {\n  return <Sheet.Trigger data-slot=\"drawer-trigger\" {...props} />\n}\n\nfunction DrawerContent({\n  className,\n  children,\n  ...props\n}: React.ComponentProps<typeof Sheet.Content>) {\n  return (\n    <Sheet.Content\n      data-slot=\"drawer-content\"\n      className={cn(\"bg-background rounded-t-2xl shadow-lg\", className)}\n      {...props}\n    >\n      {children}\n    </Sheet.Content>\n  )\n}\n\nfunction DrawerHandle({\n  className,\n  ...props\n}: React.ComponentProps<typeof Sheet.Handle>) {\n  return (\n    <Sheet.Handle\n      data-slot=\"drawer-handle\"\n      className={cn(\"bg-muted mx-auto mt-4 h-2 w-[100px] shrink-0 rounded-full\", className)}\n      {...props}\n    />\n  )\n}\n\nfunction DrawerTitle({\n  className,\n  ...props\n}: React.ComponentProps<typeof Sheet.Title>) {\n  return (\n    <Sheet.Title\n      data-slot=\"drawer-title\"\n      className={cn(\"text-foreground px-4 pt-3 font-semibold\", className)}\n      {...props}\n    />\n  )\n}\n\nfunction DrawerDescription({\n  className,\n  ...props\n}: React.ComponentProps<typeof Sheet.Description>) {\n  return (\n    <Sheet.Description\n      data-slot=\"drawer-description\"\n      className={cn(\"text-muted-foreground px-4 text-sm\", className)}\n      {...props}\n    />\n  )\n}\n\nfunction DrawerClose({\n  className,\n  ...props\n}: React.ComponentProps<typeof Sheet.Close>) {\n  return (\n    <Sheet.Close\n      data-slot=\"drawer-close\"\n      className={cn(\n        \"text-foreground/70 hover:text-foreground absolute top-4 right-4 text-sm underline-offset-4 hover:underline\",\n        className\n      )}\n      {...props}\n    />\n  )\n}\n\nexport {\n  Drawer,\n  DrawerTrigger,\n  DrawerContent,\n  DrawerHandle,\n  DrawerTitle,\n  DrawerDescription,\n  DrawerClose,\n  type DetentSpec,\n}\n",
+      "type": "registry:ui",
+      "target": "components/ui/drawer.tsx"
+    }
+  ]
+}

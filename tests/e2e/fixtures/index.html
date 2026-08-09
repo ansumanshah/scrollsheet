@@ -1,0 +1,72 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    <title>scrollsheet e2e fixtures</title>
+    <style>
+      html,
+      body {
+        margin: 0;
+        font-family: system-ui, sans-serif;
+        background: #f3f3f3;
+      }
+      .page {
+        padding: 24px;
+        max-width: 480px;
+        margin: 0 auto;
+      }
+      .stack {
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+        margin-block: 16px;
+      }
+      .btn {
+        padding: 10px 16px;
+        border-radius: 10px;
+        border: 1px solid #ccc;
+        background: white;
+        font-size: 15px;
+      }
+      /* No .sheet background/border-radius override here, deliberately —
+         the library now ships its own default look (background, radius,
+         shadow, side-aware), and these fixtures exist partly to verify that
+         default renders correctly. A fixture-level override would shadow it
+         and make that untestable. */
+      .sheet-inner {
+        padding: 16px 20px 24px;
+      }
+      #page-scroll-area {
+        height: 80px;
+        overflow-y: auto;
+        border: 1px solid #ccc;
+        padding: 4px 8px;
+      }
+      .filler p {
+        color: #666;
+      }
+      /* This stylesheet parses before the library's own (lazily injected on
+         first sheet open) — the exact ordering the dock rule's :where() fix
+         depends on. Same recipe as examples/lightbox.tsx's .ex-lb-panel:
+         --scrollsheet-inset-bottom flips the sheet data-scrollsheet-detached
+         (centers it vertically for a single ['full'] detent), left/right/
+         width override the dock's right-docked drawer back to a centered
+         card. */
+      @media (min-width: 768px) {
+        .fixture-centered-panel {
+          --scrollsheet-inset-bottom: 24px;
+          left: 0;
+          right: 0;
+          width: auto;
+          max-width: 360px;
+          margin-inline: auto;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/main.js"></script>
+  </body>
+</html>

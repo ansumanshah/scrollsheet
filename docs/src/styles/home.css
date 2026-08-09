@@ -1,0 +1,838 @@
+/* ─────────────────────────────────────────────────────────────────────────
+   Homepage: hero, comparison table, examples gallery
+   ───────────────────────────────────────────────────────────────────────── */
+
+.hero {
+  padding-block: clamp(56px, 10vw, 108px) clamp(40px, 6vw, 72px);
+  display: grid;
+  gap: clamp(32px, 5vw, 56px);
+}
+
+/*
+ * Below the two-column breakpoint the hero is a single narrow column with
+ * the demo underneath it, so left-aligned text with a left-anchored install
+ * box reads as ragged against a centered phone. Centred through the whole
+ * column instead, install box included. The lede keeps its max-width, so
+ * `margin-inline: auto` is what actually centres it rather than text-align.
+ */
+@media (max-width: 979px) {
+  .hero {
+    text-align: center;
+  }
+  .hero-lede {
+    margin-inline: auto;
+  }
+  .hero-actions {
+    justify-content: center;
+  }
+  /* The tabs are left-anchored in the two-column layout; centre them with
+     everything else once the hero collapses to one centred column. */
+  .install-tabs {
+    align-self: center;
+  }
+}
+
+@media (min-width: 980px) {
+  .hero {
+    grid-template-columns: 1.05fr 0.95fr;
+    align-items: center;
+  }
+}
+
+.hero h1 {
+  font-size: clamp(2.6rem, 6.4vw, 4.4rem);
+  letter-spacing: -0.035em;
+  line-height: 1.03;
+  margin-bottom: 20px;
+}
+
+.hero h1 em {
+  font-style: normal;
+  color: var(--accent);
+}
+
+.hero-lede {
+  font-size: clamp(1.05rem, 1.6vw, 1.25rem);
+  color: var(--fg-muted);
+  max-width: 46ch;
+  margin-bottom: 28px;
+}
+
+.hero-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-bottom: 32px;
+}
+
+.hero-stage {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* ── Phone frame: the hero demo lives inside an iframe because the sheet
+   it shows is position:fixed in the top layer, which a plain div cannot
+   constrain. Hidden below 980px in favor of .hero-inline-demo. ────────── */
+
+/*
+ * The frame is the only skeuomorphic object on the page, so it earns its
+ * detail: a titanium-ish bezel gradient, a 1px specular edge, a recessed
+ * screen, and two shadows (a wide ambient one for the float, a tight dark
+ * one for contact). Everything is a gradient or a shadow, so there is no
+ * image to load and it reads correctly in both themes.
+ */
+.phone-frame {
+  display: none;
+  position: relative;
+  width: 300px;
+  height: 632px;
+  /* Inner radius is derived, never eyeballed: a concentric corner needs
+     screen radius = frame radius - rail width, or the two curves visibly
+     diverge along the diagonal. */
+  --rail: 12px;
+  --frame-radius: 52px;
+  padding: var(--rail);
+  border-radius: var(--frame-radius);
+  background: linear-gradient(160deg, #4a4750 0%, #26242b 26%, #1b1a1f 58%, #34323a 100%);
+  box-shadow:
+    /* specular highlight along the top edge of the rail */
+    inset 0 1px 0 rgb(255 255 255 / 0.28),
+    inset 0 -1px 0 rgb(255 255 255 / 0.08),
+    /* the rail's own thickness */
+    inset 0 0 0 1px rgb(0 0 0 / 0.55),
+    0 2px 6px rgb(0 0 0 / 0.28),
+    0 34px 68px -24px rgb(0 0 0 / 0.55);
+}
+
+/* Side buttons. Drawn on the rail itself so they catch the same light. */
+.phone-frame::before,
+.phone-frame::after {
+  content: "";
+  position: absolute;
+  width: 3px;
+  border-radius: 2px;
+  background: linear-gradient(180deg, #4c4953, #2a282f);
+  box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.2);
+}
+/* volume pair, left rail */
+.phone-frame::before {
+  left: -2px;
+  top: 132px;
+  height: 96px;
+}
+/* power, right rail */
+.phone-frame::after {
+  right: -2px;
+  top: 168px;
+  height: 74px;
+}
+
+/* Dynamic-island pill, floating inside the screen rather than cut out of
+   the bezel: that is what current hardware looks like, and a notch reads as
+   a 2019 phone. */
+.phone-frame-notch {
+  position: absolute;
+  top: 24px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 82px;
+  height: 24px;
+  background: #08080a;
+  border-radius: 999px;
+  z-index: 1;
+  pointer-events: none;
+  box-shadow: inset 0 0 0 1px rgb(255 255 255 / 0.06);
+}
+
+.phone-frame-iframe {
+  display: block;
+  width: 100%;
+  height: 100%;
+  border: 0;
+  border-radius: calc(var(--frame-radius) - var(--rail));
+  background: var(--bg-inset);
+  /* Recesses the screen into the rail. */
+  box-shadow: 0 0 0 1px rgb(0 0 0 / 0.85);
+}
+
+.hero-inline-demo {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 14px;
+}
+
+
+@media (min-width: 980px) {
+  .phone-frame {
+    display: block;
+  }
+  .hero-inline-demo {
+    display: none;
+  }
+  /*
+   * Right-align the phone to the container edge so it shares an alignment
+   * line with the header and the sections below. Centred in its own column
+   * it read as anchored to nothing. This has to sit after the base
+   * .hero-stage rule: same specificity, so source order decides.
+   */
+  .hero-stage {
+    justify-content: flex-end;
+  }
+}
+
+/* ── Hero demo sheet content: reused as-is inside the phone-frame iframe
+   (docs/src/pages/embed/hero.astro), which defines its own copy of
+   .demo-panel/.demo-panel-body so it has no dependency on this file. ──── */
+
+.demo-panel-list {
+  list-style: none;
+  margin: 4px 0 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 11px;
+}
+
+.demo-panel-list li {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 0.92rem;
+  color: var(--fg);
+}
+
+.demo-panel-list svg {
+  flex: none;
+  width: 16px;
+  height: 16px;
+  color: var(--accent);
+}
+
+/* ── Hero showcase, mounted inline below 980px (docs/src/components/
+   HeroShowcase.tsx via .hero-inline-demo above) ─────────────────────────
+   Same component as the desktop phone-frame iframe, same class names, but
+   a different container: this one is a plain card in normal document
+   flow, not a fixed-position mock screen filling an iframe's viewport, so
+   only the row list and the panel shape variants need styling here. The
+   base .demo-panel/.demo-panel-body look (background, radius, padding,
+   Sheet.Title/Description type) already comes from examples.css, loaded
+   site-wide — only the two shape modifiers below need to out-rank it. */
+
+.hs-app {
+  position: relative;
+  width: 100%;
+  max-width: 420px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  background: var(--bg-elevated);
+  box-shadow: var(--shadow-md);
+  padding: 18px 18px 6px;
+  text-align: left;
+}
+
+.hs-app-bar {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  margin: 0 2px 10px;
+}
+
+.hs-app-bar h1 {
+  font-size: 1.15rem;
+  letter-spacing: -0.02em;
+  margin: 0;
+}
+
+.hs-app-bar span {
+  font-size: 0.78rem;
+  color: var(--fg-faint);
+}
+
+.hs-row {
+  appearance: none;
+  border: 0;
+  background: none;
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 4px;
+  border-bottom: 1px solid var(--border);
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+  border-radius: 10px;
+}
+
+.hs-row:last-child {
+  border-bottom: 0;
+}
+
+.hs-row:hover {
+  background: var(--bg-inset);
+}
+
+.hs-thumb {
+  flex: none;
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  opacity: 0.9;
+}
+
+.hs-thumb--sheet {
+  background: linear-gradient(135deg, var(--accent), #a78bfa);
+}
+
+.hs-thumb--drawer {
+  background: linear-gradient(135deg, #f0a868, #e4735c);
+}
+
+.hs-thumb--dialog {
+  background: linear-gradient(135deg, #4fa89b, #2f6f6a);
+}
+
+.hs-thumb--nested {
+  background: linear-gradient(135deg, #6c8ff0, #3f5bd0);
+}
+
+.hs-thumb--toast {
+  background: linear-gradient(135deg, #d9a441, #b3762a);
+}
+
+.hs-row-text {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.hs-row-label {
+  font-size: 0.92rem;
+  font-weight: 550;
+}
+
+.hs-row-hint {
+  font-size: 0.76rem;
+  color: var(--fg-faint);
+}
+
+/* Close button for the bottom sheet and nested-sheet rows. */
+.hs-close {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  width: 28px;
+  height: 28px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 0;
+  border-radius: 999px;
+  background: var(--bg-inset);
+  color: var(--fg-muted);
+  cursor: pointer;
+}
+
+.hs-close svg {
+  width: 15px;
+  height: 15px;
+}
+
+.hs-actions {
+  display: flex;
+  gap: 8px;
+  margin-top: 18px;
+}
+
+.hs-btn {
+  flex: 1;
+  appearance: none;
+  border: 1px solid var(--border);
+  background: var(--bg-inset);
+  color: var(--fg);
+  font: inherit;
+  font-size: 0.88rem;
+  padding: 9px 12px;
+  border-radius: 10px;
+  cursor: pointer;
+}
+
+.hs-btn--danger {
+  background: var(--danger);
+  border-color: var(--danger);
+  color: #fff;
+}
+
+/* Drawer: no top-only rounding, it docks flush to the screen edge. */
+.demo-panel.demo-panel--side {
+  border-radius: 0;
+}
+
+.hs-drawer-header {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  padding: 4px 22px 0;
+}
+
+.hs-drawer-title {
+  margin: 0;
+  font-size: 1.15rem;
+}
+
+.hs-drawer-close {
+  flex: none;
+  width: 44px;
+  height: 44px;
+  margin: -10px 0 -10px -12px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 0;
+  border-radius: 999px;
+  background: none;
+  color: var(--fg-muted);
+  cursor: pointer;
+}
+
+.hs-drawer-close:hover {
+  background: var(--bg-inset);
+}
+
+.hs-drawer-close svg {
+  width: 18px;
+  height: 18px;
+}
+
+/*
+ * Dialog: a detached, all-corner-rounded card rather than a docked sheet.
+ * The frame's own iframe copy pulls this in from the bottom by 150px to
+ * center it inside a fixed 632px box — a fudge tuned for that box, wrong
+ * on a real device of unknown height. A modest, fixed inset reads as a
+ * floating card without needing to know the viewport size.
+ */
+.demo-panel.demo-panel--dialog {
+  border-radius: 16px;
+  --scrollsheet-inset-x: 20px;
+  --scrollsheet-inset-bottom: 20px;
+  padding-top: 0;
+}
+
+.demo-panel--dialog .demo-panel-body {
+  padding-top: 24px;
+}
+
+.hs-menu {
+  list-style: none;
+  margin: 6px 0 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.hs-menu li {
+  padding: 11px 2px;
+  font-size: 0.9rem;
+  border-bottom: 1px solid var(--border);
+}
+
+.hs-menu li:last-child {
+  border-bottom: 0;
+}
+
+/* Higher specificity than examples.css's own .demo-panel-body p, which
+   would otherwise win this element by document order alone. */
+.hs-note {
+  margin-top: 14px !important;
+  font-size: 0.76rem !important;
+  color: var(--fg-faint) !important;
+}
+
+.hs-share-targets {
+  display: flex;
+  gap: 10px;
+  margin: 18px 0 0;
+  overflow-x: auto;
+}
+
+.hs-share-target {
+  appearance: none;
+  border: 0;
+  background: none;
+  flex: none;
+  width: 64px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 0;
+  color: inherit;
+  font: inherit;
+  cursor: pointer;
+}
+
+.hs-share-icon {
+  width: 52px;
+  height: 52px;
+  border-radius: 999px;
+  background: var(--bg-inset);
+  color: var(--fg-muted);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.hs-share-icon svg {
+  width: 22px;
+  height: 22px;
+}
+
+.hs-share-target-label {
+  font-size: 0.72rem;
+  color: var(--fg-muted);
+  text-align: center;
+}
+
+.hs-link-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 16px;
+  padding: 10px 12px;
+  border-radius: 12px;
+  background: var(--bg-inset);
+}
+
+.hs-link-row svg {
+  flex: none;
+  width: 16px;
+  height: 16px;
+  color: var(--fg-muted);
+}
+
+.hs-link-url {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 0.85rem;
+}
+
+.hs-link-copy {
+  flex: none;
+  appearance: none;
+  border: 0;
+  background: var(--bg-elevated);
+  color: var(--accent);
+  font: inherit;
+  font-size: 0.8rem;
+  font-weight: 600;
+  padding: 6px 12px;
+  border-radius: 8px;
+  cursor: pointer;
+}
+
+.hs-link-row + .hs-btn {
+  margin-top: 18px;
+}
+
+/* ── Examples gallery grid ───────────────────────────────────────────── */
+
+.examples-grid {
+  display: grid;
+  gap: 22px;
+  grid-template-columns: 1fr;
+}
+
+@media (min-width: 860px) {
+  .examples-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+
+/* ── Comparison cards ────────────────────────────────────────────────── */
+
+.compare-cards {
+  display: grid;
+  gap: 14px;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+}
+
+.compare-card {
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  background: var(--bg-elevated);
+  padding: 18px 20px;
+}
+
+.compare-card-us {
+  border-color: var(--accent);
+  background: var(--accent-soft);
+}
+
+.compare-name {
+  font-weight: 700;
+  margin-bottom: 10px;
+}
+
+.compare-card-us .compare-name {
+  color: var(--accent);
+}
+
+.compare-card ul {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+  font-size: 0.92rem;
+  color: var(--fg-muted);
+}
+
+.compare-card li strong {
+  color: var(--fg);
+}
+
+.compare-card .yes {
+  color: #1a8f4c;
+  font-weight: 700;
+}
+@media (prefers-color-scheme: dark) {
+  .compare-card .yes { color: #5fd694; }
+}
+.compare-card .no {
+  color: var(--fg-faint);
+  font-weight: 700;
+}
+
+/* ── Comparison table ────────────────────────────────────────────────────
+ * Mobile first: each ROW becomes its own card, dimension as the heading and
+ * one line per library (the library name comes from each cell data-lib via
+ * ::before). That keeps a single dimension comparable on a phone without a
+ * horizontal scroll. From 760px up it becomes a real table.
+ */
+.compare-scroll {
+  container-type: inline-size;
+}
+/* ── Platform support grid ──────────────────────────────────────────────── */
+
+.platform-grid {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 10px;
+  grid-template-columns: repeat(auto-fit, minmax(248px, 1fr));
+}
+
+/* Column layout so the fallback band lands on the card's bottom edge in
+   every card, and a row of them can be read straight across. */
+.platform-card {
+  display: flex;
+  flex-direction: column;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  background: var(--bg-elevated);
+  padding: 16px 18px;
+}
+
+.platform-card code {
+  font-family: var(--font-mono);
+  font-size: 0.86rem;
+  color: var(--fg);
+}
+
+.platform-card p {
+  margin: 0;
+}
+
+.platform-card__use {
+  margin-top: 8px !important;
+  font-size: 0.88rem;
+  color: var(--fg);
+}
+
+/* The date is the answer to "can I ship this", so it reads before the
+   version numbers rather than after them. */
+.platform-card__since {
+  margin-top: 8px !important;
+  /* align-self, not display:inline-block: the card is a flex column, so a
+     block-level chip would stretch to the full card width. */
+  align-self: flex-start;
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: var(--bg-inset);
+  font-size: 0.75rem;
+  font-variant-numeric: tabular-nums;
+  color: var(--fg-muted);
+}
+
+.platform-card__versions {
+  margin-top: 6px !important;
+  /* Takes up the slack, so the fallback band below it stays bottom-aligned
+     without giving up its own 12px gap. */
+  margin-bottom: auto;
+  font-size: 0.79rem;
+  color: var(--fg-faint);
+}
+
+/* The fallback is the line people are actually deciding on, so it gets its
+   own band rather than trailing the versions as a third grey paragraph. */
+.platform-card__without {
+  margin-top: 12px !important;
+  padding-top: 10px;
+  border-top: 1px solid var(--border);
+  font-size: 0.82rem;
+  color: var(--fg-muted);
+}
+
+.platform-card__without span {
+  display: block;
+  font-size: 0.7rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--fg-faint);
+  margin-bottom: 2px;
+}
+
+.compare-table {
+  width: 100%;
+  border-collapse: collapse;
+  text-align: left;
+}
+.compare-table thead {
+  display: none;
+}
+.compare-table tr {
+  display: block;
+  padding: 14px 16px;
+  margin-bottom: 10px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  background: var(--bg-elevated);
+}
+.compare-table th[scope=row] {
+  display: block;
+  margin-bottom: 8px;
+  font-size: 14px;
+  font-weight: 600;
+}
+.compare-note {
+  display: block;
+  margin-top: 3px;
+  font-size: 12.5px;
+  font-weight: 400;
+  line-height: 1.45;
+  color: var(--muted);
+}
+.compare-table td {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 4px 0;
+  font-size: 13.5px;
+  color: var(--muted);
+}
+.compare-table td::before {
+  content: attr(data-lib);
+  flex: none;
+  color: var(--fg);
+  opacity: 0.62;
+}
+.compare-table td.compare-col-us {
+  color: var(--fg);
+  font-weight: 600;
+}
+.compare-table td.compare-col-us::before {
+  opacity: 1;
+  font-weight: 600;
+}
+.compare-table td.is-best {
+  color: var(--accent);
+}
+/* Where a competitor genuinely wins. Marked, not hidden. */
+.compare-table td.is-win {
+  color: var(--fg);
+}
+
+@container (min-width: 760px) {
+  /* Fixed layout: the first header cell's width sets the label column and
+     the vendor columns split the rest evenly — auto layout was squeezing
+     the labels to content width and letting the vendors sprawl. */
+  .compare-table {
+    table-layout: fixed;
+  }
+  .compare-table thead {
+    display: table-header-group;
+  }
+  .compare-table thead th:first-child {
+    width: 26%;
+  }
+  .compare-table tr {
+    display: table-row;
+    padding: 0;
+    margin: 0;
+    border: none;
+    border-radius: 0;
+    background: none;
+    border-bottom: 1px solid var(--border);
+  }
+  .compare-table th,
+  .compare-table td {
+    display: table-cell;
+    padding: 13px 14px;
+    vertical-align: top;
+  }
+  .compare-table td::before {
+    content: none;
+  }
+  /* Centre the answers under their vendor heading. The row label stays
+     left-aligned: it is prose, and ragging it centre would break the
+     left edge the reader scans down. */
+  .compare-table thead th:not(:first-child),
+  .compare-table td {
+    text-align: center;
+  }
+  .compare-table thead th {
+    font-size: 13px;
+    font-weight: 600;
+    border-bottom: 1px solid var(--border);
+  }
+  /* Must out-rank the mobile card rule's `.compare-table th[scope=row]
+     { display: block }` (0,2,1) — a bare `.compare-table th` (0,1,1)
+     silently loses and the row header collapses into an anonymous cell. */
+  .compare-table th[scope="row"] {
+    display: table-cell;
+    margin: 0;
+  }
+  .compare-table th[scope="row"] .compare-note {
+    font-size: 12px;
+    line-height: 1.4;
+  }
+  /* One tinted column so the eye lands on it without a shouty treatment. */
+  .compare-table .compare-col-us {
+    background: color-mix(in srgb, var(--accent) 7%, transparent);
+  }
+  .compare-table thead .compare-col-us {
+    border-radius: var(--radius-md) var(--radius-md) 0 0;
+  }
+}
+
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
