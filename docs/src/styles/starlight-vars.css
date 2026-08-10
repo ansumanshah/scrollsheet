@@ -65,6 +65,8 @@
   --sl-nav-height: 65px;
   --sl-nav-pad-y: 0px;
   --sl-nav-pad-x: var(--gutter);
+  /* Same square as .theme-toggle, so the button centers on the icon row. */
+  --sl-menu-button-size: 34px;
 }
 
 :root[data-theme="light"] {

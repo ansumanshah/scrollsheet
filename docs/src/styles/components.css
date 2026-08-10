@@ -109,6 +109,27 @@
   background: var(--bg-inset);
 }
 
+/* Starlight's mobile menu button ships as a white shadowed circle; restyle
+   it to read as one of this header's flat icon buttons. Its own rules live
+   in @layer starlight.core, so these unlayered ones win at any specificity. */
+starlight-menu-button button {
+  background: none;
+  color: var(--fg-muted);
+  box-shadow: none;
+  border-radius: var(--radius-sm);
+  padding: 8px;
+  transition: color 140ms var(--ease-out), background 140ms var(--ease-out);
+}
+starlight-menu-button button:hover {
+  color: var(--fg);
+  background: var(--bg-inset);
+}
+starlight-menu-button[aria-expanded="true"] button {
+  color: var(--fg);
+  background: var(--bg-inset);
+  box-shadow: none;
+}
+
 .theme-toggle svg {
   width: 18px;
   height: 18px;
