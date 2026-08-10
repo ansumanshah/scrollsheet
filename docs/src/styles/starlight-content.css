@@ -83,10 +83,8 @@
 }
 
 .sidebar-content .group-label {
-  font-size: 0.8rem;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
+  font-size: 0.82rem;
+  font-weight: 650;
   color: var(--fg-faint);
 }
 

@@ -6,6 +6,8 @@ description: Add scrollsheet with bun, npm, pnpm, or yarn, or pull individual pa
 import { Tabs, TabItem, FileTree, LinkCard, CardGrid } from '@astrojs/starlight/components';
 import DocExample from '../../../../components/DocExample.astro';
 
+## Install
+
 <Tabs syncKey="pm">
   <TabItem label="bun">
     ```sh
@@ -28,6 +30,8 @@ import DocExample from '../../../../components/DocExample.astro';
     ```
   </TabItem>
 </Tabs>
+
+## Import
 
 Then import the component and the stylesheet, once per app:
 
@@ -54,6 +58,7 @@ Every primitive and pattern also ships as a registry item, installable with the 
 ```sh
 bunx shadcn@latest add https://scrollsheet.dev/r/drawer.json
 bunx shadcn@latest add https://scrollsheet.dev/r/sheet.json
+bunx shadcn@latest add https://scrollsheet.dev/r/dialog.json
 bunx shadcn@latest add https://scrollsheet.dev/r/confirm.json
 bunx shadcn@latest add https://scrollsheet.dev/r/share-sheet.json
 bunx shadcn@latest add https://scrollsheet.dev/r/sidebar.json
@@ -63,15 +68,17 @@ bunx shadcn@latest add https://scrollsheet.dev/r/toast.json
 Or pull the same files straight off GitHub: swap `https://scrollsheet.dev/r/` for
 `https://raw.githubusercontent.com/ansumanshah/scrollsheet/main/registry/`.
 
-Each writes one file into `components/ui/`: `drawer.tsx`, `sheet.tsx`, `confirm.tsx`,
-`share-sheet.tsx`, `sidebar.tsx`, `toast.tsx`. `confirm` and `share-sheet` build on `drawer`;
-`sidebar` builds on `sheet`; the CLI pulls those in automatically.
+Each writes one file into `components/ui/`: `drawer.tsx`, `sheet.tsx`, `dialog.tsx`,
+`confirm.tsx`, `share-sheet.tsx`, `sidebar.tsx`, `toast.tsx`. `confirm` and `share-sheet`
+build on `drawer`; `sidebar` builds on `sheet`; the CLI pulls those in automatically.
+What each one gives you: [Recipes](/docs/recipes).
 
 <FileTree>
 - components/
   - ui/
     - drawer.tsx
     - sheet.tsx
+    - dialog.tsx
     - confirm.tsx
     - share-sheet.tsx
     - sidebar.tsx

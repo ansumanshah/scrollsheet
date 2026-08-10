@@ -5,6 +5,8 @@ description: dialog and spring easing reach about 96% of browsers; the remaining
 
 import { Aside, LinkCard } from '@astrojs/starlight/components';
 
+## Support by browser
+
 <div className="table-scroll">
 
 | Browser | Spring easing | Compositor-driven backdrop dim + `--scrollsheet-progress` |
@@ -14,6 +16,8 @@ import { Aside, LinkCard } from '@astrojs/starlight/components';
 | Firefox | 112+ | behind a flag, see below |
 
 </div>
+
+## Caveats
 
 <Aside type="caution" title="Below the version floor">
   Safari 16.4–17.1 parses `<dialog>` but not CSS `linear()`, so the spring falls back to a plain

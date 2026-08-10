@@ -13,11 +13,13 @@ import DocExample from '../../../../components/DocExample.astro';
 
 Drop-in: same `toast`, `useSonner`, `Toaster` exports, running on the same architecture real
 Sonner uses: a persistent card per toast, all portaled through one shared `<section>` in
-`document.body`, positioned with CSS instead of stacked inside a shared sheet panel. Every
-method (`toast()`, `.success()`,
-`.error()`, `.info()`, `.warning()`, `.loading()`, `.message()`, `.custom(jsx)`, `.promise()`,
-`.dismiss(id?)`) works before or after a `<Toaster>` mounts, backed by one shared
-module-level queue.
+`document.body`, positioned with CSS instead of stacked inside a shared sheet panel.
+
+Every method (`toast()`, `.success()`, `.error()`, `.info()`, `.warning()`, `.loading()`,
+`.message()`, `.custom(jsx)`, `.promise()`, `.dismiss(id?)`) works before or after a
+`<Toaster>` mounts, backed by one shared module-level queue.
+
+## CSS compatibility
 
 <Aside type="tip" title="Both names land on every element">
 `useSonner` is the same function as `useToasts` (the rest of these docs teach the latter); pick
@@ -28,6 +30,8 @@ whichever reads better in your codebase. On the DOM side, every class and `data-
 `.sonner-toast {}` / `[data-sonner-*]` CSS needs to change. That's the right default for a
 migration; leave `sonnerCompat` alone and keep your Sonner CSS as-is.
 </Aside>
+
+## What maps 1:1
 
 <DocExample
   name="toast"
@@ -53,10 +57,14 @@ migration; leave `sonnerCompat` alone and keep your Sonner CSS as-is.
 
 </div>
 
+## Swipe and motion
+
 Swipe-to-dismiss tracks both axes: drag past 45px or flick it fast enough and it dismisses,
 release short of that and it springs back. Enter/exit, the stack's expand/collapse, and the
 swipe itself are all CSS transitions, not a JS animation loop; `prefers-reduced-motion: reduce`
 zeroes all of them, the same contract the core primitive keeps everywhere else.
+
+## What changes
 
 <Aside type="caution" title="v1 gaps">
 <div className="table-scroll prop-table">
@@ -72,12 +80,15 @@ zeroes all of them, the same contract the core primitive keeps everywhere else.
 </div>
 </Aside>
 
+## Styles setup
+
 Sonner injects its styles automatically; scrollsheet's default entry expects two imports next
-to the `Toaster` instead: `scrollsheet/styles.css` and `scrollsheet/toast.css`. For sonner's
-zero-setup behavior, import `toast` and `Toaster` from `scrollsheet/auto`: embedded styles,
-injected on first render. The `auto` entry is also the right one for design systems whose CSS
-pipeline statically compiles custom properties away (postcss-css-variables and similar); that
-compilation destroys the runtime variables the stylesheets' geometry runs on.
+to the `Toaster` instead: `scrollsheet/styles.css` and `scrollsheet/toast.css`.
+
+For sonner's zero-setup behavior, import `toast` and `Toaster` from `scrollsheet/auto`:
+embedded styles, injected on first render. The `auto` entry is also the right one for design
+systems whose CSS pipeline statically compiles custom properties away (postcss-css-variables
+and similar); that compilation destroys the runtime variables the stylesheets' geometry runs on.
 
 <LinkCard
   title="Migrate from vaul"

@@ -18,17 +18,23 @@ Utilities apply directly: no plugin, no config, works with Tailwind v4 out of th
   caption="Drag to the tallest of the three stops; that's the data-scrollsheet-at-max state the in-* variant below targets."
 />
 
+## Custom properties
+
 Set the library's own variables with arbitrary properties, or in your stylesheet:
 
 ```tsx
 <Sheet.Content className="[--scrollsheet-radius:24px] [--scrollsheet-backdrop:rgb(0_0_0/0.6)]" />
 ```
 
+## State variants
+
 State attributes live on the `<dialog>` ancestor, so match them with v4's `in-*` variant:
 
 ```tsx
 <Sheet.Content className="in-data-[scrollsheet-at-max]:rounded-none" />
 ```
+
+## Specificity
 
 The mechanics stylesheet only wins where it must (position, transform). Everything visual sits
 in zero-specificity `:where()` rules, so a Tailwind utility always overrides it.

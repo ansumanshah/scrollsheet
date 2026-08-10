@@ -1,0 +1,52 @@
+---
+title: Recipes
+description: 'Seven installable patterns via the shadcn CLI: drawer, sheet, dialog, toast, confirm, share sheet, and sidebar, each one file in components/ui/ wrapping the primitives.'
+---
+
+Every recipe is a shadcn registry item. One command writes one file into `components/ui/`
+with shadcn's default styling applied, wrapping the same primitives the rest of these docs
+document. It's your file after that: restyle it, cut what you don't need.
+
+```sh
+bunx shadcn@latest add https://scrollsheet.dev/r/drawer.json
+```
+
+Swap `drawer.json` for any item below.
+
+## drawer
+
+The shadcn/ui drawer API you already know, backed by scrollsheet instead of vaul:
+`Drawer`, `DrawerTrigger`, `DrawerContent`, `DrawerTitle`, `DrawerDescription`,
+`DrawerClose`, plus `DrawerHandle`. Same JSX, but the element is a native `<dialog>` and
+the gesture is CSS scroll-snap.
+
+## sheet
+
+The shadcn/ui sheet (side panel), same `Sheet`/`SheetTrigger`/`SheetContent`/`SheetHeader`/
+`SheetFooter` API, with drag-to-dismiss on every edge. One difference: `side` lives on
+`<Sheet>` (the root), not on `SheetContent`.
+
+## dialog
+
+The shadcn/ui dialog API on scrollsheet's centered presentation: zoom and fade, no travel,
+no detents, a native `<dialog>` in the top layer instead of Radix.
+
+## toast
+
+The built-in toast system as a mount-once `Toaster`: per-toast DOM, six positions,
+stacking, swipe to dismiss, Sonner-compatible API.
+
+## confirm
+
+A destructive-action confirmation drawer. `dismissible={false}` and `disableDrag` block
+swipe, backdrop tap, and Esc, so only its own two buttons can close it.
+
+## share-sheet
+
+A share drawer with an avatar row for recent contacts and a grid of share targets. Both
+are plain buttons you wire up yourself.
+
+## sidebar
+
+A left-anchored navigation drawer with a fixed 300px detent: grouped nav sections plus a
+sign-out row, styled as a sidebar instead of a bottom sheet.

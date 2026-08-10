@@ -9,18 +9,26 @@ import DocExample from '../../../../components/DocExample.astro';
 button, a, input, textarea, select, label, [contenteditable], [data-scrollsheet-no-drag]
 ```
 
+## Mouse drag
+
 `pointerType: 'mouse'` can grab the panel anywhere and drag it; the last ~100ms of pointer
 samples project velocity on release, so a flick lands past the cursor. Touch and pen skip this
-path and keep riding native `scroll-snap`. The elements above opt out automatically; add
-`data-scrollsheet-no-drag` to anything else that needs the same treatment.
+path and keep riding native `scroll-snap`.
+
+The elements above opt out automatically; add `data-scrollsheet-no-drag` to anything else that
+needs the same treatment.
+
+## Trackpad and wheel input
 
 Trackpad and wheel input ride native `scroll-snap` too, not this drag path, but a single-detent
 sheet only has two snap stops (0 and the one detent), so an ambiguous wheel gesture used to land
 wherever the browser's own snap heuristic put it, ignoring `closeThreshold`. A short wheel-idle
 correction pass now compares the gesture against `closeThreshold` once it settles and only
 overrides when the two disagree, so `closeThreshold` governs a wheel dismissal the same way it
-governs a drag. Multi-detent sheets need no correction: enough stops between them for native
-snap to land correctly on its own.
+governs a drag.
+
+Multi-detent sheets need no correction: enough stops between them for native snap to land
+correctly on its own.
 
 <DocExample
   name="snap-heights"

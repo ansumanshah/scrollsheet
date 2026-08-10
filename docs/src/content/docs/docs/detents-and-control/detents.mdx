@@ -15,13 +15,20 @@ type DetentSpec = 'full' | 'medium' | 'content' | number | `${number}px`;
 />
 ```
 
+## Detent vocabulary
+
 A detent is a resting height, resolved to a scroll-snap stop. `'content'` measures natural
 height, `'medium'` is 50% of viewport, and `'full'` is viewport minus a top inset. Any other
-number is a fraction, or pixels above 1. `onTravel(px, progress, info)` fires every frame the
-sheet moves, also published as `--scrollsheet-progress`. The third argument carries `range`
-(`[0, maxDetent]`, px) and `progressAtDetents`, a `Map` from each detent's resolved px height to
-its own 0-1 progress, for driving something off a specific detent instead of only the nearest
-one. It's reused and mutated in place every frame, not allocated fresh: read it synchronously,
+number is a fraction, or pixels above 1.
+
+## Tracking travel
+
+`onTravel(px, progress, info)` fires every frame the sheet moves, also published as
+`--scrollsheet-progress`. The third argument carries `range` (`[0, maxDetent]`, px) and
+`progressAtDetents`, a `Map` from each detent's resolved px height to its own 0-1 progress, for
+driving something off a specific detent instead of only the nearest one.
+
+It's reused and mutated in place every frame, not allocated fresh: read it synchronously,
 don't hold onto the reference.
 
 <DocExample

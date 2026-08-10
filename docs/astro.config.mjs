@@ -114,6 +114,7 @@ export default defineConfig({
           label: "Getting started",
           items: [{ slug: "docs/getting-started/install" }, { slug: "docs/getting-started/anatomy" }],
         },
+        { slug: "docs/recipes" },
         {
           label: "Styling",
           items: [{ slug: "docs/styling/css" }, { slug: "docs/styling/tailwind" }],
@@ -147,7 +148,9 @@ export default defineConfig({
           ],
         },
         { slug: "docs/toasts" },
-        { slug: "docs/motion" },
+        // Sidebar-width label; the page keeps its full "Using scrollsheet
+        // with Motion" title, which disambiguates from the motion core.
+        { slug: "docs/motion", label: "Motion interop" },
         {
           label: "Migrating",
           items: [

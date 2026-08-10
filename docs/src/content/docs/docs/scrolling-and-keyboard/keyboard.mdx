@@ -12,16 +12,25 @@ import DocExample from '../../../../components/DocExample.astro';
 </Sheet.Content>
 ```
 
+## The keyboard inset
+
 iOS resizes `visualViewport`, not the layout viewport, when the keyboard opens. scrollsheet
-listens to it and writes the inset to `--scrollsheet-keyboard`, no prop required. The panel
-overdraws about 120vh past its bottom edge, so a stale frame never shows a gap while the
-keyboard pushes the content up.
+listens to it and writes the inset to `--scrollsheet-keyboard`, no prop required.
+
+The panel overdraws about 120vh past its bottom edge, so a stale frame never shows a gap while
+the keyboard pushes the content up.
+
+## Promoting to a taller detent
 
 A sheet resting at a short peek detent has no room to show a field the keyboard covers, so
 `keyboardExpands` on `Sheet.Root` promotes to the tallest detent the moment the keyboard
 actually appears, and restores the peek detent when it closes, unless a drag or a controlled
-change moved the sheet in between. The gate is a measured nonzero inset, never focus alone: a
-desktop click into an input expands nothing.
+change moved the sheet in between.
+
+The gate is a measured nonzero inset, never focus alone: a desktop click into an input expands
+nothing.
+
+## Keyboard clearance on side sheets
 
 Top, left, and right sheets are pinned to their edge, so the panel itself never moves for the
 keyboard. Their content still can, though: the same inset becomes bottom clearance on
@@ -46,9 +55,13 @@ independently scrolling list needs no CSS chain of your own:
 ```
 
 The list then sizes to whatever the sheet has left, including when the keyboard caps the panel
-at the visual viewport. `fill` is off by default because it changes how the `content` detent
-measures: with it on, the detent and content-morph both read the content's natural size across
-all of the body's children (margins included) instead of the body's own stretched box.
+at the visual viewport.
+
+`fill` is off by default because it changes how the `content` detent measures: with it on, the
+detent and content-morph both read the content's natural size across all of the body's children
+(margins included) instead of the body's own stretched box.
+
+## Without the fill prop
 
 Doing it by hand instead, same result:
 

@@ -21,12 +21,18 @@ import 'scrollsheet/styles.css';
 </Sheet.Root>
 ```
 
+## Stylesheet import
+
 The stylesheet import is once per app, same as vaul's `style.css`. Bundler can't handle CSS
 imports? Use `scrollsheet/auto`; see [Styling](/docs/styling/css).
+
+## Client-only
 
 `Sheet.*` is client-only: state, event handlers, real DOM. In Next.js App Router, add
 `'use client'` to the file that renders it; see [Framework support](/docs/advanced/framework-support)
 for what breaks if you don't.
+
+## The pieces
 
 `Sheet.Root` owns state and renders nothing itself. `Sheet.Trigger` opens it on click; skip it and
 drive `open`/`onOpenChange` yourself for a fully controlled sheet. `Sheet.Content` is the

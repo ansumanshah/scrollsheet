@@ -5,6 +5,8 @@ description: injectStylesInto adopts the core stylesheet into a shadow root, sin
 
 import { Aside, LinkCard } from '@astrojs/starlight/components';
 
+## Injecting into a shadow root
+
 Shadow DOM needs the `scrollsheet/auto` entry: it carries the stylesheet the injectors adopt.
 The default entry ships no embedded CSS, so its `injectStylesInto` has nothing to inject and
 does nothing. Import everything from `scrollsheet/auto` and call `injectStylesInto` once per
@@ -16,13 +18,19 @@ import { Sheet, injectStylesInto } from 'scrollsheet/auto';
 injectStylesInto(shadowRoot);
 ```
 
+## How it works
+
 It adopts the core stylesheet into the root via `adoptedStyleSheets`, so a trigger and its
 surrounding markup living behind shadow encapsulation get properly scoped styles instead of
-reaching across the boundary for `document.head`'s tag. On an engine with no constructable
-stylesheets (Safari < 16.4) it falls back to a `<style>` tag appended inside the root itself,
-still scoped, just not adopted. The `<dialog>` itself still portals to `document.body` regardless:
-this only scopes the trigger/surrounding markup's stylesheet, not where the sheet renders, since a
-top-layer dialog is structurally a document-level thing.
+reaching across the boundary for `document.head`'s tag.
+
+On an engine with no constructable stylesheets (Safari < 16.4) it falls back to a `<style>` tag
+appended inside the root itself, still scoped, just not adopted. The `<dialog>` itself still
+portals to `document.body` regardless: this only scopes the trigger/surrounding markup's
+stylesheet, not where the sheet renders, since a top-layer dialog is structurally a document-level
+thing.
+
+## Toast styles
 
 `injectToastStylesInto` is a sibling export for the toast stylesheet, not folded into
 `injectStylesInto`: it targets separate CSS that a core-only consumer's bundle tree-shakes away

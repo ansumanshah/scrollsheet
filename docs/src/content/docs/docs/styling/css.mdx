@@ -1,5 +1,5 @@
 ---
-title: Styling
+title: CSS
 description: scrollsheet ships mechanics only; style the panel with a plain className like any other card.
 ---
 
@@ -44,9 +44,10 @@ you would bundle every component twice.
 Every number above is measured on a production build. Dev-only warning strings sit behind a
 development/production export condition, the same one Vite, webpack 5+, and Next.js all set
 automatically, so they never reach a production bundle. A bundler that doesn't set that condition
-just serves the production build in dev too: no warnings, nothing broken. `themeColorDimming`
-goes further: its controller loads from a separate, lazily-fetched chunk, so an app that never
-sets the prop never ships it.
+just serves the production build in dev too: no warnings, nothing broken.
+
+`themeColorDimming` goes further: its controller loads from a separate, lazily-fetched chunk, so
+an app that never sets the prop never ships it.
 
 <Aside type="tip">
   For CSP with the `auto` entry, pass `nonce` to `Sheet.Root`. Shadow DOM injection
@@ -69,6 +70,8 @@ you'd style any card:
   border-radius: 12px;
 }
 ```
+
+## Sonner compatibility
 
 Arrived with an existing Sonner integration? Its `import { toast, Toaster } from 'scrollsheet'`
 compat layer also stamps the matching `sonner-*` class and `data-sonner-*` attribute on every

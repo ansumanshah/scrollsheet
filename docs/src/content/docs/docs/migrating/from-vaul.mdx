@@ -21,6 +21,8 @@ separate `NestedRoot`.
   caption="Open the drawer and click through its sections. Same Drawer.* import, same markup."
 />
 
+## What maps 1:1
+
 <div className="table-scroll prop-table">
 
 | vaul API | Maps to |
@@ -38,12 +40,16 @@ Scrollsheet-native props with no vaul counterpart (`backdropDismissible`, `escap
 `keyboardExpands`, `onTravel`, `scrollbar`, `actionsRef`) forward through `Drawer.Root`
 untranslated, so one native feature never forces a full conversion to `Sheet.*`.
 
+## Width
+
 <Aside type="caution" title="Side sheets size from detents, not CSS">
   With `direction="left"` or `"right"`, the panel's width is the detent
   (`width: var(--scrollsheet-max-detent)` in the stylesheet). A `width: 360px` in your own CSS
   silently loses, and with no snap points the panel sizes to its content. Map fixed widths to
   snap points: `snapPoints={['360px']}` for a fixed panel, `snapPoints={[1]}` for full-bleed.
 </Aside>
+
+## What changes
 
 <Aside type="caution" title="One deliberate accuracy divergence">
   `onRelease`'s second argument is the real open/closed outcome here (`true` only when the sheet

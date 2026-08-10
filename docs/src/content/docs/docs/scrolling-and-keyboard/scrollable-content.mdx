@@ -14,17 +14,25 @@ import DocExample from '../../../../components/DocExample.astro';
 </Sheet.Content>
 ```
 
+## Marking a nested scroller
+
 Mark an inner scroller with `data-scrollsheet-nested-scroll` and the classic conflict resolves
 itself: swiping scrolls the list, and once the list hits its top, the same swipe continues as
-sheet travel. Works under `handleOnly` and `disableDrag` too; the handoff only widens the drag
-surface while a touch that started inside the marked element is live. Any number of elements can
-carry the attribute, including ones added or removed while the sheet is open.
+sheet travel.
+
+Works under `handleOnly` and `disableDrag` too; the handoff only widens the drag surface while a
+touch that started inside the marked element is live. Any number of elements can carry the
+attribute, including ones added or removed while the sheet is open.
+
+## Scrollbar styling
 
 The marked element gets the panel's own overlay scrollbar treatment too, controlled by the same
 `scrollbar` prop on `Sheet.Root`: `'overlay'` (the default) hides the native scrollbar and shows a
-thin auto-hiding thumb, `'hidden'` hides it with no thumb, `'native'` leaves it alone. Under
-`'overlay'`, scrollsheet sets `position: relative` on the marked element to anchor the thumb;
-overriding it back to `static` breaks the thumb. The other two modes leave `position` alone.
+thin auto-hiding thumb, `'hidden'` hides it with no thumb, `'native'` leaves it alone.
+
+Under `'overlay'`, scrollsheet sets `position: relative` on the marked element to anchor the
+thumb; overriding it back to `static` breaks the thumb. The other two modes leave `position`
+alone.
 
 <DocExample
   name="comments"
