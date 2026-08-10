@@ -2,7 +2,7 @@
 
 One primitive for bottom sheets, drawers, modal dialogs, side panels, and toasts.
 
-> Bottom sheets for React that feel native. One primitive for bottom sheets, drawers, modal dialogs, side panels, and toasts, built on `<dialog>` and CSS scroll-snap. Zero dependencies, ~<!--size:index.gzip:0-->19<!--/size--> kB gzipped, React 18+, MIT licensed.
+> Bottom sheets for React that feel native. One primitive for bottom sheets, drawers, modal dialogs, side panels, and toasts, built on `<dialog>` and CSS scroll-snap. Zero dependencies, ~<!--size:index.gzip:0-->18<!--/size--> kB gzipped, React 18+, MIT licensed.
 
 scrollsheet renders a real `<dialog>` in the browser's top layer and drives its drag gesture
 with a native `scroll-snap-type: y mandatory` container instead of a pointer-event physics

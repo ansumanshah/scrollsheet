@@ -41,7 +41,6 @@ import {
   warnLargestUndimmedDetentOutOfRange,
   warnMissingDialogSupport,
 } from "./internal/env";
-import { isDev } from "./internal/dev-warn";
 import { FallbackSheet } from "./internal/fallback-sheet";
 import { Slot, composeRefs } from "./internal/slot";
 import { injectStyles } from "./internal/styles";
@@ -907,7 +906,7 @@ export const Content = /* @__PURE__ */ React.forwardRef<HTMLDivElement, SheetCon
       // CSSOM custom-property spec (a set-but-unusual value would still come
       // back non-empty, leading space and all), so no .trim() is needed.
       if (
-        isDev &&
+        process.env.NODE_ENV !== "production" &&
         dialogRef.current &&
         !getComputedStyle(dialogRef.current).getPropertyValue("--scrollsheet-dur")
       ) {

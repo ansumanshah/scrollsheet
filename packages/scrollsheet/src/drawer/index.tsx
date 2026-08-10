@@ -283,29 +283,34 @@ export function Root(props: DrawerRootProps) {
 
   // Fires during render (not an effect) so it also surfaces on the server —
   // `renderToString` never runs effects, and this compat layer is meant to
-  // warn there too. Deduped module-wide, so it truly only logs once.
-  const ignored = collectIgnored([
-    ["setBackgroundColorOnScale", setBackgroundColorOnScale],
-    ["noBodyStyles", noBodyStyles],
-    ["disablePreventScroll", disablePreventScroll],
-    ["preventScrollRestoration", preventScrollRestoration],
-    ["repositionInputs", repositionInputs],
-    ["scrollLockTimeout", scrollLockTimeout],
-    ["onDrag", onDrag],
-    ["container", container],
-    ["fixed", fixed],
-    ["autoFocus", autoFocus],
-    ["nested", nested],
-  ]);
-  if (ignored.length > 0) {
-    warnOnce(
-      "root-ignored-props",
-      `[scrollsheet Drawer] These <Drawer.Root> props from vaul have no effect in this compat layer and are ignored: ${ignored.join(", ")}. See the vaul migration notes in the README.${
-        onDrag !== undefined
-          ? " onDrag: the native onTravel prop works on this same <Drawer.Root>."
-          : ""
-      }`,
-    );
+  // warn there too. Deduped module-wide, so it truly only logs once. The
+  // whole block (ignored-list computation included) is dev-only — nothing
+  // outside it reads `ignored` — so a production build folds it away
+  // entirely instead of just the message string.
+  if (process.env.NODE_ENV !== "production") {
+    const ignored = collectIgnored([
+      ["setBackgroundColorOnScale", setBackgroundColorOnScale],
+      ["noBodyStyles", noBodyStyles],
+      ["disablePreventScroll", disablePreventScroll],
+      ["preventScrollRestoration", preventScrollRestoration],
+      ["repositionInputs", repositionInputs],
+      ["scrollLockTimeout", scrollLockTimeout],
+      ["onDrag", onDrag],
+      ["container", container],
+      ["fixed", fixed],
+      ["autoFocus", autoFocus],
+      ["nested", nested],
+    ]);
+    if (ignored.length > 0) {
+      warnOnce(
+        "root-ignored-props",
+        `[scrollsheet Drawer] These <Drawer.Root> props from vaul have no effect in this compat layer and are ignored: ${ignored.join(", ")}. See the vaul migration notes in the README.${
+          onDrag !== undefined
+            ? " onDrag: the native onTravel prop works on this same <Drawer.Root>."
+            : ""
+        }`,
+      );
+    }
   }
 
   // `[]` falls through to Sheet.Root's own detents default — a truthiness
@@ -323,11 +328,13 @@ export function Root(props: DrawerRootProps) {
   // counts what remains), dead code once snapPoints exist (matching real
   // vaul), and an omitted prop reproduces vaul's own default feel.
   const resolvedCloseThreshold = resolveCloseThreshold(snapPoints, closeThreshold);
-  if (snapPoints !== undefined && snapPoints.length > 0 && closeThreshold !== undefined) {
-    warnOnce(
-      "close-threshold-with-snap-points",
-      "[scrollsheet Drawer] <Drawer.Root closeThreshold> has no effect when snapPoints is set — this matches real vaul, where closeThreshold is dead code once snapPoints exist (its onRelease returns through the snap-points branch before ever reading it). Use the native Sheet.Root `closeThreshold` (a live 0-1 fraction of the first detent, works alongside detents) if you want the upgrade.",
-    );
+  if (process.env.NODE_ENV !== "production") {
+    if (snapPoints !== undefined && snapPoints.length > 0 && closeThreshold !== undefined) {
+      warnOnce(
+        "close-threshold-with-snap-points",
+        "[scrollsheet Drawer] <Drawer.Root closeThreshold> has no effect when snapPoints is set — this matches real vaul, where closeThreshold is dead code once snapPoints exist (its onRelease returns through the snap-points branch before ever reading it). Use the native Sheet.Root `closeThreshold` (a live 0-1 fraction of the first detent, works alongside detents) if you want the upgrade.",
+      );
+    }
   }
 
   // vaul's onRelease's second arg is already "is the drawer still open" —
@@ -442,11 +449,13 @@ export interface DrawerPortalProps {
 }
 
 export function Portal({ children, container }: DrawerPortalProps) {
-  if (container !== undefined) {
-    warnOnce(
-      "portal-container",
-      "[scrollsheet Drawer] <Drawer.Portal container> has no effect — scrollsheet's <dialog> always renders into the browser's top layer (effectively document.body), so there's no separate container to portal into.",
-    );
+  if (process.env.NODE_ENV !== "production") {
+    if (container !== undefined) {
+      warnOnce(
+        "portal-container",
+        "[scrollsheet Drawer] <Drawer.Portal container> has no effect — scrollsheet's <dialog> always renders into the browser's top layer (effectively document.body), so there's no separate container to portal into.",
+      );
+    }
   }
   return <>{children}</>;
 }
@@ -523,26 +532,31 @@ export const Content = /* @__PURE__ */ React.forwardRef<HTMLDivElement, DrawerCo
     const direction = React.useContext(DirectionContext);
     const snapPointsActive = hasMultipleSnapPoints(ctx.detents);
 
-    const ignored = collectIgnored([
-      ["onPointerDownOutside", onPointerDownOutside],
-      ["onOpenAutoFocus", onOpenAutoFocus],
-      ["onEscapeKeyDown", onEscapeKeyDown],
-      ["onCloseAutoFocus", onCloseAutoFocus],
-      ["onInteractOutside", onInteractOutside],
-      ["onFocusOutside", onFocusOutside],
-      ["forceMount", forceMount],
-    ]);
-    if (ignored.length > 0) {
-      warnOnce(
-        "content-ignored-props",
-        `[scrollsheet Drawer] These <Drawer.Content> props from vaul have no effect in this compat layer and are stripped before reaching the DOM: ${ignored.join(", ")}. See the vaul migration notes in the README.${
-          onPointerDownOutside !== undefined ||
-          onInteractOutside !== undefined ||
-          onEscapeKeyDown !== undefined
-            ? " To block backdrop-tap dismissal, set backdropDismissible={false} on <Drawer.Root>; to block Esc, escapeDismissible={false}."
-            : ""
-        }`,
-      );
+    // Dev-only, same reasoning as Root's ignored-props block above: nothing
+    // outside this guard reads `ignored`, so a production build folds away
+    // the whole computation, not just the message string.
+    if (process.env.NODE_ENV !== "production") {
+      const ignored = collectIgnored([
+        ["onPointerDownOutside", onPointerDownOutside],
+        ["onOpenAutoFocus", onOpenAutoFocus],
+        ["onEscapeKeyDown", onEscapeKeyDown],
+        ["onCloseAutoFocus", onCloseAutoFocus],
+        ["onInteractOutside", onInteractOutside],
+        ["onFocusOutside", onFocusOutside],
+        ["forceMount", forceMount],
+      ]);
+      if (ignored.length > 0) {
+        warnOnce(
+          "content-ignored-props",
+          `[scrollsheet Drawer] These <Drawer.Content> props from vaul have no effect in this compat layer and are stripped before reaching the DOM: ${ignored.join(", ")}. See the vaul migration notes in the README.${
+            onPointerDownOutside !== undefined ||
+            onInteractOutside !== undefined ||
+            onEscapeKeyDown !== undefined
+              ? " To block backdrop-tap dismissal, set backdropDismissible={false} on <Drawer.Root>; to block Esc, escapeDismissible={false}."
+              : ""
+          }`,
+        );
+      }
     }
 
     return (

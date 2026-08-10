@@ -263,11 +263,13 @@ export function ToasterShell({
   nonce,
 }: ToasterProps) {
   const resolvedId = id ?? toasterId;
-  if (toasterId !== undefined) {
-    warnOnce(
-      "toaster-id-deprecated",
-      '[scrollsheet Toaster] Toaster\'s "toasterId" prop is deprecated — use "id" instead.',
-    );
+  if (process.env.NODE_ENV !== "production") {
+    if (toasterId !== undefined) {
+      warnOnce(
+        "toaster-id-deprecated",
+        '[scrollsheet Toaster] Toaster\'s "toasterId" prop is deprecated — use "id" instead.',
+      );
+    }
   }
   const { toasts: allToasts } = useSonner();
   const toasts = React.useMemo(
@@ -283,17 +285,19 @@ export function ToasterShell({
   const visibleToasts = resolveVisibleToasts(visibleToastsProp);
   const defaultDuration = durationProp ?? toastOptions?.duration ?? 4000;
 
-  if (theme !== undefined && theme !== "light") {
-    warnOnce(
-      "shell-theme",
-      `[scrollsheet Toaster] theme="${theme}" isn't implemented yet — v1 always renders the static light card real Sonner ships by default.`,
-    );
-  }
-  if (richColors) {
-    warnOnce(
-      "shell-rich-colors",
-      "[scrollsheet Toaster] richColors isn't implemented yet — toasts render with their default icon color only.",
-    );
+  if (process.env.NODE_ENV !== "production") {
+    if (theme !== undefined && theme !== "light") {
+      warnOnce(
+        "shell-theme",
+        `[scrollsheet Toaster] theme="${theme}" isn't implemented yet — v1 always renders the static light card real Sonner ships by default.`,
+      );
+    }
+    if (richColors) {
+      warnOnce(
+        "shell-rich-colors",
+        "[scrollsheet Toaster] richColors isn't implemented yet — toasts render with their default icon color only.",
+      );
+    }
   }
 
   React.useEffect(() => {

@@ -52,14 +52,17 @@
   "exports": {
     ".": {
       "types": "./dist/index.d.mts",
+      "development": "./dist/dev/index.mjs",
       "import": "./dist/index.mjs"
     },
     "./auto": {
       "types": "./dist/auto/index.d.mts",
+      "development": "./dist/dev/auto/index.mjs",
       "import": "./dist/auto/index.mjs"
     },
     "./motion": {
       "types": "./dist/motion.d.mts",
+      "development": "./dist/dev/motion.mjs",
       "import": "./dist/motion.mjs"
     },
     "./styles.css": "./dist/styles.css",

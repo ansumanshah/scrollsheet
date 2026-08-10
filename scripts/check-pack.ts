@@ -3,7 +3,8 @@
  * npm pack smoke test: asserts the tarball a real `npm publish` would ship
  * actually contains what consumers load: dist/index.mjs (the one JS entry),
  * the two compat chunks it re-exports from (dist/drawer.mjs, dist/toast.mjs),
- * and the two stylesheets (dist/styles.css, dist/toast.css) —
+ * the two stylesheets (dist/styles.css, dist/toast.css), and the dist/dev
+ * sibling tree the "development" export condition points at —
  * package.json's `files`/`exports` fields are easy to drift from what
  * `bun run build` actually emits. Run after build (this reads dist/
  * indirectly via `npm pack`, not directly).
@@ -17,6 +18,14 @@ const REQUIRED_FILES = [
   "dist/auto/index.mjs",
   "dist/styles.css",
   "dist/toast.css",
+  // Development tree (dev-only warning strings, "development" export
+  // condition) — proves the tarball actually ships the second chunk graph,
+  // not just the production one.
+  "dist/dev/index.mjs",
+  "dist/dev/drawer.mjs",
+  "dist/dev/toast.mjs",
+  "dist/dev/motion.mjs",
+  "dist/dev/auto/index.mjs",
 ];
 
 // The root entry is css-external — a build regression that leaks either
@@ -31,7 +40,9 @@ let autoHasCss = false;
 for await (const file of new Glob("**/*.mjs").scan(distUrl.pathname)) {
   const text = await Bun.file(`${distUrl.pathname}${file}`).text();
   const hasCss = SENTINELS.some((s) => text.includes(s));
-  if (file.startsWith("auto/")) {
+  // "auto/" or "dev/auto/" — the development pass mirrors the same
+  // root/auto split one level down, under dist/dev.
+  if (/(?:^|\/)auto\//.test(file)) {
     autoHasCss ||= hasCss;
   } else if (hasCss) {
     console.error(`scrollsheet: root (css-external) graph embeds css: dist/${file}`);

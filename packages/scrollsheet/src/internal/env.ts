@@ -77,9 +77,9 @@ let warnedNoDialogSupport = false;
  * drag, which is otherwise indistinguishable from a misconfiguration.
  */
 export function warnMissingDialogSupport(): void {
-  if (warnedNoDialogSupport) return;
-  const isDev = typeof process !== "undefined" && process.env.NODE_ENV !== "production";
-  if (!isDev) return;
+  // NODE_ENV first and bare: the build passes compile it to a literal, so
+  // the production tree folds this whole body away (string included).
+  if (process.env.NODE_ENV === "production" || warnedNoDialogSupport) return;
   warnedNoDialogSupport = true;
   console.warn(
     "scrollsheet: this browser has no <dialog> support — falling back to a plain modal (no detents, drag, or animation). Content and dismissal work as normal.",
@@ -102,9 +102,9 @@ let warnedUndimmedDetentOutOfRange = false;
  * topmost detent"), not a misconfiguration.
  */
 export function warnLargestUndimmedDetentOutOfRange(): void {
-  if (warnedUndimmedDetentOutOfRange) return;
-  const isDev = typeof process !== "undefined" && process.env.NODE_ENV !== "production";
-  if (!isDev) return;
+  // NODE_ENV first and bare: the build passes compile it to a literal, so
+  // the production tree folds this whole body away (string included).
+  if (process.env.NODE_ENV === "production" || warnedUndimmedDetentOutOfRange) return;
   warnedUndimmedDetentOutOfRange = true;
   console.warn(
     "scrollsheet: largestUndimmedDetent resolved to a height above every configured detent — the backdrop and themeColorDimming will stay undimmed for nearly all of the sheet's travel. Choose a largestUndimmedDetent within the configured detents range.",
@@ -128,9 +128,9 @@ let warnedUnresolvableSnapToDetent = false;
  * that the requested spec won't round-trip through the public detent state.
  */
 export function warnUnresolvableSnapToDetent(): void {
-  if (warnedUnresolvableSnapToDetent) return;
-  const isDev = typeof process !== "undefined" && process.env.NODE_ENV !== "production";
-  if (!isDev) return;
+  // NODE_ENV first and bare: the build passes compile it to a literal, so
+  // the production tree folds this whole body away (string included).
+  if (process.env.NODE_ENV === "production" || warnedUnresolvableSnapToDetent) return;
   warnedUnresolvableSnapToDetent = true;
   console.warn(
     "scrollsheet: actionsRef.snapTo() was called with a detent spec that isn't in this sheet's `detents` list — the panel will rest at the nearest configured detent, but `activeDetent`/`onActiveDetentChange` (and Handle's aria-valuenow/aria-valuetext) will still reflect the literal spec you passed in, not the resolved one.",
@@ -160,9 +160,9 @@ let warnedContentAsChildInvalidChild = false;
  * warnings for every prop `Slot` tried to merge onto it.
  */
 export function warnContentAsChildInvalidChild(): void {
-  if (warnedContentAsChildInvalidChild) return;
-  const isDev = typeof process !== "undefined" && process.env.NODE_ENV !== "production";
-  if (!isDev) return;
+  // NODE_ENV first and bare: the build passes compile it to a literal, so
+  // the production tree folds this whole body away (string included).
+  if (process.env.NODE_ENV === "production" || warnedContentAsChildInvalidChild) return;
   warnedContentAsChildInvalidChild = true;
   console.warn(
     "scrollsheet: Sheet.Content asChild expects children to be a single non-Fragment React element — falling back to the default panel <div> (asChild ignored) instead.",
@@ -188,7 +188,8 @@ export function _resetContentAsChildInvalidChildWarningForTests(): void {
  * dev-warn.ts's own `_resetWarnOnceForTests`.
  */
 export function warnCoreStylesMissing(): void {
-  warnOnce("css", "scrollsheet: import 'scrollsheet/styles.css'");
+  if (process.env.NODE_ENV !== "production")
+    warnOnce("css", "scrollsheet: import 'scrollsheet/styles.css'");
 }
 
 /** Live media check, not cached: the OS setting can change mid-session. */

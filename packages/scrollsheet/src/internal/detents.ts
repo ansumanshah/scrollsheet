@@ -63,7 +63,7 @@ export function resolveDetents(specs: readonly DetentSpec[], ctx: DetentContext)
       spec === "medium" ||
       spec === "content" ||
       (typeof spec === "string" && spec.endsWith("px") && Number.isFinite(Number.parseFloat(spec)));
-    if (!recognized) {
+    if (!recognized && process.env.NODE_ENV !== "production") {
       const message = `scrollsheet: ${spec}: full/medium/content/number/px`;
       warnOnce(message, message);
     }
