@@ -2,6 +2,15 @@
 
 All notable changes to this project are documented here.
 
+## 1.0.0-beta.5 - 2026-08-14
+
+Responsive presentation profiles, and a real fix for how centered dialogs degrade.
+
+- **`desktopSide` and `desktopBreakpoint` on `Sheet.Root`.** A mobile bottom sheet that opens as a centered dialog, drawer, or side panel at the breakpoint (default 768px, the same line the desktop presentation uses): `side="bottom" desktopSide="center"`, two props instead of a matchMedia hook. Resolved SSR-safe after mount; crossing the breakpoint while open re-presents instantly, both directions. Unset, nothing changes. Costs 0.42 kB gzip on the Sheet entry.
+- **Fixed: `side="center"` (and therefore every `Dialog` consumer) degraded to a bottom-sheet-shaped fallback on the ~4% of browsers without `<dialog>`.** The no-dialog fallback now has a real centered variant sharing the same width guard variables. Found while measuring CSS reachability for this release.
+- Fixed: a centered sheet with `themeColorDimming` treated the bottom browser bar as sheet-attached and mounted bottom-edge overlays it can never use.
+- The full test matrix now includes an iPhone SE class small-viewport project (375x667), which promptly caught a spec bug of ours; the docs gained a [trigger-morph recipe](https://scrollsheet.dev/docs/presentation/trigger-morph) (View Transitions, zero library bytes) and a [responsive profiles guide](https://scrollsheet.dev/docs/presentation/responsive-profiles).
+
 ## 1.0.0-beta.4 - 2026-08-13
 
 A bundle-size pass driven by a real design-system migration, a first-class centered dialog, and a Radix Dialog adapter.
