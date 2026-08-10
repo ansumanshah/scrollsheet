@@ -109,6 +109,29 @@
   background: var(--bg-inset);
 }
 
+/* Expressive Code's copy button: keep the 32px hit area but draw the glyph
+   at icon size — the mask otherwise fills the whole button and reads
+   enormous next to a one-line command. */
+.expressive-code .copy button {
+  border-radius: 8px;
+}
+.expressive-code .copy button::after {
+  -webkit-mask-size: 18px;
+  mask-size: 18px;
+  -webkit-mask-position: center;
+  mask-position: center;
+  -webkit-mask-repeat: no-repeat;
+  mask-repeat: no-repeat;
+}
+.expressive-code .copy button div {
+  -webkit-mask-size: 18px;
+  mask-size: 18px;
+  -webkit-mask-position: center;
+  mask-position: center;
+  -webkit-mask-repeat: no-repeat;
+  mask-repeat: no-repeat;
+}
+
 /* Starlight's mobile menu button ships as a white shadowed circle; restyle
    it to read as one of this header's flat icon buttons. Its own rules live
    in @layer starlight.core, so these unlayered ones win at any specificity. */

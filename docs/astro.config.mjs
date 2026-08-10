@@ -83,6 +83,21 @@ export default defineConfig({
       // the same color as the rest of the site AND keeps it in the bundle.
       expressiveCode: {
         themes: ["vitesse-dark"],
+        styleOverrides: {
+          borderRadius: "12px",
+          borderColor: "rgb(255 255 255 / 0.08)",
+          // The copy button and frame chrome scale from this; the default
+          // 0.9rem produced a ~56px button dwarfing one-line commands.
+          uiFontSize: "0.72rem",
+          frames: {
+            frameBoxShadowCssValue: "none",
+            terminalTitlebarBorderBottomColor: "transparent",
+            inlineButtonBorder: "transparent",
+            inlineButtonBackground: "rgb(255 255 255)",
+            inlineButtonBackgroundIdleOpacity: "0.06",
+            inlineButtonBackgroundHoverOrFocusOpacity: "0.14",
+          },
+        },
       },
       // Starlight owns only /docs/*; the rest of the site keeps its own
       // Base.astro layout. These two overrides are what keep the two
