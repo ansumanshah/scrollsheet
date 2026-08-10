@@ -55,6 +55,7 @@ import { isAtScrollBoundary } from "./motion/scroll-handoff";
 import { syncSnapStops as syncSnapStopsImpl } from "./motion/snap-stops";
 import { useDragEngine } from "./internal/use-drag-engine";
 import { useEnterExitLeg } from "./internal/use-enter-exit-leg";
+import { usePresentationFlip } from "./internal/use-presentation-flip";
 import { useBodyFreeze } from "./internal/use-body-freeze";
 import { useKeyboardViewport } from "./internal/use-keyboard-viewport";
 import { useNestedScrollbars } from "./internal/use-nested-scrollbars";
@@ -1035,6 +1036,27 @@ export const Content = /* @__PURE__ */ React.forwardRef<HTMLDivElement, SheetCon
       phaseRef,
       ctxRef,
       animRef,
+    });
+
+    // desktopSide re-presenting the sheet while it's already open (see the
+    // hook's own doc comment for why the open-sequence effect above can't
+    // cover this case alone).
+    usePresentationFlip({
+      present,
+      phaseRef,
+      ctxRef,
+      side: ctx.side,
+      center: ctx.center,
+      dialogRef,
+      trackRef,
+      backdropRef,
+      topChromeRef,
+      bottomChromeDimRef,
+      maxDetentRef,
+      animRef,
+      measure,
+      resolveSpec,
+      updateTravel,
     });
 
     useOverlayScrollbar({ present, scrollbar: ctx.scrollbar, panelRef, scrollbarRef });

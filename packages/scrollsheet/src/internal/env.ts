@@ -196,3 +196,17 @@ export function warnCoreStylesMissing(): void {
 export function prefersReducedMotion(): boolean {
   return typeof matchMedia === "function" && matchMedia("(prefers-reduced-motion: reduce)").matches;
 }
+
+/**
+ * Dev-only, one-time heads-up: `desktopBreakpoint` only does anything paired
+ * with `desktopSide` — set alone, the breakpoint is never checked against
+ * anything, so the resolved presentation stays `side` at every width. A
+ * silent no-op reads as a bug report, not a misconfiguration, without this.
+ */
+export function warnDesktopBreakpointWithoutSide(): void {
+  if (process.env.NODE_ENV !== "production")
+    warnOnce(
+      "desktop-breakpoint",
+      "scrollsheet: desktopBreakpoint is set without desktopSide — it has no effect on its own.",
+    );
+}
