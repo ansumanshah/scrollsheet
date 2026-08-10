@@ -228,6 +228,14 @@
   .brand__word {
     display: none;
   }
+  /* The docs header hides the whole nav at this width, so unlike the
+     marketing header it has room for the wordmark. Except on the very
+     narrowest phones, where search + icons + the menu button reclaim it. */
+  @media (min-width: 380px) {
+    .site-header--docs .brand__word {
+      display: inline;
+    }
+  }
   .site-nav a {
     font-size: 0.84rem;
     padding-inline: 5px;
