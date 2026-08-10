@@ -1,0 +1,73 @@
+---
+title: Migrate from Radix Dialog
+description: 'Drop-in Dialog namespace rendering the centered presentation: same JSX, data-state animation CSS keeps matching, radix-only props warn once with the replacement recipe.'
+---
+
+import { Aside, LinkCard } from '@astrojs/starlight/components';
+
+```diff
+- import * as Dialog from '@radix-ui/react-dialog';
++ import { Dialog } from 'scrollsheet';
++ import 'scrollsheet/styles.css';
+```
+
+Keep the JSX. `Dialog.Root`, `Trigger`, `Portal`, `Overlay`, `Content`, `Title`,
+`Description`, and `Close` all exist and render scrollsheet's centered modal: a real
+`<dialog>` in the top layer, zoom+fade on a spring, native focus containment. Sheet-only
+consumers ship none of it; the adapter tree-shakes out unless imported.
+
+If your CSS pipeline compiles custom properties away (postcss-css-variables and similar),
+import from `scrollsheet/auto` instead and drop the stylesheet import.
+
+## What maps 1:1
+
+| radix | scrollsheet `Dialog` |
+| --- | --- |
+| `Root` `open` / `defaultOpen` / `onOpenChange` / `modal` | same props, same semantics |
+| `Trigger`, `Close`, `Title`, `Description` (`asChild` included) | same |
+| `Content` `className` / ref / `asChild` | same; your CSS owns the width |
+| `[data-state="open"]` / `[data-state="closed"]` keyframes | stamped on Content's element, existing animation CSS keeps matching |
+
+Beyond radix, `Root` also takes scrollsheet's own `actionsRef`, `backdropDismissible`,
+`escapeDismissible`, and `onOpenChangeComplete` (fires after the exit animation ends).
+
+## What changes
+
+| radix pattern | recipe |
+| --- | --- |
+| `onPointerDownOutside={(e) => e.preventDefault()}` | `backdropDismissible={false}` on `Dialog.Root` |
+| `onInteractOutside` | same: `backdropDismissible={false}` |
+| `onEscapeKeyDown={(e) => e.preventDefault()}` | `escapeDismissible={false}` on `Dialog.Root` |
+| `onOpenAutoFocus` / `onCloseAutoFocus` / `onFocusOutside` | drop them; native `showModal()` owns focus, `autofocus` on a field overrides the initial target |
+| `forceMount` | drop it; the open lifecycle owns mount timing |
+| `Portal container={...}` | drop it; the `<dialog>` top layer replaces portaling |
+| `Overlay` with overlay CSS | keep the element (it renders nothing); restyle the real backdrop via `.scrollsheet-backdrop` or `--scrollsheet-backdrop` |
+
+Each dropped prop warns once in development with its recipe. Production builds carry no
+warning text at all.
+
+<Aside type="note">
+Dismissal fires on backdrop click, not pointerdown. Deliberate: iOS Safari can deliver a
+backdrop tap as a bare click with no preceding pointerdown, which the pointerdown model
+drops. A press that starts inside the panel and slides out does not dismiss on any modern
+engine either way.
+</Aside>
+
+## Width
+
+Radix Content is unstyled; scrollsheet guards with `--scrollsheet-center-max-inline`
+(default `min(560px, 100%)`). Your className's width wins below the guard; raise the
+variable for wider dialogs. On the ~4% of browsers without `<dialog>`, the same dialog
+degrades to a centered static modal with the same width variables.
+
+## Going native
+
+`Dialog.*` is a thin layer over `<Sheet.Root side="center">`. Converting removes the
+indirection and opens the rest of the surface, including `desktopSide` for the
+responsive case in reverse: a dialog on desktop that presents as a bottom sheet on phones.
+
+<LinkCard
+  title="Centered dialog"
+  description="The presentation this adapter renders, documented on its own."
+  href="/docs/presentation/centered-dialog"
+/>

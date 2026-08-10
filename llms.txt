@@ -13,9 +13,13 @@ where it is, carrying velocity). Five components: `Sheet.Root`, `Sheet.Trigger`,
 `Sheet.Content`, `Sheet.Handle`, `Sheet.Title` / `Sheet.Description` / `Sheet.Close`.
 `Trigger`, `Close`, and `Handle` take `asChild` to render your own element with the behavior
 merged in. A multi-detent `Handle` exposes slider semantics (role, value, arrow/Home/End keys).
+`side="center"` renders a centered modal dialog (content-sized, zoom+fade,
+no travel), and `desktopSide`/`desktopBreakpoint` turn a mobile bottom sheet
+into a desktop dialog, drawer, or panel at a breakpoint from two props.
 Ships a drop-in vaul compatibility layer (`Drawer`) for migrating off vaul,
+a drop-in Radix Dialog layer (`Dialog`) rendering the centered presentation,
 and a drop-in Sonner layer (`toast`, `useSonner`, `Toaster`) for migrating
-off Sonner, both exported from the same entry and tree-shaken out unless imported.
+off Sonner, all exported from the same entry and tree-shaken out unless imported.
 
 ## Docs
 

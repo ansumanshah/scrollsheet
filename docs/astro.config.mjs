@@ -150,7 +150,11 @@ export default defineConfig({
         { slug: "docs/motion" },
         {
           label: "Migrating",
-          items: [{ slug: "docs/migrating/from-vaul" }, { slug: "docs/migrating/from-sonner" }],
+          items: [
+            { slug: "docs/migrating/from-vaul" },
+            { slug: "docs/migrating/from-sonner" },
+            { slug: "docs/migrating/from-radix-dialog" },
+          ],
         },
         {
           label: "Advanced",
