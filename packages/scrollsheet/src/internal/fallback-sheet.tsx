@@ -79,7 +79,7 @@ function pushEscapeHandler(handler: () => void): () => void {
 }
 
 export interface FallbackSheetProps {
-  side: Side;
+  side: Side | "center";
   modal: boolean;
   backdropDismissible: boolean;
   escapeDismissible: boolean;

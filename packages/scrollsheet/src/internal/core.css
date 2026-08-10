@@ -1224,6 +1224,20 @@
   box-shadow: var(--scrollsheet-shadow, 0 8px 32px rgb(0 0 0 / 0.16));
   padding-top: max(var(--scrollsheet-safe-area-top, env(safe-area-inset-top, 0px)), 0px);
 }
+/* Centered variant: the degraded shape of side="center" (and every Dialog
+   compat consumer). Same max-inline guard vars as the real center panel so
+   consumer overrides carry across the degradation. */
+.scrollsheet-fallback[data-scrollsheet-side="center"] {
+  align-items: center;
+  justify-content: center;
+}
+.scrollsheet-fallback[data-scrollsheet-side="center"] :where(.scrollsheet-fallback-panel) {
+  max-inline-size: var(--scrollsheet-center-max-inline, min(560px, calc(100% - 40px)));
+  max-height: 85%;
+  border-radius: var(--scrollsheet-radius);
+  box-shadow: var(--scrollsheet-shadow, 0 8px 32px rgb(0 0 0 / 0.16));
+}
+
 .scrollsheet-fallback[data-scrollsheet-side="left"] {
   justify-content: flex-start;
 }

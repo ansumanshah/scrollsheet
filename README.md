@@ -76,7 +76,7 @@ Also exported: `DetentSpec`, `Side`, `SheetActions`, `TravelInfo`, `spring(confi
 - **Toasts, no Sonner knowledge required.** `import { toast, Toaster, useToasts } from 'scrollsheet'` styles with `.scrollsheet-toast` classes and `--scrollsheet-toast-*` custom properties: `.promise()`, update-by-id, all six positions with per-toast overrides, swipe-to-dismiss with a velocity flick. Already on Sonner? Your `.sonner-toast` CSS still matches, unchanged, and `useSonner`/`toasterId` keep working. [Migration guide](https://scrollsheet.dev/docs/migrating/from-sonner).
 - **Agent skills.** [`skills/`](skills/) ships `migrate-from-vaul`, `migrate-from-sonner`, and `build-with-scrollsheet` for coding agents.
 - **Motion core (experimental).** `scrollsheet/motion` is the React-free layer the sheet runs on: closed-form spring solver, interruptible WAAPI wrapper, scroll tween. 1.6 kB gzipped standalone.
-- **Zero-config entry.** `scrollsheet/auto` embeds the stylesheet and injects it on first open: no CSS import needed, <!--size:auto.gzip:1-->21.6<!--/size--> kB gzip for `Sheet` against the default entry's <!--size:index.gzip:1-->17.5<!--/size-->.
+- **Zero-config entry.** `scrollsheet/auto` embeds the stylesheet and injects it on first open: no CSS import needed, <!--size:auto.gzip:1-->21.7<!--/size--> kB gzip for `Sheet` against the default entry's <!--size:index.gzip:1-->17.5<!--/size-->.
 
 Focus containment comes from the platform's `showModal()`, not a JS focus trap. On open, focus lands on the panel so mobile keyboards don't pop unasked; use native `autofocus` to override.
 

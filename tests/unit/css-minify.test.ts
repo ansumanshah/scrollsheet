@@ -43,7 +43,10 @@ describe("generated CORE_CSS", () => {
     // (side="center"): grid-centered track with keyboard-aware gutter,
     // canvas dissolution, consumer-owned panel sizing guards, hidden
     // handle, and the zoom+fade resting states.
-    expect(CORE_CSS.length).toBeLessThan(25_600);
+    // Raised to 26.0k for the centered no-dialog fallback variant plus the
+    // center padding reset (the fallback previously bottom-anchored center
+    // mode, a real degradation bug for Dialog consumers).
+    expect(CORE_CSS.length).toBeLessThan(26_000);
   });
 
   test("keeps brace structure balanced", () => {

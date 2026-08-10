@@ -910,7 +910,8 @@ export const Content = /* @__PURE__ */ React.forwardRef<HTMLDivElement, SheetCon
           // read, not a second getComputedStyle call.
           getPanelColor: () =>
             canvasRef.current?.style.getPropertyValue("--scrollsheet-panel-bg") || null,
-          isBottomAttached: () => ctxRef.current.side === "bottom" && !detachedRef.current,
+          isBottomAttached: () =>
+            ctxRef.current.side === "bottom" && !ctxRef.current.center && !detachedRef.current,
           getBottomChromeEl: () => bottomChromeRef.current,
           getBottomDimEl: () => bottomChromeDimRef.current,
         });
@@ -1305,7 +1306,7 @@ export const Content = /* @__PURE__ */ React.forwardRef<HTMLDivElement, SheetCon
       return (
         <LoadedFallbackSheet
           ref={composedPanelRef}
-          side={ctx.side}
+          side={ctx.center ? "center" : ctx.side}
           modal={ctx.modal !== false}
           backdropDismissible={ctx.backdropDismissible}
           escapeDismissible={ctx.escapeDismissible}
@@ -1340,7 +1341,7 @@ export const Content = /* @__PURE__ */ React.forwardRef<HTMLDivElement, SheetCon
     // open. Scoped to side==='bottom' at the JSX level (detached is a
     // runtime-only signal, checked inside theme-color.ts instead).
     const bottomChromeSentinel =
-      ctx.themeColorDimming && ctx.side === "bottom" ? (
+      ctx.themeColorDimming && ctx.side === "bottom" && !ctx.center ? (
         // Sizing lives in core.css (.scrollsheet-bottom-sentinel — see its
         // comment for the iOS keyboard-snapshot constraint); theme-color.ts
         // paints the background.
@@ -1353,7 +1354,9 @@ export const Content = /* @__PURE__ */ React.forwardRef<HTMLDivElement, SheetCon
     // canvas-level sibling, not a panel child — the panel is the scroller
     // there, and nothing inside a scroller can pin to its visible edge.
     const kbFadeEl =
-      ctx.side === "bottom" ? <div className="scrollsheet-kb-fade" aria-hidden="true" /> : null;
+      ctx.side === "bottom" && !ctx.center ? (
+        <div className="scrollsheet-kb-fade" aria-hidden="true" />
+      ) : null;
 
     const chromeStrips = !nonModal && ctx.themeColorDimming;
     const innerContent = (

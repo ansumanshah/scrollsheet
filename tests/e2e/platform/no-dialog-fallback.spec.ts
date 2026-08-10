@@ -90,3 +90,25 @@ test.describe("no-<dialog> fallback", () => {
     expect(await page.evaluate(() => document.body.style.overflow)).toBe(overflowBefore);
   });
 });
+
+test.describe("no-<dialog> fallback: side=\"center\"", () => {
+  test("degrades to a CENTERED static modal, not the bottom-sheet shape", async ({ page }) => {
+    await page.goto("/");
+    await page.getByRole("button", { name: "Center dialog", exact: true }).click();
+
+    const fallback = page.locator(".scrollsheet-fallback");
+    await expect(fallback).toHaveAttribute("data-scrollsheet-side", "center");
+
+    const viewport = page.viewportSize()!;
+    const box = await fallback
+      .locator(".scrollsheet-fallback-panel")
+      .evaluate((el) => el.getBoundingClientRect());
+    const centerX = box.x + box.width / 2;
+    const centerY = box.y + box.height / 2;
+    expect(Math.abs(centerX - viewport.width / 2)).toBeLessThanOrEqual(2);
+    expect(Math.abs(centerY - viewport.height / 2)).toBeLessThanOrEqual(2);
+    // Not the bottom-sheet shape: never full-bleed width, never edge-flush.
+    expect(box.width).toBeLessThan(viewport.width);
+    expect(box.y + box.height).toBeLessThan(viewport.height - 4);
+  });
+});
