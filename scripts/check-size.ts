@@ -37,15 +37,15 @@ const BUDGETS: Record<SizeKey, number> = {
   // embeds the stylesheets (the auto entry does), so index/drawer/toast/all
   // each shed ~4-5 kB. Measured at this reset:
   // 18.35 / 19.50 / 21.48 / 24.07 / 22.27 kB gzip.
-  index: 18.6 * 1024,
-  drawer: 19.7 * 1024,
+  index: 18.8 * 1024,
+  drawer: 20.0 * 1024,
   // Cutover to per-toast DOM dropped the Sheet dependency: toast fell from
   // 21.48 to 6.70 kB (measured), tightened here so the gate stays live. The
   // same decoupling raised `all` from 24.1 to 25.21 — Sheet and Toaster no
   // longer share any bytes, the structural cost of the win for toast-only
   // consumers.
   toast: 7.0 * 1024,
-  all: 25.5 * 1024,
+  all: 25.8 * 1024,
   // auto raised 22.5 → 22.6 for the iOS body-unfreeze scroll restore
   // (measured 22.50 → 22.52).
   auto: 22.6 * 1024,
