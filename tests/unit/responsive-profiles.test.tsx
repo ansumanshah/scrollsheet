@@ -104,7 +104,8 @@ describe("responsive profiles — DOM", () => {
 
   function dialogSide(): string | null {
     return (
-      document.querySelector("dialog.scrollsheet-dialog")?.getAttribute("data-scrollsheet-side") ?? null
+      document.querySelector("dialog.scrollsheet-dialog")?.getAttribute("data-scrollsheet-side") ??
+      null
     );
   }
 
@@ -115,8 +116,11 @@ describe("responsive profiles — DOM", () => {
   let previousMatchMedia: typeof window.matchMedia | undefined;
   let queries: string[] = [];
   function mockMatchMedia(matches: boolean): void {
-    previousMatchMedia = (globalThis as unknown as { matchMedia?: typeof window.matchMedia }).matchMedia;
-    (globalThis as unknown as { matchMedia: typeof window.matchMedia }).matchMedia = ((query: string) => {
+    previousMatchMedia = (globalThis as unknown as { matchMedia?: typeof window.matchMedia })
+      .matchMedia;
+    (globalThis as unknown as { matchMedia: typeof window.matchMedia }).matchMedia = ((
+      query: string,
+    ) => {
       queries.push(query);
       return {
         matches,
@@ -128,7 +132,8 @@ describe("responsive profiles — DOM", () => {
   }
   function restoreMatchMedia(): void {
     if (previousMatchMedia) {
-      (globalThis as unknown as { matchMedia: typeof window.matchMedia }).matchMedia = previousMatchMedia;
+      (globalThis as unknown as { matchMedia: typeof window.matchMedia }).matchMedia =
+        previousMatchMedia;
     } else {
       delete (globalThis as Record<string, unknown>).matchMedia;
     }
