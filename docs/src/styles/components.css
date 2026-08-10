@@ -26,6 +26,7 @@
   display: flex;
   align-items: center;
   gap: 10px;
+  flex: none;
   font-weight: 700;
   font-size: 1.05rem;
   letter-spacing: -0.01em;
@@ -48,17 +49,34 @@
   justify-content: flex-start;
 }
 
+/* flex: 1 1 0 + min-width: 0 between two flex: none neighbors: the nav is
+   the ONLY squeezable part of the row, so the action icons can never be
+   pushed past the viewport edge. Real iOS Safari did exactly that with the
+   old auto-margin centering (wider SF text metrics) — the GitHub icon sat
+   offscreen with a 2px sliver showing. Emulated engines never reproduced it. */
 .site-nav {
   display: flex;
   align-items: center;
   gap: 4px;
-  margin-inline: auto;
+  flex: 1 1 0;
+  min-width: 0;
+  justify-content: flex-start;
+}
+
+@media (min-width: 768px) {
+  .site-nav {
+    justify-content: center;
+  }
 }
 
 .site-actions {
   display: flex;
   align-items: center;
   gap: 8px;
+  flex: none;
+  /* No-op while the nav's flex: 1 fills the middle; when the docs header
+     hides the nav on mobile this is what keeps the icons right-aligned. */
+  margin-inline-start: auto;
 }
 
 /* Separates the actions from the nav without drawing a hard rule. */
@@ -221,6 +239,13 @@
   .site-header--docs .site-nav {
     display: none;
   }
+}
+
+/* The Starlight shell pads the docs header slot with --sl-nav-pad-x and
+   reserves the fixed menu button's footprint itself; the container's own
+   gutter on top of that would double the padding. */
+.site-header--docs .site-header__inner {
+  padding-inline: 0;
 }
 
 /* Safety valve. Longer labels, a larger default font size, or another header

@@ -55,6 +55,16 @@
   --sl-hue-purple: 248;
   --sl-hue-orange: 4;
   --sl-hue-red: 4;
+
+  /* Starlight positions its FIXED mobile menu button from these, not from
+     the rendered header override — mismatched values float the button
+     detached above the row (seen on iOS). 65px = the override's 64px row
+     plus its bottom border; pad-y 0 because the override brings its own
+     vertical centering; pad-x is the shell's (and the button's) inset, so
+     the override's container drops its own gutter (components.css). */
+  --sl-nav-height: 65px;
+  --sl-nav-pad-y: 0px;
+  --sl-nav-pad-x: var(--gutter);
 }
 
 :root[data-theme="light"] {
