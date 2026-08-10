@@ -201,7 +201,7 @@ export const examples: ExampleEntry[] = [
   {
     name: "sides",
     title: "Four sides",
-    description: '`side`: the same sheet anchored to the bottom, top, left, or right edge.',
+    description: "`side`: the same sheet anchored to the bottom, top, left, or right edge.",
     group: "mechanics",
     component: SidesExample,
   },
