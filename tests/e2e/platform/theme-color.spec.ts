@@ -34,3 +34,20 @@ test("the theme-color meta dims while the sheet is open and restores on close", 
   });
   await expect.poll(() => page.evaluate(readMeta), { timeout: SPRING_TIMEOUT }).toBe("#ffffff");
 });
+
+test("center: the meta dims via the open sequence, with no travel frames to carry it", async ({
+  page,
+}) => {
+  await page.goto("/");
+  const dialog = await openSheetByTrigger(page, "Theme color center dialog");
+  await expect(dialog).toHaveAttribute("data-scrollsheet-side", "center");
+  await expect
+    .poll(() => page.evaluate(readMeta), { timeout: SPRING_TIMEOUT })
+    .not.toBe("#ffffff");
+
+  await dialog.getByRole("button", { name: "Close", exact: true }).click();
+  await expect(page.locator("dialog.scrollsheet-dialog")).toHaveCount(0, {
+    timeout: SPRING_TIMEOUT,
+  });
+  await expect.poll(() => page.evaluate(readMeta), { timeout: SPRING_TIMEOUT }).toBe("#ffffff");
+});

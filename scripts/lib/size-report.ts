@@ -79,7 +79,7 @@ export interface BundleSize {
   brotliKb: number;
 }
 
-export const BUNDLE_SIZES: Record<"index" | "drawer" | "toast" | "all" | "auto", BundleSize> = {
+export const BUNDLE_SIZES: Record<"index" | "drawer" | "dialog" | "toast" | "all" | "auto", BundleSize> = {
 ${entries}
 };
 `;

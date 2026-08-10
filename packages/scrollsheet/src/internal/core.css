@@ -1354,8 +1354,11 @@
   overflow: auto;
   border-radius: var(--scrollsheet-radius, 16px);
   /* The travel engine's eg/keyboard-lift vars never apply to a grid-placed
-     panel; clear the inherited bottom-anchored inset model entirely. */
+     panel; clear the inherited bottom-anchored inset model entirely. The
+     base rule's home-indicator padding-bottom goes with it: a centered card
+     never meets the bottom edge, same reset the top side already makes. */
   inset: auto;
+  padding-bottom: 0;
 }
 .scrollsheet-dialog[data-scrollsheet-side="center"] .scrollsheet-handle {
   display: none;

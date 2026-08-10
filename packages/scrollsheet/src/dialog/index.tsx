@@ -189,13 +189,12 @@ export interface DialogContentProps extends SheetContentProps {
  * (an ancestor of the rendered panel) already carries, watched with a
  * `MutationObserver` for flips.
  *
- * Known gap on the no-`<dialog>` fallback path (internal/fallback-sheet.tsx,
- * ~4% global): `SheetContent` doesn't forward its incoming `ref` to
- * `FallbackSheet` at all (a plain function component, not a `forwardRef`
- * one), so this component never receives a DOM node to observe or stamp
- * there — `data-state` stays at its unset default the whole time a
- * fallback modal is open. The `ctx.open` branch below is a defensive
- * default for if that ever changes, not something reachable today.
+ * The no-`<dialog>` fallback path (internal/fallback-sheet.tsx, ~4%
+ * global) DOES forward the ref to its panel, but that DOM tree carries no
+ * `data-scrollsheet-state` ancestor to observe — the `ctx.open` branch
+ * below is the live mechanism there, stamping open/closed straight from
+ * context (the fallback has no exit animation, so open state IS the whole
+ * lifecycle).
  *
  * Deliberate divergence from Radix, not a bug: outside-dismissal here fires
  * on a backdrop CLICK, matching scrollsheet's own `Sheet.Root` everywhere

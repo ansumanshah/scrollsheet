@@ -90,17 +90,30 @@ function ThemeColorSheet() {
     return () => meta.remove();
   }, []);
   return (
-    <Sheet.Root themeColorDimming>
-      <Sheet.Trigger className="btn">Theme color sheet</Sheet.Trigger>
-      <Sheet.Content className="sheet" aria-label="Theme color sheet">
-        <Sheet.Handle />
-        <div className="sheet-inner">
-          <Sheet.Title>Theme color</Sheet.Title>
-          <Sheet.Description>Dims the page theme-color meta while open.</Sheet.Description>
-          <Sheet.Close className="btn">Close</Sheet.Close>
-        </div>
-      </Sheet.Content>
-    </Sheet.Root>
+    <>
+      <Sheet.Root themeColorDimming>
+        <Sheet.Trigger className="btn">Theme color sheet</Sheet.Trigger>
+        <Sheet.Content className="sheet" aria-label="Theme color sheet">
+          <Sheet.Handle />
+          <div className="sheet-inner">
+            <Sheet.Title>Theme color</Sheet.Title>
+            <Sheet.Description>Dims the page theme-color meta while open.</Sheet.Description>
+            <Sheet.Close className="btn">Close</Sheet.Close>
+          </div>
+        </Sheet.Content>
+      </Sheet.Root>
+      {/* Center has no travel frames — its meta dim rides the open sequence
+          plus the async-controller arrival path, both pinned by the spec. */}
+      <Sheet.Root side="center" themeColorDimming>
+        <Sheet.Trigger className="btn">Theme color center dialog</Sheet.Trigger>
+        <Sheet.Content className="sheet" aria-label="Theme color center dialog">
+          <div className="sheet-inner">
+            <Sheet.Title>Theme color center</Sheet.Title>
+            <Sheet.Close className="btn">Close</Sheet.Close>
+          </div>
+        </Sheet.Content>
+      </Sheet.Root>
+    </>
   );
 }
 

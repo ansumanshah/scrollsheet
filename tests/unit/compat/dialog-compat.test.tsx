@@ -424,27 +424,29 @@ describe("Content's data-state bridge (live DOM)", () => {
     expect(host).not.toBeNull();
     if (!host) throw new Error("host not found");
 
-    await React.act(async () => {
-      host.setAttribute("data-scrollsheet-state", "opening");
-    });
+    // MutationObserver delivery is a microtask; the extra macrotask turn
+    // makes each flip's observation deterministic under full-suite load
+    // instead of racing act's own flush.
+    const flipState = async (value: string) => {
+      await React.act(async () => {
+        host.setAttribute("data-scrollsheet-state", value);
+        await new Promise((resolve) => setTimeout(resolve, 0));
+      });
+    };
+
+    await flipState("opening");
     expect(panel?.getAttribute("data-state")).toBe("open");
 
-    await React.act(async () => {
-      host.setAttribute("data-scrollsheet-state", "open");
-    });
+    await flipState("open");
     expect(panel?.getAttribute("data-state")).toBe("open");
 
-    await React.act(async () => {
-      host.setAttribute("data-scrollsheet-state", "closing");
-    });
+    await flipState("closing");
     expect(panel?.getAttribute("data-state")).toBe("closed");
     // Still mounted mid-exit — the bridge flips the attribute without
     // waiting for (or requiring) the panel to unmount.
     expect(document.querySelector("[data-scrollsheet-panel]")).not.toBeNull();
 
-    await React.act(async () => {
-      host.setAttribute("data-scrollsheet-state", "pre");
-    });
+    await flipState("pre");
     expect(panel?.getAttribute("data-state")).toBe("closed");
   });
 });

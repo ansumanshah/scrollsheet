@@ -787,6 +787,11 @@ export const Content = /* @__PURE__ */ React.forwardRef<HTMLDivElement, SheetCon
         for (const el of [backdropRef.current, topChromeRef.current, bottomChromeDimRef.current]) {
           el?.style.setProperty("--scrollsheet-dim", "1");
         }
+        // The meta-tag blend is JS-only (updateTravel's apply() never runs
+        // for center), so pin it to settled-open here too. The controller
+        // arrives async; the creation effect re-applies for center on
+        // resolve, covering an open that beats the chunk.
+        themeColorRef.current?.apply(1, true);
       } else {
         const target = resolveSpec(ctx.activeDetent);
         const rawTarget = mapScroll(
@@ -912,6 +917,12 @@ export const Content = /* @__PURE__ */ React.forwardRef<HTMLDivElement, SheetCon
         // The next scroll/settle frame (already in flight from the open
         // sequence's own scrollTop assignment) calls updateTravel() and
         // applies the current progress — no initial value computed here.
+        // EXCEPT center: it has no travel frames, so nothing ever applies a
+        // value after this resolve. Apply settled-open unconditionally —
+        // this effect only runs while the sheet is present, and dimming a
+        // frame before "opening" matches the chrome strips' own pre-state
+        // snap (iOS samples its backings at that exact first paint).
+        if (ctxRef.current.center) controller?.apply(1, true);
       });
       return () => {
         cancelled = true;
@@ -1023,6 +1034,13 @@ export const Content = /* @__PURE__ */ React.forwardRef<HTMLDivElement, SheetCon
 
     useKeyboardViewport({
       present,
+      // Center rides the inert "bottom" here ON PURPOSE and it is
+      // load-bearing: the hook's isBottom path writes --scrollsheet-vv-top/
+      // -vv-height, which the base track rule sizes off — without them a
+      // center dialog's grid box would size against the full layout viewport
+      // instead of the keyboard-shrunk visual one and miscenter under a
+      // keyboard. measure()/updateTravel() have their own center gates, so
+      // the detent-flavored branches downstream all no-op safely.
       side: ctx.side,
       activeDetent: ctx.activeDetent,
       dialogRef,

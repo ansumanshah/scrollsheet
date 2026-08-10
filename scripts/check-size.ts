@@ -39,6 +39,9 @@ const BUDGETS: Record<SizeKey, number> = {
   // 18.35 / 19.50 / 21.48 / 24.07 / 22.27 kB gzip.
   index: 18.8 * 1024,
   drawer: 20.0 * 1024,
+  // Sheet-core plus the radix adapter, minus Handle's outside-pill
+  // machinery (Dialog never re-exports Handle, so it shakes out).
+  dialog: 16.9 * 1024,
   // Cutover to per-toast DOM dropped the Sheet dependency: toast fell from
   // 21.48 to 6.70 kB (measured), tightened here so the gate stays live. The
   // same decoupling raised `all` from 24.1 to 25.21 — Sheet and Toaster no

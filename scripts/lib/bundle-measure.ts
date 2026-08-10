@@ -26,7 +26,7 @@ import { brotliCompressSync } from "node:zlib";
 
 export interface ImportShape {
   /** Stable key used by the generated size report and its `<!--size:KEY...-->` markers. */
-  key: "index" | "drawer" | "toast" | "all" | "auto";
+  key: "index" | "drawer" | "dialog" | "toast" | "all" | "auto";
   /** Named exports pulled from the package entry, verbatim. */
   named: string;
   /** Import path; defaults to the root entry. */
@@ -38,6 +38,10 @@ export interface ImportShape {
 export const IMPORT_SHAPES: readonly ImportShape[] = [
   { key: "index", named: "Sheet", label: "import { Sheet } from 'scrollsheet'" },
   { key: "drawer", named: "Drawer", label: "import { Drawer } from 'scrollsheet'" },
+  // The radix compat layer rides the center presentation, so this is
+  // sheet-core plus the adapter — the gate proves the adapter stays thin
+  // AND that it never silently reaches Drawer or the toast graph.
+  { key: "dialog", named: "Dialog", label: "import { Dialog } from 'scrollsheet'" },
   {
     key: "toast",
     named: "Toaster, toast",

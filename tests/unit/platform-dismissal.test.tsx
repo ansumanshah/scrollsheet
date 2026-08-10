@@ -415,3 +415,79 @@ describe("non-modal Esc never blocks the page's own listeners", () => {
     }
   });
 });
+
+describe("backdrop dismissal on a bare click (no preceding pointerdown)", () => {
+  // iOS Safari can deliver a backdrop tap as a lone `click` with no
+  // pointerdown at all. The track's dismissal deliberately keys on click so
+  // those taps work; this pins the exact event sequence the design decision
+  // exists for (a pointerdown-gated model would fail this test). Covers
+  // Sheet directly and the Dialog compat layer through it.
+  async function mountAndBareClick(element: React.ReactElement) {
+    (globalThis as Record<string, unknown>).HTMLDialogElement = FakeDialogElement;
+    await mount(element);
+    const track = document.querySelector(".scrollsheet-track");
+    expect(track).not.toBeNull();
+    await React.act(async () => {
+      track!.dispatchEvent(new MouseEvent("click", { bubbles: true, cancelable: true }));
+    });
+  }
+
+  test("Sheet: a lone click targeting the track dismisses", async () => {
+    const { Sheet } = await import("../../packages/scrollsheet/src/index");
+    let open = true;
+    await mountAndBareClick(
+      React.createElement(
+        Sheet.Root,
+        {
+          defaultOpen: true,
+          onOpenChange: (next: boolean) => {
+            open = next;
+          },
+        },
+        React.createElement(Sheet.Content, { "aria-label": "panel" }, "hi"),
+      ),
+    );
+    expect(open).toBe(false);
+  });
+
+  test("Dialog compat: the same lone click dismisses the centered dialog", async () => {
+    const { Dialog } = await import("../../packages/scrollsheet/src/index");
+    let open = true;
+    await mountAndBareClick(
+      React.createElement(
+        Dialog.Root,
+        {
+          defaultOpen: true,
+          onOpenChange: (next: boolean) => {
+            open = next;
+          },
+        },
+        React.createElement(
+          Dialog.Content,
+          { "aria-label": "dialog" },
+          React.createElement(Dialog.Title, null, "t"),
+        ),
+      ),
+    );
+    expect(open).toBe(false);
+  });
+
+  test("backdropDismissible={false}: the lone click is ignored", async () => {
+    const { Sheet } = await import("../../packages/scrollsheet/src/index");
+    let open = true;
+    await mountAndBareClick(
+      React.createElement(
+        Sheet.Root,
+        {
+          defaultOpen: true,
+          backdropDismissible: false,
+          onOpenChange: (next: boolean) => {
+            open = next;
+          },
+        },
+        React.createElement(Sheet.Content, { "aria-label": "panel" }, "hi"),
+      ),
+    );
+    expect(open).toBe(true);
+  });
+});
