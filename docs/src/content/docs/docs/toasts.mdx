@@ -1,44 +1,44 @@
 ---
 title: Toasts
-description: A toast is modal={false} plus a plain timer closing it, the same controlled open prop any other sheet uses.
+description: toast() and Toaster ship in the package — per-toast DOM, six positions, swipe to dismiss, Sonner-compatible API.
 ---
 
 import { LinkCard } from '@astrojs/starlight/components';
 import DocExample from '../../../components/DocExample.astro';
 
 ```tsx
-const [open, setOpen] = useState(false);
+import { Toaster, toast } from 'scrollsheet';
+import 'scrollsheet/toast.css';
 
-useEffect(() => {
-  if (!open) return;
-  const timer = setTimeout(() => setOpen(false), 4000);
-  return () => clearTimeout(timer);
-}, [open]);
+// mount once, anywhere
+<Toaster />;
 
-<Sheet.Root modal={false} open={open} onOpenChange={setOpen} detents={['content']}>
+// fire from any code, component or not
+toast('Saved to your list');
+toast.success('Synced', { description: 'Two seconds ago.' });
+toast('Archived', { action: { label: 'Undo', onClick: restore } });
 ```
 
-A toast is just `modal={false}` plus a plain timer closing it, the same controlled `open` any
-other sheet uses.
+`toast()` and `<Toaster>` are part of the package, on their own primitives — a persistent
+element per toast, all six positions with per-toast override, stacking that hides overflow
+instead of dismissing it, and 2-axis swipe-to-dismiss. `toast.promise()`, `useToasts()`,
+`classNames`, and per-type `icons` are all there; the [API reference](/docs/reference/api)
+lists the full surface.
 
 <DocExample
   name="toast"
-  caption="Open it and wait four seconds. The timer closes it, no button required."
+  caption="Fire a few. They stack, self-dismiss, and swipe away."
 />
 
-Migrating an existing Sonner integration instead of writing this by hand?
+Coming from Sonner? The API matches it, so the migration is the import line:
 
 ```diff
 - import { toast, Toaster } from 'sonner';
 + import { toast, Toaster } from 'scrollsheet';
 ```
 
-scrollsheet's Sonner compat layer is a drop-in for `toast()`/`Toaster`, its own architecture
-matching real Sonner's per-toast DOM and positioning rather than this Sheet-based pattern. See
-[Migrate from Sonner](/docs/migrating/from-sonner).
-
 <LinkCard
   title="Migrate from Sonner"
-  description="Drop-in replacement for toast, useToasts, and Toaster, running on the same per-toast DOM as real Sonner, with every position, per-toast overrides, and swipe-to-dismiss."
+  description="What carries over unchanged, the sonner-* CSS names that keep working, and the documented v1 gaps."
   href="/docs/migrating/from-sonner"
 />

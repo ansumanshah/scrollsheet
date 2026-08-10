@@ -186,7 +186,7 @@ export const examples: ExampleEntry[] = [
   {
     name: "toast",
     title: "Toast",
-    description: "`modal={false}` with a queue in component state: toasts show one after another.",
+    description: "toast() and Toaster, built in: stacked cards, self-dismissing, swipe to dismiss.",
     group: "non-modal",
     component: ToastExample,
   },

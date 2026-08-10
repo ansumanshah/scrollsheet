@@ -61,6 +61,14 @@
 
 /* ── Mobile jump list: horizontal-scrolling anchor pills ──────────────── */
 
+.docs-mobile-toc a {
+  /* A question longer than the screen can't be read either way; ellipsize
+     instead of letting one pill dwarf the viewport. */
+  max-width: 78vw;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
 .docs-mobile-toc {
   display: flex;
   gap: 8px;

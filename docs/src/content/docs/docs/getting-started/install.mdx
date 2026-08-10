@@ -29,6 +29,17 @@ import DocExample from '../../../../components/DocExample.astro';
   </TabItem>
 </Tabs>
 
+Then import the component and the stylesheet, once per app:
+
+```tsx
+import { Sheet } from 'scrollsheet';
+import 'scrollsheet/styles.css';
+```
+
+Prefer zero config? `import { Sheet } from 'scrollsheet/auto'` embeds the stylesheet — no CSS
+import. `Sheet.*` is client-only: in Next.js App Router, add `"use client"` to the file that
+renders it.
+
 <DocExample
   name="confirm"
   caption="The smallest complete sheet: a title, a body, two buttons. Drag it down; it will not go."
