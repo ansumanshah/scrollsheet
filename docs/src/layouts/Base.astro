@@ -16,7 +16,9 @@ const { title, description, ogImage = "/og.png", noIndex = false } = Astro.props
 const siteUrl = Astro.site ?? new URL("https://scrollsheet.dev");
 const canonicalURL = new URL(Astro.url.pathname, siteUrl);
 const ogImageURL = new URL(ogImage, siteUrl);
-const pageTitle = title === "scrollsheet" ? title : `${title} · scrollsheet`;
+// The home page's title leads with the brand already; suffixing those
+// would render "scrollsheet: ... · scrollsheet".
+const pageTitle = title.startsWith("scrollsheet") ? title : `${title} · scrollsheet`;
 ---
 
 <!doctype html>
