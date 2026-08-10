@@ -6,7 +6,7 @@ One primitive for bottom sheets, drawers, modal dialogs, side panels, and toasts
 
 ## Why another drawer
 
-[vaul](https://github.com/emilkowalski/vaul) carried the ecosystem for years, and its bug tracker tells one story over and over: pointer tracking fights the browser. scrollsheet takes the opposite bet: **don't simulate the gesture, be the scroll.**
+[vaul](https://github.com/emilkowalski/vaul) is the React drawer nearly everyone ships: 37 million downloads a week. Its bug tracker tells one story over and over: pointer tracking fights the browser. scrollsheet takes the opposite bet: **don't simulate the gesture, be the scroll.**
 
 1. **The sheet is a native `<dialog>`.** Top layer, so no z-index wars. Focus containment, Esc, and background inerting come from the platform.
 2. **The drag is a native scroll.** A full-viewport `scroll-snap` container; detents are snap stops. 1:1 tracking, momentum, and rubber-banding run on the compositor. There is no drag code to have bugs in.
