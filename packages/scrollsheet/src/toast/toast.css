@@ -29,7 +29,7 @@
    transform baked in here (that's the per-toast positioning block below). */
 .scrollsheet-toast {
   border: 1px solid rgb(0 0 0 / 0.08);
-  border-radius: 8px;
+  border-radius: var(--scrollsheet-toast-radius, 14px);
   background: #fff;
   box-shadow: 0 4px 12px rgb(0 0 0 / 0.1);
 }
@@ -278,8 +278,7 @@
     )
     scale(
       calc(
-        -1 *
-          (1 + var(--scrollsheet-toast-toasts-before, var(--sonner-toasts-before, 0)) * 0.05)
+        1 - var(--scrollsheet-toast-toasts-before, var(--sonner-toasts-before, 0)) * 0.05
       )
     );
   height: var(--scrollsheet-toast-front-height, var(--sonner-front-height, auto));
