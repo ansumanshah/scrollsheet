@@ -19,7 +19,7 @@
  */
 
 import * as React from "react";
-import { Root as SheetRoot } from "../root";
+import { Root as SheetRoot, type SheetRootProps } from "../root";
 import { Trigger } from "../trigger";
 import { Content as SheetContent, type SheetContentProps } from "../content";
 import { Handle as SheetHandle } from "../handle";
@@ -134,7 +134,27 @@ export function composeOpenChange(
 
 /* ── Root ─────────────────────────────────────────────────────────────── */
 
-export interface DrawerRootProps {
+/**
+ * vaul's own props, translated — plus (via the Pick) the scrollsheet-native
+ * props that have no vaul counterpart and forward to `Sheet.Root`
+ * untranslated: `backdropDismissible` (the escape hatch vaul served with the
+ * Radix onPointerDownOutside/onInteractOutside preventDefault idiom),
+ * `escapeDismissible` (same for onEscapeKeyDown), `keyboardExpands`,
+ * `onTravel` (the live counterpart of vaul's ignored `onDrag`), `scrollbar`,
+ * and `actionsRef`. Only props with no vaul name-collision are forwarded —
+ * anything vaul also has (`closeThreshold`, `modal`, `dismissible`, …) keeps
+ * its translated vaul semantics above.
+ */
+export interface DrawerRootProps
+  extends Pick<
+    SheetRootProps,
+    | "actionsRef"
+    | "backdropDismissible"
+    | "escapeDismissible"
+    | "keyboardExpands"
+    | "onTravel"
+    | "scrollbar"
+  > {
   children?: React.ReactNode;
   open?: boolean;
   defaultOpen?: boolean;
@@ -254,6 +274,12 @@ export function Root(props: DrawerRootProps) {
     onRelease,
     container,
     fixed,
+    actionsRef,
+    backdropDismissible,
+    escapeDismissible,
+    keyboardExpands,
+    onTravel,
+    scrollbar,
   } = props;
 
   // Fires during render (not an effect) so it also surfaces on the server —
@@ -275,7 +301,11 @@ export function Root(props: DrawerRootProps) {
   if (ignored.length > 0) {
     warnOnce(
       "root-ignored-props",
-      `[scrollsheet Drawer] These <Drawer.Root> props from vaul have no effect in this compat layer and are ignored: ${ignored.join(", ")}. See the vaul migration notes in the README.`,
+      `[scrollsheet Drawer] These <Drawer.Root> props from vaul have no effect in this compat layer and are ignored: ${ignored.join(", ")}. See the vaul migration notes in the README.${
+        onDrag !== undefined
+          ? " onDrag: the native onTravel prop works on this same <Drawer.Root>."
+          : ""
+      }`,
     );
   }
 
@@ -371,6 +401,12 @@ export function Root(props: DrawerRootProps) {
         sequentialDetents={snapToSequentialPoint}
         closeThreshold={resolvedCloseThreshold}
         onRelease={handleRelease}
+        actionsRef={actionsRef}
+        backdropDismissible={backdropDismissible}
+        escapeDismissible={escapeDismissible}
+        keyboardExpands={keyboardExpands}
+        onTravel={onTravel}
+        scrollbar={scrollbar}
       >
         {children}
       </SheetRoot>
@@ -500,7 +536,13 @@ export const Content = /* @__PURE__ */ React.forwardRef<HTMLDivElement, DrawerCo
     if (ignored.length > 0) {
       warnOnce(
         "content-ignored-props",
-        `[scrollsheet Drawer] These <Drawer.Content> props from vaul have no effect in this compat layer and are stripped before reaching the DOM: ${ignored.join(", ")}. See the vaul migration notes in the README.`,
+        `[scrollsheet Drawer] These <Drawer.Content> props from vaul have no effect in this compat layer and are stripped before reaching the DOM: ${ignored.join(", ")}. See the vaul migration notes in the README.${
+          onPointerDownOutside !== undefined ||
+          onInteractOutside !== undefined ||
+          onEscapeKeyDown !== undefined
+            ? " To block backdrop-tap dismissal, set backdropDismissible={false} on <Drawer.Root>; to block Esc, escapeDismissible={false}."
+            : ""
+        }`,
       );
     }
 

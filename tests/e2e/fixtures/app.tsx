@@ -999,6 +999,41 @@ function DrawerCloseThresholdDefaultSheet() {
 }
 
 /**
+ * vaul compat: scrollsheet-native props forwarded through Drawer.Root
+ * untranslated (see DrawerRootProps' Pick). backdropDismissible={false} is
+ * the recipe the Radix onPointerDownOutside-preventDefault idiom maps to —
+ * backdrop tap must NOT dismiss while Esc (still on) does.
+ */
+function DrawerBackdropBlockedSheet() {
+  return (
+    <Drawer.Root backdropDismissible={false}>
+      <Drawer.Trigger className="btn">Drawer backdrop blocked sheet</Drawer.Trigger>
+      <Drawer.Content className="sheet" aria-label="Drawer backdrop blocked sheet">
+        <Drawer.Handle />
+        <div className="sheet-inner">
+          <Drawer.Title>Backdrop blocked</Drawer.Title>
+        </div>
+      </Drawer.Content>
+    </Drawer.Root>
+  );
+}
+
+/** vaul compat: the escapeDismissible={false} counterpart — Esc must NOT dismiss while backdrop tap (still on) does. */
+function DrawerEscBlockedSheet() {
+  return (
+    <Drawer.Root escapeDismissible={false}>
+      <Drawer.Trigger className="btn">Drawer esc blocked sheet</Drawer.Trigger>
+      <Drawer.Content className="sheet" aria-label="Drawer esc blocked sheet">
+        <Drawer.Handle />
+        <div className="sheet-inner">
+          <Drawer.Title>Esc blocked</Drawer.Title>
+        </div>
+      </Drawer.Content>
+    </Drawer.Root>
+  );
+}
+
+/**
  * vaul compat: fadeFromIndex explicit 0 (vs. DrawerFadeFromIndexOmittedSheet
  * above, which leaves it omitted and defaults to the topmost snap point) —
  * undimmed ONLY at the very first snap point, so by the second (0.6) it
@@ -1691,6 +1726,8 @@ export function App() {
           initialVisible={false}
         />
         <DrawerCloseThresholdDefaultSheet />
+        <DrawerBackdropBlockedSheet />
+        <DrawerEscBlockedSheet />
         <DrawerFadeFromIndexExplicitSheet />
         <DrawerDirectionSheet direction="top" trigger="Drawer direction top sheet" />
         <DrawerDirectionSheet direction="left" trigger="Drawer direction left sheet" />

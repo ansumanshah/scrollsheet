@@ -1,5 +1,5 @@
 import { type Locator, type Page, expect, test } from "@playwright/test";
-import { SPRING_TIMEOUT, openSheetByTrigger } from "../helpers";
+import { SPRING_TIMEOUT, clickAboveThePanel, openSheetByTrigger } from "../helpers";
 
 /**
  * vaul parity — the VERIFY list from the vaul-compat audit
@@ -270,5 +270,39 @@ test.describe("Content asChild", () => {
         text.includes("asChild expects children to be a single non-Fragment"),
       ),
     ).toBe(true);
+  });
+});
+
+test.describe("native prop forwarding", () => {
+  // The Radix onPointerDownOutside/onInteractOutside preventDefault idiom
+  // maps to backdropDismissible={false} — forwarded untranslated through
+  // Drawer.Root, so the backdrop tap is inert while every other dismiss
+  // path stays live.
+  test("backdropDismissible={false} blocks backdrop tap, Esc still closes", async ({ page }) => {
+    await page.goto("/");
+    const dialog = await openSheetByTrigger(page, "Drawer backdrop blocked sheet");
+
+    await clickAboveThePanel(page);
+    await page.waitForTimeout(500);
+    await expect(dialog).toHaveAttribute("data-scrollsheet-state", "open");
+
+    await page.keyboard.press("Escape");
+    await expect(page.locator("dialog.scrollsheet-dialog")).toHaveCount(0, {
+      timeout: SPRING_TIMEOUT,
+    });
+  });
+
+  test("escapeDismissible={false} blocks Esc, backdrop tap still closes", async ({ page }) => {
+    await page.goto("/");
+    const dialog = await openSheetByTrigger(page, "Drawer esc blocked sheet");
+
+    await page.keyboard.press("Escape");
+    await page.waitForTimeout(500);
+    await expect(dialog).toHaveAttribute("data-scrollsheet-state", "open");
+
+    await clickAboveThePanel(page);
+    await expect(page.locator("dialog.scrollsheet-dialog")).toHaveCount(0, {
+      timeout: SPRING_TIMEOUT,
+    });
   });
 });

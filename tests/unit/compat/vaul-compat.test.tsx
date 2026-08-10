@@ -9,6 +9,8 @@ import {
   resolveCloseThreshold,
   resolveFadeFromIndex,
 } from "../../../packages/scrollsheet/src/drawer/index";
+import { _resetWarnOnceForTests } from "../../../packages/scrollsheet/src/internal/dev-warn";
+import type { SheetActions } from "../../../packages/scrollsheet/src/root";
 
 /**
  * The vaul compat layer (src/drawer) is a thin translation over the same
@@ -121,6 +123,37 @@ function TitleDescriptionAsChildOwnIdDrawer() {
       <Drawer.Description asChild>
         <span id="my-own-id">Description</span>
       </Drawer.Description>
+    </Drawer.Root>
+  );
+}
+
+/**
+ * The scrollsheet-native props Root forwards untranslated (see
+ * DrawerRootProps' Pick) — real props now, so none may trip the
+ * ignored-props warning, and the render must not throw with all six set.
+ */
+const nativeActionsRef: { current: SheetActions | null } = { current: null };
+function NativeForwardDrawer() {
+  return (
+    <Drawer.Root
+      defaultOpen
+      backdropDismissible={false}
+      escapeDismissible={false}
+      keyboardExpands
+      scrollbar="hidden"
+      onTravel={() => {}}
+      actionsRef={nativeActionsRef}
+    >
+      <Drawer.Content aria-label="native forward sheet" />
+    </Drawer.Root>
+  );
+}
+
+/** onDrag alone — its ignored-props warning must point at the forwarded onTravel. */
+function OnDragDrawer() {
+  return (
+    <Drawer.Root defaultOpen onDrag={() => {}}>
+      <Drawer.Content aria-label="onDrag sheet" />
     </Drawer.Root>
   );
 }
@@ -412,6 +445,51 @@ describe("vaul compat", () => {
  * so SSR can't observe the resolved --scrollsheet-fade-start/-end values
  * this feeds into.
  */
+// Runs AFTER the "vaul compat" describe — these tests reset warnOnce's
+// module-wide dedup state, which the tests above deliberately never do
+// (their once-only assertions depend on the shared Set staying warm).
+describe("native prop forwarding", () => {
+  test("scrollsheet-native props forward without any ignored-props warning", () => {
+    const warnSpy = spyOn(console, "warn").mockImplementation(() => {});
+    try {
+      _resetWarnOnceForTests();
+      expect(() => renderToString(<NativeForwardDrawer />)).not.toThrow();
+      expect(warnSpy).not.toHaveBeenCalled();
+    } finally {
+      warnSpy.mockRestore();
+    }
+  });
+
+  test("onDrag's ignored-props warning points at the forwarded onTravel", () => {
+    const warnSpy = spyOn(console, "warn").mockImplementation(() => {});
+    try {
+      _resetWarnOnceForTests();
+      renderToString(<OnDragDrawer />);
+      const message = warnSpy.mock.calls
+        .map((call) => String(call[0]))
+        .find((m) => m.includes("onDrag"));
+      expect(message).toContain("onTravel");
+    } finally {
+      warnSpy.mockRestore();
+    }
+  });
+
+  test("Content's outside-interaction warning teaches the Root recipe", () => {
+    const warnSpy = spyOn(console, "warn").mockImplementation(() => {});
+    try {
+      _resetWarnOnceForTests();
+      renderToString(<ContentIgnoredPropsDrawer />);
+      const message = warnSpy.mock.calls
+        .map((call) => String(call[0]))
+        .find((m) => m.includes("<Drawer.Content>"));
+      expect(message).toContain("backdropDismissible={false}");
+      expect(message).toContain("escapeDismissible={false}");
+    } finally {
+      warnSpy.mockRestore();
+    }
+  });
+});
+
 describe("resolveFadeFromIndex", () => {
   test("no snapPoints resolves to undefined regardless of fadeFromIndex", () => {
     expect(resolveFadeFromIndex(undefined, undefined)).toBeUndefined();
