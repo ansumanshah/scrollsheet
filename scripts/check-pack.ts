@@ -81,3 +81,20 @@ if (missing.length > 0) {
 }
 
 console.log(`✔ npm pack contains: ${REQUIRED_FILES.join(", ")}`);
+
+// README's prose cites the current version ("Currently `1.0.0-beta.N` on the
+// beta dist-tag") — hand-authored, so it drifts silently on every bump. The
+// tarball ships that README (root copy is the source of truth); keep the
+// sentence honest here, where verify already runs after every build.
+const pkg = (await Bun.file(
+  new URL("../packages/scrollsheet/package.json", import.meta.url),
+).json()) as { version: string };
+const readme = await Bun.file(new URL("../README.md", import.meta.url)).text();
+const cited = readme.match(/Currently `([^`]+)`/)?.[1];
+if (cited !== pkg.version) {
+  console.error(
+    `scrollsheet: README says "Currently \`${cited}\`" but packages/scrollsheet/package.json is ${pkg.version} — update the README sentence (or this check if the sentence moved).`,
+  );
+  process.exit(1);
+}
+console.log(`✔ README version reference matches package.json (${pkg.version})`);
