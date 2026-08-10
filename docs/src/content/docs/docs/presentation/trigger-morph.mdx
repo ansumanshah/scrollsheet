@@ -1,0 +1,219 @@
+---
+title: Morph a trigger into a sheet
+description: view-transition-name on the trigger and the panel, wrapped in document.startViewTransition, turns open and close into one continuous shape change instead of two animations racing each other.
+---
+
+import { Aside, LinkCard } from '@astrojs/starlight/components';
+
+```tsx
+trigger.style.viewTransitionName = 'morph';
+document.startViewTransition(() => {
+  flushSync(() => setOpen(true));
+  trigger.style.viewTransitionName = '';
+});
+```
+
+```css
+/* on the panel */
+view-transition-name: morph;
+--scrollsheet-travel: none;
+```
+
+The trigger and the panel share one `view-transition-name`. `document.startViewTransition`
+screenshots whichever element currently owns that name, runs your state change, then screenshots
+whichever element owns it next, and cross-fades the box between the two positions and sizes. The
+sheet's own travel would play a slide or a zoom+fade underneath that at the same time, so
+`--scrollsheet-travel: none` on the panel switches it off; the morph is the one entrance, and the
+same class handles the exit in reverse.
+
+Only one element can hold a given `view-transition-name` at a time or the transition throws. The
+panel's name can sit in CSS permanently: a closed `<dialog>` is `display: none` by the UA
+stylesheet, and `display: none` elements don't participate, so there's never a moment the panel
+and the trigger both carry it. The trigger's copy is different: it stays on screen whether the
+sheet is open or not, so its name has to be set right before the transition and cleared right
+after, or the still-visible trigger and the now-visible panel would collide the instant the sheet
+opens.
+
+## A button that grows into a modal
+
+The classic case: a button becomes a `side="center"` dialog in its place, not a modal that fades
+in from nowhere.
+
+```tsx
+import * as React from 'react';
+import { flushSync } from 'react-dom';
+import { Sheet } from 'scrollsheet';
+
+type VTDocument = Document & {
+  startViewTransition?: (update: () => void) => { finished: Promise<unknown> };
+};
+
+function reducedMotion() {
+  return window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+}
+
+// A trigger that's scrolled off-screen or already unmounted has nowhere for
+// the reverse morph to land, so the guard checks it's still in the viewport,
+// not just still in the DOM.
+function onscreen(el: HTMLElement) {
+  const r = el.getBoundingClientRect();
+  return r.bottom > 0 && r.right > 0 && r.top < window.innerHeight && r.left < window.innerWidth;
+}
+
+/** Wires one trigger element to morph into its sheet by a shared `name`. */
+function useTriggerMorph(name: string, setOpen: (open: boolean) => void) {
+  const triggerRef = React.useRef<HTMLButtonElement>(null);
+
+  const openMorph = () => {
+    const doc = document as VTDocument;
+    const trigger = triggerRef.current;
+    if (!doc.startViewTransition || reducedMotion() || !trigger) {
+      setOpen(true);
+      return;
+    }
+    trigger.style.viewTransitionName = name;
+    doc.startViewTransition(() => {
+      flushSync(() => setOpen(true));
+      trigger.style.viewTransitionName = '';
+    });
+  };
+
+  const closeMorph = () => {
+    const doc = document as VTDocument;
+    const trigger = triggerRef.current;
+    if (!doc.startViewTransition || reducedMotion() || !trigger || !onscreen(trigger)) {
+      setOpen(false);
+      return;
+    }
+    const transition = doc.startViewTransition(() => {
+      flushSync(() => setOpen(false));
+      trigger.style.viewTransitionName = name;
+    });
+    transition.finished.finally(() => {
+      trigger.style.viewTransitionName = '';
+    });
+  };
+
+  return { triggerRef, openMorph, closeMorph };
+}
+
+export function NewProjectButton() {
+  const [open, setOpen] = React.useState(false);
+  const { triggerRef, openMorph, closeMorph } = useTriggerMorph('new-project', setOpen);
+
+  return (
+    <>
+      <button ref={triggerRef} type="button" onClick={openMorph}>
+        New project
+      </button>
+      <Sheet.Root side="center" open={open} onOpenChange={(next) => !next && closeMorph()}>
+        <Sheet.Content className="morph-panel" style={{ width: 360, viewTransitionName: 'new-project' }}>
+          <Sheet.Title>New project</Sheet.Title>
+          <Sheet.Description>Give it a name to get started.</Sheet.Description>
+          <input autoFocus placeholder="Project name" />
+          <button type="button" onClick={closeMorph}>Create</button>
+        </Sheet.Content>
+      </Sheet.Root>
+    </>
+  );
+}
+```
+
+```css
+.morph-panel {
+  --scrollsheet-travel: none;
+}
+```
+
+Every dismissal path has to route through `closeMorph`, including the ones that never touch the
+Create button: backdrop click and Escape both call `onOpenChange(false)` on a controlled sheet
+without touching `open` themselves, which is exactly the hook the morph needs to run before the
+state actually flips.
+
+## A bottom sheet, same hook
+
+Nothing above is center-specific. `--scrollsheet-travel: none` degrades the slide-in the same
+way it degrades the zoom+fade. A list row morphing into a bottom sheet reuses `useTriggerMorph`
+as-is:
+
+```tsx
+interface Order {
+  id: string;
+  title: string;
+  detail: string;
+}
+
+function OrderRow({ order }: { order: Order }) {
+  const [open, setOpen] = React.useState(false);
+  // Unique per row: many rows are mounted at once, and each needs its own name.
+  const name = `order-${order.id}`;
+  const { triggerRef, openMorph, closeMorph } = useTriggerMorph(name, setOpen);
+
+  return (
+    <>
+      <button ref={triggerRef} type="button" className="order-row" onClick={openMorph}>
+        {order.title}
+      </button>
+      <Sheet.Root open={open} onOpenChange={(next) => !next && closeMorph()} detents={['content', 'full']}>
+        <Sheet.Content className="morph-panel" style={{ viewTransitionName: name }}>
+          <Sheet.Handle />
+          <Sheet.Title>{order.title}</Sheet.Title>
+          <p>{order.detail}</p>
+          <Sheet.Close>Done</Sheet.Close>
+        </Sheet.Content>
+      </Sheet.Root>
+    </>
+  );
+}
+```
+
+<Aside type="note">
+  Rows that never opened keep the trigger's `view-transition-name` empty, so idle rows never
+  collide with each other or with whichever one is currently morphing.
+</Aside>
+
+## What this costs you
+
+<Aside type="caution" title="Chrome and Safari only">
+  `document.startViewTransition` is Chrome/Edge 111+ and Safari 18+; Firefox doesn't have it yet.
+  `useTriggerMorph`'s `doc.startViewTransition` check is the whole fallback: unsupported browsers
+  and `prefers-reduced-motion: reduce` both fall straight through to the plain `setOpen` call, and
+  the sheet plays its normal spring entrance instead. There's no second code path to maintain,
+  just the one guard.
+</Aside>
+
+<Aside type="caution" title="It snapshots the whole viewport">
+  A View Transition captures the entire document, not just the trigger and the panel. On a page
+  with a lot of paint work outstanding, that capture can visibly stutter: the same cost every
+  cross-fading page transition pays, not something specific to sheets. Try it on the actual page
+  it'll ship on, not a blank test route.
+</Aside>
+
+<Aside type="caution" title="The trigger has to still be there">
+  The reverse morph needs a real element to land on. `useTriggerMorph`'s `onscreen` check covers
+  the two ways that breaks: the trigger scrolled out of view (a row opened, then the list scrolled
+  underneath it) or unmounted outright (the sheet outlived the page that opened it). Either way
+  `closeMorph` falls back to the plain `setOpen(false)` exit: no error, no dangling name, just no
+  morph for that one close.
+</Aside>
+
+## Why not animate it in JS
+
+Nothing here is scrollsheet-specific plumbing. It's the platform's own API, wired to the two
+state changes a sheet already exposes. The browser owns the crossfade and runs it as a compositor
+animation, off the main thread, so it stays smooth under exactly the kind of load that would make
+a JS-driven FLIP animation stutter. Feature-detecting it costs one `if`, and unsupported browsers
+get the library's regular entrance, not a broken one. That's also why it isn't a `Sheet.Root` prop:
+the fallback is free, the morph is a browser feature the library doesn't need to reimplement, and
+wiring it costs nothing when it's unavailable.
+
+The [Lightbox](/#lightbox) example is this same pattern doing more work: paging, pinch-zoom, and a
+chrome overlay riding its own timing on top of the morph. Read [its source
+comments](https://github.com/ansumanshah/scrollsheet/blob/main/examples/lightbox.tsx) once this
+pattern feels familiar.
+
+<LinkCard
+  title="Centered dialog"
+  description="side='center' renders a content-sized modal in the middle of the viewport, the presentation this recipe pairs with most."
+  href="/docs/presentation/centered-dialog"
+/>

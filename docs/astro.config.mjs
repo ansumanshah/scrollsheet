@@ -142,6 +142,7 @@ export default defineConfig({
             { slug: "docs/presentation/desktop-drag" },
             { slug: "docs/presentation/desktop-presentation" },
             { slug: "docs/presentation/page-transitions" },
+            { slug: "docs/presentation/trigger-morph" },
           ],
         },
         { slug: "docs/toasts" },
