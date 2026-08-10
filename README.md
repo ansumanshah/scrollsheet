@@ -21,8 +21,6 @@ Your page never gets touched. No `position: fixed` body hacks, no scroll restora
 bun add scrollsheet@beta   # or npm/pnpm/yarn
 ```
 
-Currently `1.0.0-beta.3` on the `beta` dist-tag: the API is settled and the test matrix is green; the label comes off after the real-device verification pass. ESM only.
-
 ## Use
 
 ```tsx

@@ -9,7 +9,6 @@ Gaps a design-system migration hit in the compat layers, closed same day.
 - `Drawer.Root` now forwards the scrollsheet-native props that have no vaul counterpart: `backdropDismissible`, `escapeDismissible`, `keyboardExpands`, `onTravel`, `scrollbar`, `actionsRef`. The Radix `onPointerDownOutside`-preventDefault idiom becomes `backdropDismissible={false}`, and the dev warning for the stripped Content props now says so.
 - Per-toast `style` (and `toastOptions.style`), matching Sonner's `ExternalToast.style`: inline styles land on the toast row over the stack's own variables, so `top` or `zIndex` overrides stick. Per-toast wins over the Toaster's base.
 - Docs: side sheets size from detents, not CSS width (a vaul-era `width: 360px` maps to `snapPoints={['360px']}`). Design systems whose CSS pipeline compiles custom properties away (postcss-css-variables and similar) should import from `scrollsheet/auto`.
-- The README's version reference is checked in `verify` now, so it can't silently drift from package.json again.
 
 ## 1.0.0-beta.2 - 2026-08-10
 
