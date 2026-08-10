@@ -2,6 +2,30 @@
 
 All notable changes to this project are documented here.
 
+## 1.0.0-beta.4 - 2026-08-13
+
+A bundle-size pass driven by a real design-system migration, a first-class centered dialog, and a Radix Dialog adapter.
+
+**Smaller.** Every entry point, gzip, beta.3 to beta.4:
+
+| Import | beta.3 | beta.4 |
+| --- | --- | --- |
+| `Sheet` | 18.6 kB | 17.2 kB |
+| `Drawer` (vaul compat) | 19.8 kB | 18.0 kB |
+| `Toaster, toast` | 6.8 kB | 6.6 kB |
+| all four | 25.6 kB | 23.6 kB |
+| `Sheet` from `/auto` | 22.6 kB | 21.3 kB |
+
+- Dev-only warning messages no longer ship in production bundles. The package now has `development` and `production` export conditions; every modern bundler picks the right tree automatically, and a bundler that knows neither simply gets the production build.
+- `themeColorDimming`'s engine loads from its own chunk only when the prop is set. Non-users stop shipping it.
+- The no-`<dialog>` fallback modal loads from its own chunk only on the ~4% of browsers that need it, preloaded at mount there so the first open shows no gap.
+
+**Centered dialog.** `side="center"` is a real presentation now, not a CSS trick: content-sized panel centered on both axes, zoom+fade on the same spring the sheets use, keyboard-aware, drag-free. Your CSS owns the width; core only guards the maximum (`--scrollsheet-center-max-inline`, default `min(560px, 100%)`).
+
+**Radix Dialog adapter.** `import { Dialog } from 'scrollsheet'` keeps @radix-ui/react-dialog JSX working against the centered presentation: Root/Trigger/Portal/Overlay/Content/Title/Description/Close, `data-state` stamping for existing animation CSS, and one-time dev warnings that name the scrollsheet recipe for each stripped radix prop. Dismissal is click-based on purpose: iOS Safari can deliver a backdrop tap as a bare click with no pointerdown, which the outside-pointerdown model misses. Sheet-only consumers ship none of this.
+
+**Toasts.** `sonnerCompat={false}` on the Toaster renders neutral `.scrollsheet-toast` names only, for fresh integrations with no Sonner legacy. The default stays dual-stamped; migrated CSS keeps matching.
+
 ## 1.0.0-beta.3 - 2026-08-10
 
 Gaps a design-system migration hit in the compat layers, closed same day.
