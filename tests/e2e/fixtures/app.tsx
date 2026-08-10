@@ -139,6 +139,30 @@ function CenterSheet() {
 }
 
 /**
+ * desktopSide="center": a bottom sheet below the default 768px breakpoint,
+ * a centered dialog at/above it. The responsive-profiles spec crosses the
+ * line with page.setViewportSize, both before opening and while the sheet
+ * is already open (a live flip).
+ */
+function ResponsiveProfileSheet() {
+  return (
+    <Sheet.Root side="bottom" desktopSide="center">
+      <Sheet.Trigger className="btn">Responsive profile sheet</Sheet.Trigger>
+      <Sheet.Content className="sheet" aria-label="Responsive profile sheet">
+        <Sheet.Handle />
+        <div className="sheet-inner">
+          <Sheet.Title>Responsive profile</Sheet.Title>
+          <Sheet.Description>
+            Bottom sheet below 768px, centered dialog at/above it.
+          </Sheet.Description>
+          <Sheet.Close className="btn">Close</Sheet.Close>
+        </div>
+      </Sheet.Content>
+    </Sheet.Root>
+  );
+}
+
+/**
  * Radix Dialog compat: an acceptance modal replicating a typical
  * design-system Modal 1:1 — Root/Trigger/Portal/Overlay/Content/Title/
  * Description/Close, centered via scrollsheet's own side="center"
@@ -1796,6 +1820,7 @@ export function App() {
         <BasicSheet />
         <ThemeColorSheet />
         <CenterSheet />
+        <ResponsiveProfileSheet />
         <DialogAcceptanceModal trigger="Dialog acceptance modal" />
         <DialogAcceptanceModal
           trigger="Dialog acceptance modal (backdrop blocked)"

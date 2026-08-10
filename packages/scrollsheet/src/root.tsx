@@ -3,9 +3,12 @@
 import * as React from "react";
 import { SheetContext, type TravelInfo } from "./context";
 import type { DetentSpec } from "./internal/detents";
-import { warnUnresolvableSnapToDetent } from "./internal/env";
+import { warnDesktopBreakpointWithoutSide, warnUnresolvableSnapToDetent } from "./internal/env";
 import { useControllableState } from "./internal/use-controllable-state";
 import type { Side } from "./motion/geometry";
+
+/** matchMedia's default desktop-presentation line — see core.css. */
+const DEFAULT_DESKTOP_BREAKPOINT = 768;
 
 /** Imperative escape hatch — see `actionsRef` on `<Sheet.Root>`. */
 export interface SheetActions {
@@ -99,6 +102,23 @@ export interface SheetRootProps {
    * travel, no detents or drag. @default 'bottom'
    */
   side?: Side | "center";
+  /**
+   * Overrides the resolved presentation once the viewport reaches
+   * `desktopBreakpoint` — `side` stays the base presentation below it.
+   * Resolved via a `matchMedia` subscription: server render and the first
+   * client paint both resolve to `side` (never read from `window` during
+   * render — that's what would warn on hydration), the desktop check lands
+   * after mount. Crossing the breakpoint while the sheet is open
+   * re-presents instantly, no morph. Unset: `side` applies at every width,
+   * today's behavior exactly.
+   */
+  desktopSide?: Side | "center";
+  /**
+   * The min-width (px) `desktopSide` takes over at. Only meaningful paired
+   * with `desktopSide` — set alone, it warns once in dev and does nothing.
+   * @default 768
+   */
+  desktopBreakpoint?: number;
   /**
    * When false, the page behind stays fully interactive and scrollable — no
    * backdrop, no focus trap, no inert-ing the rest of the page. Renders on a
@@ -213,6 +233,27 @@ function useRegisterCounter(): [number, () => () => void] {
   return [count, register];
 }
 
+/**
+ * Whether the viewport is currently at or above `breakpoint` — `false` until
+ * a client effect resolves it (server render and the first client paint
+ * agree, so hydration never warns), then live via a `matchMedia` "change"
+ * subscription. `enabled` skips the subscription entirely when `desktopSide`
+ * is unset, so a Root that never uses this prop pays for one inert
+ * `useState` and nothing else — no listener, no extra render.
+ */
+function useDesktopBreakpoint(breakpoint: number, enabled: boolean): boolean {
+  const [isDesktop, setIsDesktop] = React.useState(false);
+  React.useEffect(() => {
+    if (!enabled || typeof matchMedia !== "function") return;
+    const mql = matchMedia(`(min-width: ${breakpoint}px)`);
+    setIsDesktop(mql.matches);
+    const onChange = (event: MediaQueryListEvent) => setIsDesktop(event.matches);
+    mql.addEventListener("change", onChange);
+    return () => mql.removeEventListener("change", onChange);
+  }, [breakpoint, enabled]);
+  return isDesktop;
+}
+
 export function Root({
   children,
   open: openProp,
@@ -230,6 +271,8 @@ export function Root({
   themeColorDimming = false,
   onTravel,
   side = "bottom",
+  desktopSide,
+  desktopBreakpoint: desktopBreakpointProp,
   modal = true,
   backgroundEffect,
   backgroundRef,
@@ -274,10 +317,23 @@ export function Root({
   const openerRef = React.useRef<HTMLElement | null>(null);
   const [canvasEl, setCanvasEl] = React.useState<HTMLElement | null>(null);
 
+  if (
+    process.env.NODE_ENV !== "production" &&
+    desktopBreakpointProp !== undefined &&
+    desktopSide === undefined
+  ) {
+    warnDesktopBreakpointWithoutSide();
+  }
+  const desktopBreakpoint = desktopBreakpointProp ?? DEFAULT_DESKTOP_BREAKPOINT;
+  const isDesktop = useDesktopBreakpoint(desktopBreakpoint, desktopSide !== undefined);
+  // desktopSide only overrides once the viewport actually crosses the
+  // breakpoint — below it, or with desktopSide unset, this is exactly `side`.
+  const effectiveSide: Side | "center" =
+    isDesktop && desktopSide !== undefined ? desktopSide : side;
   // Center resolves to a boolean flag plus an inert "bottom" side so the
   // 4-side geometry union never widens — see SheetContextValue.center.
-  const center = side === "center";
-  const resolvedSide: Side = center ? "bottom" : side;
+  const center = effectiveSide === "center";
+  const resolvedSide: Side = center ? "bottom" : effectiveSide;
 
   const value = React.useMemo(
     () => ({
