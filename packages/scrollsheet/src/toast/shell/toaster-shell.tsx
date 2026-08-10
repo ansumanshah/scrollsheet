@@ -72,6 +72,7 @@ interface PositionGroupProps {
   icons: ToasterProps["icons"];
   className: string | undefined;
   baseStyle: React.CSSProperties;
+  sonnerCompat: boolean;
   registerListEl: (position: ToastPosition, el: HTMLOListElement | null) => void;
   dismissRow: (record: ToastRecord) => void;
   onHoverEnter: () => void;
@@ -92,6 +93,7 @@ function PositionGroup({
   icons,
   className,
   baseStyle,
+  sonnerCompat,
   registerListEl,
   dismissRow,
   onHoverEnter,
@@ -174,9 +176,9 @@ function PositionGroup({
     <ol
       ref={listRef}
       data-scrollsheet-toaster=""
-      data-sonner-toaster=""
+      data-sonner-toaster={sonnerCompat ? "" : undefined}
       data-scrollsheet-theme="light"
-      data-sonner-theme="light"
+      data-sonner-theme={sonnerCompat ? "light" : undefined}
       data-y-position={y}
       data-x-position={x}
       tabIndex={-1}
@@ -222,6 +224,7 @@ function PositionGroup({
             onDismiss={dismissRow}
             observe={observe}
             toasterClassNames={toastOptions?.classNames}
+            sonnerCompat={sonnerCompat}
             icons={icons}
             toasterCloseButtonAriaLabel={toastOptions?.closeButtonAriaLabel}
             toasterStyle={toastOptions?.style}
@@ -261,6 +264,7 @@ export function ToasterShell({
   containerAriaLabel = "Notifications",
   hotkey = DEFAULT_HOTKEY,
   nonce,
+  sonnerCompat = true,
 }: ToasterProps) {
   const resolvedId = id ?? toasterId;
   if (process.env.NODE_ENV !== "production") {
@@ -504,6 +508,7 @@ export function ToasterShell({
           icons={icons}
           className={className}
           baseStyle={baseStyle}
+          sonnerCompat={sonnerCompat}
           registerListEl={registerListEl}
           dismissRow={dismissRow}
           onHoverEnter={handleHoverEnter}

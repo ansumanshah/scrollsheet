@@ -730,3 +730,49 @@ describe("per-toast style", () => {
     expect(styled?.style.getPropertyValue("--scrollsheet-toast-stack-offset")).not.toBe("");
   });
 });
+
+describe("sonnerCompat", () => {
+  test("default (true): every row carries both the neutral and the sonner dialect", async () => {
+    await mount(<ToasterShell />);
+    await React.act(async () => {
+      toast("dual stamped");
+    });
+    const row = rows()[0]!;
+    expect(row.classList.contains("scrollsheet-toast")).toBe(true);
+    expect(row.classList.contains("sonner-toast")).toBe(true);
+    expect(row.hasAttribute("data-scrollsheet-toast")).toBe(true);
+    expect(row.hasAttribute("data-sonner-toast")).toBe(true);
+    const ol = document.querySelector("[data-scrollsheet-toaster]")!;
+    expect(ol.hasAttribute("data-sonner-toaster")).toBe(true);
+    expect(ol.getAttribute("data-sonner-theme")).toBe("light");
+    expect(row.querySelector(".sonner-toast-body")).not.toBeNull();
+  });
+
+  test("false: neutral names only — no sonner class, attribute, or theme mirror anywhere", async () => {
+    await mount(<ToasterShell sonnerCompat={false} />);
+    await React.act(async () => {
+      toast("neutral only", { description: "with body" });
+    });
+    const row = rows()[0]!;
+    expect(row.classList.contains("scrollsheet-toast")).toBe(true);
+    expect(row.classList.contains("sonner-toast")).toBe(false);
+    expect(row.hasAttribute("data-scrollsheet-toast")).toBe(true);
+    expect(row.hasAttribute("data-sonner-toast")).toBe(false);
+    const ol = document.querySelector("[data-scrollsheet-toaster]")!;
+    expect(ol.hasAttribute("data-sonner-toaster")).toBe(false);
+    expect(ol.hasAttribute("data-sonner-theme")).toBe(false);
+    // The whole subtree, not just the root: icon/body/title mirrors all drop.
+    expect(document.querySelector('[class*="sonner-"]')).toBeNull();
+    expect(document.querySelector(".scrollsheet-toast-body")).not.toBeNull();
+  });
+
+  test("false with a custom jsx toast: the custom row drops its mirrors too", async () => {
+    await mount(<ToasterShell sonnerCompat={false} />);
+    await React.act(async () => {
+      toast.custom(() => <div>custom body</div>);
+    });
+    const row = rows()[0]!;
+    expect(row.hasAttribute("data-scrollsheet-custom")).toBe(true);
+    expect(row.hasAttribute("data-sonner-custom")).toBe(false);
+  });
+});

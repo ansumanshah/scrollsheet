@@ -79,6 +79,8 @@ export interface ToastRowProps {
   toasterCloseButtonAriaLabel?: string;
   /** The Toaster's own `toastOptions.style` — every row's base inline styles, under the record's own `style`. */
   toasterStyle?: React.CSSProperties;
+  /** False drops the sonner-dialect mirrors (`.sonner-*` classes, `data-sonner-*` attributes) from the DOM — neutral names only. */
+  sonnerCompat: boolean;
 }
 
 export function ToastRow({
@@ -102,6 +104,7 @@ export function ToastRow({
   icons,
   toasterCloseButtonAriaLabel,
   toasterStyle,
+  sonnerCompat,
 }: ToastRowProps) {
   const role = record.type === "error" ? "alert" : "status";
   const mounted = useMountedFlag();
@@ -148,10 +151,12 @@ export function ToastRow({
 
   // Neutral name first (what our own toast.css reads, and what a fresh
   // consumer's own CSS targets), sonner name alongside it so a migrant's
-  // existing `.sonner-toast {}` rule keeps matching unmodified.
+  // existing `.sonner-toast {}` rule keeps matching unmodified. With
+  // sonnerCompat off, the mirrors drop and only neutral names render.
+  const legacy = (name: string) => (sonnerCompat ? name : undefined);
   const rootClassName = cn(
     "scrollsheet-toast",
-    "sonner-toast",
+    legacy("sonner-toast"),
     record.className,
     toasterClassNames?.toast,
     record.classNames?.toast,
@@ -187,9 +192,9 @@ export function ToastRow({
         ref={setRefs}
         className={rootClassName}
         data-scrollsheet-toast=""
-        data-sonner-toast=""
+        data-sonner-toast={sonnerCompat ? "" : undefined}
         data-scrollsheet-custom=""
-        data-sonner-custom=""
+        data-sonner-custom={sonnerCompat ? "" : undefined}
         data-testid={record.testId}
         role={role}
         style={style}
@@ -211,7 +216,7 @@ export function ToastRow({
       ref={setRefs}
       className={rootClassName}
       data-scrollsheet-toast=""
-      data-sonner-toast=""
+      data-sonner-toast={sonnerCompat ? "" : undefined}
       data-type={record.type}
       data-testid={record.testId}
       role={role}
@@ -222,7 +227,7 @@ export function ToastRow({
       <span
         className={cn(
           "scrollsheet-toast-icon",
-          "sonner-toast-icon",
+          legacy("sonner-toast-icon"),
           toasterClassNames?.icon,
           record.classNames?.icon,
         )}
@@ -235,7 +240,7 @@ export function ToastRow({
             icons={icons}
             spinnerClassName={cn(
               "scrollsheet-toast-spinner",
-              "sonner-toast-spinner",
+              legacy("sonner-toast-spinner"),
               toasterClassNames?.loader,
               record.classNames?.loader,
             )}
@@ -245,7 +250,7 @@ export function ToastRow({
       <div
         className={cn(
           "scrollsheet-toast-body",
-          "sonner-toast-body",
+          legacy("sonner-toast-body"),
           toasterClassNames?.content,
           record.classNames?.content,
         )}
@@ -254,7 +259,7 @@ export function ToastRow({
           <div
             className={cn(
               "scrollsheet-toast-title",
-              "sonner-toast-title",
+              legacy("sonner-toast-title"),
               toasterClassNames?.title,
               record.classNames?.title,
             )}
@@ -266,7 +271,7 @@ export function ToastRow({
           <div
             className={cn(
               "scrollsheet-toast-description",
-              "sonner-toast-description",
+              legacy("sonner-toast-description"),
               toasterClassNames?.description,
               record.classNames?.description,
             )}
@@ -276,13 +281,13 @@ export function ToastRow({
         )}
       </div>
       {hasActions && (
-        <div className="scrollsheet-toast-actions sonner-toast-actions">
+        <div className={cn("scrollsheet-toast-actions", legacy("sonner-toast-actions"))}>
           {record.cancel && (
             <button
               type="button"
               className={cn(
                 "scrollsheet-toast-cancel",
-                "sonner-toast-cancel",
+                legacy("sonner-toast-cancel"),
                 toasterClassNames?.cancelButton,
                 record.classNames?.cancelButton,
               )}
@@ -302,7 +307,7 @@ export function ToastRow({
               type="button"
               className={cn(
                 "scrollsheet-toast-action",
-                "sonner-toast-action",
+                legacy("sonner-toast-action"),
                 toasterClassNames?.actionButton,
                 record.classNames?.actionButton,
               )}
@@ -322,7 +327,7 @@ export function ToastRow({
               type="button"
               className={cn(
                 "scrollsheet-toast-close",
-                "sonner-toast-close",
+                legacy("sonner-toast-close"),
                 toasterClassNames?.closeButton,
                 record.classNames?.closeButton,
               )}

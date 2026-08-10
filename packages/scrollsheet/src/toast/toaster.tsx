@@ -98,6 +98,14 @@ export interface ToasterProps {
   hotkey?: readonly string[];
   /** CSP nonce for the injected style tag. */
   nonce?: string;
+  /**
+   * True (the default) mirrors every neutral class and attribute with its
+   * sonner-dialect twin (`.sonner-toast`, `data-sonner-*`) so CSS written
+   * against real Sonner keeps matching. Set false on a fresh integration
+   * with no Sonner legacy: rows render the `.scrollsheet-toast` names only.
+   * @default true
+   */
+  sonnerCompat?: boolean;
 }
 
 /**
