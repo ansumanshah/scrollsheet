@@ -28,9 +28,7 @@ beforeAll(async () => {
   Object.defineProperty(navigator, "platform", { value: "iPhone", configurable: true });
   const ReactDOM = await import("react-dom/client");
   ({ act } = await import("react"));
-  ({ useBodyFreeze } = await import(
-    "../../packages/scrollsheet/src/internal/use-body-freeze"
-  ));
+  ({ useBodyFreeze } = await import("../../packages/scrollsheet/src/internal/use-body-freeze"));
   container = document.createElement("div");
   document.body.appendChild(container);
   Root = ReactDOM.createRoot(container);

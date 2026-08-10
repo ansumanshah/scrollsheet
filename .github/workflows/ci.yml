@@ -191,7 +191,11 @@ jobs:
   # Gated on push-to-main (excludes pull_request entirely, including from
   # forks) and on running in this repo rather than a fork's own copy.
   deploy:
-    needs: [check, e2e, docs]
+    # check + docs only: the full e2e matrix still runs and reds the commit,
+    # but the docs deploy doesn't wait ~8 minutes for it. `check` (typecheck,
+    # unit, build) catches src breakage the aliased site would inherit; `docs`
+    # builds the artifact being deployed.
+    needs: [check, docs]
     if: github.event_name == 'push' && github.ref == 'refs/heads/main' && github.repository == 'ansumanshah/scrollsheet'
     runs-on: ubuntu-latest
     permissions:

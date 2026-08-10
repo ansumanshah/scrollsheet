@@ -2,6 +2,14 @@
 
 All notable changes to this project are documented here.
 
+## 1.0.0-beta.2 - 2026-08-10
+
+First real-device findings, same day.
+
+- Fixed: closing a sheet on iOS visibly scrolled the whole page when the host page sets `scroll-behavior: smooth` (a common global style). The body-freeze restore now jumps back instantly.
+- Fixed: collapsed toast stacks recede properly — back cards scale down behind the front one. The ported formula was mirrored and growing instead.
+- Toast card radius is now `--scrollsheet-toast-radius`, default 14px (was a hard-coded 8px).
+
 ## 1.0.0-beta.1 - 2026-08-10
 
 First public release, on npm's `beta` dist-tag while the real-device pass finishes.
