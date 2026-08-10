@@ -18,7 +18,7 @@ Your page never gets touched. No `position: fixed` body hacks, no scroll restora
 ## Install
 
 ```sh
-bun add scrollsheet@beta   # or npm/pnpm/yarn
+bun add scrollsheet   # or npm/pnpm/yarn
 ```
 
 ## Use
@@ -130,7 +130,7 @@ Every primitive ships as a registry item:
 bunx shadcn@latest add https://raw.githubusercontent.com/ansumanshah/scrollsheet/main/registry/drawer.json
 ```
 
-Items: `drawer`, `sheet`, `dialog`, `confirm`, `share-sheet`, `sidebar`, `toast`. Each writes one file into `components/ui/` with shadcn's default styling applied, wrapping the primitives above. Swap `drawer.json` in the URL for any of them. These URLs only resolve once the repo is public.
+Items: `drawer`, `sheet`, `dialog`, `confirm`, `share-sheet`, `sidebar`, `toast`. Each writes one file into `components/ui/` with shadcn's default styling applied, wrapping the primitives above. Swap `drawer.json` in the URL for any of them.
 
 ## Roadmap
 
