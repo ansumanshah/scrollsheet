@@ -46,14 +46,17 @@
 
 .right-sidebar-panel starlight-toc a {
   color: var(--fg-muted);
+  border-radius: 8px;
+  padding-block: 0.3rem;
 }
 .right-sidebar-panel starlight-toc a:hover {
   color: var(--fg);
+  background: var(--bg-inset);
 }
 .right-sidebar-panel starlight-toc a[aria-current="true"] {
   color: var(--accent);
   font-weight: 600;
-  box-shadow: inset 2px 0 0 var(--accent);
+  background: color-mix(in srgb, var(--accent) 12%, transparent);
 }
 .right-sidebar::-webkit-scrollbar {
   display: none;
