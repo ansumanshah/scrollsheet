@@ -137,6 +137,7 @@ export default defineConfig({
           label: "Presentation",
           items: [
             { slug: "docs/presentation/side-panels" },
+            { slug: "docs/presentation/centered-dialog" },
             { slug: "docs/presentation/non-modal" },
             { slug: "docs/presentation/desktop-drag" },
             { slug: "docs/presentation/desktop-presentation" },

@@ -1,4 +1,10 @@
-import { type Side, type SideGeometry, geometryFor, mapScroll, recedeTransform } from "../motion/geometry";
+import {
+  type Side,
+  type SideGeometry,
+  geometryFor,
+  mapScroll,
+  recedeTransform,
+} from "../motion/geometry";
 
 export type Phase = "pre" | "opening" | "open" | "closing";
 
@@ -62,7 +68,11 @@ const NON_TEXT_INPUT_TYPES = new Set([
  * pointless and can interrupt an active slider drag.
  */
 /** Clamp the track's raw scroll into [0, maxDetent] and map it to revealed px. */
-export function readRevealed(track: HTMLElement, geometry: SideGeometry, maxDetent: number): number {
+export function readRevealed(
+  track: HTMLElement,
+  geometry: SideGeometry,
+  maxDetent: number,
+): number {
   const rawClamped = Math.min(Math.max(track[geometry.scrollProp], 0), maxDetent);
   return mapScroll(rawClamped, maxDetent, geometry.sign);
 }

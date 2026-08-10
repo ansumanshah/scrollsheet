@@ -25,7 +25,8 @@ whichever reads better in your codebase. On the DOM side, every class and `data-
 `Toaster` renders is stamped twice: the neutral name (`.scrollsheet-toast`,
 `data-scrollsheet-toaster`, `--scrollsheet-toast-gap`, ...) *and* the matching Sonner one
 (`.sonner-toast`, `data-sonner-toaster`, `--sonner-gap` as a fallback), so none of your existing
-`.sonner-toast {}` / `[data-sonner-*]` CSS needs to change.
+`.sonner-toast {}` / `[data-sonner-*]` CSS needs to change. That's the right default for a
+migration; leave `sonnerCompat` alone and keep your Sonner CSS as-is.
 </Aside>
 
 <DocExample

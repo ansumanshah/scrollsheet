@@ -71,9 +71,10 @@ describe("dev-only warning strings", () => {
         expect(prod, `${family}: leaked into a production dist/**/*.mjs chunk`).not.toContain(
           substring,
         );
-        expect(dev, `${family}: missing from dist/dev — the development tree should keep it`).toContain(
-          substring,
-        );
+        expect(
+          dev,
+          `${family}: missing from dist/dev — the development tree should keep it`,
+        ).toContain(substring);
       }
     },
   );

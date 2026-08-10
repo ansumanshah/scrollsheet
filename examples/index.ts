@@ -13,6 +13,7 @@ import WalletExample from "./wallet";
 
 import SidesExample from "./sides";
 import SnapHeightsExample from "./snap-heights";
+import CenterExample from "./center";
 import ConfirmExample from "./confirm";
 import FullScreenExample from "./full-screen";
 import NestedExample from "./nested";
@@ -121,6 +122,13 @@ export const examples: ExampleEntry[] = [
     description: "A detached floating card: multi-view morph from menu to detail to confirm.",
     group: "actions",
     component: WalletExample,
+  },
+  {
+    name: "center",
+    title: "Centered dialog",
+    description: '`side="center"`: a content-sized modal with zoom and fade, no travel.',
+    group: "actions",
+    component: CenterExample,
   },
   {
     name: "confirm",

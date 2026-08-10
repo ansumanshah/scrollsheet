@@ -24,9 +24,7 @@ test("the theme-color meta dims while the sheet is open and restores on close", 
   // black by the dim progress. Poll, not a fixed wait: creation resolves a
   // microtask (or one chunk fetch) after open, and the write lands on the
   // next travel/settle frame after that.
-  await expect
-    .poll(() => page.evaluate(readMeta), { timeout: SPRING_TIMEOUT })
-    .not.toBe("#ffffff");
+  await expect.poll(() => page.evaluate(readMeta), { timeout: SPRING_TIMEOUT }).not.toBe("#ffffff");
   const dimmed = await page.evaluate(readMeta);
   expect(dimmed).not.toBeNull();
 
@@ -34,7 +32,5 @@ test("the theme-color meta dims while the sheet is open and restores on close", 
   await expect(page.locator("dialog.scrollsheet-dialog")).toHaveCount(0, {
     timeout: SPRING_TIMEOUT,
   });
-  await expect
-    .poll(() => page.evaluate(readMeta), { timeout: SPRING_TIMEOUT })
-    .toBe("#ffffff");
+  await expect.poll(() => page.evaluate(readMeta), { timeout: SPRING_TIMEOUT }).toBe("#ffffff");
 });

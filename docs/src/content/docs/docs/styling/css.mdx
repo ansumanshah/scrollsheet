@@ -41,6 +41,13 @@ entry's {BUNDLE_SIZES.index.gzipKb.toFixed(1)}. Toasts on the default entry need
 `scrollsheet/styles.css` and `scrollsheet/toast.css`. Never mix the two entries in one app;
 you would bundle every component twice.
 
+Every number above is measured on a production build. Dev-only warning strings sit behind a
+development/production export condition, the same one Vite, webpack 5+, and Next.js all set
+automatically, so they never reach a production bundle. A bundler that doesn't set that condition
+just serves the production build in dev too: no warnings, nothing broken. `themeColorDimming`
+goes further: its controller loads from a separate, lazily-fetched chunk, so an app that never
+sets the prop never ships it.
+
 <Aside type="tip">
   For CSP with the `auto` entry, pass `nonce` to `Sheet.Root`. Shadow DOM injection
   (`injectStylesInto`) also needs the `auto` entry; the default entry has no stylesheet to
@@ -66,4 +73,6 @@ you'd style any card:
 Arrived with an existing Sonner integration? Its `import { toast, Toaster } from 'scrollsheet'`
 compat layer also stamps the matching `sonner-*` class and `data-sonner-*` attribute on every
 element, so your existing `.sonner-toast {}` CSS keeps matching unmodified. See
-[Migrate from Sonner](/docs/migrating/from-sonner).
+[Migrate from Sonner](/docs/migrating/from-sonner). Starting fresh, with no Sonner CSS to keep
+matching? `<Toaster sonnerCompat={false}>` drops the mirrored names and renders the neutral
+`.scrollsheet-*` classes and attributes only.

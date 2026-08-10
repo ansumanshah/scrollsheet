@@ -1,0 +1,92 @@
+---
+title: Centered dialog
+description: side="center" renders a content-sized modal in the middle of the viewport, zoom+fade instead of travel, no detents or drag, your CSS owns the width.
+---
+
+import { Aside, LinkCard } from '@astrojs/starlight/components';
+import DocExample from '../../../../components/DocExample.astro';
+
+<DocExample
+  name="center"
+  caption="Content-sized, centered, zoom+fade. The example's own class sets the width; drag does nothing here."
+/>
+
+```tsx
+<Sheet.Root side="center">
+  <Sheet.Trigger>Delete project</Sheet.Trigger>
+  <Sheet.Content className="sheet" style={{ width: 400 }}>
+    <Sheet.Title>Delete this project?</Sheet.Title>
+    <Sheet.Description>This can't be undone.</Sheet.Description>
+    <Sheet.Close>Cancel</Sheet.Close>
+  </Sheet.Content>
+</Sheet.Root>
+```
+
+`side="center"` is a first-class presentation, not a CSS trick bolted onto a bottom sheet. The
+panel is content-sized and placed in the middle of the viewport instead of anchored to an edge:
+no travel range, no detents, no drag. It opens and closes with a zoom+fade (scale from 0.95 to
+1, with opacity) on the same spring every other sheet uses, instead of the slide a bottom or side
+sheet plays.
+
+## Width is yours
+
+Core sets no width on the panel, only guard rails: `max-inline-size` defaults to
+`min(560px, 100%)` so a dialog with no styling at all never touches the viewport edges. Size it
+the same way you'd size any card:
+
+```css
+.sheet {
+  width: 400px;
+}
+```
+
+Wider dialog? Raise the guard rail instead of fighting it:
+
+```css
+.sheet {
+  --scrollsheet-center-max-inline: 720px;
+}
+```
+
+`--scrollsheet-center-gutter` (default `20px`) is the minimum breathing room against the
+viewport edge on small screens, independent of the width you choose.
+
+## Keyboard
+
+A centered dialog with a text input shifts up above the on-screen keyboard automatically. It
+reads the same `--scrollsheet-keyboard` inset the bottom sheet engine already writes, so there's
+no separate keyboard mode to opt into.
+
+## Dismissal
+
+Escape and a backdrop click both dismiss, same as every other side. `dismissible`,
+`escapeDismissible`, and `backdropDismissible` all work unchanged.
+
+<Aside type="note">
+Center has no gesture surface: `disableDrag` is implied and `Sheet.Handle` renders `display:
+none` if you leave one in the markup (useful when the same `Sheet.Content` also renders as a
+bottom sheet at a smaller breakpoint). `detents` and `keyboardExpands` are ignored, the panel is
+always sized by its content.
+</Aside>
+
+## No-`<dialog>` fallback
+
+The ~4% of browsers without `<dialog>` support already render every sheet as a plain centered
+modal (see [Browser support](/docs/browser-support#without-dialog)). A center dialog's fallback
+is nearly indistinguishable from its normal path, so there's nothing extra to account for.
+
+## Center vs. a bottom sheet
+
+Reach for `center` when the content is a short, self-contained decision that reads naturally as
+a dialog: a confirmation, a one-field form, an alert. Keep the default bottom (or side)
+presentation for anything a thumb should be able to drag: multi-step flows, longer scrollable
+content, or a sheet meant to feel native on a phone. `side="center"` is a fixed choice, not a
+breakpoint. For a sheet that should dock as a centered dialog on desktop but stay a full-bleed
+bottom sheet on mobile, see [Desktop presentation](/docs/presentation/desktop-presentation)
+instead. That's a responsive default, not this prop.
+
+<LinkCard
+  title="API reference"
+  description="Full prop reference for Sheet.Root, the styling hooks on Sheet.Content, and every other named export."
+  href="/docs/reference/api"
+/>

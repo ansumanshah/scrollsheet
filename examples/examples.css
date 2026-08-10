@@ -1888,3 +1888,9 @@
     font-size: 0.88rem;
   }
 }
+
+/* Centered dialog example: the example owns the width, core only guards the
+   maximum. Fixed width below the guard proves consumer sizing wins. */
+.ex-center-panel {
+  width: min(360px, 100%);
+}

@@ -58,7 +58,7 @@ import DocExample from '../../../../components/DocExample.astro';
 
 | Prop | Type | Default |
 | --- | --- | --- |
-| `side` | `'bottom' \| 'top' \| 'left' \| 'right'` | `'bottom'` |
+| `side` | `'bottom' \| 'top' \| 'left' \| 'right' \| 'center'` | `'bottom'` |
 | `modal` | `boolean` | `true` |
 | `backgroundEffect` | `'scale' \| 'parallax' \| 'none'` | `'scale'` for a full-height mobile bottom sheet opened from inside the marked wrapper, else off |
 | `backgroundRef` | `React.RefObject<HTMLElement \| null>` | targets `backgroundEffect` directly, skipping the `data-scrollsheet-background` query |
@@ -68,6 +68,10 @@ import DocExample from '../../../../components/DocExample.astro';
 | `disableDrag` | `boolean` | `false` |
 
 </div>
+
+`side="center"` renders a content-sized modal dialog instead of an edge-anchored sheet.
+`detents`, `disableDrag`, and `keyboardExpands` are all inert: there's no travel range or drag
+gesture to configure. See [Centered dialog](/docs/presentation/centered-dialog).
 
 ### Interaction and other
 
@@ -92,7 +96,7 @@ import DocExample from '../../../../components/DocExample.astro';
 | Attribute | Where | Values |
 | --- | --- | --- |
 | `data-scrollsheet-state` | `<dialog>` | `pre` \| `opening` \| `open` \| `closing` |
-| `data-scrollsheet-side` | `<dialog>` | `bottom` \| `top` \| `left` \| `right` |
+| `data-scrollsheet-side` | `<dialog>` | `bottom` \| `top` \| `left` \| `right` \| `center` |
 | `data-scrollsheet-modal` | `<dialog>` | `"false"` when `modal={false}`, absent otherwise |
 | `data-scrollsheet-scrollbar` | `<dialog>` | `overlay` \| `hidden` \| `native` |
 | `data-scrollsheet-at-max` | `<dialog>` | present at tallest detent |
@@ -129,6 +133,9 @@ import DocExample from '../../../../components/DocExample.astro';
 | `--scrollsheet-inset-x` / `-top` / `-bottom` / `-left` / `-right` / `-y` | panel (set by you) | px offsets for the "inset card" recipe (`-x`/`-y` are the cross-axis inset for bottom/top and left/right sheets) |
 | `--scrollsheet-scrollbar-width` / `-color` | panel (set by you) | overlay scrollbar thumb, default `4px`; also styles nested-scroller thumbs |
 | `--scrollsheet-focus-ring` / `-width` | handle (set by you) | keyboard focus ring on `Sheet.Handle` |
+| `--scrollsheet-center-max-inline` | panel (set by you) | max width guard for `side="center"`, default `min(560px, 100%)`; the panel itself carries no width, set one on your own class |
+| `--scrollsheet-center-max-block` | panel (set by you) | max height guard for `side="center"`, default `100%`; the panel scrolls internally past this |
+| `--scrollsheet-center-gutter` | panel (set by you) | minimum edge padding for `side="center"` on small viewports, default `20px` |
 
 </div>
 
@@ -149,7 +156,7 @@ import DocExample from '../../../../components/DocExample.astro';
 | `spring(config?)` | `{ stiffness, damping, mass, velocity, restDelta }` → `{ easing, durationMs }` |
 | `isSupported()` | `() => boolean`, false on the ~4% of browsers with no `<dialog>`, where the sheet falls back to a plain modal (see [Without `<dialog>`](/docs/browser-support#without-dialog)) |
 | `Drawer` | vaul-compatible namespace mapped onto `Sheet.*`: `Root`, `Trigger`, `Portal`, `Overlay`, `Content`, `Handle`, `Title`, `Description`, `Close` (`NestedRoot` is an alias of `Root`). See [Migrate from vaul](/docs/migrating/from-vaul) |
-| `Toaster`, `toast`, `useToasts` | Toast exports on their own per-toast DOM (no `Sheet.Root` involved): all six positions with per-toast overrides, hide-not-evict overflow, swipe-to-dismiss. Sonner-compatible too: `useSonner`, `toasterId`, and existing `.sonner-toast` CSS all keep working. See [Migrate from Sonner](/docs/migrating/from-sonner) |
+| `Toaster`, `toast`, `useToasts` | Toast exports on their own per-toast DOM (no `Sheet.Root` involved): all six positions with per-toast overrides, hide-not-evict overflow, swipe-to-dismiss. Sonner-compatible too: `useSonner`, `toasterId`, and existing `.sonner-toast` CSS all keep working, controlled by `<Toaster sonnerCompat>` (`boolean`, default `true`; `false` drops every `.sonner-*` class and `data-sonner-*` attribute, neutral `.scrollsheet-*` names only). See [Migrate from Sonner](/docs/migrating/from-sonner) |
 | `injectStylesInto(root, nonce?)` | `(root: ShadowRoot, nonce?: string) => void`, adopts the core stylesheet into a shadow root. See [Shadow DOM](/docs/advanced/shadow-dom) |
 | `injectToastStylesInto(root, nonce?)` | Same signature, for the toast stylesheet. A sibling export, not folded into `injectStylesInto` |
 
