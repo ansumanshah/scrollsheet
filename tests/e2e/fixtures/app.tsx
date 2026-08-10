@@ -73,6 +73,36 @@ function BasicSheet() {
   );
 }
 
+/**
+ * themeColorDimming smoke target. Provides its own `<meta name="theme-color">`
+ * (the fixture page head ships none) so the spec can watch the tag's content
+ * darken while the sheet is open and restore after close — which proves the
+ * lazily loaded theme-color module actually arrives and gets applied on
+ * travel frames, not just that the prop parses.
+ */
+function ThemeColorSheet() {
+  React.useEffect(() => {
+    const meta = document.createElement("meta");
+    meta.name = "theme-color";
+    meta.content = "#ffffff";
+    document.head.append(meta);
+    return () => meta.remove();
+  }, []);
+  return (
+    <Sheet.Root themeColorDimming>
+      <Sheet.Trigger className="btn">Theme color sheet</Sheet.Trigger>
+      <Sheet.Content className="sheet" aria-label="Theme color sheet">
+        <Sheet.Handle />
+        <div className="sheet-inner">
+          <Sheet.Title>Theme color</Sheet.Title>
+          <Sheet.Description>Dims the page theme-color meta while open.</Sheet.Description>
+          <Sheet.Close className="btn">Close</Sheet.Close>
+        </div>
+      </Sheet.Content>
+    </Sheet.Root>
+  );
+}
+
 /** Three detents (35% / 70% / full) with a live active-detent readout — for detent-snapping/settle tests. */
 function ThreeDetentSheet() {
   const detents = [0.35, 0.7, "full"] as const;
@@ -1691,6 +1721,7 @@ export function App() {
         <OutsideHandleDetachedSheet />
         <FloatingHandleSheet />
         <BasicSheet />
+        <ThemeColorSheet />
         <ThreeDetentSheet />
         <KeyboardSheet />
         <ControlledSheet />

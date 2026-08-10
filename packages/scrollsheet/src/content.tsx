@@ -44,7 +44,8 @@ import {
 import { FallbackSheet } from "./internal/fallback-sheet";
 import { Slot, composeRefs } from "./internal/slot";
 import { injectStyles } from "./internal/styles";
-import { type ThemeColorController, createThemeColorController } from "./internal/theme-color";
+import type { ThemeColorController } from "./internal/theme-color";
+import { preloadThemeColor } from "./internal/theme-color-loader";
 import { useBackgroundEffect } from "./internal/use-background-effect";
 import { useCloseWatcher } from "./internal/use-close-watcher";
 import { useContentMorph } from "./internal/use-content-morph";
@@ -820,28 +821,47 @@ export const Content = /* @__PURE__ */ React.forwardRef<HTMLDivElement, SheetCon
     // Lives for as long as the sheet is present at all (mount through the close
     // animation), so `restore()` always fires on both close and unmount via the
     // effect cleanup — there's no separate teardown path to keep in sync.
+    // The module behind the opt-in prop is code-split; kick the load at mount
+    // (prop set, sheet not yet open) so it is resident before a user gesture
+    // can open the sheet, instead of racing the first open.
+    React.useEffect(() => {
+      if (ctx.themeColorDimming) void preloadThemeColor();
+    }, [ctx.themeColorDimming]);
+
     React.useEffect(() => {
       if (!present || !ctx.themeColorDimming) return;
-      const controller = createThemeColorController({
-        getBackdropColor: () => {
-          // The attribute, not the class: the top-chrome strip shares the
-          // class and would match first in document order.
-          const backdrop = dialogRef.current?.querySelector("[data-scrollsheet-backdrop]");
-          return backdrop ? getComputedStyle(backdrop).backgroundColor : null;
-        },
-        // Already resolved by measure() onto the canvas — a style.getPropertyValue
-        // read, not a second getComputedStyle call.
-        getPanelColor: () =>
-          canvasRef.current?.style.getPropertyValue("--scrollsheet-panel-bg") || null,
-        isBottomAttached: () => ctxRef.current.side === "bottom" && !detachedRef.current,
-        getBottomChromeEl: () => bottomChromeRef.current,
-        getBottomDimEl: () => bottomChromeDimRef.current,
+      let cancelled = false;
+      let controller: ThemeColorController | null = null;
+      // Resolved from the mount-time preload's cached promise — a microtask,
+      // not a network fetch, in every case but a defaultOpen first render.
+      // The controller is only ever consumed on travel frames (themeColorRef,
+      // read by updateTravel), so a late arrival degrades to the next frame
+      // picking it up, never a missed teardown: cleanup runs on the same
+      // closure regardless of when creation resolved.
+      void preloadThemeColor().then((mod) => {
+        if (cancelled || !mod) return;
+        controller = mod.createThemeColorController({
+          getBackdropColor: () => {
+            // The attribute, not the class: the top-chrome strip shares the
+            // class and would match first in document order.
+            const backdrop = dialogRef.current?.querySelector("[data-scrollsheet-backdrop]");
+            return backdrop ? getComputedStyle(backdrop).backgroundColor : null;
+          },
+          // Already resolved by measure() onto the canvas — a style.getPropertyValue
+          // read, not a second getComputedStyle call.
+          getPanelColor: () =>
+            canvasRef.current?.style.getPropertyValue("--scrollsheet-panel-bg") || null,
+          isBottomAttached: () => ctxRef.current.side === "bottom" && !detachedRef.current,
+          getBottomChromeEl: () => bottomChromeRef.current,
+          getBottomDimEl: () => bottomChromeDimRef.current,
+        });
+        themeColorRef.current = controller;
+        // The next scroll/settle frame (already in flight from the open
+        // sequence's own scrollTop assignment) calls updateTravel() and
+        // applies the current progress — no initial value computed here.
       });
-      themeColorRef.current = controller;
-      // The next scroll/settle frame (already in flight from the open sequence's
-      // own scrollTop assignment) calls updateTravel() and applies the current
-      // progress — no need to compute an initial value here.
       return () => {
+        cancelled = true;
         controller?.restore();
         themeColorRef.current = null;
       };

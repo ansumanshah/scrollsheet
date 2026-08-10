@@ -68,9 +68,15 @@ export interface BundleSizes {
   brotli: number;
 }
 
+interface MetafileOutput {
+  entryPoint?: string;
+  imports: Array<{ path: string; kind: string }>;
+}
+
 export async function bundleAndCompress(entryAbsPath: string): Promise<BundleSizes> {
   const dir = await mkdtemp(join(tmpdir(), "scrollsheet-size-"));
-  const outfile = join(dir, "bundle.mjs");
+  const outdir = join(dir, "out");
+  const metafile = join(dir, "meta.json");
   try {
     const proc = Bun.spawn(
       [
@@ -87,7 +93,14 @@ export async function bundleAndCompress(entryAbsPath: string): Promise<BundleSiz
         // Measure what a consumer's production build ships: bundlers define
         // NODE_ENV, which dead-code-eliminates the dev-only warning strings.
         '--define:process.env.NODE_ENV="production"',
-        `--outfile=${outfile}`,
+        // Splitting, so a chunk reachable only through a dynamic import()
+        // (theme-color behind the opt-in themeColorDimming prop) is measured
+        // the way a consumer ships it: emitted, but not in the main bundle.
+        // For a graph with no dynamic imports esbuild still emits exactly one
+        // file here, byte-identical to the old single-outfile mode.
+        "--splitting",
+        `--outdir=${outdir}`,
+        `--metafile=${metafile}`,
       ],
       { stdout: "pipe", stderr: "pipe" },
     );
@@ -96,11 +109,35 @@ export async function bundleAndCompress(entryAbsPath: string): Promise<BundleSiz
       const stderr = await new Response(proc.stderr).text();
       throw new Error(`esbuild failed bundling ${entryAbsPath}:\n${stderr}`);
     }
-    const bundled = new Uint8Array(await Bun.file(outfile).arrayBuffer());
-    return {
-      gzip: Bun.gzipSync(bundled).byteLength,
-      brotli: brotliCompressSync(bundled).byteLength,
+    const meta = (await Bun.file(metafile).json()) as {
+      outputs: Record<string, MetafileOutput>;
     };
+    // Sum the entry output plus everything it reaches through STATIC imports
+    // only — a dynamic-import edge is a chunk the consumer's user downloads
+    // on demand, not part of what this import statement ships.
+    const outputs = meta.outputs;
+    const entryKey = Object.keys(outputs).find((k) => outputs[k]!.entryPoint);
+    if (!entryKey) throw new Error(`no entry output in esbuild metafile for ${entryAbsPath}`);
+    const shipped = new Set<string>();
+    const walk = (key: string) => {
+      if (shipped.has(key) || !outputs[key]) return;
+      shipped.add(key);
+      for (const imp of outputs[key]!.imports) {
+        if (imp.kind === "import-statement") walk(imp.path);
+      }
+    };
+    walk(entryKey);
+    let gzip = 0;
+    let brotli = 0;
+    for (const key of shipped) {
+      // Metafile output keys are cwd-relative; resolve against the outdir's
+      // own absolute prefix inside the key.
+      const abs = key.startsWith("/") ? key : join(process.cwd(), key);
+      const bundled = new Uint8Array(await Bun.file(abs).arrayBuffer());
+      gzip += Bun.gzipSync(bundled).byteLength;
+      brotli += brotliCompressSync(bundled).byteLength;
+    }
+    return { gzip, brotli };
   } finally {
     await rm(dir, { recursive: true, force: true });
   }
