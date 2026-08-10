@@ -48,16 +48,16 @@ const CODE: Record<string, string> = {
  * still importable on its own — only this grid got smaller.
  */
 const HOMEPAGE_EXAMPLES = [
-  "confirm",
+  "maps",
+  "wallet",
+  "lightbox",
+  "cart",
+  "toast",
+  "nested",
   "snap-heights",
   "profile-form",
   "sides",
-  "nested",
-  "lightbox",
-  "toast",
-  "wallet",
-  "maps",
-  "cart",
+  "confirm",
 ];
 
 const homepageExamples = HOMEPAGE_EXAMPLES.map((name) => {
@@ -217,6 +217,20 @@ const COMPARE_ROWS: {
   },
 ];
 
+/* Notes render as numbered footnotes below the table, not inside label
+ * cells: inline notes made row heights wildly uneven and broke the scan. */
+const footnotes = COMPARE_ROWS.filter((r) => r.note).map((r) => r.note!);
+const noteNumber = (note?: string) => (note ? footnotes.indexOf(note) + 1 : 0);
+
+/* Plain yes/no cells become glyphs so wins and gaps scan at a glance;
+ * nuanced values keep their text. */
+const cellParts = (value: string) => {
+  if (value === "yes") return { glyph: "✓", rest: "", cls: "is-yes" };
+  if (value === "no") return { glyph: "—", rest: "", cls: "is-no" };
+  if (value.startsWith("yes, ")) return { glyph: "✓", rest: value.slice(5), cls: "is-yes" };
+  return { glyph: "", rest: value, cls: "" };
+};
+
 const title = "scrollsheet: native bottom sheets and drawers for React";
 const description = `One React primitive for bottom sheets, drawers, modal dialogs, side panels, and toasts. Built on <dialog> and CSS scroll-snap. ${Math.round(BUNDLE_SIZES.index.gzipKb)} kB gzipped, zero dependencies.`;
 ---
@@ -373,25 +387,42 @@ const description = `One React primitive for bottom sheets, drawers, modal dialo
             <tr>
               <th scope="row">
                 {row.label}
-                {row.note && <span class="compare-note">{row.note}</span>}
+                {row.note && <sup class="compare-ref">{noteNumber(row.note)}</sup>}
               </th>
-              {row.values.map((value, i) => (
-                <td
-                  data-lib={COMPARE_LIBS[i]}
-                  class={[
-                    i === 0 ? "compare-col-us" : "",
-                    row.best === i ? "is-best" : "",
-                    row.win?.includes(i) ? "is-win" : "",
-                  ].filter(Boolean).join(" ") || undefined}
-                >
-                  {value}
-                </td>
-              ))}
+              {row.values.map((value, i) => {
+                const part = cellParts(value);
+                return (
+                  <td
+                    data-lib={COMPARE_LIBS[i]}
+                    class={[
+                      i === 0 ? "compare-col-us" : "",
+                      row.best === i ? "is-best" : "",
+                      row.win?.includes(i) ? "is-win" : "",
+                      part.cls,
+                    ].filter(Boolean).join(" ") || undefined}
+                  >
+                    <span class="cmp-val">
+                      {part.glyph && <span class="cmp-glyph" aria-hidden="true">{part.glyph}</span>}
+                      {part.glyph && (
+                        <span class="visually-hidden">{part.glyph === "✓" ? "yes" : "no"}</span>
+                      )}
+                      {part.rest}
+                    </span>
+                  </td>
+                );
+              })}
             </tr>
           ))}
         </tbody>
       </table>
     </div>
+    {footnotes.length > 0 && (
+      <ol class="compare-footnotes">
+        {footnotes.map((note) => (
+          <li>{note}</li>
+        ))}
+      </ol>
+    )}
   </section>
 
   <section class="container section" aria-labelledby="platform-heading">

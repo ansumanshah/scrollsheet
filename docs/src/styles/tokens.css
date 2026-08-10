@@ -106,6 +106,9 @@
   --accent-ring: rgb(90 69 232 / 0.35);
   --danger: #c4392f;
   --danger-soft: #fbe9e6;
+  --shadow-sm: 0 1px 2px rgb(12 11 10 / 0.06);
+  --shadow-md: 0 8px 24px -8px rgb(12 11 10 / 0.16);
+  --shadow-lg: 0 24px 64px -20px rgb(12 11 10 / 0.28);
 }
 :root[data-theme="dark"] {
   color-scheme: dark;
@@ -124,4 +127,7 @@
   --accent-ring: rgb(147 133 255 / 0.4);
   --danger: #ff7a70;
   --danger-soft: #2c1917;
+  --shadow-sm: 0 1px 2px rgb(0 0 0 / 0.4);
+  --shadow-md: 0 8px 24px -8px rgb(0 0 0 / 0.5);
+  --shadow-lg: 0 24px 64px -20px rgb(0 0 0 / 0.6);
 }

@@ -25,10 +25,10 @@ const title = "scrollsheet demo";
     -->
     <script is:inline>
       try {
-        var t = localStorage.getItem("theme");
-        if (t === "light" || t === "dark") document.documentElement.dataset.theme = t;
+        document.documentElement.dataset.theme =
+          localStorage.getItem("theme") === "dark" ? "dark" : "light";
       } catch (e) {
-        /* Private mode; fall through to prefers-color-scheme. */
+        document.documentElement.dataset.theme = "light";
       }
     </script>
     <style is:global>

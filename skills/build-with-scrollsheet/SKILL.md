@@ -34,16 +34,22 @@ import { Sheet } from 'scrollsheet';
 | `Sheet.Description` | `<p>` | wires `aria-describedby` automatically when rendered |
 | `Sheet.Close` | `<button>` | closes on click. `asChild` supported |
 
-Styles for mechanics (position, transform, scroll-snap, backdrop, focus containment) inject
-automatically at runtime: the sheet can only render after JS runs, so nothing flashes unstyled.
+Import the stylesheet once per app (it carries the mechanics: position, transform, scroll-snap,
+backdrop, focus containment):
+
+```tsx
+import 'scrollsheet/styles.css'; // plus 'scrollsheet/toast.css' if you use toasts
+```
+
+Prefer zero config? `import { Sheet } from 'scrollsheet/auto'` embeds the stylesheet and injects
+it on first open — no CSS import. `auto` is also the entry for Shadow DOM and strict-CSP setups
+(pass `nonce` to `Sheet.Root`).
+
 Give the panel your own visuals through `className`:
 
 ```css
 .my-sheet { background: white; border-radius: 16px 16px 0 0; box-shadow: 0 -8px 40px rgb(0 0 0 / .16); }
 ```
-
-Strict CSP: pass `nonce` to `Sheet.Root`, or skip auto-injection and `import 'scrollsheet/styles.css'`
-yourself.
 
 ## Detents
 
@@ -203,7 +209,7 @@ markup (trigger only, no dialog). No `window`/`document` access at module scope.
 
 | Framework | Works out of the box | Note |
 | --- | --- | --- |
-| Next.js App Router | yes | `"use client"` already on every file that needs it, including the dist chunk boundary |
+| Next.js App Router | yes, with a caveat | `Sheet.*` is client-only. Add `"use client"` to the file that renders it — a Server Component sees the `Sheet` object as one opaque client reference, so `Sheet.Root` is `undefined` there |
 | Next.js Pages Router | yes | no RSC boundary to worry about |
 | Remix / React Router v7 | yes | same SSR + hydration shape |
 | Astro | yes, with a caveat | give whatever renders `Sheet.Trigger` a `client:*` directive: an Astro island only hydrates with one |
@@ -213,7 +219,7 @@ markup (trigger only, no dialog). No `window`/`document` access at module scope.
 
 | Symptom | Cause | Fix |
 | --- | --- | --- |
-| Sheet flashes unstyled on first paint | you imported `scrollsheet/styles.css` late, or a CSP blocked the auto-inject with no `nonce` | pass `nonce` to `Sheet.Root`, or import the CSS file yourself up front |
+| Sheet renders as a plain unstyled dialog | missing `import 'scrollsheet/styles.css'` (the dev build warns once) | add the import, or switch to `scrollsheet/auto`; on the `auto` entry under a strict CSP, pass `nonce` to `Sheet.Root` |
 | Inner list won't scroll independently | `handleOnly`/`disableDrag` set but the list has no `data-scrollsheet-nested-scroll` | add the attribute to the scrollable element |
 | `fill` set but detent measures wrong height | `fill` changes what `'content'` detent measures (body's first child, not the body box) | only use `fill` with a genuine fixed-header + flex-scroll layout, per the recipe above |
 | `onTravel`'s `info` looks stale/wrong values later | held a reference to `TravelInfo` across frames | read every field synchronously inside the callback; it's mutated in place, not reallocated |

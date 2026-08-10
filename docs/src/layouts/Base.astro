@@ -37,21 +37,24 @@ const pageTitle = title === "scrollsheet" ? title : `${title} · scrollsheet`;
       browser's chrome at once, so a sheet can only match the bottom bar if
       the sheet, the page, and this tag are the same color.
     */}
-    <meta name="theme-color" content="#0a0a0b" media="(prefers-color-scheme: dark)" />
-    <meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)" />
+    <meta name="theme-color" content="#ffffff" />
 
     <!--
-      Applies a stored theme choice before first paint. Inline and blocking on
-      purpose: a deferred module would run after the document renders, so a
-      visitor who picked light would get a dark flash on every navigation.
-      Absent a stored choice this does nothing and prefers-color-scheme wins.
+      Applies the theme before first paint. Inline and blocking on purpose: a
+      deferred module would run after the document renders, so a visitor who
+      picked dark would get a light flash on every navigation. Light is the
+      default; dark only when the visitor chose it via the toggle.
     -->
     <script is:inline>
       try {
-        var t = localStorage.getItem("theme");
-        if (t === "light" || t === "dark") document.documentElement.dataset.theme = t;
+        var t = localStorage.getItem("theme") === "dark" ? "dark" : "light";
+        document.documentElement.dataset.theme = t;
+        if (t === "dark") {
+          var m = document.querySelector('meta[name="theme-color"]');
+          if (m) m.setAttribute("content", "#0a0a0b");
+        }
       } catch (e) {
-        /* Safari private mode throws on localStorage; system theme is fine. */
+        document.documentElement.dataset.theme = "light";
       }
     </script>
 

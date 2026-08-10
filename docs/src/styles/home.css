@@ -605,8 +605,8 @@
   color: #1a8f4c;
   font-weight: 700;
 }
-@media (prefers-color-scheme: dark) {
-  .compare-card .yes { color: #5fd694; }
+:root[data-theme="dark"] .compare-card .yes {
+  color: #5fd694;
 }
 .compare-card .no {
   color: var(--fg-faint);
@@ -725,13 +725,39 @@
   font-size: 14px;
   font-weight: 600;
 }
-.compare-note {
-  display: block;
-  margin-top: 3px;
+.compare-ref {
+  margin-left: 3px;
+  font-size: 0.72em;
+  font-weight: 500;
+  color: var(--fg-faint);
+}
+.compare-footnotes {
+  margin: 14px 2px 0;
+  padding-left: 20px;
+  max-width: 720px;
   font-size: 12.5px;
-  font-weight: 400;
-  line-height: 1.45;
+  line-height: 1.5;
   color: var(--muted);
+}
+.compare-footnotes li {
+  margin-top: 5px;
+}
+.cmp-val {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 6px;
+}
+.cmp-glyph {
+  font-weight: 700;
+}
+.compare-table td.is-yes .cmp-glyph {
+  color: #1a8f4c;
+}
+:root[data-theme="dark"] .compare-table td.is-yes .cmp-glyph {
+  color: #5fd694;
+}
+.compare-table td.is-no {
+  color: var(--fg-faint);
 }
 .compare-table td {
   display: flex;
@@ -789,7 +815,7 @@
   .compare-table td {
     display: table-cell;
     padding: 13px 14px;
-    vertical-align: top;
+    vertical-align: middle;
   }
   .compare-table td::before {
     content: none;
@@ -812,10 +838,6 @@
   .compare-table th[scope="row"] {
     display: table-cell;
     margin: 0;
-  }
-  .compare-table th[scope="row"] .compare-note {
-    font-size: 12px;
-    line-height: 1.4;
   }
   /* One tinted column so the eye lands on it without a shouty treatment. */
   .compare-table .compare-col-us {
