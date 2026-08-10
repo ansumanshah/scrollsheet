@@ -6,7 +6,7 @@ One primitive for bottom sheets, drawers, modal dialogs, side panels, and toasts
 
 ## Why another drawer
 
-[vaul](https://github.com/emilkowalski/vaul) carried the ecosystem for two years and last shipped in December 2024. Its bug tracker tells one story over and over: pointer tracking fights the browser. scrollsheet takes the opposite bet: **don't simulate the gesture, be the scroll.**
+[vaul](https://github.com/emilkowalski/vaul) carried the ecosystem for years, and its bug tracker tells one story over and over: pointer tracking fights the browser. scrollsheet takes the opposite bet: **don't simulate the gesture, be the scroll.**
 
 1. **The sheet is a native `<dialog>`.** Top layer, so no z-index wars. Focus containment, Esc, and background inerting come from the platform.
 2. **The drag is a native scroll.** A full-viewport `scroll-snap` container; detents are snap stops. 1:1 tracking, momentum, and rubber-banding run on the compositor. There is no drag code to have bugs in.
@@ -94,7 +94,6 @@ Focus containment comes from the platform's `showModal()`, not a JS focus trap. 
 
 | | scrollsheet | vaul | Silk | react-modal-sheet |
 | --- | --- | --- | --- | --- |
-| Maintained | yes | **no** | yes | yes |
 | Runtime deps | **0** | Radix Dialog (+24 transitive) | 0 | Motion (peer) |
 | Native `<dialog>` / top layer | **yes** | no | no | no |
 | Gesture engine | native scroll | pointer events | native scroll | Motion drag |
