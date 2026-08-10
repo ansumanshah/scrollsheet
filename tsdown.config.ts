@@ -23,6 +23,7 @@ const shared = {
 const entries = (dir: string) => ({
   index: `${pkg}/src/index.ts`,
   drawer: `${pkg}/src/drawer/index.tsx`,
+  dialog: `${pkg}/src/dialog/index.tsx`,
   toast: `${pkg}/src/toast/index.tsx`,
   ...(dir === "" ? { motion: `${pkg}/src/motion/index.ts` } : {}),
 });

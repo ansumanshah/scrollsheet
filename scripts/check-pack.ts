@@ -2,18 +2,19 @@
 /**
  * npm pack smoke test: asserts the tarball a real `npm publish` would ship
  * actually contains what consumers load: dist/index.mjs (the one JS entry),
- * the two compat chunks it re-exports from (dist/drawer.mjs, dist/toast.mjs),
- * the two stylesheets (dist/styles.css, dist/toast.css), and the dist/dev
- * sibling tree the "development" export condition points at —
- * package.json's `files`/`exports` fields are easy to drift from what
- * `bun run build` actually emits. Run after build (this reads dist/
- * indirectly via `npm pack`, not directly).
+ * the three compat chunks it re-exports from (dist/drawer.mjs,
+ * dist/dialog.mjs, dist/toast.mjs), the two stylesheets (dist/styles.css,
+ * dist/toast.css), and the dist/dev sibling tree the "development" export
+ * condition points at — package.json's `files`/`exports` fields are easy to
+ * drift from what `bun run build` actually emits. Run after build (this
+ * reads dist/ indirectly via `npm pack`, not directly).
  */
 export {}; // top-level await requires this file to be a module, not a script
 
 const REQUIRED_FILES = [
   "dist/index.mjs",
   "dist/drawer.mjs",
+  "dist/dialog.mjs",
   "dist/toast.mjs",
   "dist/auto/index.mjs",
   "dist/styles.css",
@@ -23,6 +24,7 @@ const REQUIRED_FILES = [
   // not just the production one.
   "dist/dev/index.mjs",
   "dist/dev/drawer.mjs",
+  "dist/dev/dialog.mjs",
   "dist/dev/toast.mjs",
   "dist/dev/motion.mjs",
   "dist/dev/auto/index.mjs",

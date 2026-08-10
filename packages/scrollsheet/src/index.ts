@@ -11,20 +11,24 @@ export { spring, type SpringConfig, type SpringCurve } from "./motion";
 export { injectStylesInto } from "./internal/styles";
 
 /*
- * The compat layers ship from this same entry, so migrating off vaul or
- * sonner is a one-line change of the module specifier and nothing else:
+ * The compat layers ship from this same entry, so migrating off vaul,
+ * Radix Dialog, or sonner is a one-line change of the module specifier and
+ * nothing else:
  *
  *   - import { Drawer } from 'vaul';
  *   + import { Drawer } from 'scrollsheet';
+ *
+ *   - import * as Dialog from '@radix-ui/react-dialog';
+ *   + import { Dialog } from 'scrollsheet';
  *
  *   - import { Toaster, toast } from 'sonner';
  *   + import { Toaster, toast } from 'scrollsheet';
  *
  * Only the namespace objects and their public types are re-exported, never
- * the loose members: vaul's own Root/Content/Handle/Title/Description/Close
+ * the loose members: vaul's/Radix's own Root/Content/Title/Description/Close
  * are different components from the ones above and would collide by name.
  * `sideEffects: false` for JS plus these being plain re-exports is what keeps
- * a Sheet-only consumer from paying for either layer — scripts/check-size.ts
+ * a Sheet-only consumer from paying for any compat layer — scripts/check-size.ts
  * measures each import shape separately to hold that guarantee.
  */
 export { Drawer } from "./drawer";
@@ -41,6 +45,17 @@ export type {
   DrawerDescriptionProps,
   DrawerCloseProps,
 } from "./drawer";
+export { Dialog } from "./dialog";
+export type {
+  DialogRootProps,
+  DialogTriggerProps,
+  DialogPortalProps,
+  DialogOverlayProps,
+  DialogContentProps,
+  DialogTitleProps,
+  DialogDescriptionProps,
+  DialogCloseProps,
+} from "./dialog";
 export { Toaster, toast, useSonner, useToasts } from "./toast";
 export type {
   ToasterProps,

@@ -63,6 +63,19 @@
           margin-inline: auto;
         }
       }
+      /* Radix Dialog compat acceptance fixture: consumer-owned width via a
+         plain max-width class, the recipe center mode's own docs call for
+         (core sets only max-inline-size/max-block-size GUARDS, never a
+         width — see .claude/beta4-design.md's center mode sketch). */
+      .fixture-dialog-panel {
+        width: 90vw;
+        max-width: 400px;
+      }
+      .fixture-dialog-close {
+        position: absolute;
+        top: 12px;
+        right: 12px;
+      }
     </style>
   </head>
   <body>
