@@ -104,21 +104,24 @@ test.describe("actionsRef", () => {
       timeout: SPRING_TIMEOUT,
     });
 
-    // fixture's detents=[0.3, 0.7]; 0.5 is not a member of that list.
+    // fixture's detents=[0.3, 0.7]; 0.4 is not a member of that list. Not
+    // 0.5: that sits EXACTLY equidistant between the two detents, and pixel
+    // rounding then decides the winner per viewport height (which is how a
+    // small-viewport project first caught this spec asserting a coin flip).
     const viewportHeight = page.viewportSize()!.height;
     const expected = Math.round(viewportHeight * 0.3);
     const track = dialog.locator(".scrollsheet-track");
 
     await page.evaluate(() =>
-      (window as unknown as ActionsRefWindow).__actionsRefSheet?.snapTo(0.5),
+      (window as unknown as ActionsRefWindow).__actionsRefSheet?.snapTo(0.4),
     );
 
     // Visual rest position resolves to the nearest configured detent (0.3).
     const scrollTop = await waitForStableScrollTop(track);
     expect(Math.abs(scrollTop - expected)).toBeLessThanOrEqual(DETENT_TOLERANCE);
 
-    // activeDetent/onActiveDetentChange keep the literal, unresolved 0.5.
-    await expect(dialog.locator("code")).toHaveText("0.5");
+    // activeDetent/onActiveDetentChange keep the literal, unresolved 0.4.
+    await expect(dialog.locator("code")).toHaveText("0.4");
 
     // Handle's slider value goes missing rather than announcing a
     // fabricated detent — aria-valuenow/aria-valuetext are both omitted.

@@ -83,6 +83,21 @@ export default defineConfig({
       },
     },
     {
+      // iPhone SE class: the smallest viewport the library commits to. Same
+      // spec set as chromium-mobile — old-device layout and gesture-geometry
+      // regressions (detent math on short viewports, keyboard band on a
+      // 667px screen, center dialogs on narrow widths) show up here first.
+      // Runs in the full matrix only, not the fast lane.
+      name: "chromium-small",
+      testIgnore: [/[\\/]desktop[\\/]/, /[\\/]site[\\/]/, /[\\/]visual[\\/]/, /[\\/]perf[\\/]/],
+      use: {
+        browserName: "chromium",
+        viewport: { width: 375, height: 667 },
+        deviceScaleFactor: 2,
+        hasTouch: true,
+      },
+    },
+    {
       name: "chromium-desktop",
       // 'cross-browser-*' specs run on every project (see chromium-mobile's
       // comment above) — matched here alongside the desktop-only specs.
