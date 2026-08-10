@@ -1,6 +1,6 @@
 {
   "name": "react-native-scrollsheet",
-  "version": "0.0.0",
+  "version": "0.0.1",
   "description": "Reserved for the React Native build of scrollsheet. Not implemented yet: use the web package `scrollsheet` today.",
   "license": "MIT",
   "author": "Ansuman Shah <ansumanshah@gmail.com>",
