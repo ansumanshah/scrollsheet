@@ -2,6 +2,8 @@
 
 Bottom sheets for React that feel native. Because they are.
 
+<img src="docs/public/hero.gif" width="290" align="right" alt="A bottom sheet dragged between detents 1:1 and flick-dismissed, rendered in a native dialog">
+
 One primitive for bottom sheets, drawers, modal dialogs, side panels, and toasts. A real `<dialog>` in the top layer. The browser's own scroll engine for gestures. Spring physics compiled to CSS `linear()`. <!--size:index.gzip:1-->17.6<!--/size--> kB gzipped, <!--size:index.brotli:1-->15.7<!--/size--> kB brotli, plus a 3.9 kB stylesheet. React 18+.
 
 ## Why another drawer
