@@ -2,12 +2,21 @@
 
 All notable changes to this project are documented here.
 
+## 1.0.0-beta.3 - 2026-08-10
+
+Gaps a design-system migration hit in the compat layers, closed same day.
+
+- `Drawer.Root` now forwards the scrollsheet-native props that have no vaul counterpart: `backdropDismissible`, `escapeDismissible`, `keyboardExpands`, `onTravel`, `scrollbar`, `actionsRef`. The Radix `onPointerDownOutside`-preventDefault idiom becomes `backdropDismissible={false}`, and the dev warning for the stripped Content props now says so.
+- Per-toast `style` (and `toastOptions.style`), matching Sonner's `ExternalToast.style`: inline styles land on the toast row over the stack's own variables, so `top` or `zIndex` overrides stick. Per-toast wins over the Toaster's base.
+- Docs: side sheets size from detents, not CSS width (a vaul-era `width: 360px` maps to `snapPoints={['360px']}`). Design systems whose CSS pipeline compiles custom properties away (postcss-css-variables and similar) should import from `scrollsheet/auto`.
+- The README's version reference is checked in `verify` now, so it can't silently drift from package.json again.
+
 ## 1.0.0-beta.2 - 2026-08-10
 
 First real-device findings, same day.
 
 - Fixed: closing a sheet on iOS visibly scrolled the whole page when the host page sets `scroll-behavior: smooth` (a common global style). The body-freeze restore now jumps back instantly.
-- Fixed: collapsed toast stacks recede properly — back cards scale down behind the front one. The ported formula was mirrored and growing instead.
+- Fixed: collapsed toast stacks recede properly: back cards scale down behind the front one. The ported formula was mirrored and growing instead.
 - Toast card radius is now `--scrollsheet-toast-radius`, default 14px (was a hard-coded 8px).
 
 ## 1.0.0-beta.1 - 2026-08-10
@@ -48,7 +57,7 @@ First public release, on npm's `beta` dist-tag while the real-device pass finish
 - Fixed: `sideEffects` exempts CSS, so bundlers keep the stylesheet import.
 - Fixed: the `"use client"` banner lands on every dist chunk.
 - shadcn/ui registry item (`sheet`) served from the docs site.
-- Considered and dropped: `command`/`commandfor` on `Trigger` — the dialog is portaled and doesn't exist before first open, so there is nothing to point `commandfor` at.
+- Considered and dropped: `command`/`commandfor` on `Trigger`. The dialog is portaled and doesn't exist before first open, so there is nothing to point `commandfor` at.
 
 **Vaul compat**
 
@@ -60,7 +69,7 @@ First public release, on npm's `beta` dist-tag while the real-device pass finish
 
 **Toasts**
 
-- `Toaster`, `toast()` and its variants, `toast.promise()`, `useToasts` — own primitives, no `Sheet.Root` involved. Neutral-first styling: `.scrollsheet-toast` classes and `--scrollsheet-toast-*` custom properties.
+- `Toaster`, `toast()` and its variants, `toast.promise()`, `useToasts`: own primitives, no `Sheet.Root` involved. Neutral-first styling with `.scrollsheet-toast` classes and `--scrollsheet-toast-*` custom properties.
 - Same architecture as Sonner: a persistent DOM node per toast, all six positions with per-toast override, 2-axis swipe-to-dismiss with a velocity flick.
 - `visibleToasts` (default 3) hides overflow instead of evicting it. Timers keep running; a hidden toast fades in when a slot frees.
 - Sonner drop-in kept: `useSonner` alias, `.sonner-toast`/`data-sonner-*` stamps beside the neutral ones, `scrollsheet/toast.css` (renamed from `sonner.css` before publish).

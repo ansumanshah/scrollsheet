@@ -14,17 +14,17 @@ import DocExample from '../../../../components/DocExample.astro';
 Drop-in: same `toast`, `useSonner`, `Toaster` exports, running on the same architecture real
 Sonner uses: a persistent card per toast, all portaled through one shared `<section>` in
 `document.body`, positioned with CSS instead of stacked inside a shared sheet panel. Every
-method — `toast()`, `.success()`,
+method (`toast()`, `.success()`,
 `.error()`, `.info()`, `.warning()`, `.loading()`, `.message()`, `.custom(jsx)`, `.promise()`,
-`.dismiss(id?)` — works before or after a `<Toaster>` mounts, backed by one shared
+`.dismiss(id?)`) works before or after a `<Toaster>` mounts, backed by one shared
 module-level queue.
 
 <Aside type="tip" title="Both names land on every element">
-`useSonner` is the same function as `useToasts` (the rest of these docs teach the latter) — pick
+`useSonner` is the same function as `useToasts` (the rest of these docs teach the latter); pick
 whichever reads better in your codebase. On the DOM side, every class and `data-*` attribute the
 `Toaster` renders is stamped twice: the neutral name (`.scrollsheet-toast`,
 `data-scrollsheet-toaster`, `--scrollsheet-toast-gap`, ...) *and* the matching Sonner one
-(`.sonner-toast`, `data-sonner-toaster`, `--sonner-gap` as a fallback) — so none of your existing
+(`.sonner-toast`, `data-sonner-toaster`, `--sonner-gap` as a fallback), so none of your existing
 `.sonner-toast {}` / `[data-sonner-*]` CSS needs to change.
 </Aside>
 
@@ -43,11 +43,12 @@ whichever reads better in your codebase. On the DOM side, every class and `data-
 | Stack | Every toast is a real, persistent card, not a ghost placeholder; collapsed ones sit behind the front one and expand to the full list on hover or `Alt+T` (configurable via `hotkey`). `Escape` dismisses the front toast, or collapses the stack back if the hotkey opened it, though a stack the pointer is still hovering stays expanded until the pointer leaves |
 | `visibleToasts` | Caps how many toasts show at once, default 3 like Sonner. Toasts past the cap stay mounted but hidden, timers still running, and fade in the moment a slot frees; nothing gets evicted. Minimum 1: `0` or negative still shows one |
 | Auto-dismiss | Uses the toast's own `duration`, or the `Toaster`'s. Pauses on hover, any pointer down on the stack (including mid-swipe), keyboard expand, and a hidden tab, resuming with the time left rather than a fresh countdown; updating a live toast's `duration` re-arms the timer from the new value |
-| Action / cancel buttons | Dismiss after their own `onClick` runs — cancel unconditionally, action unless the handler calls `event.preventDefault()` |
+| Action / cancel buttons | Dismiss after their own `onClick` runs: cancel unconditionally, action unless the handler calls `event.preventDefault()` |
 | `type: 'loading'` | Can't be swiped or closed by button, regardless of `dismissible` |
 | `toast.promise()` | Accepts an extended result object (`{ message, ...rest }`) from `success`/`error`; a static `description` set at call time survives to the settled toast |
 | `toast.getToasts()` / `.getHistory()` | Mirror Sonner's own introspection API; history is capped at 100 entries |
 | `testId`, `closeButtonAriaLabel` | Render as `data-testid`; override the close button's accessible name |
+| Per-toast `style` | `toast('Saved', { style: { top: '8px' } })` puts inline styles on that toast's row, merged over the stack's own offset and scale variables, so position and `zIndex` overrides stick. `toastOptions.style` on the `Toaster` sets the base for every row |
 
 </div>
 
@@ -72,8 +73,10 @@ zeroes all of them, the same contract the core primitive keeps everywhere else.
 
 Sonner injects its styles automatically; scrollsheet's default entry expects two imports next
 to the `Toaster` instead: `scrollsheet/styles.css` and `scrollsheet/toast.css`. For sonner's
-zero-setup behavior, import `toast` and `Toaster` from `scrollsheet/auto` — embedded styles,
-injected on first render.
+zero-setup behavior, import `toast` and `Toaster` from `scrollsheet/auto`: embedded styles,
+injected on first render. The `auto` entry is also the right one for design systems whose CSS
+pipeline statically compiles custom properties away (postcss-css-variables and similar); that
+compilation destroys the runtime variables the stylesheets' geometry runs on.
 
 <LinkCard
   title="Migrate from vaul"

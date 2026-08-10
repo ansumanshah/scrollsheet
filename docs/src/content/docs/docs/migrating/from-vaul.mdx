@@ -30,8 +30,20 @@ separate `NestedRoot`.
 | `closeThreshold` | A real feature; the adapter converts conventions (vaul counts the drag away, scrollsheet counts what remains), so vaul's `0.25` default keeps its feel. Only live when `snapPoints` is unset, matching vaul |
 | `onOpenStart` / `onCloseStart` | `onOpenChange` (fires at the state flip) |
 | `onOpenEnd` / `onCloseEnd` | `onOpenChangeComplete(open)` (fires once the transition visually finishes) |
+| `onPointerDownOutside` / `onInteractOutside` with `preventDefault()` | `backdropDismissible={false}` on `Drawer.Root` (blocks backdrop tap, keeps drag and Esc); the `onEscapeKeyDown` version is `escapeDismissible={false}` |
 
 </div>
+
+Scrollsheet-native props with no vaul counterpart (`backdropDismissible`, `escapeDismissible`,
+`keyboardExpands`, `onTravel`, `scrollbar`, `actionsRef`) forward through `Drawer.Root`
+untranslated, so one native feature never forces a full conversion to `Sheet.*`.
+
+<Aside type="caution" title="Side sheets size from detents, not CSS">
+  With `direction="left"` or `"right"`, the panel's width is the detent
+  (`width: var(--scrollsheet-max-detent)` in the stylesheet). A `width: 360px` in your own CSS
+  silently loses, and with no snap points the panel sizes to its content. Map fixed widths to
+  snap points: `snapPoints={['360px']}` for a fixed panel, `snapPoints={[1]}` for full-bleed.
+</Aside>
 
 <Aside type="caution" title="One deliberate accuracy divergence">
   `onRelease`'s second argument is the real open/closed outcome here (`true` only when the sheet
@@ -45,10 +57,12 @@ separate `NestedRoot`.
 
 <Aside type="caution" title="Known gaps">
   Props that existed to fight the page (scroll-lock, portal containers, manual keyboard handling,
-  `fixed`) are unnecessary here and warn once in dev. Radix `Dialog.Content`-only props with no
-  equivalent (`onPointerDownOutside`, `onOpenAutoFocus`, `onEscapeKeyDown`, `onCloseAutoFocus`,
-  `onInteractOutside`, `onFocusOutside`, `forceMount`) are stripped before they reach the DOM.
-  `Drawer.Overlay` renders nothing. The backdrop is automatic.
+  `fixed`) are unnecessary here and warn once in dev. Radix `Dialog.Content`-only props
+  (`onPointerDownOutside`, `onOpenAutoFocus`, `onEscapeKeyDown`, `onCloseAutoFocus`,
+  `onInteractOutside`, `onFocusOutside`, `forceMount`) are stripped before they reach the DOM;
+  the outside-interaction and Esc idioms map to `backdropDismissible={false}` and
+  `escapeDismissible={false}` per the table above. `Drawer.Overlay` renders nothing. The
+  backdrop is automatic.
 </Aside>
 
 <LinkCard

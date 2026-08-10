@@ -64,6 +64,13 @@ independently from the same entry) or need a feature the adapter doesn't expose 
 | `dismissible` | `dismissible` | same name |
 | `open` / `defaultOpen` / `onOpenChange` | same | unchanged |
 
+### Scrollsheet-native props work on the adapter too
+
+`Drawer.Root` forwards these untranslated (no vaul equivalent, no name collision):
+`backdropDismissible`, `escapeDismissible`, `keyboardExpands`, `onTravel`, `scrollbar`,
+`actionsRef`. Reach for them when you need one scrollsheet feature without converting the
+whole tree to native `Sheet.*`.
+
 ### snapPoints to detents value conversion
 
 | vaul value | scrollsheet `DetentSpec` |
@@ -84,6 +91,18 @@ Also: in real vaul, `closeThreshold` is dead code once `snapPoints` is set (`onR
 through the snap-points branch before reading it). scrollsheet's native `closeThreshold` has no
 such restriction, it works alongside `detents`. If your vaul app set both and relied on
 `closeThreshold` being ignored, decide on purpose whether you want the upgrade.
+
+### Side sheets: the panel's width IS the detent
+
+For `direction="left"` / `"right"`, scrollsheet resolves detents as widths
+(core.css: `width: var(--scrollsheet-max-detent)`). A vaul-era `width: 360px` in your own
+CSS silently loses: the panel tracks the detent, and with no snap points set it sizes to
+its content. Map fixed widths to `snapPoints` (adapter) or `detents` (native):
+
+```tsx
+<Drawer.Root direction="right" snapPoints={['360px']}>  // fixed-width panel
+<Drawer.Root direction="right" snapPoints={[1]}>        // full-bleed
+```
 
 ### Handle.preventCycle: no native equivalent
 
@@ -118,7 +137,13 @@ step 2:
 
 `<Drawer.Content>` also accepts and strips these Radix `Dialog.Content`-only props (warns once,
 dev-only): `onPointerDownOutside`, `onOpenAutoFocus`, `onEscapeKeyDown`, `onCloseAutoFocus`,
-`onInteractOutside`, `onFocusOutside`, `forceMount`.
+`onInteractOutside`, `onFocusOutside`, `forceMount`. The two common uses map to real props on
+`Drawer.Root`:
+
+| Radix idiom | Replacement |
+| --- | --- |
+| `onPointerDownOutside={(e) => e.preventDefault()}` (block backdrop tap, keep drag and Esc) | `backdropDismissible={false}` |
+| `onEscapeKeyDown={(e) => e.preventDefault()}` | `escapeDismissible={false}` |
 
 ## CSS selectors still work
 

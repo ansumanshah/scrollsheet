@@ -120,6 +120,7 @@ to rely on.
 | Action / cancel buttons | works: dismiss after their own `onClick` runs — cancel unconditionally, action unless the handler calls `event.preventDefault()` |
 | `type: 'loading'` | works: can't be swiped or closed by button, regardless of `dismissible` |
 | `classNames` (per-toast + `toastOptions.classNames`) | works: merges onto every rendered slot |
+| `style` (per-toast + `toastOptions.style`) | works: inline styles on the toast row, merged over the stack's own offset/scale variables (per-toast wins over `toastOptions.style`), so `top` or `zIndex` overrides stick |
 | `icons` (per-type overrides, including the loading spinner) | works: a per-toast `icon` always wins |
 | `toast.getToasts()` / `.getHistory()` | works: mirrors Sonner's own introspection API; history is capped at 100 entries |
 | `testId`, `closeButtonAriaLabel` | works: render as `data-testid`; override the close button's accessible name (default "Close toast") |

@@ -21,7 +21,7 @@ Your page never gets touched. No `position: fixed` body hacks, no scroll restora
 bun add scrollsheet@beta   # or npm/pnpm/yarn
 ```
 
-Currently `1.0.0-beta.1` on the `beta` dist-tag: the API is settled and the test matrix is green; the label comes off after the real-device verification pass. ESM only.
+Currently `1.0.0-beta.2` on the `beta` dist-tag: the API is settled and the test matrix is green; the label comes off after the real-device verification pass. ESM only.
 
 ## Use
 
@@ -43,6 +43,8 @@ import 'scrollsheet/styles.css';
 `Sheet.*` is client-only: state, event handlers, real DOM. In Next.js App Router, add `'use client'` to the file that renders it, same as any other interactive component.
 
 The stylesheet carries mechanics only; visuals are yours via `className`. No bundler CSS handling? Import everything from `scrollsheet/auto` instead: same components with the stylesheet embedded, injected the first time a sheet opens (also the entry for Shadow DOM and CSP-`nonce` setups).
+
+Design systems and other libraries that re-bundle their CSS: if your pipeline statically compiles custom properties away (postcss-css-variables and similar), it destroys the runtime `--scrollsheet-*` variables the stylesheet's geometry runs on, and sheets break in subtle ways. Import from `scrollsheet/auto` there instead; the injected stylesheet never enters your build.
 
 ### Detents
 
