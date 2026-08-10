@@ -2,7 +2,7 @@
 
 Bottom sheets for React that feel native. Because they are.
 
-One primitive for bottom sheets, drawers, modal dialogs, side panels, and toasts. A real `<dialog>` in the top layer. The browser's own scroll engine for gestures. Spring physics compiled to CSS `linear()`. <!--size:index.gzip:1-->17.6<!--/size--> kB gzipped, <!--size:index.brotli:1-->15.7<!--/size--> kB brotli, plus a mandatory 3.8 kB stylesheet: 22.3 kB combined. React 18+.
+One primitive for bottom sheets, drawers, modal dialogs, side panels, and toasts. A real `<dialog>` in the top layer. The browser's own scroll engine for gestures. Spring physics compiled to CSS `linear()`. <!--size:index.gzip:1-->17.6<!--/size--> kB gzipped, <!--size:index.brotli:1-->15.7<!--/size--> kB brotli, plus a 3.9 kB stylesheet. React 18+.
 
 ## Why another drawer
 
@@ -52,11 +52,20 @@ Design systems and other libraries that re-bundle their CSS: if your pipeline st
 
 A detent is `'content'` (the default), `'medium'`, `'full'`, a fraction, or `'320px'`. The handle cycles detents on click and moves between them with arrow keys.
 
+### Centered dialogs
+
+```tsx
+<Sheet.Root side="center">           // a content-sized modal, zoom+fade, your CSS owns the width
+<Sheet.Root desktopSide="center">    // bottom sheet on phones, that modal at 768px and up
+```
+
+Same component, same props, same focus behavior. [Guide](https://scrollsheet.dev/docs/presentation/centered-dialog), [responsive profiles](https://scrollsheet.dev/docs/presentation/responsive-profiles).
+
 ### API
 
 | Component | What it is |
 | --- | --- |
-| `Sheet.Root` | State owner. `open`, `onOpenChange`, `onOpenChangeComplete`, `actionsRef` (`open()` / `close()` / `snapTo(detent)`), `detents`, `activeDetent`, `onActiveDetentChange`, `dismissible`, `escapeDismissible`, `backdropDismissible`, `onTravel`, `nonce`, `side`, `modal`, `backgroundEffect`, `scrollbar`, `largestUndimmedDetent`, `handleOnly`, `disableDrag`, `sequentialDetents`, `closeThreshold`, `keyboardExpands`, `onRelease`, `desktopSide`, `desktopBreakpoint` |
+| `Sheet.Root` | State owner. `open` / `onOpenChange`, `detents` / `activeDetent`, `side` (any edge or `'center'`), `desktopSide` / `desktopBreakpoint`, `modal`, the `dismissible` family, `actionsRef` (`open()` / `close()` / `snapTo(detent)`), plus travel, keyboard, and gesture tuning props |
 | `Sheet.Trigger` | Button wired with `aria-haspopup` / `aria-expanded` |
 | `Sheet.Content` | The `<dialog>`, backdrop, scroll track, and panel |
 | `Sheet.Handle` | Grabber pill: click cycles detents, arrows move, down-arrow at the lowest detent dismisses. `variant="floating"` overlays full-bleed content; `variant="outside"` floats the pill in the backdrop above the sheet |
@@ -71,12 +80,11 @@ Also exported: `DetentSpec`, `Side`, `SheetActions`, `TravelInfo`, `spring(confi
 - **Nested scrollers.** Mark an inner list `data-scrollsheet-nested-scroll`: it scrolls, and at its top the same swipe continues as sheet travel.
 - **Content morph.** A `'content'` detent springs to new content height instead of jumping.
 - **Keyboard engine.** `visualViewport`-tracked insets so the keyboard never reveals the page through a gap (the classic vaul bug). Works on every side; `keyboardExpands` promotes a peek-detent sheet to its tallest detent while the keyboard is up.
-- **Desktop mouse drag**, `fill` prop, Shadow DOM injection, `themeColorDimming`, hidden scrollbars with an overlay thumb.
-- **Centered dialogs.** `side="center"`: a content-sized modal in the middle of the viewport, zoom+fade on the same spring, your CSS owns the width. `desktopSide="center"` makes a bottom sheet open as one at your breakpoint instead, two props replacing the matchMedia hook. [Guide](https://scrollsheet.dev/docs/presentation/centered-dialog).
 - **Radix Dialog drop-in.** `import { Dialog } from 'scrollsheet'` keeps @radix-ui/react-dialog JSX working against the centered presentation, `data-state` animation CSS included; radix-only props warn once in dev with the replacement recipe. [Migration guide](https://scrollsheet.dev/docs/migrating/from-radix-dialog).
 - **vaul drop-in.** `import { Drawer } from 'scrollsheet'` keeps vaul's API and `data-vaul-*` attributes; props that existed to fight the page warn once in dev. [Migration guide](https://scrollsheet.dev/docs/migrating/from-vaul).
 - **Toasts, no Sonner knowledge required.** `import { toast, Toaster, useToasts } from 'scrollsheet'` styles with `.scrollsheet-toast` classes and `--scrollsheet-toast-*` custom properties: `.promise()`, update-by-id, all six positions with per-toast overrides, swipe-to-dismiss with a velocity flick. Already on Sonner? Your `.sonner-toast` CSS still matches, unchanged, and `useSonner`/`toasterId` keep working; fresh integrations can drop the mirrors with `sonnerCompat={false}`. [Migration guide](https://scrollsheet.dev/docs/migrating/from-sonner).
-- **Agent skills.** [`skills/`](skills/) ships `migrate-from-vaul`, `migrate-from-sonner`, and `build-with-scrollsheet` for coding agents.
+- **Smaller things.** Desktop mouse drag, the `fill` prop, Shadow DOM injection, `themeColorDimming`, hidden scrollbars with an overlay thumb.
+- **Agent skills.** [`skills/`](skills/) ships `migrate-from-vaul`, `migrate-from-sonner`, `migrate-from-radix-dialog`, and `build-with-scrollsheet` for coding agents.
 - **Motion core (experimental).** `scrollsheet/motion` is the React-free layer the sheet runs on: closed-form spring solver, interruptible WAAPI wrapper, scroll tween. 1.6 kB gzipped standalone.
 - **Zero-config entry.** `scrollsheet/auto` embeds the stylesheet and injects it on first open: no CSS import needed, <!--size:auto.gzip:1-->21.8<!--/size--> kB gzip for `Sheet` against the default entry's <!--size:index.gzip:1-->17.6<!--/size-->.
 
@@ -122,7 +130,7 @@ Every primitive ships as a registry item:
 bunx shadcn@latest add https://raw.githubusercontent.com/ansumanshah/scrollsheet/main/registry/drawer.json
 ```
 
-Items: `drawer`, `sheet`, `confirm`, `share-sheet`, `sidebar`, `toast`. Each writes one file into `components/ui/` with shadcn's default styling applied, wrapping the primitives above. Swap `drawer.json` in the URL for any of them. These URLs only resolve once the repo is public.
+Items: `drawer`, `sheet`, `dialog`, `confirm`, `share-sheet`, `sidebar`, `toast`. Each writes one file into `components/ui/` with shadcn's default styling applied, wrapping the primitives above. Swap `drawer.json` in the URL for any of them. These URLs only resolve once the repo is public.
 
 ## Roadmap
 
