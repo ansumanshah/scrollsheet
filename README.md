@@ -135,6 +135,6 @@ bun test           # unit tests
 bun run verify     # the full gate
 ```
 
-See [CONTRIBUTING.md](./CONTRIBUTING.md) and the [CHANGELOG](https://github.com/ansumanshah/scrollsheet/blob/main/CHANGELOG.md).
+See [CONTRIBUTING.md](https://github.com/ansumanshah/scrollsheet/blob/main/CONTRIBUTING.md) and the [CHANGELOG](https://github.com/ansumanshah/scrollsheet/blob/main/CHANGELOG.md).
 
 MIT © [Ansuman Shah](https://github.com/ansumanshah)
