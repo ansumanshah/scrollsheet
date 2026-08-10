@@ -46,6 +46,8 @@ const BUDGETS: Record<SizeKey, number> = {
   // consumers.
   toast: 7.0 * 1024,
   all: 25.5 * 1024,
+  // auto raised 22.5 → 22.6 for the iOS body-unfreeze scroll restore
+  // (measured 22.50 → 22.52).
   auto: 22.6 * 1024,
 };
 

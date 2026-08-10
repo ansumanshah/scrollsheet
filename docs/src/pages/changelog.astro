@@ -20,7 +20,7 @@ const changelogBody = changelogRaw.replace(/^#\s+Changelog\s*\n/, "");
 // Show only the latest release inline. The full history lives in
 // CHANGELOG.md itself, one click away, so this page stays short instead
 // of growing without bound as releases accumulate.
-const [firstRelease, secondRelease] = [...changelogBody.matchAll(/^## .*$/gm)];
+const [firstRelease, secondRelease] = [...changelogBody.matchAll(/^## \d.*$/gm)];
 const latestRelease =
   firstRelease && secondRelease
     ? changelogBody.slice(firstRelease.index, secondRelease.index)

@@ -62,7 +62,7 @@ export function hasClosedBySupport(): boolean {
   return typeof HTMLDialogElement !== "undefined" && "closedBy" in HTMLDialogElement.prototype;
 }
 
-/** Whether the CloseWatcher constructor (Chrome 144+, earlier on Android) is available. */
+/** Whether the CloseWatcher constructor (Chrome 126+, Firefox 149+, Safari preview) is available. */
 export function hasCloseWatcherSupport(): boolean {
   return typeof window !== "undefined" && "CloseWatcher" in window;
 }

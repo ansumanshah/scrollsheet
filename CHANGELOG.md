@@ -48,7 +48,7 @@ First public release, on npm's `beta` dist-tag while the real-device pass finish
 - Closed-form spring solver, O(1), no integration error. `spring()` throws on a curve that never converges.
 - `scrollsheet/motion` (experimental): the spring/WAAPI/scroll-tween core with no React.
 - Modal sheets set `dialog.closedby` where supported (Chrome 134+, Firefox 141+): `closerequest` or `none`, never `any`.
-- Non-modal dismissible sheets create a `CloseWatcher` (Chrome 126+, touch-primary devices only) so Android back closes the sheet instead of navigating. Real-device check pending.
+- Non-modal dismissible sheets create a `CloseWatcher` (Chrome 126+, Firefox 149+, touch-primary devices only) so Android back closes the sheet instead of navigating. Real-device check pending.
 - `Sheet.Handle` variants: `floating` overlays full-bleed content; `outside` floats the pill above the sheet (bottom sheets only).
 - Self-closing `<Sheet.Close />` renders a styled ✕: top-right, 44px hit area, labeled.
 - Two style entries: the default is css-external (`import 'scrollsheet/styles.css'`), vaul's convention. `scrollsheet/auto` embeds the stylesheet and injects it on first open; it is also the entry for Shadow DOM and CSP-nonce setups.

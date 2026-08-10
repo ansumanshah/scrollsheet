@@ -186,8 +186,6 @@ jobs:
   # workflow already built and smoke-tested keeps one build and one set of
   # tests in front of everything that ships.
   #
-  # `needs` on all three test jobs means a red check/e2e/docs run blocks the
-  # deploy outright — there is no path to publish without green tests first.
   # Gated on push-to-main (excludes pull_request entirely, including from
   # forks) and on running in this repo rather than a fork's own copy.
   deploy:
