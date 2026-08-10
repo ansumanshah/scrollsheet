@@ -14,12 +14,13 @@
     "dev": "bun run --cwd docs dev",
     "test:e2e:fast": "playwright test --project=chromium-mobile",
     "test:site": "playwright test -c playwright.site.config.ts",
-    "verify": "bun run typecheck && bun run build && bun test tests/unit && bun run test:e2e:fast && bun run size && bun run pack:check && bun run check:registry",
+    "verify": "bun run typecheck && bun run check:compat && bun run build && bun test tests/unit && bun run test:e2e:fast && bun run size && bun run pack:check && bun run check:registry",
     "gen:css": "bun run scripts/gen-css.ts",
     "size": "bun run scripts/check-size.ts",
     "pack:check": "bun run scripts/check-pack.ts",
     "check:registry": "bun run scripts/check-registry.ts",
-    "check:dialog-share": "bun run scripts/check-dialog-share.ts"
+    "check:dialog-share": "bun run scripts/check-dialog-share.ts",
+    "check:compat": "bun run scripts/check-compat.ts"
   },
   "devDependencies": {
     "@happy-dom/global-registrator": "^20.11.1",
@@ -27,6 +28,11 @@
     "@types/bun": "^1.3.14",
     "@types/react": "^19.2.18",
     "@types/react-dom": "^19.2.4",
+    "@typescript-eslint/parser": "^8.66.0",
+    "browserslist": "^4.28.8",
+    "doiuse": "^6.0.6",
+    "eslint": "^10.8.1",
+    "eslint-plugin-compat": "^7.0.2",
     "happy-dom": "^20.11.1",
     "lightningcss": "^1.33.0",
     "react": "^19.2.8",

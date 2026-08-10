@@ -1,0 +1,33 @@
+# scrollsheet's supported-experience browser floor.
+#
+# Source of truth: docs/src/content/docs/docs/browser-support.mdx, the
+# "Spring easing" column of the support table (the row for the full,
+# non-degraded experience: native <dialog> plus the CSS linear() spring).
+# Below this floor <dialog> still works but the docs say the spring falls
+# back to a plain ease-out, and below Safari 16.4 there is no <dialog> at
+# all (fallback-sheet.tsx's fixed-position modal takes over instead, no
+# drag/detents). That fallback path is intentionally NOT the target here:
+# the compat gate checks the code that runs for the ~96% who get the real
+# experience, not the ~4% who get the no-JS-features fallback.
+#
+# Do not raise this floor for the compositor-driven backdrop dim /
+# --scrollsheet-progress column in the same table (Chrome/Edge 115+,
+# Safari 26+, Firefox behind a flag) -- that is a documented progressive
+# enhancement with a working JS-driven fallback below its own floor, not
+# part of the supported-experience baseline.
+chrome >= 113
+edge >= 113
+firefox >= 112
+
+# Desktop Safari, as stated.
+safari >= 17.2
+
+# iOS Safari and Android Chrome are not separate rows in the docs table,
+# but both are the same rendering engine on a version-locked release train
+# as their desktop counterpart (Apple ships Safari/iOS Safari together;
+# Chrome for Android tracks the same Chromium version as desktop Chrome),
+# so applying the stated floor to them is not inventing a new number, and
+# omitting them would blind the gate to the platforms this library is
+# built for.
+ios_saf >= 17.2
+and_chr >= 113
