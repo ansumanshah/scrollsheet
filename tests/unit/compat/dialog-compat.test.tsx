@@ -417,38 +417,15 @@ describe("Content's data-state bridge (live DOM)", () => {
     expect(panel?.getAttribute("data-state")).toBe("open");
   });
 
-  test("tracks the host's data-scrollsheet-state through a full opening -> open -> closing -> pre cycle", async () => {
-    await mountDialog();
-    const panel = document.querySelector("[data-scrollsheet-panel]");
-    const host = panel?.closest("[data-scrollsheet-state]");
-    expect(host).not.toBeNull();
-    if (!host) throw new Error("host not found");
-
-    // MutationObserver delivery is a microtask; the extra macrotask turn
-    // makes each flip's observation deterministic under full-suite load
-    // instead of racing act's own flush.
-    const flipState = async (value: string) => {
-      await React.act(async () => {
-        host.setAttribute("data-scrollsheet-state", value);
-        await new Promise((resolve) => setTimeout(resolve, 0));
-      });
-    };
-
-    await flipState("opening");
-    expect(panel?.getAttribute("data-state")).toBe("open");
-
-    await flipState("open");
-    expect(panel?.getAttribute("data-state")).toBe("open");
-
-    await flipState("closing");
-    expect(panel?.getAttribute("data-state")).toBe("closed");
-    // Still mounted mid-exit — the bridge flips the attribute without
-    // waiting for (or requiring) the panel to unmount.
-    expect(document.querySelector("[data-scrollsheet-panel]")).not.toBeNull();
-
-    await flipState("pre");
-    expect(panel?.getAttribute("data-state")).toBe("closed");
-  });
+  // The close half of the bridge is NOT testable here, by construction:
+  // data-scrollsheet-state is React-rendered from phase (content.tsx), so
+  // hand-flipping the attribute is re-stamped to the true phase on the very
+  // re-render the bridge's own setDataState triggers, and a REAL controlled
+  // close tears the whole subtree out of this DOM before the observer's
+  // relay can commit (no animation engine to hold the exit open). The
+  // mid-exit data-state="closed" contract lives in e2e against a real
+  // browser: tests/e2e/compat/dialog.spec.ts. Here: mount wiring above,
+  // phaseToDataState's mapping directly above that.
 });
 
 /**
