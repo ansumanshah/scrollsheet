@@ -103,6 +103,27 @@ function ThemeColorSheet() {
   );
 }
 
+/**
+ * side="center": a centered modal dialog. Carries a Handle on purpose (the
+ * spec asserts center mode hides it), a fixed consumer width (the spec
+ * asserts consumer sizing wins over core), and the standard Close.
+ */
+function CenterSheet() {
+  return (
+    <Sheet.Root side="center">
+      <Sheet.Trigger className="btn">Center dialog</Sheet.Trigger>
+      <Sheet.Content className="sheet" aria-label="Center dialog" style={{ width: 320 }}>
+        <Sheet.Handle />
+        <div className="sheet-inner">
+          <Sheet.Title>Centered</Sheet.Title>
+          <Sheet.Description>A centered modal with zoom and fade.</Sheet.Description>
+          <Sheet.Close className="btn">Close</Sheet.Close>
+        </div>
+      </Sheet.Content>
+    </Sheet.Root>
+  );
+}
+
 /** Three detents (35% / 70% / full) with a live active-detent readout — for detent-snapping/settle tests. */
 function ThreeDetentSheet() {
   const detents = [0.35, 0.7, "full"] as const;
@@ -1722,6 +1743,7 @@ export function App() {
         <FloatingHandleSheet />
         <BasicSheet />
         <ThemeColorSheet />
+        <CenterSheet />
         <ThreeDetentSheet />
         <KeyboardSheet />
         <ControlledSheet />

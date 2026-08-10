@@ -1313,3 +1313,62 @@
     background: Highlight;
   }
 }
+
+/* ── Center presentation (side="center") ─────────────────────────────────
+   A centered modal dialog: no travel, no detents, no drag. The track keeps
+   its full-viewport box (it is still the backdrop-click dismiss target and
+   the keyboard-aware layout container) but becomes a place-items grid
+   instead of a scroll-snap scroller. The canvas dissolves (display:
+   contents) so the panel is the grid item; its overdraw band and the
+   outside-handle portal have no meaning here.
+   Keyboard clearance: the grid's bottom padding consumes the same
+   --scrollsheet-keyboard the bottom-sheet engine writes on the dialog, so
+   the centered panel shifts up above the keyboard with no engine change. */
+.scrollsheet-dialog[data-scrollsheet-side="center"] .scrollsheet-track {
+  overflow: hidden;
+  scroll-snap-type: none;
+  display: grid;
+  place-items: center;
+  box-sizing: border-box;
+  padding: var(--scrollsheet-center-gutter, 20px);
+  padding-bottom: calc(var(--scrollsheet-center-gutter, 20px) + var(--scrollsheet-keyboard, 0px));
+}
+.scrollsheet-dialog[data-scrollsheet-side="center"] .scrollsheet-canvas {
+  display: contents;
+}
+.scrollsheet-dialog[data-scrollsheet-side="center"] .scrollsheet-canvas::after {
+  content: none;
+}
+/* Content-sized both axes; the consumer owns width. The caps are var-
+   indirected (not bare declarations) for the same reason the panel's inset
+   uses custom properties: the /auto entry injects this sheet AFTER consumer
+   CSS, so a bare declaration here would win ties on source order and the
+   side-sheet width-from-detent trap would repeat. Override the vars, or (in
+   css-external mode) any later rule. */
+.scrollsheet-dialog[data-scrollsheet-side="center"] .scrollsheet-panel {
+  position: static;
+  width: auto;
+  height: auto;
+  max-inline-size: var(--scrollsheet-center-max-inline, min(560px, 100%));
+  max-block-size: var(--scrollsheet-center-max-block, 100%);
+  overflow: auto;
+  border-radius: var(--scrollsheet-radius, 16px);
+  /* The travel engine's eg/keyboard-lift vars never apply to a grid-placed
+     panel; clear the inherited bottom-anchored inset model entirely. */
+  inset: auto;
+}
+.scrollsheet-dialog[data-scrollsheet-side="center"] .scrollsheet-handle {
+  display: none;
+}
+/* Resting states for the zoom+fade leg: the leg animates between these
+   exact endpoint values (scale 1 - .05v, opacity 1 - v), so dropping the
+   animation at finish (or having no WAAPI at all) lands on the same frame
+   the leg would have painted. */
+.scrollsheet-dialog[data-scrollsheet-side="center"]:is(
+    [data-scrollsheet-state="pre"],
+    [data-scrollsheet-state="closing"]
+  )
+  .scrollsheet-panel {
+  transform: scale(0.95);
+  opacity: 0;
+}

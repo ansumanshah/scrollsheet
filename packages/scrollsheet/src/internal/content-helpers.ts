@@ -15,6 +15,8 @@ export const FOCUS_SCROLL_DEBOUNCE_MS = 250;
 export const NO_DRAG_SELECTOR =
   "button, a, input, textarea, select, label, [contenteditable], [data-scrollsheet-no-drag]";
 export const DRAG_VELOCITY_WINDOW_MS = 100;
+/** Center presentation enter/exit: scale spans [1 - range, 1] over the leg. */
+export const CENTER_ZOOM_RANGE = 0.05;
 export const DRAG_PROJECTION_MS = 160;
 export const DRAG_CLICK_SUPPRESS_PX = 4;
 const RECEDE_SCALE_DELTA = 0.06; // 1 -> 0.94

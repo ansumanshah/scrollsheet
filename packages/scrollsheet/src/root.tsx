@@ -93,8 +93,12 @@ export interface SheetRootProps {
    * the reference. Keep this handler cheap — it runs on every travel frame.
    */
   onTravel?: (revealedPx: number, progress: number, info: TravelInfo) => void;
-  /** Which edge the sheet is anchored to. @default 'bottom' */
-  side?: Side;
+  /**
+   * Which edge the sheet is anchored to, or `"center"` for a centered modal
+   * dialog: content-sized, consumer CSS owns width, zoom+fade instead of
+   * travel, no detents or drag. @default 'bottom'
+   */
+  side?: Side | "center";
   /**
    * When false, the page behind stays fully interactive and scrollable — no
    * backdrop, no focus trap, no inert-ing the rest of the page. Renders on a
@@ -270,6 +274,11 @@ export function Root({
   const openerRef = React.useRef<HTMLElement | null>(null);
   const [canvasEl, setCanvasEl] = React.useState<HTMLElement | null>(null);
 
+  // Center resolves to a boolean flag plus an inert "bottom" side so the
+  // 4-side geometry union never widens — see SheetContextValue.center.
+  const center = side === "center";
+  const resolvedSide: Side = center ? "bottom" : side;
+
   const value = React.useMemo(
     () => ({
       open,
@@ -285,14 +294,17 @@ export function Root({
       nonce,
       themeColorDimming,
       onTravel,
-      side,
+      side: resolvedSide,
+      center,
       modal,
       backgroundEffect,
       backgroundRef,
       scrollbar,
       largestUndimmedDetent,
       handleOnly,
-      disableDrag,
+      // Center has no gesture surface at all; the engine's own disableDrag
+      // gate is the single mechanism both opt-outs share.
+      disableDrag: disableDrag || center,
       sequentialDetents,
       closeThreshold,
       keyboardExpands,
@@ -319,7 +331,8 @@ export function Root({
       nonce,
       themeColorDimming,
       onTravel,
-      side,
+      resolvedSide,
+      center,
       modal,
       backgroundEffect,
       backgroundRef,

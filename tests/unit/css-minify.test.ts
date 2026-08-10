@@ -39,7 +39,11 @@ describe("generated CORE_CSS", () => {
     // <Sheet.Close /> styled default (light/dark, hover, hit area, focus
     // ring, forced-colors), and the bottom-chrome sentinel's move from
     // inline styles into .scrollsheet-bottom-sentinel.
-    expect(CORE_CSS.length).toBeLessThan(24_500);
+    // Raised to 25.6k (25319 actual) for the center presentation
+    // (side="center"): grid-centered track with keyboard-aware gutter,
+    // canvas dissolution, consumer-owned panel sizing guards, hidden
+    // handle, and the zoom+fade resting states.
+    expect(CORE_CSS.length).toBeLessThan(25_600);
   });
 
   test("keeps brace structure balanced", () => {

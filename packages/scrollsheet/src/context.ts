@@ -37,6 +37,13 @@ export interface SheetContextValue {
   /** Which edge the sheet is anchored to. @default 'bottom' */
   side: Side;
   /**
+   * True for `side="center"`: a centered modal presentation with no travel,
+   * detents, or drag — zoom+fade enter/exit instead. `side` stays "bottom"
+   * as an inert fallback for geometry paths that never run in center mode,
+   * so the 4-side geometry math never sees a fifth value.
+   */
+  center: boolean;
+  /**
    * The mounted canvas element — Handle `variant="outside"` portals its
    * pill here, outside the panel's overflow clip, riding the same scroll
    * layer as the panel. Null until Content commits.

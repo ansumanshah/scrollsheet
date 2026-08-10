@@ -51,6 +51,14 @@ export function animate(
   toCss: (value: number) => string,
   curve: SpringCurve,
   config: SpringConfig,
+  /**
+   * Additional properties driven by the same leg, each with its own
+   * formatter over the same numeric value — one WAAPI animation, several
+   * keyframe channels (the center presentation's zoom+fade pairs transform
+   * with opacity). stop()/cancel() cover every channel; the recovered
+   * value/velocity stay in the shared numeric space.
+   */
+  extraChannels?: Record<string, (value: number) => string>,
 ): AnimateHandle {
   let settled = false;
   let animation: Animation | null = null;
@@ -70,10 +78,17 @@ export function animate(
 
   if (curve.durationMs > 0 && typeof el.animate === "function") {
     try {
-      animation = el.animate(
-        { [prop]: [toCss(from), toCss(to)] },
-        { duration: curve.durationMs, easing: curve.easing, fill: "both" },
-      );
+      const keyframes: Record<string, string[]> = { [prop]: [toCss(from), toCss(to)] };
+      if (extraChannels) {
+        for (const [extraProp, format] of Object.entries(extraChannels)) {
+          keyframes[extraProp] = [format(from), format(to)];
+        }
+      }
+      animation = el.animate(keyframes, {
+        duration: curve.durationMs,
+        easing: curve.easing,
+        fill: "both",
+      });
       animation.finished.then(
         () => {
           if (settled) return;

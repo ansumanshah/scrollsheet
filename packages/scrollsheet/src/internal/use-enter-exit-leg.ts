@@ -5,6 +5,7 @@ import { type AnimateHandle, animate } from "../motion/animate";
 import { geometryFor, mapScroll } from "../motion/geometry";
 import { scaleDismissDuration, selectEnterExitCurve } from "../motion/spring-leg";
 import {
+  CENTER_ZOOM_RANGE,
   type Overlay,
   type Phase,
   applyRecede,
@@ -100,6 +101,24 @@ export function useEnterExitLeg({
       noTravel,
       linearEasing: env().linearEasing,
     });
+    // Center presentation: the leg is a zoom+fade on the panel in place —
+    // no travel axis, no track, so neither the offscreen translate below nor
+    // the reveal-scaled dismiss duration applies. Same phase machine, same
+    // interruption semantics (stop() recovers the shared numeric progress).
+    if (ctxRef.current.center) {
+      const handle = animate(
+        panel,
+        "transform",
+        from,
+        to,
+        (v) => `scale(${(1 - CENTER_ZOOM_RANGE * v).toFixed(4)})`,
+        curve,
+        config,
+        { opacity: (v) => (1 - v).toFixed(4) },
+      );
+      enterExitRef.current = handle;
+      return handle;
+    }
     // Interrupted legs scale too, not just fresh drag-release dismissals —
     // an enter grabbed by a close is mostly hidden already, so full duration
     // there is a dead tail.
@@ -168,8 +187,14 @@ export function useEnterExitLeg({
       // Clear any inline transform a mid-flight stop() committed — the
       // resting rule for this state holds the same end value from here on,
       // and a lingering inline freeze would override every later CSS state.
+      // Opacity too: the center leg's stop() commits both channels, and a
+      // stale inline opacity would pin the panel translucent forever (a
+      // no-op for the translate legs, which never touch it).
       const panel = panelRef.current;
-      if (panel) panel.style.transform = "";
+      if (panel) {
+        panel.style.transform = "";
+        panel.style.opacity = "";
+      }
       if (to === 0) {
         // The leg's animation was masking any recede writes a still-open
         // child pushed while it ran (animations outrank inline styles).

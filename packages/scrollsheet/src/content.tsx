@@ -356,6 +356,14 @@ export const Content = /* @__PURE__ */ React.forwardRef<HTMLDivElement, SheetCon
       const hasHandle = body.querySelector("[data-scrollsheet-handle]") !== null;
       setBoolAttr(dialog, "data-scrollsheet-has-handle", hasHandle);
 
+      // Center presentation: the panel is content-sized by the center CSS
+      // block and there is no travel range — detent resolution, snap stops,
+      // dim ranges, and the detached/full-height machinery are all inert.
+      // Only the two writes above (overdraw fill color, handle spacing) are
+      // meaningful, and every measure() caller (resize, keyboard, morph)
+      // stays safe through this single early return.
+      if (ctxRef.current.center) return;
+
       const viewportSize = track[geometry.clientSizeProp];
       // Detached (floating-card) sheets reserve their margin out of the
       // detent space itself: 'full' resolves to viewport minus the top and
@@ -502,6 +510,11 @@ export const Content = /* @__PURE__ */ React.forwardRef<HTMLDivElement, SheetCon
       const dialog = dialogRef.current;
       const track = trackRef.current;
       if (!dialog || !track) return;
+      // Center: no travel exists. The open sequence writes the static
+      // dim/progress values once; every per-frame consumer below (onTravel,
+      // stack progress, backgroundEffect, radius-flatten) is travel-defined
+      // and deliberately never fires.
+      if (ctxRef.current.center) return;
       const geometry = geometryFor(ctxRef.current.side);
       const maxDetent = maxDetentRef.current;
       const revealed = readRevealed(track, geometry, maxDetent);
@@ -739,14 +752,26 @@ export const Content = /* @__PURE__ */ React.forwardRef<HTMLDivElement, SheetCon
         overlayOpenRef.current = true;
       }
       measure();
-      const target = resolveSpec(ctx.activeDetent);
-      const rawTarget = mapScroll(
-        target?.height ?? maxDetentRef.current,
-        maxDetentRef.current,
-        geometry.sign,
-      );
-      jumpScroll(track, geometry.axis, rawTarget);
-      updateTravel();
+      if (ctx.center) {
+        // No travel: the backdrop's dim rides the state-transition CSS
+        // alone, so its inputs are pinned to their settled-open values once,
+        // here, instead of per travel frame. The chrome strips share the
+        // same var (they render for modal themeColorDimming regardless of
+        // side).
+        backdropRef.current?.style.setProperty("--scrollsheet-progress", "1");
+        for (const el of [backdropRef.current, topChromeRef.current, bottomChromeDimRef.current]) {
+          el?.style.setProperty("--scrollsheet-dim", "1");
+        }
+      } else {
+        const target = resolveSpec(ctx.activeDetent);
+        const rawTarget = mapScroll(
+          target?.height ?? maxDetentRef.current,
+          maxDetentRef.current,
+          geometry.sign,
+        );
+        jumpScroll(track, geometry.axis, rawTarget);
+        updateTravel();
+      }
 
       // Respect an explicit [autofocus] the consumer rendered; otherwise keep
       // focus on the panel so mobile keyboards don't pop unrequested.
@@ -777,6 +802,9 @@ export const Content = /* @__PURE__ */ React.forwardRef<HTMLDivElement, SheetCon
       ctx.activeDetent,
       ctx.nonce,
       ctx.side,
+      // ctx.side stays "bottom" across a bottom<->center flip (center is the
+      // flag, not the side), so the flag must invalidate this effect itself.
+      ctx.center,
       ctx.modal,
       measure,
       resolveSpec,
@@ -878,6 +906,10 @@ export const Content = /* @__PURE__ */ React.forwardRef<HTMLDivElement, SheetCon
     // ── Scroll engine ────────────────────────────────────────────────────────
     React.useEffect(() => {
       if (!present) return;
+      // Center: the track never scrolls, and settle()'s below-threshold
+      // check reads "revealed 0" as a dismiss — a stray scrollend from
+      // elastic overscroll must never reach it.
+      if (ctx.center) return;
       const track = trackRef.current;
       if (!track) return;
       let raf = 0;
@@ -908,7 +940,7 @@ export const Content = /* @__PURE__ */ React.forwardRef<HTMLDivElement, SheetCon
         if (raf) cancelAnimationFrame(raf);
         if (settleTimerRef.current) clearTimeout(settleTimerRef.current);
       };
-    }, [present, settle, updateTravel]);
+    }, [present, ctx.center, settle, updateTravel]);
 
     // ── Programmatic detent travel ───────────────────────────────────────────
     React.useEffect(() => {
@@ -1365,7 +1397,7 @@ export const Content = /* @__PURE__ */ React.forwardRef<HTMLDivElement, SheetCon
     const sharedProps = {
       className: "scrollsheet-dialog",
       "data-scrollsheet-state": phase,
-      "data-scrollsheet-side": ctx.side,
+      "data-scrollsheet-side": ctx.center ? "center" : ctx.side,
       "data-scrollsheet-sda": sda ? "" : undefined,
       "data-scrollsheet-scrollbar": ctx.scrollbar,
       "data-scrollsheet-handle-only": ctx.handleOnly ? "" : undefined,
