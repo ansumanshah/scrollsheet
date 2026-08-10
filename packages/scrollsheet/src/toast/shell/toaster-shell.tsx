@@ -224,6 +224,7 @@ function PositionGroup({
             toasterClassNames={toastOptions?.classNames}
             icons={icons}
             toasterCloseButtonAriaLabel={toastOptions?.closeButtonAriaLabel}
+            toasterStyle={toastOptions?.style}
           />
         );
       })}

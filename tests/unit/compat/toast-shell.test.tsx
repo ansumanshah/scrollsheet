@@ -704,3 +704,29 @@ describe("swipe: gesture immunity", () => {
     expect(el.getAttribute("data-swiping")).toBe("false");
   });
 });
+
+describe("per-toast style", () => {
+  // Pins the merge order (stacking styles → toastOptions.style →
+  // record.style), matching real Sonner: the per-toast style must be able to
+  // override the row's own computed zIndex/position, and the Toaster-wide
+  // base style applies to every row underneath it.
+  test("record.style wins over the row's stacking styles; toastOptions.style is the base", async () => {
+    await mount(<ToasterShell toastOptions={{ style: { opacity: "0.5" } }} />);
+    await React.act(async () => {
+      toast("plain", { testId: "plain", duration: 60_000 });
+      toast("styled", {
+        testId: "styled",
+        duration: 60_000,
+        style: { zIndex: 99, top: "12px" },
+      });
+    });
+    const styled = document.querySelector<HTMLElement>('[data-testid="styled"]');
+    const plain = document.querySelector<HTMLElement>('[data-testid="plain"]');
+    expect(plain?.style.opacity).toBe("0.5");
+    expect(styled?.style.opacity).toBe("0.5");
+    expect(styled?.style.zIndex).toBe("99");
+    expect(styled?.style.top).toBe("12px");
+    expect(plain?.style.zIndex).not.toBe("99");
+    expect(styled?.style.getPropertyValue("--scrollsheet-toast-stack-offset")).not.toBe("");
+  });
+});

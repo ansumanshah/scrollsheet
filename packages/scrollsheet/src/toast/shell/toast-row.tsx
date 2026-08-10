@@ -77,6 +77,8 @@ export interface ToastRowProps {
   toasterClassNames?: ToastClassnames;
   icons?: ToastIcons;
   toasterCloseButtonAriaLabel?: string;
+  /** The Toaster's own `toastOptions.style` — every row's base inline styles, under the record's own `style`. */
+  toasterStyle?: React.CSSProperties;
 }
 
 export function ToastRow({
@@ -99,6 +101,7 @@ export function ToastRow({
   toasterClassNames,
   icons,
   toasterCloseButtonAriaLabel,
+  toasterStyle,
 }: ToastRowProps) {
   const role = record.type === "error" ? "alert" : "status";
   const mounted = useMountedFlag();
@@ -130,12 +133,17 @@ export function ToastRow({
     if (el) el.inert = removed;
   }, [removed]);
 
+  // Consumer styles spread AFTER the stacking variables — real Sonner's own
+  // merge order (internal vars, then toastOptions.style, then toast.style),
+  // so a per-toast `style` can reposition a row or override any variable.
   const style = {
     "--scrollsheet-toast-toasts-before": toastsBefore,
     "--scrollsheet-toast-stack-offset": `${stackOffset}px`,
     "--scrollsheet-toast-front-height": frontHeight !== undefined ? `${frontHeight}px` : "0px",
     "--scrollsheet-toast-initial-height": height !== undefined ? `${height}px` : "auto",
     zIndex: Math.max(0, total - index),
+    ...toasterStyle,
+    ...record.style,
   } as React.CSSProperties;
 
   // Neutral name first (what our own toast.css reads, and what a fresh

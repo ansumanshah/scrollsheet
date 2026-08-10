@@ -54,6 +54,13 @@ describe("toast() store", () => {
     expect(_getSonnerSnapshotForTests()[0]?.type).toBe("default");
   });
 
+  test("per-toast style carries through create and update-in-place", () => {
+    const id = toast("styled", { style: { top: "12px" } });
+    expect(_getSonnerSnapshotForTests()[0]?.style).toEqual({ top: "12px" });
+    toast("styled again", { id, style: { top: "24px" } });
+    expect(_getSonnerSnapshotForTests()[0]?.style).toEqual({ top: "24px" });
+  });
+
   test("passing an existing id updates that entry in place instead of pushing a new one", () => {
     const id = toast("first", { id: "fixed" });
     toast("second", { id: "fixed" });

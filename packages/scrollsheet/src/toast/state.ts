@@ -102,6 +102,13 @@ export interface ToastData {
   testId?: string;
   /** Overrides the close button's accessible name for this toast only. @default "Close toast" (or the Toaster's own `toastOptions.closeButtonAriaLabel`) */
   closeButtonAriaLabel?: string;
+  /**
+   * Inline styles for this toast's row element, merged over the row's own
+   * stacking variables and `toastOptions.style` (last wins, so `top`,
+   * `zIndex`, or any `--scrollsheet-toast-*` variable can be overridden
+   * per-toast) — mirrors real Sonner's own `ExternalToast.style`.
+   */
+  style?: React.CSSProperties;
 }
 
 /** A live queue entry — what `useSonner()` and each row render from. */
