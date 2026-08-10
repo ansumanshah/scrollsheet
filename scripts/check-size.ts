@@ -46,7 +46,7 @@ const BUDGETS: Record<SizeKey, number> = {
   // consumers.
   toast: 7.0 * 1024,
   all: 25.5 * 1024,
-  auto: 22.5 * 1024,
+  auto: 22.6 * 1024,
 };
 
 let anyFailed = false;

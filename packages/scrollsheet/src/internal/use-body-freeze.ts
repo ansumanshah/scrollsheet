@@ -67,7 +67,14 @@ export function useBodyFreeze(active: boolean): void {
         s.left = restore.left;
         s.right = restore.right;
         s.height = restore.height;
+        // A page-level `scroll-behavior: smooth` would turn this restore into
+        // an animated scroll from the top of the page — the inline override
+        // forces the jump to be instant, then hands the property back.
+        const root = document.documentElement;
+        const prevBehavior = root.style.scrollBehavior;
+        root.style.scrollBehavior = "auto";
         window.scrollTo(restore.scrollX, restore.scrollY);
+        root.style.scrollBehavior = prevBehavior;
       }
     };
   }, [active]);
