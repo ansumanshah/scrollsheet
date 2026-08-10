@@ -151,13 +151,13 @@ describe("generated TOAST_CSS", () => {
   });
 
   test("preserves calc() operator spacing in the collapsed-row transform", () => {
-    // The per-row scale step is --scrollsheet-toast-toasts-before-driven
-    // (matching real Sonner's own --scale: toastsBefore * 0.05 + 1 formula,
-    // with a --sonner-toasts-before fallback for a migrant's own override) —
+    // The per-row scale step recedes each card behind the front one
+    // (real Sonner's toastsBefore * -0.05 + 1, i.e. 0.95 at depth 1), with
+    // a --sonner-toasts-before fallback for a migrant's own override —
     // losing a space here to an over-eager minifier pass would silently
-    // change which operand `*`/`+` bind to.
+    // change which operand `*`/`-` bind to.
     expect(TOAST_CSS).toContain(
-      "scale(calc(-1 * (1 + var(--scrollsheet-toast-toasts-before,var(--sonner-toasts-before,0)) * .05)))",
+      "scale(calc(1 - var(--scrollsheet-toast-toasts-before,var(--sonner-toasts-before,0)) * .05))",
     );
   });
 
