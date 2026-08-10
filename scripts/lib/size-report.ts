@@ -23,9 +23,13 @@
  *      1 decimal, .claude/ROADMAP.md and the FAQ to 2, llms.txt to a bare
  *      "~N" whole number).
  */
-import type { BundleSizes, SizeKey } from "./bundle-measure";
+import { IMPORT_SHAPES, type BundleSizes, type SizeKey } from "./bundle-measure";
 
-export const SIZE_ENTRY_KEYS = ["index", "drawer", "toast", "all", "auto"] as const;
+// Derived, never listed: a new IMPORT_SHAPES entry must flow into the
+// generated module's keys and type in the same change, or the generated
+// file's own Record type rejects the object it sits over (astro check in
+// CI's docs job is the gate that catches it — nothing local does).
+export const SIZE_ENTRY_KEYS = IMPORT_SHAPES.map((shape) => shape.key);
 export type SizeEntryKey = SizeKey;
 
 export interface SizeEntry {
@@ -79,7 +83,7 @@ export interface BundleSize {
   brotliKb: number;
 }
 
-export const BUNDLE_SIZES: Record<"index" | "drawer" | "dialog" | "toast" | "all" | "auto", BundleSize> = {
+export const BUNDLE_SIZES: Record<${SIZE_ENTRY_KEYS.map((key) => `"${key}"`).join(" | ")}, BundleSize> = {
 ${entries}
 };
 `;
