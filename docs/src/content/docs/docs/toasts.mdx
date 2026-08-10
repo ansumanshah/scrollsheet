@@ -1,6 +1,6 @@
 ---
 title: Toasts
-description: toast() and Toaster ship in the package — per-toast DOM, six positions, swipe to dismiss, Sonner-compatible API.
+description: toast() and Toaster ship in the package. Per-toast DOM, six positions, swipe to dismiss, Sonner-compatible API.
 ---
 
 import { LinkCard } from '@astrojs/starlight/components';
@@ -19,7 +19,7 @@ toast.success('Synced', { description: 'Two seconds ago.' });
 toast('Archived', { action: { label: 'Undo', onClick: restore } });
 ```
 
-`toast()` and `<Toaster>` are part of the package, on their own primitives — a persistent
+`toast()` and `<Toaster>` are part of the package, on their own primitives: a persistent
 element per toast, all six positions with per-toast override, stacking that hides overflow
 instead of dismissing it, and 2-axis swipe-to-dismiss. `toast.promise()`, `useToasts()`,
 `classNames`, and per-type `icons` are all there; the [API reference](/docs/reference/api)

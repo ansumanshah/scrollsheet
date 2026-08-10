@@ -149,7 +149,7 @@ import DocExample from '../../../../components/DocExample.astro';
 | `spring(config?)` | `{ stiffness, damping, mass, velocity, restDelta }` → `{ easing, durationMs }` |
 | `isSupported()` | `() => boolean`, false on the ~4% of browsers with no `<dialog>`, where the sheet falls back to a plain modal (see [Without `<dialog>`](/docs/browser-support#without-dialog)) |
 | `Drawer` | vaul-compatible namespace mapped onto `Sheet.*`: `Root`, `Trigger`, `Portal`, `Overlay`, `Content`, `Handle`, `Title`, `Description`, `Close` (`NestedRoot` is an alias of `Root`). See [Migrate from vaul](/docs/migrating/from-vaul) |
-| `Toaster`, `toast`, `useToasts` | Toast exports on their own per-toast DOM (no `Sheet.Root` involved): all six positions with per-toast overrides, hide-not-evict overflow, swipe-to-dismiss. Sonner-compatible too — `useSonner`, `toasterId`, and existing `.sonner-toast` CSS all keep working. See [Migrate from Sonner](/docs/migrating/from-sonner) |
+| `Toaster`, `toast`, `useToasts` | Toast exports on their own per-toast DOM (no `Sheet.Root` involved): all six positions with per-toast overrides, hide-not-evict overflow, swipe-to-dismiss. Sonner-compatible too: `useSonner`, `toasterId`, and existing `.sonner-toast` CSS all keep working. See [Migrate from Sonner](/docs/migrating/from-sonner) |
 | `injectStylesInto(root, nonce?)` | `(root: ShadowRoot, nonce?: string) => void`, adopts the core stylesheet into a shadow root. See [Shadow DOM](/docs/advanced/shadow-dom) |
 | `injectToastStylesInto(root, nonce?)` | Same signature, for the toast stylesheet. A sibling export, not folded into `injectStylesInto` |
 

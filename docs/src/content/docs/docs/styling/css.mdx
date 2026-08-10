@@ -16,7 +16,7 @@ import { BUNDLE_SIZES } from '../../../../lib/bundle-sizes.generated';
 ```
 
 scrollsheet ships mechanics only (position, transform, scroll-snap, backdrop, focus
-containment) in `scrollsheet/styles.css` — import it once next to your components, the same
+containment) in `scrollsheet/styles.css`; import it once next to your components, the same
 convention vaul uses. The `className` on `Sheet.Content` lands on the panel, so style it like
 any card.
 
@@ -53,7 +53,7 @@ you would bundle every component twice.
 `.scrollsheet-toast-body`, title: `.scrollsheet-toast-title`, description:
 `.scrollsheet-toast-description`, actions: `.scrollsheet-toast-action` /
 `.scrollsheet-toast-cancel` / `.scrollsheet-toast-close`) and reads its layout knobs from
-`--scrollsheet-toast-*` custom properties — `--scrollsheet-toast-gap`,
+`--scrollsheet-toast-*` custom properties: `--scrollsheet-toast-gap`,
 `--scrollsheet-toast-offset`, `--scrollsheet-toast-mobile-offset`. Override either the same way
 you'd style any card:
 

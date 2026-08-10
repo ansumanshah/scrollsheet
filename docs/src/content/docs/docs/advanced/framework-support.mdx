@@ -25,7 +25,7 @@ dialog, just your trigger.
 <Aside type="caution" title="Next.js App Router">
   `Sheet.Root`, `Sheet.Trigger`, and the rest are interactive: state, event handlers, real DOM
   refs. They only run in a Client Component. scrollsheet's own `"use client"` banner on every
-  dist chunk is not enough by itself — a Server Component that imports `Sheet` and renders
+  dist chunk is not enough by itself: a Server Component that imports `Sheet` and renders
   `<Sheet.Root>` gets one opaque client reference for the whole `Sheet` object, so `Sheet.Root`
   reads as `undefined` there and React throws `Element type is invalid`. Add `'use client'` to
   the top of whatever file renders it, the same rule as any other interactive component in App

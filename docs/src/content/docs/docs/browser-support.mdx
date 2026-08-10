@@ -23,7 +23,7 @@ import { Aside, LinkCard } from '@astrojs/starlight/components';
 
 <Aside type="caution" title="Scroll-driven animation gaps">
   The backdrop dim and `--scrollsheet-progress` run as CSS scroll-driven animations
-  (`animation-timeline: scroll()`), off the main thread, on engines that support them —
+  (`animation-timeline: scroll()`), off the main thread, on engines that support them,
   feature-detected once and stamped `data-scrollsheet-sda` on the dialog. Firefox has it behind
   a flag as of mid-2026; Safari 17.2–25 has the spring but not scroll-driven animations. Below
   that compositor floor, the same values update every frame from `onTravel`'s own JS write
@@ -34,7 +34,7 @@ import { Aside, LinkCard } from '@astrojs/starlight/components';
 
 <Aside type="caution" title="Close-request routing">
   Where `dialog.closedBy` exists (Chrome/Edge 134+, Firefox 141+), a modal sheet sets `closedby`
-  to `closerequest` when `escapeDismissible` is on, `none` when it's off — Esc and the Android
+  to `closerequest` when `escapeDismissible` is on, `none` when it's off, so Esc and the Android
   back gesture route through the platform's own close-request machinery, not scrollsheet's
   manual handling. Never `closedby="any"`: `.scrollsheet-dialog` always covers the full
   viewport, so there's no "outside the dialog" region for a native light-dismiss to detect; it
