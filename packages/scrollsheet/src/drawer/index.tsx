@@ -145,16 +145,15 @@ export function composeOpenChange(
  * anything vaul also has (`closeThreshold`, `modal`, `dismissible`, …) keeps
  * its translated vaul semantics above.
  */
-export interface DrawerRootProps
-  extends Pick<
-    SheetRootProps,
-    | "actionsRef"
-    | "backdropDismissible"
-    | "escapeDismissible"
-    | "keyboardExpands"
-    | "onTravel"
-    | "scrollbar"
-  > {
+export interface DrawerRootProps extends Pick<
+  SheetRootProps,
+  | "actionsRef"
+  | "backdropDismissible"
+  | "escapeDismissible"
+  | "keyboardExpands"
+  | "onTravel"
+  | "scrollbar"
+> {
   children?: React.ReactNode;
   open?: boolean;
   defaultOpen?: boolean;
