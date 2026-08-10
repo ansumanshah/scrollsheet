@@ -23,7 +23,13 @@ import {
  * fast synthetic drag (steps arrive over just a few ms of real time) can
  * carry enough projected velocity to overshoot past the intended detent.
  */
-async function mouseDrag(page: Page, x: number, startY: number, endY: number, steps = 16) {
+async function mouseDrag(
+  page: Page,
+  x: number,
+  startY: number,
+  endY: number,
+  { steps = 16, holdEndMs = 0 } = {},
+) {
   await page.mouse.move(x, startY);
   await page.mouse.down();
   for (let i = 1; i <= steps; i++) {
@@ -31,6 +37,14 @@ async function mouseDrag(page: Page, x: number, startY: number, endY: number, st
     await page.mouse.move(x, y);
   }
   for (let i = 0; i < 4; i++) await page.mouse.move(x, endY);
+  // holdEndMs makes the release a deliberate placement: real wall-clock time
+  // at the end position both flushes the engine's 100ms velocity window with
+  // stationary samples and trips its 80ms stale-release cutoff, so the
+  // outcome is purely positional. Without it, a loaded machine can process
+  // the queued moves in one burst whose compressed timestamps read as a
+  // fling, and the release projection legitimately overshoots the detent
+  // the test expects.
+  if (holdEndMs > 0) await page.waitForTimeout(holdEndMs);
   await page.mouse.up();
 }
 
@@ -94,8 +108,12 @@ test.describe("desktop mouse drag", () => {
     // 35% -> comfortably closer to 70% than back to 35% or up to full
     // (full resolves to viewport minus the desktop floating-card margins,
     // which pulls the 70%/full midpoint down — keep the drag clearly short
-    // of it).
-    await mouseDrag(page, box.x + box.width / 2, box.y + box.height / 2, box.y - 200);
+    // of it). holdEndMs pins this as a placement, not a fling: the assertion
+    // is about NEAREST-detent resolution, and a projected fling to full is
+    // correct engine behavior this test must not be exposed to.
+    await mouseDrag(page, box.x + box.width / 2, box.y + box.height / 2, box.y - 200, {
+      holdEndMs: 120,
+    });
 
     const scrollTop = await waitForStableScrollTop(track);
     const expected = Math.round(viewportHeight * 0.7);
