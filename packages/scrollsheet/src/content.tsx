@@ -1062,7 +1062,7 @@ export const Content = /* @__PURE__ */ React.forwardRef<HTMLDivElement, SheetCon
     // cover this case alone).
     usePresentationFlip({
       present,
-      phaseRef,
+      phase,
       ctxRef,
       side: ctx.side,
       center: ctx.center,
@@ -1071,6 +1071,7 @@ export const Content = /* @__PURE__ */ React.forwardRef<HTMLDivElement, SheetCon
       backdropRef,
       topChromeRef,
       bottomChromeDimRef,
+      themeColorRef,
       maxDetentRef,
       animRef,
       measure,

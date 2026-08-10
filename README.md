@@ -2,7 +2,7 @@
 
 Bottom sheets for React that feel native. Because they are.
 
-One primitive for bottom sheets, drawers, modal dialogs, side panels, and toasts. A real `<dialog>` in the top layer. The browser's own scroll engine for gestures. Spring physics compiled to CSS `linear()`. <!--size:index.gzip:1-->17.5<!--/size--> kB gzipped, <!--size:index.brotli:1-->15.6<!--/size--> kB brotli, plus a mandatory 3.8 kB stylesheet: 22.3 kB combined. React 18+.
+One primitive for bottom sheets, drawers, modal dialogs, side panels, and toasts. A real `<dialog>` in the top layer. The browser's own scroll engine for gestures. Spring physics compiled to CSS `linear()`. <!--size:index.gzip:1-->17.6<!--/size--> kB gzipped, <!--size:index.brotli:1-->15.7<!--/size--> kB brotli, plus a mandatory 3.8 kB stylesheet: 22.3 kB combined. React 18+.
 
 ## Why another drawer
 
@@ -76,7 +76,7 @@ Also exported: `DetentSpec`, `Side`, `SheetActions`, `TravelInfo`, `spring(confi
 - **Toasts, no Sonner knowledge required.** `import { toast, Toaster, useToasts } from 'scrollsheet'` styles with `.scrollsheet-toast` classes and `--scrollsheet-toast-*` custom properties: `.promise()`, update-by-id, all six positions with per-toast overrides, swipe-to-dismiss with a velocity flick. Already on Sonner? Your `.sonner-toast` CSS still matches, unchanged, and `useSonner`/`toasterId` keep working. [Migration guide](https://scrollsheet.dev/docs/migrating/from-sonner).
 - **Agent skills.** [`skills/`](skills/) ships `migrate-from-vaul`, `migrate-from-sonner`, and `build-with-scrollsheet` for coding agents.
 - **Motion core (experimental).** `scrollsheet/motion` is the React-free layer the sheet runs on: closed-form spring solver, interruptible WAAPI wrapper, scroll tween. 1.6 kB gzipped standalone.
-- **Zero-config entry.** `scrollsheet/auto` embeds the stylesheet and injects it on first open: no CSS import needed, <!--size:auto.gzip:1-->21.7<!--/size--> kB gzip for `Sheet` against the default entry's <!--size:index.gzip:1-->17.5<!--/size-->.
+- **Zero-config entry.** `scrollsheet/auto` embeds the stylesheet and injects it on first open: no CSS import needed, <!--size:auto.gzip:1-->21.8<!--/size--> kB gzip for `Sheet` against the default entry's <!--size:index.gzip:1-->17.6<!--/size-->.
 
 Focus containment comes from the platform's `showModal()`, not a JS focus trap. On open, focus lands on the panel so mobile keyboards don't pop unasked; use native `autofocus` to override.
 
