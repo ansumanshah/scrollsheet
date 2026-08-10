@@ -206,6 +206,14 @@ describe("review-fix regressions", () => {
         ),
       );
     });
+    // FallbackSheet is a code-split chunk: it mounts one import-resolution
+    // microtask after the sheet's own render, so give the preload a few
+    // task turns before asserting.
+    for (let i = 0; i < 5 && !document.querySelector("[data-scrollsheet-handle]"); i++) {
+      await React.act(async () => {
+        await new Promise((resolve) => setTimeout(resolve, 0));
+      });
+    }
     const handle = document.querySelector("[data-scrollsheet-handle]");
     expect(handle).not.toBeNull();
     expect(handle?.hasAttribute("data-scrollsheet-handle-variant")).toBe(false);

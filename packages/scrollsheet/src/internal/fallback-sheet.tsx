@@ -1,7 +1,7 @@
 import * as React from "react";
+
 import { createPortal } from "react-dom";
 import type { Side } from "../motion/geometry";
-import { injectStyles } from "./styles";
 
 /**
  * The no-`<dialog>` degradation path (~4% global: Opera Mini, some old in-app
@@ -21,6 +21,24 @@ import { injectStyles } from "./styles";
  * worse than none for screen-reader users), and does not animate. It is the
  * boring modal that always works, kept boring on purpose.
  */
+
+/**
+ * Local two-ref merge instead of slot.tsx's composeRefs: this module is a
+ * lazily loaded chunk, and importing slot would drag the whole sheet-core
+ * chunk into this one's static graph, which un-tree-shakes every other
+ * entry that shares a chunk with it (measured: the toast shape ballooned
+ * from 6.6 to 21.7 kB gzip through exactly that edge).
+ */
+function mergeRefs<T>(
+  a: React.RefObject<T | null>,
+  b: React.Ref<T> | undefined,
+): React.RefCallback<T> {
+  return (node) => {
+    a.current = node;
+    if (typeof b === "function") b(node);
+    else if (b) (b as React.MutableRefObject<T | null>).current = node;
+  };
+}
 
 /** Refcounted so nested degraded sheets don't fight over the body scroll lock. */
 let scrollLockCount = 0;
@@ -68,34 +86,37 @@ export interface FallbackSheetProps {
   onDismiss: () => void;
   labelledBy?: string;
   describedBy?: string;
-  nonce?: string;
   className?: string;
   panelProps: React.HTMLAttributes<HTMLDivElement> & { "aria-label"?: string };
   children?: React.ReactNode;
 }
 
-export function FallbackSheet({
-  side,
-  modal,
-  backdropDismissible,
-  escapeDismissible,
-  onDismiss,
-  labelledBy,
-  describedBy,
-  nonce,
-  className,
-  panelProps,
-  children,
-}: FallbackSheetProps) {
+export const FallbackSheet = React.forwardRef<HTMLDivElement, FallbackSheetProps>(
+  function FallbackSheet(
+    {
+      side,
+      modal,
+      backdropDismissible,
+      escapeDismissible,
+      onDismiss,
+      labelledBy,
+      describedBy,
+      className,
+      panelProps,
+      children,
+    },
+    forwardedRef,
+  ) {
   const panelRef = React.useRef<HTMLDivElement>(null);
   // Latest-ref so the Escape/backdrop handlers never close over a stale
   // callback without re-subscribing (same pattern as the main path).
   const dismissRef = React.useRef(onDismiss);
   dismissRef.current = onDismiss;
 
-  React.useEffect(() => {
-    injectStyles(nonce);
-  }, [nonce]);
+  // Style injection is the CALLER's job (content.tsx's degraded effect):
+  // this module is a lazily loaded chunk, and importing styles.ts here would
+  // statically chain it to the sheet-core chunk, un-tree-shaking every entry
+  // that shares a chunk with it. Same constraint as mergeRefs above.
 
   // Focus round-trip. `showModal()` would do this natively; here it is the
   // difference between "the sheet opened" and "the sheet opened somewhere a
@@ -172,7 +193,7 @@ export function FallbackSheet({
       )}
       <div
         {...panelProps}
-        ref={panelRef}
+        ref={mergeRefs(panelRef, forwardedRef)}
         tabIndex={-1}
         role="dialog"
         aria-modal={modal ? true : undefined}
@@ -190,4 +211,5 @@ export function FallbackSheet({
     </div>,
     document.body,
   );
-}
+  },
+);

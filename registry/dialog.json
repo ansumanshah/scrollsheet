@@ -1,0 +1,19 @@
+{
+  "$schema": "https://ui.shadcn.com/schema/registry-item.json",
+  "name": "dialog",
+  "type": "registry:ui",
+  "title": "Dialog",
+  "description": "A shadcn/ui dialog built on scrollsheet instead of Radix Dialog. Same Dialog/DialogTrigger/DialogContent/DialogHeader/DialogFooter/DialogTitle/DialogDescription/DialogClose API you already know, but backed by a native <dialog> in the top layer with scrollsheet's centered presentation (zoom+fade, no travel or detents). Zero runtime dependencies beyond scrollsheet itself.",
+  "author": "Ansuman Shah <https://github.com/ansumanshah>",
+  "dependencies": [
+    "scrollsheet"
+  ],
+  "files": [
+    {
+      "path": "registry/dialog/dialog.tsx",
+      "content": "\"use client\"\n\nimport * as React from \"react\"\nimport { Sheet } from \"scrollsheet\"\n\nimport { cn } from \"@/lib/utils\"\n\nfunction Dialog({ ...props }: React.ComponentProps<typeof Sheet.Root>) {\n  return <Sheet.Root data-slot=\"dialog\" side=\"center\" {...props} />\n}\n\nfunction DialogTrigger({\n  ...props\n}: React.ComponentProps<typeof Sheet.Trigger>) {\n  return <Sheet.Trigger data-slot=\"dialog-trigger\" {...props} />\n}\n\nfunction DialogContent({\n  className,\n  children,\n  ...props\n}: React.ComponentProps<typeof Sheet.Content>) {\n  return (\n    <Sheet.Content\n      data-slot=\"dialog-content\"\n      className={cn(\"bg-background w-full max-w-lg rounded-lg border p-6 shadow-lg\", className)}\n      {...props}\n    >\n      {children}\n    </Sheet.Content>\n  )\n}\n\nfunction DialogHeader({ className, ...props }: React.ComponentProps<\"div\">) {\n  return (\n    <div\n      data-slot=\"dialog-header\"\n      className={cn(\"flex flex-col gap-2 text-center sm:text-left\", className)}\n      {...props}\n    />\n  )\n}\n\nfunction DialogFooter({ className, ...props }: React.ComponentProps<\"div\">) {\n  return (\n    <div\n      data-slot=\"dialog-footer\"\n      className={cn(\"flex flex-col-reverse gap-2 sm:flex-row sm:justify-end\", className)}\n      {...props}\n    />\n  )\n}\n\nfunction DialogTitle({\n  className,\n  ...props\n}: React.ComponentProps<typeof Sheet.Title>) {\n  return (\n    <Sheet.Title\n      data-slot=\"dialog-title\"\n      className={cn(\"text-foreground text-lg font-semibold\", className)}\n      {...props}\n    />\n  )\n}\n\nfunction DialogDescription({\n  className,\n  ...props\n}: React.ComponentProps<typeof Sheet.Description>) {\n  return (\n    <Sheet.Description\n      data-slot=\"dialog-description\"\n      className={cn(\"text-muted-foreground text-sm\", className)}\n      {...props}\n    />\n  )\n}\n\nfunction DialogClose({\n  className,\n  ...props\n}: React.ComponentProps<typeof Sheet.Close>) {\n  return (\n    <Sheet.Close\n      data-slot=\"dialog-close\"\n      className={cn(\n        \"text-foreground/70 hover:text-foreground absolute top-4 right-4 text-sm underline-offset-4 hover:underline\",\n        className\n      )}\n      {...props}\n    />\n  )\n}\n\nexport {\n  Dialog,\n  DialogTrigger,\n  DialogContent,\n  DialogHeader,\n  DialogFooter,\n  DialogTitle,\n  DialogDescription,\n  DialogClose,\n}\n",
+      "type": "registry:ui",
+      "target": "components/ui/dialog.tsx"
+    }
+  ]
+}

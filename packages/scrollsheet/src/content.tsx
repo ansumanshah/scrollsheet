@@ -41,7 +41,7 @@ import {
   warnLargestUndimmedDetentOutOfRange,
   warnMissingDialogSupport,
 } from "./internal/env";
-import { FallbackSheet } from "./internal/fallback-sheet";
+import { preloadFallbackSheet } from "./internal/fallback-sheet-loader";
 import { Slot, composeRefs } from "./internal/slot";
 import { injectStyles } from "./internal/styles";
 import type { ThemeColorController } from "./internal/theme-color";
@@ -296,6 +296,31 @@ export const Content = /* @__PURE__ */ React.forwardRef<HTMLDivElement, SheetCon
     React.useEffect(() => {
       if (!dialogOk && ctx.open) warnMissingDialogSupport();
     }, [dialogOk, ctx.open]);
+
+    // Style injection for the degraded path lives HERE, not inside
+    // FallbackSheet: that module must stay import-free so its lazy chunk
+    // never chains to the sheet core (see its own doc comments).
+    React.useEffect(() => {
+      if (degraded) injectStyles(ctx.nonce);
+    }, [degraded, ctx.nonce]);
+
+    // The degraded modal is code-split: the ~96% with <dialog> never ship
+    // it. Keyed on the platform probe at MOUNT (not on open) so the module
+    // is resident before the first open on the platforms that need it; a
+    // defaultOpen first render there shows the modal one microtask late.
+    const [LoadedFallbackSheet, setLoadedFallbackSheet] = React.useState<
+      typeof import("./internal/fallback-sheet").FallbackSheet | null
+    >(null);
+    React.useEffect(() => {
+      if (dialogOk || !mounted || LoadedFallbackSheet) return;
+      let alive = true;
+      void preloadFallbackSheet().then((mod) => {
+        if (alive && mod) setLoadedFallbackSheet(() => mod.FallbackSheet);
+      });
+      return () => {
+        alive = false;
+      };
+    }, [dialogOk, mounted, LoadedFallbackSheet]);
 
     // panelRef never changes identity, so this only re-composes when the
     // consumer's own ref does.
@@ -1231,8 +1256,15 @@ export const Content = /* @__PURE__ */ React.forwardRef<HTMLDivElement, SheetCon
     }, []);
 
     if (degraded) {
+      // Null until the mount-time preload resolves (a microtask on the
+      // platforms that need it) — the modal appears then, same as any
+      // state-driven open. The forwarded ref reaches the fallback panel so
+      // compat layers that bridge attributes off the panel node (Dialog's
+      // data-state) keep working on this path.
+      if (!LoadedFallbackSheet) return null;
       return (
-        <FallbackSheet
+        <LoadedFallbackSheet
+          ref={composedPanelRef}
           side={ctx.side}
           modal={ctx.modal !== false}
           backdropDismissible={ctx.backdropDismissible}
@@ -1240,12 +1272,11 @@ export const Content = /* @__PURE__ */ React.forwardRef<HTMLDivElement, SheetCon
           onDismiss={() => ctx.setOpen(false)}
           labelledBy={ctx.hasTitle ? ctx.titleId : undefined}
           describedBy={ctx.hasDescription ? ctx.descriptionId : undefined}
-          nonce={ctx.nonce}
           className={className}
           panelProps={panelProps}
         >
           {children}
-        </FallbackSheet>
+        </LoadedFallbackSheet>
       );
     }
 
