@@ -141,6 +141,7 @@ export default defineConfig({
             { slug: "docs/presentation/non-modal" },
             { slug: "docs/presentation/desktop-drag" },
             { slug: "docs/presentation/desktop-presentation" },
+            { slug: "docs/presentation/responsive-profiles" },
             { slug: "docs/presentation/page-transitions" },
             { slug: "docs/presentation/trigger-morph" },
           ],

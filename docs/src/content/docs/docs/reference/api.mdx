@@ -59,6 +59,8 @@ import DocExample from '../../../../components/DocExample.astro';
 | Prop | Type | Default |
 | --- | --- | --- |
 | `side` | `'bottom' \| 'top' \| 'left' \| 'right' \| 'center'` | `'bottom'` |
+| `desktopSide` | `'bottom' \| 'top' \| 'left' \| 'right' \| 'center'` | unset: `side` applies at every width |
+| `desktopBreakpoint` | `number` | `768` |
 | `modal` | `boolean` | `true` |
 | `backgroundEffect` | `'scale' \| 'parallax' \| 'none'` | `'scale'` for a full-height mobile bottom sheet opened from inside the marked wrapper, else off |
 | `backgroundRef` | `React.RefObject<HTMLElement \| null>` | targets `backgroundEffect` directly, skipping the `data-scrollsheet-background` query |
@@ -72,6 +74,12 @@ import DocExample from '../../../../components/DocExample.astro';
 `side="center"` renders a content-sized modal dialog instead of an edge-anchored sheet.
 `detents`, `disableDrag`, and `keyboardExpands` are all inert: there's no travel range or drag
 gesture to configure. See [Centered dialog](/docs/presentation/centered-dialog).
+
+`desktopSide` overrides the resolved presentation once the viewport reaches
+`desktopBreakpoint`, resolved through a `matchMedia` subscription that lands after mount (server
+render and first paint both resolve to `side`). `desktopBreakpoint` only has an effect paired
+with `desktopSide`; set alone it warns once in dev. See
+[Responsive profiles](/docs/presentation/responsive-profiles).
 
 ### Interaction and other
 

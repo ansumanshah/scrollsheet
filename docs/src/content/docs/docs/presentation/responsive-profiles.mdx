@@ -1,0 +1,84 @@
+---
+title: Responsive profiles
+description: 'side="bottom" desktopSide="center": a mobile bottom sheet that becomes a desktop dialog, drawer, or side panel at the breakpoint, two props instead of a matchMedia hook.'
+---
+
+import { Aside, LinkCard } from '@astrojs/starlight/components';
+import DocExample from '../../../../components/DocExample.astro';
+
+<DocExample
+  name="responsive"
+  caption="Under 720px it drags like a sheet; at 720px and wider the same component opens as a centered dialog. Resize to cross the line."
+/>
+
+```tsx
+<Sheet.Root side="bottom" desktopSide="center">
+```
+
+That's the whole pattern: a bottom sheet on a phone, a centered dialog once the viewport is wide
+enough to call it one. No `matchMedia` hook, no conditional `detents`, no branching on which
+markup to render. `side` and `desktopSide` are both first-class presentations already; this just
+picks between them for you.
+
+## The breakpoint
+
+`desktopSide` takes over at `desktopBreakpoint`, `768` by default: the same line the
+[desktop presentation](/docs/presentation/desktop-presentation) CSS switches on, so a sheet using
+either mechanism changes shape at the same viewport width. Override it per `Sheet.Root`:
+
+```tsx
+<Sheet.Root side="bottom" desktopSide="center" desktopBreakpoint={1024}>
+```
+
+`desktopBreakpoint` only means something paired with `desktopSide`. Set alone it warns once in
+dev and does nothing, because there's nothing for the crossing to switch between.
+
+## Crossing while open
+
+Resize past the breakpoint with the sheet already open and it re-presents instantly: no morph,
+no dismiss-and-reopen, just a new presentation on the same open sheet. Resize back down and it
+flips back the same way, in either direction, as many times as the viewport crosses the line.
+
+## First paint
+
+Server render and the first client paint both resolve to the base `side`. The `matchMedia`
+subscription that can promote it to `desktopSide` only lands after mount, never during render, so
+hydration never disagrees with the server about which side it is. In practice this is invisible:
+a `Sheet.Root` renders nothing until it's opened, and by the time a user can open one, mount has
+already happened and the subscription has already resolved. There's no flash of the wrong
+presentation to design around.
+
+## Any side, either way
+
+`side` and `desktopSide` take the same five values (`'bottom' | 'top' | 'left' | 'right' |
+'center'`) and don't have to relate to each other. A bottom sheet that becomes a left drawer on
+desktop:
+
+```tsx
+<Sheet.Root side="bottom" desktopSide="left">
+```
+
+A right panel on mobile that centers itself on desktop, a top sheet that becomes a right drawer,
+whatever the layout calls for. `desktopSide` is just the presentation `side` swaps to, not a
+fixed mobile-to-desktop story.
+
+<Aside type="note">
+`disableDrag`, `detents`, and the rest of the props stay exactly as documented for whichever side
+is currently resolved: a `desktopSide="center"` sheet is inert to drag once desktop takes over,
+same as `side="center"` always is. See [Centered dialog](/docs/presentation/centered-dialog).
+</Aside>
+
+## vs. desktop presentation
+
+[Desktop presentation](/docs/presentation/desktop-presentation) is CSS: past 768px, core restyles
+the *same* `side` into a docked drawer or a squared-off edge, no prop involved. `desktopSide`
+replaces the presentation outright, swapping which side is even in effect. Reach for the CSS
+default when a wider viewport should just make the current side look native to a pointer and
+keyboard. Reach for `desktopSide` when desktop should read as a different kind of surface
+entirely, most often a bottom sheet becoming a centered dialog.
+
+<LinkCard
+  title="API reference"
+  description="Full prop reference for Sheet.Root, the styling hooks on Sheet.Content, and every other named export."
+  href="/docs/reference/api"
+/>
