@@ -46,7 +46,13 @@ describe("generated CORE_CSS", () => {
     // Raised to 26.0k for the centered no-dialog fallback variant plus the
     // center padding reset (the fallback previously bottom-anchored center
     // mode, a real degradation bug for Dialog consumers).
-    expect(CORE_CSS.length).toBeLessThan(26_000);
+    // Raised to 27.2k (27019 actual) for opt-in dark theming: light is now
+    // the shipped default everywhere, and the panel/handle/close dark rules
+    // moved off prefers-color-scheme onto [data-scrollsheet-theme="dark"],
+    // with the old OS-tracking behavior kept as an opt-in
+    // [data-scrollsheet-theme="system"] variant — doubling each of those
+    // three rule pairs instead of replacing them.
+    expect(CORE_CSS.length).toBeLessThan(27_200);
   });
 
   test("keeps brace structure balanced", () => {

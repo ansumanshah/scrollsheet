@@ -1,5 +1,10 @@
 import { expect, test } from "@playwright/test";
-import { SPRING_TIMEOUT, openSheetByTrigger, waitForStableScrollTop } from "../helpers";
+import {
+  SPRING_TIMEOUT,
+  openSheetByTrigger,
+  setScrollsheetTheme,
+  waitForStableScrollTop,
+} from "../helpers";
 
 /**
  * v0.2 default look ("the best UI should be the default UI") — background,
@@ -44,8 +49,23 @@ test.describe("default look", () => {
     void bl;
   });
 
-  test("dark mode: the panel and handle flip to dark defaults", async ({ page }) => {
+  test("dark OS scheme alone never flips the panel — light is the default everywhere", async ({
+    page,
+  }) => {
     await page.emulateMedia({ colorScheme: "dark" });
+    await page.goto("/");
+    const dialog = await openSheetByTrigger(page, "Full height sheet");
+    const panel = dialog.locator(".scrollsheet-panel");
+    const bg = await panel.evaluate((el) => getComputedStyle(el).backgroundColor);
+    expect(bg).toBe("rgb(255, 255, 255)");
+  });
+
+  test('data-scrollsheet-theme="dark" pins the dark palette regardless of OS scheme', async ({
+    page,
+  }) => {
+    // Deliberately no emulateMedia — proves the attribute, not the OS
+    // scheme, drives this, matching the new opt-in contract.
+    await setScrollsheetTheme(page, "dark");
     await page.goto("/");
     const dialog = await openSheetByTrigger(page, "Full height sheet");
     const panel = dialog.locator(".scrollsheet-panel");

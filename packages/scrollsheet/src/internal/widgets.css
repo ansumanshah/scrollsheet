@@ -47,15 +47,23 @@
   transform: scaleX(1.3);
   cursor: grabbing;
 }
-/* Dark-mode default: the panel's own default background flips to #1c1c1e
-   (above), so a translucent-black handle would nearly disappear on it —
-   flip to translucent white. A consumer's own --scrollsheet-handle(-hover)
-   override still wins in either scheme, unchanged. */
+/* Dark-mode default, opt-in via data-scrollsheet-theme (documented on
+   <html>): the panel's own dark background is #1c1c1e (core.css), so a
+   translucent-black handle would nearly disappear on it — flip to
+   translucent white. A consumer's own --scrollsheet-handle(-hover) override
+   still wins in either scheme, unchanged. "system" restores OS-scheme
+   tracking (the old default). */
+:where([data-scrollsheet-theme="dark"]) :where(.scrollsheet-handle) {
+  background: var(--scrollsheet-handle, rgb(255 255 255 / 0.32));
+}
+:where([data-scrollsheet-theme="dark"]) :where(.scrollsheet-handle:hover) {
+  background: var(--scrollsheet-handle-hover, rgb(255 255 255 / 0.46));
+}
 @media (prefers-color-scheme: dark) {
-  :where(.scrollsheet-handle) {
+  :where([data-scrollsheet-theme="system"]) :where(.scrollsheet-handle) {
     background: var(--scrollsheet-handle, rgb(255 255 255 / 0.32));
   }
-  :where(.scrollsheet-handle:hover) {
+  :where([data-scrollsheet-theme="system"]) :where(.scrollsheet-handle:hover) {
     background: var(--scrollsheet-handle-hover, rgb(255 255 255 / 0.46));
   }
 }
@@ -152,12 +160,21 @@
   background: var(--scrollsheet-close-bg-hover, rgb(0 0 0 / 0.1));
   color: var(--scrollsheet-close-color-hover, rgb(0 0 0 / 0.75));
 }
+/* Same light-default, opt-in-dark contract as the handle above. */
+:where([data-scrollsheet-theme="dark"]) :where(.scrollsheet-close) {
+  background: var(--scrollsheet-close-bg, rgb(255 255 255 / 0.09));
+  color: var(--scrollsheet-close-color, rgb(255 255 255 / 0.62));
+}
+:where([data-scrollsheet-theme="dark"]) :where(.scrollsheet-close:hover) {
+  background: var(--scrollsheet-close-bg-hover, rgb(255 255 255 / 0.14));
+  color: var(--scrollsheet-close-color-hover, rgb(255 255 255 / 0.85));
+}
 @media (prefers-color-scheme: dark) {
-  :where(.scrollsheet-close) {
+  :where([data-scrollsheet-theme="system"]) :where(.scrollsheet-close) {
     background: var(--scrollsheet-close-bg, rgb(255 255 255 / 0.09));
     color: var(--scrollsheet-close-color, rgb(255 255 255 / 0.62));
   }
-  :where(.scrollsheet-close:hover) {
+  :where([data-scrollsheet-theme="system"]) :where(.scrollsheet-close:hover) {
     background: var(--scrollsheet-close-bg-hover, rgb(255 255 255 / 0.14));
     color: var(--scrollsheet-close-color-hover, rgb(255 255 255 / 0.85));
   }

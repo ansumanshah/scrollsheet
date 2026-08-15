@@ -25,10 +25,15 @@ const title = "scrollsheet demo";
     -->
     <script is:inline>
       try {
-        document.documentElement.dataset.theme =
-          localStorage.getItem("theme") === "dark" ? "dark" : "light";
+        var t = localStorage.getItem("theme") === "dark" ? "dark" : "light";
+        document.documentElement.dataset.theme = t;
+        // Mirrors onto scrollsheet's own opt-in attribute so the demo sheet
+        // in this frame stays themed with the site instead of defaulting to
+        // light regardless of the toggle.
+        document.documentElement.dataset.scrollsheetTheme = t;
       } catch (e) {
         document.documentElement.dataset.theme = "light";
+        document.documentElement.dataset.scrollsheetTheme = "light";
       }
     </script>
     <style is:global>

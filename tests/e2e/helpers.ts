@@ -58,6 +58,34 @@ export async function hasAttribute(locator: Locator, name: string): Promise<bool
 }
 
 /**
+ * Registers an addInitScript that stamps data-scrollsheet-theme onto <html>
+ * before the app's own JS runs — call before page.goto(). Guards against
+ * document.documentElement being null at the moment an init script's own
+ * top-level code runs: this Chromium/WebKit build evaluates
+ * addInitScript-injected scripts as soon as the new document's JS context
+ * exists, which can be before the HTML parser has inserted the <html> node
+ * (confirmed via a raw setAttribute in an init script throwing "Cannot read
+ * properties of null" on every project, chromium and webkit alike) — a real
+ * page's own inline <script> in <head> never hits this, since parsing has
+ * already produced <html> by the time that script executes.
+ */
+export async function setScrollsheetTheme(
+  page: Page,
+  theme: "dark" | "system" | "light",
+): Promise<void> {
+  await page.addInitScript((value) => {
+    const apply = () => {
+      document.documentElement.dataset.scrollsheetTheme = value;
+    };
+    if (document.documentElement) {
+      apply();
+    } else {
+      document.addEventListener("DOMContentLoaded", apply, { once: true });
+    }
+  }, theme);
+}
+
+/**
  * Click a sonner-compat trigger and wait for its Toaster's own `<ol
  * data-scrollsheet-toaster>` position group to appear, with a real row
  * inside it settled past its own enter transition. The sonner shell has no

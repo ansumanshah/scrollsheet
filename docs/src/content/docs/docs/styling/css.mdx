@@ -55,6 +55,34 @@ an app that never sets the prop never ships it.
   inject.
 </Aside>
 
+## Dark mode
+
+Light is the default palette everywhere. An app with no theming of its own never flips dark just
+because the visitor's OS is set to dark: the panel, handle, and close button all keep their
+light-mode colors regardless of `prefers-color-scheme`.
+
+Opt into dark by setting `data-scrollsheet-theme="dark"` on an ancestor, typically `<html>`:
+
+```html
+<html data-scrollsheet-theme="dark">
+```
+
+To make the panel track the OS scheme automatically, use `"system"` instead:
+
+```html
+<html data-scrollsheet-theme="system">
+```
+
+Any other value, or no attribute at all, renders light. The attribute is page-level: any
+ancestor carrying it switches the built-in defaults, and a nested
+`data-scrollsheet-theme="light"` does not switch a subtree back. To theme one sheet differently
+from the rest of the page, set the tokens on that sheet instead.
+
+Your own `--scrollsheet-bg`, `--scrollsheet-fg`, `--scrollsheet-handle`,
+`--scrollsheet-handle-hover`, `--scrollsheet-close-bg`, `--scrollsheet-close-color`,
+`--scrollsheet-close-bg-hover`, and `--scrollsheet-close-color-hover` overrides win in every
+mode: the attribute only changes which built-in fallback color those variables fall back to.
+
 ## Toast styling
 
 `Toaster` renders each card as `.scrollsheet-toast` (icon: `.scrollsheet-toast-icon`, body:

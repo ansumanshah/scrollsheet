@@ -63,7 +63,12 @@
       for (const frame of document.querySelectorAll("iframe")) {
         try {
           const doc = (frame as HTMLIFrameElement).contentDocument;
-          if (doc) doc.documentElement.dataset.theme = active();
+          if (doc) {
+            doc.documentElement.dataset.theme = active();
+            // Mirrors onto scrollsheet's own opt-in attribute so the demo
+            // sheet in the frame stays themed with the site.
+            doc.documentElement.dataset.scrollsheetTheme = active();
+          }
         } catch (e) {
           /* Cross-origin frame: not ours to theme. */
         }
@@ -73,6 +78,9 @@
     const toggle = () => {
       const next = active() === "dark" ? "light" : "dark";
       root.dataset.theme = next;
+      // Mirrors onto scrollsheet's own opt-in attribute so the site's live
+      // demos stay themed with the toggle instead of defaulting to light.
+      root.dataset.scrollsheetTheme = next;
       try {
         localStorage.setItem("theme", next);
       } catch (e) {

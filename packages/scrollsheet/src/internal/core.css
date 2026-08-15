@@ -462,12 +462,22 @@
   border-radius: var(--scrollsheet-radius) var(--scrollsheet-radius) 0 0;
   box-shadow: var(--scrollsheet-shadow, 0 -8px 32px rgb(0 0 0 / 0.16));
 }
+/* Light is the default palette everywhere, regardless of OS scheme — an app
+   with no theming of its own never flips dark just because the device does.
+   Dark is opt-in: an ancestor (documented as <html>) carries
+   data-scrollsheet-theme="dark" to force it, or "system" to restore
+   OS-scheme tracking below. Source order (not specificity — both rules stay
+   inside :where()) is what lets this beat the light rule above. */
+:where([data-scrollsheet-theme="dark"]) :where(.scrollsheet-panel) {
+  background: var(--scrollsheet-bg, #1c1c1e);
+  /* The background flips dark, so the text color must flip with it — a
+     panel with no dark styles of its own would otherwise show near-black
+     text on a near-black background. */
+  color: var(--scrollsheet-fg, #f5f5f7);
+}
 @media (prefers-color-scheme: dark) {
-  :where(.scrollsheet-panel) {
+  :where([data-scrollsheet-theme="system"]) :where(.scrollsheet-panel) {
     background: var(--scrollsheet-bg, #1c1c1e);
-    /* The default background flips dark, so the default text color must flip
-       with it — a page with no dark styles of its own would otherwise show
-       near-black text on a near-black panel. */
     color: var(--scrollsheet-fg, #f5f5f7);
   }
 }
@@ -1195,8 +1205,13 @@
   overscroll-behavior: contain;
   -webkit-overflow-scrolling: touch;
 }
+/* Same light-default, opt-in-dark contract as the panel block above. */
+:where([data-scrollsheet-theme="dark"]) :where(.scrollsheet-fallback-panel) {
+  background: var(--scrollsheet-bg, #1c1c1e);
+  color: var(--scrollsheet-fg, #f5f5f7);
+}
 @media (prefers-color-scheme: dark) {
-  :where(.scrollsheet-fallback-panel) {
+  :where([data-scrollsheet-theme="system"]) :where(.scrollsheet-fallback-panel) {
     background: var(--scrollsheet-bg, #1c1c1e);
     color: var(--scrollsheet-fg, #f5f5f7);
   }

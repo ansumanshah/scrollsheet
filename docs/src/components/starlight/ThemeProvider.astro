@@ -23,6 +23,10 @@
      * data-theme="dark" onto <html> and is dark-first, so an absent
      * attribute reads as dark rather than as "follow the site default".
      */
-    document.documentElement.dataset.theme = t === "dark" ? "dark" : "light";
+    var resolved = t === "dark" ? "dark" : "light";
+    document.documentElement.dataset.theme = resolved;
+    // Mirrors onto scrollsheet's own opt-in attribute so the DocExample live
+    // demos on Starlight-rendered docs pages stay themed with the site.
+    document.documentElement.dataset.scrollsheetTheme = resolved;
   })();
 </script>
