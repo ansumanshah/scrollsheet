@@ -88,7 +88,7 @@ Also exported: `DetentSpec`, `Side`, `SheetActions`, `TravelInfo`, `spring(confi
 - **Smaller things.** Desktop mouse drag, the `fill` prop, Shadow DOM injection, `themeColorDimming`, hidden scrollbars with an overlay thumb.
 - **Agent skills.** [`skills/`](skills/) ships `migrate-from-vaul`, `migrate-from-sonner`, `migrate-from-radix-dialog`, and `build-with-scrollsheet` for coding agents.
 - **Motion core (experimental).** `scrollsheet/motion` is the React-free layer the sheet runs on: closed-form spring solver, interruptible WAAPI wrapper, scroll tween. 1.6 kB gzipped standalone.
-- **Zero-config entry.** `scrollsheet/auto` embeds the stylesheet and injects it on first open: no CSS import needed, <!--size:auto.gzip:1-->21.8<!--/size--> kB gzip for `Sheet` against the default entry's <!--size:index.gzip:1-->17.6<!--/size-->.
+- **Zero-config entry.** `scrollsheet/auto` embeds the stylesheet and injects it on first open: no CSS import needed, <!--size:auto.gzip:1-->21.9<!--/size--> kB gzip for `Sheet` against the default entry's <!--size:index.gzip:1-->17.6<!--/size-->.
 
 Focus containment comes from the platform's `showModal()`, not a JS focus trap. On open, focus lands on the panel so mobile keyboards don't pop unasked; use native `autofocus` to override.
 

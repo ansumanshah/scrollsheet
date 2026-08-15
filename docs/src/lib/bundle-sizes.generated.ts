@@ -17,5 +17,5 @@ export const BUNDLE_SIZES: Record<"index" | "drawer" | "dialog" | "toast" | "all
   dialog: { gzipKb: 17.13, brotliKb: 15.23 },
   toast: { gzipKb: 6.59, brotliKb: 5.95 },
   all: { gzipKb: 24.03, brotliKb: 21.31 },
-  auto: { gzipKb: 21.78, brotliKb: 19.08 },
+  auto: { gzipKb: 21.87, brotliKb: 19.11 },
 };

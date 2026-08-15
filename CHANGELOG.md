@@ -2,6 +2,12 @@
 
 All notable changes to this project are documented here.
 
+## 1.0.0 - 2026-08-15
+
+First stable release. If you're coming from the betas, the one behavior change is below; everything else shipped in the beta entries that follow.
+
+- **Changed: sheets default to the light palette everywhere.** OS dark scheme no longer flips an unthemed app dark on its own. Set `data-scrollsheet-theme="dark"` on an ancestor (typically `<html>`) to force dark, or `"system"` to restore the old OS-scheme tracking. Token overrides (`--scrollsheet-bg`, `--scrollsheet-fg`, and the rest) are unaffected: they keep winning in every mode.
+
 ## 1.0.0-beta.5 - 2026-08-14
 
 Responsive presentation profiles, and a real fix for how centered dialogs degrade.
