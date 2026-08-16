@@ -51,3 +51,61 @@ test("crossing the breakpoint while open re-presents instantly without crashing"
   });
   await expect(dialog).toHaveAttribute("data-scrollsheet-state", "open");
 });
+
+test("a live center flip never wipes the input stamp (phantom guard)", async ({ page }) => {
+  // Fix-round review finding: the input-attribution stamp used to reset
+  // inside the scroll-engine effect, which also re-runs on a live
+  // ctx.center flip — so crossing the breakpoint wiped a REAL recent
+  // stamp, and the user's next legitimate jump within the window
+  // misclassified as phantom. The stamp now lives on a [present]-keyed
+  // effect. This drives the exact pairing: stamp under center, flip to
+  // bottom, teleport inside the attribution window — the jump must stay
+  // credited to the user and dismiss.
+  await page.emulateMedia({ reducedMotion: "reduce" }); // timing determinism
+  await page.setViewportSize(ABOVE);
+  await page.goto("/");
+  const dialog = await openSheetByTrigger(page, TRIGGER);
+  await expect(dialog).toHaveAttribute("data-scrollsheet-side", "center");
+  await page.waitForTimeout(200);
+
+  const stampAt = await dialog.evaluate((el) => {
+    el.dispatchEvent(new KeyboardEvent("keydown", { key: "a", bubbles: true }));
+    return performance.now();
+  });
+
+  await page.setViewportSize(BELOW);
+  await page.waitForFunction(
+    () =>
+      document
+        .querySelector("dialog.scrollsheet-dialog")
+        ?.getAttribute("data-scrollsheet-side") === "bottom",
+    undefined,
+    { timeout: SPRING_TIMEOUT },
+  );
+  await page.waitForTimeout(150); // flip re-jump settled (reduced motion)
+
+  // Same self-invalidation as the reopen spec: past the window, fixed and
+  // broken are indistinguishable — decline the verdict, don't hollow-pass.
+  const elapsed = (await page.evaluate(() => performance.now())) - stampAt;
+  test.skip(elapsed > 1400, `flip took ${Math.round(elapsed)}ms — stamp went stale`);
+
+  await dialog.evaluate((el) => {
+    const track = el.querySelector(".scrollsheet-track");
+    if (!track) throw new Error("no .scrollsheet-track");
+    track.scrollTo({ top: 0, behavior: "instant" });
+  });
+  // Settled outcome: credited jump = dismissal. A wiped stamp would read
+  // the teleport as phantom and wind back instead. Polled as a boolean:
+  // under reduced motion webkit unmounts the dialog before a negative
+  // attribute matcher can resolve the locator (absence errors, not passes).
+  await expect
+    .poll(
+      () =>
+        page.evaluate(() => {
+          const el = document.querySelector("dialog.scrollsheet-dialog");
+          return !el || el.getAttribute("data-scrollsheet-state") !== "open";
+        }),
+      { timeout: SPRING_TIMEOUT },
+    )
+    .toBe(true);
+});

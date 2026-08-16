@@ -1000,6 +1000,18 @@ export const Content = /* @__PURE__ */ React.forwardRef<HTMLDivElement, SheetCon
       };
     }, [present]);
 
+    // Input-stamp lifetime = the PRESENTATION, not the scroll-engine
+    // attachment: a tap in the last session must not credit this one's
+    // first phantom (review finding, live-reproduced: interact, close,
+    // reopen within 1.5s, teleport — dismissed). Keyed on [present] alone,
+    // NOT folded into the scroll engine below — that effect also re-runs on
+    // a live ctx.center flip (desktopSide crossing while open), and wiping
+    // a real recent stamp there would misclassify the user's next legit
+    // jump (fix-round review finding).
+    React.useEffect(() => {
+      if (present) lastUserInputRef.current = 0;
+    }, [present]);
+
     // ── Scroll engine ────────────────────────────────────────────────────────
     React.useEffect(() => {
       if (!present) return;
@@ -1010,16 +1022,12 @@ export const Content = /* @__PURE__ */ React.forwardRef<HTMLDivElement, SheetCon
       const track = trackRef.current;
       if (!track) return;
       let raf = 0;
-      // Fresh observation baseline per attachment: the previous
-      // presentation's final position must not classify this one's first
-      // frame as a jump — and the previous presentation's input stamp must
-      // not credit this one's first phantom. A tap in the last session
-      // otherwise left a reopened sheet unguarded for the attribution
-      // window (review finding, live-reproduced: interact, close, reopen
-      // within 1.5s, teleport — dismissed).
+      // Fresh observation baseline per LISTENER attachment (reopen AND a
+      // live center flip): a position this listener never observed must not
+      // classify the first frame it does — which also keeps the flip's own
+      // corrective jumpScroll off the classifier (prev === null exemption).
       lastScrollPosRef.current = null;
       phantomScrollRef.current = false;
-      lastUserInputRef.current = 0;
 
       const onScroll = () => {
         /* The phantom classifier (both factors documented on

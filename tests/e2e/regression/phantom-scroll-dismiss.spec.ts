@@ -36,9 +36,7 @@ async function phantomScrollTo(
   }, top);
 }
 
-test("a single-step programmatic scroll to the closed stop does not dismiss", async ({
-  page,
-}) => {
+test("a single-step programmatic scroll to the closed stop does not dismiss", async ({ page }) => {
   await page.goto("/");
   const dialog = await openSheetByTrigger(page, "Basic sheet");
   const restingTop = await dialog.evaluate(
@@ -57,10 +55,9 @@ test("a single-step programmatic scroll to the closed stop does not dismiss", as
     timeout: SPRING_TIMEOUT,
   });
   await expect
-    .poll(
-      () => dialog.evaluate((el) => el.querySelector(".scrollsheet-track")?.scrollTop ?? -1),
-      { timeout: SPRING_TIMEOUT },
-    )
+    .poll(() => dialog.evaluate((el) => el.querySelector(".scrollsheet-track")?.scrollTop ?? -1), {
+      timeout: SPRING_TIMEOUT,
+    })
     .toBeGreaterThan(restingTop - 2);
   await expect(dialog).toHaveAttribute("data-scrollsheet-state", "open");
 });
@@ -204,10 +201,9 @@ test("a tap in the previous presentation never vouches for a reopened sheet's te
   await page.waitForTimeout(500);
   await expect(dialog).toHaveAttribute("data-scrollsheet-state", "open", { timeout: 1000 });
   await expect
-    .poll(
-      () => dialog.evaluate((el) => el.querySelector(".scrollsheet-track")?.scrollTop ?? -1),
-      { timeout: SPRING_TIMEOUT },
-    )
+    .poll(() => dialog.evaluate((el) => el.querySelector(".scrollsheet-track")?.scrollTop ?? -1), {
+      timeout: SPRING_TIMEOUT,
+    })
     .toBeGreaterThan(0);
 });
 

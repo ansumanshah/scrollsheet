@@ -51,7 +51,7 @@ export const USER_SCROLL_ATTRIBUTION_MS = 1500;
  * single-jump dismiss are geometrically identical input-eventless steps,
  * and winding those back would trap AT users on a sheet with no other
  * dismiss affordance. Protecting compact sheets needs a third signal, not
- * a smaller threshold (see ROADMAP).
+ * a smaller threshold.
  */
 export const PHANTOM_SCROLL_JUMP_PX = 120;
 
@@ -79,8 +79,7 @@ export function isPhantomScrollStep(
   dragging: boolean,
   wheelSession: boolean,
 ): boolean {
-  const inputStale =
-    lastUserInputAt === 0 || now - lastUserInputAt > USER_SCROLL_ATTRIBUTION_MS;
+  const inputStale = lastUserInputAt === 0 || now - lastUserInputAt > USER_SCROLL_ATTRIBUTION_MS;
   return (
     prev !== null &&
     guardEnabled &&

@@ -94,14 +94,10 @@ describe("isPhantomScrollStep", () => {
     // sentinel as fresh input and blind the guard exactly when a
     // defaultOpen sheet needs it (caught live by the reopen spec under
     // reduced motion).
-    expect(
-      isPhantomScrollStep(400, 400 - JUMP, true, 0, 700, false, false, false),
-    ).toBe(true);
+    expect(isPhantomScrollStep(400, 400 - JUMP, true, 0, 700, false, false, false)).toBe(true);
   });
 
   test("a real stamp on a young page still reads fresh", () => {
-    expect(
-      isPhantomScrollStep(400, 400 - JUMP, true, 650, 700, false, false, false),
-    ).toBe(false);
+    expect(isPhantomScrollStep(400, 400 - JUMP, true, 650, 700, false, false, false)).toBe(false);
   });
 });
