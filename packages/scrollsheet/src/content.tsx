@@ -9,7 +9,9 @@ import {
   FULL_HEIGHT_RADIUS_FLATTEN_PX,
   type Overlay,
   type Phase,
+  PHANTOM_SCROLL_JUMP_PX,
   SETTLE_FALLBACK_MS,
+  USER_SCROLL_ATTRIBUTION_MS,
   TRAVEL_MS,
   applyBackgroundEffect,
   applyFullHeightRadius,
@@ -244,6 +246,17 @@ export const Content = /* @__PURE__ */ React.forwardRef<HTMLDivElement, SheetCon
     const ctxRef = React.useRef(ctx);
     const phaseRef = React.useRef<Phase>(phase);
     const parentStackRef = React.useRef(parentStack);
+    /** performance.now() of the last direct input on the dialog — see
+     *  USER_SCROLL_ATTRIBUTION_MS. 0 = no input yet this presentation. */
+    const lastUserInputRef = React.useRef(0);
+    /** A scroll frame teleported the track while input-stale (see
+     *  PHANTOM_SCROLL_JUMP_PX) — the next settle winds back instead of
+     *  judging. Cleared by any direct input: once a person has seen the
+     *  sheet wherever it is, their next outcome is their own. */
+    const phantomScrollRef = React.useRef(false);
+    /** Track position at the previous scroll frame, for the classifier's
+     *  per-event delta. Null = no frame observed yet this attachment. */
+    const lastScrollPosRef = React.useRef<number | null>(null);
     // fill is a Content prop, not context — measure() (a `[]`-deps useCallback)
     // reads it via ref like every other per-render value it needs.
     const fillRef = React.useRef(fill);
@@ -666,55 +679,8 @@ export const Content = /* @__PURE__ */ React.forwardRef<HTMLDivElement, SheetCon
     }, []);
 
     /**
-     * Promotes the nearest resolved detent into React state once the track's
-     * scroll position settles, and dismisses if it settled below half the
-     * first detent. No-op while `tweenActiveRef.current` is true: a browser
-     * fires native `scrollend` after *every* `scrollTo({behavior:'instant'})`
-     * call, not just the tween's true final frame, so an intermediate frame
-     * mid-tween could misfire the dismiss check before the tween lands.
-     */
-    const settle = React.useCallback(() => {
-      if (tweenActiveRef.current) return;
-      // An active drag session owns the scroll position — a scrollend firing
-      // mid-hold (the pointer paused, or a mid-enter grab just jumped the
-      // scroll) must not dismiss or promote anything under the user's finger.
-      // resolveDrag settles on release.
-      if (dialogRef.current?.hasAttribute("data-scrollsheet-dragging")) return;
-      // A live wheel session owns its outcome: endWheelSession dismisses or
-      // re-tweens after the idle gap, and scrollend must not pre-empt it.
-      if (dialogRef.current?.hasAttribute("data-scrollsheet-wheel-session")) return;
-      const track = trackRef.current;
-      if (!track) return;
-      const current = ctxRef.current;
-      const geometry = geometryFor(current.side);
-      const revealed = readRevealed(track, geometry, maxDetentRef.current);
-      if (
-        current.dismissible &&
-        isBelowCloseThreshold(revealed, firstDetentRef.current, current.closeThreshold)
-      ) {
-        current.setOpen(false);
-        return;
-      }
-      let nearest = nearestDetent(revealed, resolvedRef.current);
-      // sequentialDetents: native scroll-snap can still resolve a fast fling
-      // onto a non-adjacent stop — clamp relative to the *last settled*
-      // activeDetent, not this gesture's start (settle() has no drag session
-      // to read a start detent from).
-      if (nearest && current.sequentialDetents) {
-        nearest = clampSequentialDetent(
-          nearest,
-          resolveSpec(current.activeDetent)?.index ?? -1,
-          resolvedRef.current,
-        );
-      }
-      if (nearest && !Object.is(nearest.spec, current.activeDetent)) {
-        current.setActiveDetent(nearest.spec);
-      }
-    }, [resolveSpec]);
-
-    /**
      * Starts an animateScrollTo tween, tracked consistently in `animRef` /
-     * `tweenActiveRef` across all 3 call sites that need one — see `settle`'s
+     * `tweenActiveRef` across every call site that needs one — see `settle`'s
      * doc comment for why `tweenActiveRef` exists. A backstop timer
      * force-clears `tweenActiveRef` even if `finished` never resolves (rAF can
      * stall entirely under heavy CPU contention, e.g. a throttled/occluded
@@ -747,6 +713,77 @@ export const Content = /* @__PURE__ */ React.forwardRef<HTMLDivElement, SheetCon
       },
       [],
     );
+
+    /**
+     * Promotes the nearest resolved detent into React state once the track's
+     * scroll position settles, and dismisses if it settled below half the
+     * first detent. No-op while `tweenActiveRef.current` is true: a browser
+     * fires native `scrollend` after *every* `scrollTo({behavior:'instant'})`
+     * call, not just the tween's true final frame, so an intermediate frame
+     * mid-tween could misfire the dismiss check before the tween lands.
+     *
+     * Defined after startTween on purpose: the origin-attribution branch
+     * below restores the active detent through the same tracked tween path
+     * every other correction uses.
+     */
+    const settle = React.useCallback(() => {
+      if (tweenActiveRef.current) return;
+      // An active drag session owns the scroll position — a scrollend firing
+      // mid-hold (the pointer paused, or a mid-enter grab just jumped the
+      // scroll) must not dismiss or promote anything under the user's finger.
+      // resolveDrag settles on release.
+      if (dialogRef.current?.hasAttribute("data-scrollsheet-dragging")) return;
+      // A live wheel session owns its outcome: endWheelSession dismisses or
+      // re-tweens after the idle gap, and scrollend must not pre-empt it.
+      if (dialogRef.current?.hasAttribute("data-scrollsheet-wheel-session")) return;
+      const track = trackRef.current;
+      if (!track) return;
+      const current = ctxRef.current;
+      const geometry = geometryFor(current.side);
+      /* Origin attribution: a scroll excursion flagged as phantom (a
+         single-event teleport with no recent input — the two factors are
+         documented on PHANTOM_SCROLL_JUMP_PX) gets wound back to the
+         resting detent, never judged as a dismissal or a detent change.
+         A flag set by the classifier, not a bare staleness check here, is
+         deliberate: input that produces no DOM input events at all — a
+         screen reader's own scroll gesture, the long tail of a native
+         momentum coast — still moves in trains of small steps and must
+         keep dismissing exactly as before (review findings, 2026-08-16). */
+      if (phantomScrollRef.current) {
+        phantomScrollRef.current = false;
+        const target = resolveSpec(current.activeDetent);
+        if (target) {
+          const raw = mapScroll(target.height, maxDetentRef.current, geometry.sign);
+          if (Math.abs(track[geometry.scrollProp] - raw) > 1) {
+            startTween(track, raw, geometry.axis, true);
+          }
+        }
+        return;
+      }
+      const revealed = readRevealed(track, geometry, maxDetentRef.current);
+      if (
+        current.dismissible &&
+        isBelowCloseThreshold(revealed, firstDetentRef.current, current.closeThreshold)
+      ) {
+        current.setOpen(false);
+        return;
+      }
+      let nearest = nearestDetent(revealed, resolvedRef.current);
+      // sequentialDetents: native scroll-snap can still resolve a fast fling
+      // onto a non-adjacent stop — clamp relative to the *last settled*
+      // activeDetent, not this gesture's start (settle() has no drag session
+      // to read a start detent from).
+      if (nearest && current.sequentialDetents) {
+        nearest = clampSequentialDetent(
+          nearest,
+          resolveSpec(current.activeDetent)?.index ?? -1,
+          resolvedRef.current,
+        );
+      }
+      if (nearest && !Object.is(nearest.spec, current.activeDetent)) {
+        current.setActiveDetent(nearest.spec);
+      }
+    }, [resolveSpec, startTween]);
 
     // ── Open sequence ────────────────────────────────────────────────────────
     React.useLayoutEffect(() => {
@@ -941,6 +978,29 @@ export const Content = /* @__PURE__ */ React.forwardRef<HTMLDivElement, SheetCon
       backgroundAppliedRef,
     });
 
+    // ── Input attribution latch ──────────────────────────────────────────────
+    // Feeds the phantom-scroll classifier in the scroll engine below. Both
+    // the down and the up edges stamp: a finger can rest on the sheet longer
+    // than the attribution window before the flick that actually moves it,
+    // and it is the release that starts the scroll whose settle needs
+    // crediting. Stamping also clears a pending phantom flag — a person
+    // interacting with the sheet wherever it now sits owns what happens next.
+    React.useEffect(() => {
+      if (!present) return;
+      const dialog = dialogRef.current;
+      if (!dialog) return;
+      const stamp = () => {
+        lastUserInputRef.current = performance.now();
+        phantomScrollRef.current = false;
+      };
+      const opts = { capture: true, passive: true } as const;
+      const events = ["pointerdown", "pointerup", "touchstart", "touchend", "wheel", "keydown"];
+      for (const name of events) dialog.addEventListener(name, stamp, opts);
+      return () => {
+        for (const name of events) dialog.removeEventListener(name, stamp, opts);
+      };
+    }, [present]);
+
     // ── Scroll engine ────────────────────────────────────────────────────────
     React.useEffect(() => {
       if (!present) return;
@@ -951,8 +1011,36 @@ export const Content = /* @__PURE__ */ React.forwardRef<HTMLDivElement, SheetCon
       const track = trackRef.current;
       if (!track) return;
       let raf = 0;
+      // Fresh observation baseline per attachment: the previous
+      // presentation's final position must not classify this one's first
+      // frame as a jump.
+      lastScrollPosRef.current = null;
+      phantomScrollRef.current = false;
 
       const onScroll = () => {
+        /* The phantom classifier (both factors documented on
+           PHANTOM_SCROLL_JUMP_PX): a per-event displacement no finger step
+           produces, arriving while input is stale and while no tween, drag
+           session, or wheel session owns the scroll, marks this excursion
+           as nobody's. settle() winds it back. Guard opt-out via the
+           phantomScrollGuard prop for integrations that legitimately
+           jump-scroll the track from outside the sheet's own APIs.
+           Geometry read per-event: side can flip responsively without
+           re-running this effect. */
+        const pos = track[geometryFor(ctxRef.current.side).scrollProp];
+        const prev = lastScrollPosRef.current;
+        lastScrollPosRef.current = pos;
+        if (
+          prev !== null &&
+          ctxRef.current.phantomScrollGuard &&
+          Math.abs(pos - prev) > PHANTOM_SCROLL_JUMP_PX &&
+          performance.now() - lastUserInputRef.current > USER_SCROLL_ATTRIBUTION_MS &&
+          !tweenActiveRef.current &&
+          !dialogRef.current?.hasAttribute("data-scrollsheet-dragging") &&
+          !dialogRef.current?.hasAttribute("data-scrollsheet-wheel-session")
+        ) {
+          phantomScrollRef.current = true;
+        }
         if (!raf) {
           raf = requestAnimationFrame(() => {
             raf = 0;

@@ -74,6 +74,13 @@ export interface SheetContextValue {
   sequentialDetents: boolean;
   /** Fraction (0-1) of the first detent below which a release dismisses. */
   closeThreshold: number;
+  /**
+   * Wind back scroll excursions nobody performed (single-event track
+   * teleports with no recent input — test tooling's scrollIntoViewIfNeeded,
+   * find-in-page, focus scrolls, extensions) instead of letting them
+   * dismiss the sheet or change its detent. @default true
+   */
+  phantomScrollGuard: boolean;
   /** Bottom sheets: promote to the tallest detent while the software keyboard is up. */
   keyboardExpands: boolean;
   /** Fires on drag release with the real pointer event and whether the sheet is staying open. */

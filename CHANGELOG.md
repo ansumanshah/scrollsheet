@@ -2,6 +2,10 @@
 
 All notable changes to this project are documented here.
 
+## 1.0.1 - 2026-08-16
+
+- **Fixed: a scroll nobody performed could silently dismiss an open sheet.** `settle()` trusted any settling track position, so a single-step programmatic displacement — browser find-in-page, a focus scroll, an extension, test tooling's `scrollIntoViewIfNeeded` (the live reproduction: a consumer app's sheet closed itself mid-session under Playwright device emulation) — that landed the mandatory-snap track on its closed stop read as the user dismissing. Settling positions are now origin-attributed with a two-factor classifier: only a scroll event that both teleports farther than any finger step (120px) and arrives with no recent input on the dialog (1.5s) is treated as phantom and wound back to the resting detent. Trains of ordinary steps stay trusted no matter how input-stale, so gestures that produce no DOM input events — a screen reader's own scroll, a long native momentum coast — keep dismissing exactly as before. Opt out per sheet with `phantomScrollGuard={false}` on `Sheet.Root` if your integration legitimately jump-scrolls the track outside the sheet's own APIs.
+
 ## 1.0.0 - 2026-08-15
 
 First stable release. If you're coming from the betas, the one behavior change is below; everything else shipped in the beta entries that follow.

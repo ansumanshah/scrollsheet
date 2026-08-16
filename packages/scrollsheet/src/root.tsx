@@ -200,6 +200,16 @@ export interface SheetRootProps {
    */
   closeThreshold?: number;
   /**
+   * Wind back scroll excursions nobody performed — a single scroll event
+   * that teleports the track with no recent input on the dialog (test
+   * tooling's scrollIntoViewIfNeeded, browser find-in-page, focus scrolls,
+   * extensions) — instead of letting them dismiss the sheet or change its
+   * detent. Disable only if your integration legitimately jump-scrolls the
+   * track programmatically outside the sheet's own APIs.
+   * @default true
+   */
+  phantomScrollGuard?: boolean;
+  /**
    * Bottom sheets only. When the software keyboard opens with a text field
    * focused inside the sheet, promote to the tallest detent so the field
    * has the whole remaining viewport to scroll within — a short peek detent
@@ -282,6 +292,7 @@ export function Root({
   disableDrag = false,
   sequentialDetents = false,
   closeThreshold = 0.5,
+  phantomScrollGuard = true,
   keyboardExpands = false,
   onRelease,
 }: SheetRootProps) {
@@ -363,6 +374,7 @@ export function Root({
       disableDrag: disableDrag || center,
       sequentialDetents,
       closeThreshold,
+      phantomScrollGuard,
       keyboardExpands,
       onRelease,
       canvasEl,
@@ -398,6 +410,7 @@ export function Root({
       disableDrag,
       sequentialDetents,
       closeThreshold,
+      phantomScrollGuard,
       keyboardExpands,
       onRelease,
       canvasEl,

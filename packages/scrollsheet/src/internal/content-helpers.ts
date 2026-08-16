@@ -16,6 +16,35 @@ export type Phase = "pre" | "opening" | "open" | "closing";
 export type Overlay = HTMLElement;
 
 export const SETTLE_FALLBACK_MS = 120;
+/**
+ * Phantom-scroll classification, factor 1 of 2: how long after the last
+ * direct input on the dialog (pointer, touch, wheel, key) a scroll frame is
+ * still credited to the user. Alone this window would misjudge input that
+ * produces no DOM input events — a screen reader's own scroll gesture, the
+ * long tail of a native momentum coast — so staleness NEVER condemns a
+ * scroll by itself; it only counts against a frame that also teleports
+ * (factor 2 below). Real fingers and real coasts move in trains of small
+ * steps; their occasional violent frames happen right at the gesture, well
+ * inside this window.
+ */
+export const USER_SCROLL_ATTRIBUTION_MS = 1500;
+/**
+ * Phantom-scroll classification, factor 2 of 2: a single scroll event that
+ * displaces the track by more than this, with no recent input (factor 1)
+ * and no tween/drag/wheel session owning the scroll, is a position nobody
+ * chose — CDP's scrollIntoViewIfNeeded under test tooling teleported a
+ * mandatory-snap track from its resting detent to the closed stop in ONE
+ * step and silently dismissed the sheet (found live 2026-08-16); browser
+ * find-in-page, focus scrolls, and extensions can do the same. settle()
+ * winds a flagged excursion back to the active detent instead of
+ * dismissing or promoting on it. Residual risk, accepted and documented:
+ * a smooth-animated programmatic scroll moves in small steps and passes as
+ * a user train; an assistive gesture that jumps a full page in one event
+ * while input-stale would be wound back once (its next attempt lands
+ * inside factor 1's window via any tap, and `phantomScrollGuard={false}`
+ * opts a sheet out entirely).
+ */
+export const PHANTOM_SCROLL_JUMP_PX = 120;
 export const TRAVEL_MS = 380;
 export const FOCUS_SCROLL_DEBOUNCE_MS = 250;
 export const NO_DRAG_SELECTOR =
