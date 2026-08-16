@@ -109,7 +109,9 @@ describe("ensureFeatures", () => {
       release = r;
     });
     lazyFeature.trackCritical(gate.then(() => ({ name: "morph" })));
-    lazyFeature.trackCritical(gate.then(() => Promise.reject(new Error("dead chunk"))).catch(() => null));
+    lazyFeature.trackCritical(
+      gate.then(() => Promise.reject(new Error("dead chunk"))).catch(() => null),
+    );
     const ensured = lazyFeature.ensureFeatures();
     expect(ensured).not.toBe(null);
     let settled = false;

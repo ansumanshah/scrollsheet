@@ -57,7 +57,8 @@ import { isAtScrollBoundary } from "./motion/scroll-handoff";
 import { syncSnapStops as syncSnapStopsImpl } from "./motion/snap-stops";
 import { useDragEngine } from "./internal/use-drag-engine";
 import { useEnterExitLeg } from "./internal/use-enter-exit-leg";
-import { usePresentationFlip } from "./internal/use-presentation-flip";
+import { presentationFlip } from "./internal/presentation-flip-loader";
+import type { UsePresentationFlipInput } from "./internal/use-presentation-flip";
 import { useBodyFreeze } from "./internal/use-body-freeze";
 import { useKeyboardViewport } from "./internal/use-keyboard-viewport";
 import { useNestedScrollbars } from "./internal/use-nested-scrollbars";
@@ -1146,9 +1147,12 @@ export const Content = /* @__PURE__ */ React.forwardRef<HTMLDivElement, SheetCon
     });
 
     // desktopSide re-presenting the sheet while it's already open (see the
-    // hook's own doc comment for why the open-sequence effect above can't
-    // cover this case alone).
-    usePresentationFlip({
+    // chunk's own doc comment for why the open-sequence effect above can't
+    // cover this case alone). Loaded only for Roots that configure
+    // desktopSide; preload fires at mount, the component mounts while
+    // present and reconciles a flip that landed before the chunk resolved.
+    const flipMod = presentationFlip.useFeature(ctx.desktopProfile);
+    const flipProps: UsePresentationFlipInput = {
       present,
       phase,
       ctxRef,
@@ -1165,7 +1169,10 @@ export const Content = /* @__PURE__ */ React.forwardRef<HTMLDivElement, SheetCon
       measure,
       resolveSpec,
       updateTravel,
-    });
+      geometryFor,
+      mapScroll,
+      jumpScroll,
+    };
 
     useOverlayScrollbar({ present, scrollbar: ctx.scrollbar, panelRef, scrollbarRef });
     useBodyFreeze(present && ctx.modal);
@@ -1448,8 +1455,11 @@ export const Content = /* @__PURE__ */ React.forwardRef<HTMLDivElement, SheetCon
       ) : null;
 
     const chromeStrips = !nonModal && ctx.themeColorDimming;
+    const flipFeature =
+      flipMod && ctx.desktopProfile ? <flipMod.PresentationFlipFeature {...flipProps} /> : null;
     const innerContent = (
       <>
+        {flipFeature}
         {/* Chrome strips: slices of backdrop snapped to their target dim
             with no opening fade (core.css), because iOS samples its
             status-bar and bottom-bar backings around the first paint after

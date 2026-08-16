@@ -44,6 +44,12 @@ export interface SheetContextValue {
    */
   center: boolean;
   /**
+   * True when the Root configures `desktopSide` — the only case where
+   * side/center can flip while open, and the load gate for the
+   * presentation-flip feature chunk.
+   */
+  desktopProfile: boolean;
+  /**
    * The mounted canvas element — Handle `variant="outside"` portals its
    * pill here, outside the panel's overflow clip, riding the same scroll
    * layer as the panel. Null until Content commits.
