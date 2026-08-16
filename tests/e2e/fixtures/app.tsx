@@ -610,9 +610,24 @@ function ReopenSheet() {
   return (
     <Sheet.Root open={open} onOpenChange={setOpen} detents={[0.5]}>
       <Sheet.Trigger className="btn">Reopen fixture</Sheet.Trigger>
-      <Sheet.Content className="sheet" aria-label="Reopen fixture">
+      <Sheet.Content className="sheet" aria-label="Reopen fixture" data-testid="reopen-sheet">
         <div className="sheet-inner">
           <Sheet.Title>Reopen</Sheet.Title>
+        </div>
+      </Sheet.Content>
+    </Sheet.Root>
+  );
+}
+
+/** phantomScrollGuard={false}: the opt-out must restore pre-guard trust in
+ *  every settling position (phantom-scroll-dismiss.spec.ts). */
+function GuardOptOutSheet() {
+  return (
+    <Sheet.Root detents={[0.5]} phantomScrollGuard={false}>
+      <Sheet.Trigger className="btn">Guard opt-out sheet</Sheet.Trigger>
+      <Sheet.Content className="sheet" aria-label="Guard opt-out sheet">
+        <div className="sheet-inner">
+          <Sheet.Title>Guard opt-out</Sheet.Title>
         </div>
       </Sheet.Content>
     </Sheet.Root>
@@ -1833,6 +1848,7 @@ export function App() {
         <FillSheet />
         <AsChildSheet />
         <ReopenSheet />
+        <GuardOptOutSheet />
         <MountToggleSheet />
         <UndimmedBackdropSheet />
         <HandleOnlySheet />

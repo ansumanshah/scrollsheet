@@ -9,13 +9,12 @@ import {
   FULL_HEIGHT_RADIUS_FLATTEN_PX,
   type Overlay,
   type Phase,
-  PHANTOM_SCROLL_JUMP_PX,
   SETTLE_FALLBACK_MS,
-  USER_SCROLL_ATTRIBUTION_MS,
   TRAVEL_MS,
   applyBackgroundEffect,
   applyFullHeightRadius,
   clearRecede,
+  isPhantomScrollStep,
   jumpScroll,
   measureContentHeight,
   resolveClosedBy,
@@ -1002,6 +1001,18 @@ export const Content = /* @__PURE__ */ React.forwardRef<HTMLDivElement, SheetCon
       };
     }, [present]);
 
+    // Input-stamp lifetime = the PRESENTATION, not the scroll-engine
+    // attachment: a tap in the last session must not credit this one's
+    // first phantom (review finding, live-reproduced: interact, close,
+    // reopen within 1.5s, teleport — dismissed). Keyed on [present] alone,
+    // NOT folded into the scroll engine below — that effect also re-runs on
+    // a live ctx.center flip (desktopSide crossing while open), and wiping
+    // a real recent stamp there would misclassify the user's next legit
+    // jump (fix-round review finding).
+    React.useEffect(() => {
+      if (present) lastUserInputRef.current = 0;
+    }, [present]);
+
     // ── Scroll engine ────────────────────────────────────────────────────────
     React.useEffect(() => {
       if (!present) return;
@@ -1012,9 +1023,10 @@ export const Content = /* @__PURE__ */ React.forwardRef<HTMLDivElement, SheetCon
       const track = trackRef.current;
       if (!track) return;
       let raf = 0;
-      // Fresh observation baseline per attachment: the previous
-      // presentation's final position must not classify this one's first
-      // frame as a jump.
+      // Fresh observation baseline per LISTENER attachment (reopen AND a
+      // live center flip): a position this listener never observed must not
+      // classify the first frame it does — which also keeps the flip's own
+      // corrective jumpScroll off the classifier (prev === null exemption).
       lastScrollPosRef.current = null;
       phantomScrollRef.current = false;
 
@@ -1032,13 +1044,16 @@ export const Content = /* @__PURE__ */ React.forwardRef<HTMLDivElement, SheetCon
         const prev = lastScrollPosRef.current;
         lastScrollPosRef.current = pos;
         if (
-          prev !== null &&
-          ctxRef.current.phantomScrollGuard &&
-          Math.abs(pos - prev) > PHANTOM_SCROLL_JUMP_PX &&
-          performance.now() - lastUserInputRef.current > USER_SCROLL_ATTRIBUTION_MS &&
-          !tweenActiveRef.current &&
-          !dialogRef.current?.hasAttribute("data-scrollsheet-dragging") &&
-          !dialogRef.current?.hasAttribute("data-scrollsheet-wheel-session")
+          isPhantomScrollStep(
+            prev,
+            pos,
+            ctxRef.current.phantomScrollGuard,
+            lastUserInputRef.current,
+            performance.now(),
+            tweenActiveRef.current,
+            dialogRef.current?.hasAttribute("data-scrollsheet-dragging") ?? false,
+            dialogRef.current?.hasAttribute("data-scrollsheet-wheel-session") ?? false,
+          )
         ) {
           phantomScrollRef.current = true;
         }

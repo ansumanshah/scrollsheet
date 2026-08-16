@@ -43,8 +43,53 @@ export const USER_SCROLL_ATTRIBUTION_MS = 1500;
  * while input-stale would be wound back once (its next attempt lands
  * inside factor 1's window via any tap, and `phantomScrollGuard={false}`
  * opts a sheet out entirely).
+ *
+ * KNOWN LIMIT, kept deliberately: a sheet whose resting detent stands
+ * shorter than this floor gets no phantom protection — its closed-stop
+ * teleport IS a sub-floor step. The floor cannot scale down with the
+ * detent: on a compact sheet, a phantom hop and a screen reader's own
+ * single-jump dismiss are geometrically identical input-eventless steps,
+ * and winding those back would trap AT users on a sheet with no other
+ * dismiss affordance. Protecting compact sheets needs a third signal, not
+ * a smaller threshold.
  */
 export const PHANTOM_SCROLL_JUMP_PX = 120;
+
+/**
+ * The two-factor phantom test, pure so the boundary is unit-testable:
+ * a first observation (null prev) is never phantom, and ownership by a
+ * tween, drag session, or wheel session always clears the frame.
+ * Positional args, not an options object — this runs on every scroll
+ * event of every open sheet.
+ *
+ * `lastUserInputAt === 0` is the "no input this presentation" sentinel and
+ * is maximally stale BY DEFINITION, not by subtraction: `now - 0` reads as
+ * recent for the first 1.5s of page life, which made the guard blind
+ * exactly when a defaultOpen sheet needs it (caught by the reopen
+ * regression spec under reduced motion, where the whole cycle finishes
+ * inside that window).
+ */
+export function isPhantomScrollStep(
+  prev: number | null,
+  pos: number,
+  guardEnabled: boolean,
+  lastUserInputAt: number,
+  now: number,
+  tweenActive: boolean,
+  dragging: boolean,
+  wheelSession: boolean,
+): boolean {
+  const inputStale = lastUserInputAt === 0 || now - lastUserInputAt > USER_SCROLL_ATTRIBUTION_MS;
+  return (
+    prev !== null &&
+    guardEnabled &&
+    Math.abs(pos - prev) > PHANTOM_SCROLL_JUMP_PX &&
+    inputStale &&
+    !tweenActive &&
+    !dragging &&
+    !wheelSession
+  );
+}
 export const TRAVEL_MS = 380;
 export const FOCUS_SCROLL_DEBOUNCE_MS = 250;
 export const NO_DRAG_SELECTOR =

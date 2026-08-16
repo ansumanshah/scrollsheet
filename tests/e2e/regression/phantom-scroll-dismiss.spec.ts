@@ -36,9 +36,7 @@ async function phantomScrollTo(
   }, top);
 }
 
-test("a single-step programmatic scroll to the closed stop does not dismiss", async ({
-  page,
-}) => {
+test("a single-step programmatic scroll to the closed stop does not dismiss", async ({ page }) => {
   await page.goto("/");
   const dialog = await openSheetByTrigger(page, "Basic sheet");
   const restingTop = await dialog.evaluate(
@@ -57,10 +55,9 @@ test("a single-step programmatic scroll to the closed stop does not dismiss", as
     timeout: SPRING_TIMEOUT,
   });
   await expect
-    .poll(
-      () => dialog.evaluate((el) => el.querySelector(".scrollsheet-track")?.scrollTop ?? -1),
-      { timeout: SPRING_TIMEOUT },
-    )
+    .poll(() => dialog.evaluate((el) => el.querySelector(".scrollsheet-track")?.scrollTop ?? -1), {
+      timeout: SPRING_TIMEOUT,
+    })
     .toBeGreaterThan(restingTop - 2);
   await expect(dialog).toHaveAttribute("data-scrollsheet-state", "open");
 });
@@ -121,6 +118,143 @@ test("an input-stale TRAIN of ordinary steps still dismisses (screen-reader / mo
     track.style.scrollSnapType = "";
   });
 
+  await expect(dialog).not.toHaveAttribute("data-scrollsheet-state", "open", {
+    timeout: SPRING_TIMEOUT,
+  });
+});
+
+test("a tap in the previous presentation never vouches for a reopened sheet's teleport", async ({
+  page,
+}) => {
+  // Review finding 2 (live-reproduced pre-fix): the input stamp survived a
+  // close/reopen, so interact → close → reopen → phantom teleport inside
+  // the 1.5s window dismissed the fresh presentation. The stamp now resets
+  // per attachment.
+  //
+  // Reduced motion is load-bearing here, not a convenience: with real
+  // animations, the earliest tween-free teleport lands ~1.3-1.5s after the
+  // stamp — ON the attribution boundary, so the spec would pass with or
+  // without the fix depending on machine speed (verified both ways while
+  // authoring). Zero-duration legs collapse the cycle to ~300ms, deep
+  // inside the window, with the phase machine and classifier untouched
+  // (the travel:none/reduced-motion contract).
+  await page.emulateMedia({ reducedMotion: "reduce" });
+  await page.goto("/");
+  const dialog = await openSheetByTrigger(page, "Reopen fixture");
+  await page.waitForTimeout(300); // settled (zero-duration legs)
+
+  // Stamp the latch with an inert synthetic keydown INSIDE the dialog —
+  // the latch only needs a DOM input event on the dialog subtree, and a
+  // real click here would also wake the drag engine (a zero-distance mouse
+  // drag session whose settle races the close below). Test 2 covers the
+  // real browser input pipeline; this spec's subject is the stamp's
+  // lifetime, not its source. Same evaluate returns the stamp time so the
+  // pair is atomic.
+  const tapAt = await dialog.evaluate((el) => {
+    el.dispatchEvent(new KeyboardEvent("keydown", { key: "a", bubbles: true }));
+    return performance.now();
+  });
+
+  const setOpen = (open: boolean) =>
+    page.evaluate(
+      (o) =>
+        (window as unknown as { __setReopenSheet?: (v: boolean) => void }).__setReopenSheet?.(o),
+      open,
+    );
+  await setOpen(false);
+  // waitForFunction polls on rAF — the expect() matchers' ~100ms poll
+  // steps would eat the attribution window this spec races against.
+  // NOTE the selector: a titled sheet's dialog carries aria-labelledby,
+  // never aria-label (content.tsx's sharedProps), so the dialog is found
+  // through the panel's testid, not by label.
+  await page.waitForFunction(
+    () => !document.querySelector("dialog:has([data-testid='reopen-sheet'])"),
+    undefined,
+    { timeout: SPRING_TIMEOUT },
+  );
+  await setOpen(true);
+  // state "open" = the enter leg settled: no tween owns the track anymore,
+  // and a brief rest absorbs any trailing correction frame.
+  await page.waitForFunction(
+    () =>
+      document
+        .querySelector("dialog:has([data-testid='reopen-sheet'])")
+        ?.getAttribute("data-scrollsheet-state") === "open",
+    undefined,
+    { timeout: SPRING_TIMEOUT },
+  );
+  await page.waitForTimeout(150);
+
+  // The regression only bites while the stale stamp is still inside the
+  // attribution window — on a run slow enough to lapse it, the spec can't
+  // distinguish fixed from broken, so it declines the verdict instead of
+  // hollow-passing (bite verified against the reverted fix at authoring).
+  const elapsed = (await page.evaluate(() => performance.now())) - tapAt;
+  test.skip(elapsed > 1400, `close/reopen cycle took ${Math.round(elapsed)}ms — stamp went stale`);
+
+  await phantomScrollTo(dialog, 0);
+  // Assert the SETTLED outcome, not a snapshot: an immediate
+  // state-attribute read races the dismissal (the assertion would catch
+  // "open" before the settle processes and pass against broken code —
+  // verified while authoring). Let the settle land first, then require
+  // the sheet alive and wound back to its detent.
+  await page.waitForTimeout(500);
+  await expect(dialog).toHaveAttribute("data-scrollsheet-state", "open", { timeout: 1000 });
+  await expect
+    .poll(() => dialog.evaluate((el) => el.querySelector(".scrollsheet-track")?.scrollTop ?? -1), {
+      timeout: SPRING_TIMEOUT,
+    })
+    .toBeGreaterThan(0);
+});
+
+test("phantomScrollGuard={false} restores pre-guard trust in any settling position", async ({
+  page,
+}) => {
+  await page.goto("/");
+  const dialog = await openSheetByTrigger(page, "Guard opt-out sheet");
+  await page.waitForTimeout(1700); // same input-staleness rest as test 1
+
+  await phantomScrollTo(dialog, 0);
+  // Identical displacement to test 1 — but with the guard off, the settle
+  // judges the position as it always did and the sheet dismisses.
+  await expect(dialog).not.toHaveAttribute("data-scrollsheet-state", "open", {
+    timeout: SPRING_TIMEOUT,
+  });
+});
+
+test("compact sheets stay classifier-exempt: a sub-floor closed-stop hop dismisses (screen-reader parity)", async ({
+  page,
+}) => {
+  // Review finding 1, pinned as DESIGNED behavior, not fixed: a sheet whose
+  // resting detent stands under PHANTOM_SCROLL_JUMP_PX has a closed-stop
+  // hop geometrically identical to an assistive single-jump dismiss.
+  // Winding it back would trap AT users, so the guard stands down there
+  // (content-helpers' PHANTOM_SCROLL_JUMP_PX doc). If this spec starts
+  // failing, that a11y tradeoff was changed — re-decide it consciously.
+  await page.goto("/");
+  const dialog = await openSheetByTrigger(page, "Fill sheet");
+  // Shrink the fill'd content to a compact height; the fill-aware
+  // ResizeObserver retargets detent measurement to the wrapper.
+  await dialog.evaluate((el) => {
+    const wrapper = el.querySelector<HTMLElement>("[data-testid='fill-wrapper']");
+    if (!wrapper) throw new Error("no fill-wrapper");
+    wrapper.style.height = "90px";
+    wrapper.style.minHeight = "0";
+  });
+  await expect
+    .poll(() => dialog.evaluate((el) => el.querySelector(".scrollsheet-track")?.scrollTop ?? -1), {
+      timeout: SPRING_TIMEOUT,
+    })
+    .toBeLessThan(121);
+  await page.waitForTimeout(1700); // input-staleness rest
+
+  const restingTop = await dialog.evaluate(
+    (el) => el.querySelector(".scrollsheet-track")?.scrollTop ?? -1,
+  );
+  expect(restingTop).toBeGreaterThan(0);
+  expect(restingTop).toBeLessThan(121);
+
+  await phantomScrollTo(dialog, 0);
   await expect(dialog).not.toHaveAttribute("data-scrollsheet-state", "open", {
     timeout: SPRING_TIMEOUT,
   });
