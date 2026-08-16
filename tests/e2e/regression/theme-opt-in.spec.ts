@@ -34,7 +34,7 @@ test.describe('data-scrollsheet-theme="dark"', () => {
   });
 });
 
-test.describe('no-<dialog> fallback panel honors the attribute', () => {
+test.describe("no-<dialog> fallback panel honors the attribute", () => {
   test.beforeEach(async ({ page }) => {
     await page.addInitScript(() => {
       // Same feature removal tests/e2e/platform/no-dialog-fallback.spec.ts
