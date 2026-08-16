@@ -39,7 +39,13 @@ test.describe("scrollend feature-detection fallback", () => {
     // A real (not synthetic-event) scrollTop mutation — the browser fires its
     // own native 'scroll' event for this, same as a genuine gesture would.
     // We deliberately do NOT dispatch a synthetic 'scrollend': the fallback
-    // must settle on the 'scroll' + debounce timer alone.
+    // must settle on the 'scroll' + debounce timer alone. The keydown stamp
+    // first credits the jump to the user — this spec's subject is the
+    // debounce timer, and an unstamped teleport is the phantom guard's
+    // territory (phantom-scroll-dismiss.spec.ts owns that boundary).
+    await dialog.evaluate((el) => {
+      el.dispatchEvent(new KeyboardEvent("keydown", { key: "a", bubbles: true }));
+    });
     await track.evaluate((el) => {
       el.scrollTop = 0;
     });
@@ -56,6 +62,10 @@ test.describe("scrollend feature-detection fallback", () => {
     const viewportHeight = page.viewportSize()!.height;
     const target = Math.round(viewportHeight * 0.7);
 
+    // Same input stamp as above: the detent jump must read as the user's.
+    await dialog.evaluate((el) => {
+      el.dispatchEvent(new KeyboardEvent("keydown", { key: "a", bubbles: true }));
+    });
     await track.evaluate((el, top) => {
       el.scrollTop = top;
     }, target);

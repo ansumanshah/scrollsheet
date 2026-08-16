@@ -9,13 +9,12 @@ import {
   FULL_HEIGHT_RADIUS_FLATTEN_PX,
   type Overlay,
   type Phase,
-  PHANTOM_SCROLL_JUMP_PX,
   SETTLE_FALLBACK_MS,
-  USER_SCROLL_ATTRIBUTION_MS,
   TRAVEL_MS,
   applyBackgroundEffect,
   applyFullHeightRadius,
   clearRecede,
+  isPhantomScrollStep,
   jumpScroll,
   measureContentHeight,
   resolveClosedBy,
@@ -1013,9 +1012,14 @@ export const Content = /* @__PURE__ */ React.forwardRef<HTMLDivElement, SheetCon
       let raf = 0;
       // Fresh observation baseline per attachment: the previous
       // presentation's final position must not classify this one's first
-      // frame as a jump.
+      // frame as a jump — and the previous presentation's input stamp must
+      // not credit this one's first phantom. A tap in the last session
+      // otherwise left a reopened sheet unguarded for the attribution
+      // window (review finding, live-reproduced: interact, close, reopen
+      // within 1.5s, teleport — dismissed).
       lastScrollPosRef.current = null;
       phantomScrollRef.current = false;
+      lastUserInputRef.current = 0;
 
       const onScroll = () => {
         /* The phantom classifier (both factors documented on
@@ -1031,13 +1035,16 @@ export const Content = /* @__PURE__ */ React.forwardRef<HTMLDivElement, SheetCon
         const prev = lastScrollPosRef.current;
         lastScrollPosRef.current = pos;
         if (
-          prev !== null &&
-          ctxRef.current.phantomScrollGuard &&
-          Math.abs(pos - prev) > PHANTOM_SCROLL_JUMP_PX &&
-          performance.now() - lastUserInputRef.current > USER_SCROLL_ATTRIBUTION_MS &&
-          !tweenActiveRef.current &&
-          !dialogRef.current?.hasAttribute("data-scrollsheet-dragging") &&
-          !dialogRef.current?.hasAttribute("data-scrollsheet-wheel-session")
+          isPhantomScrollStep(
+            prev,
+            pos,
+            ctxRef.current.phantomScrollGuard,
+            lastUserInputRef.current,
+            performance.now(),
+            tweenActiveRef.current,
+            dialogRef.current?.hasAttribute("data-scrollsheet-dragging") ?? false,
+            dialogRef.current?.hasAttribute("data-scrollsheet-wheel-session") ?? false,
+          )
         ) {
           phantomScrollRef.current = true;
         }
