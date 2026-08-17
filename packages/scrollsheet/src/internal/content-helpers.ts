@@ -89,7 +89,6 @@ export function isPhantomScrollStep(
   );
 }
 export const TRAVEL_MS = 380;
-export const FOCUS_SCROLL_DEBOUNCE_MS = 250;
 export const NO_DRAG_SELECTOR =
   "button, a, input, textarea, select, label, [contenteditable], [data-scrollsheet-no-drag]";
 export const DRAG_VELOCITY_WINDOW_MS = 100;
@@ -104,13 +103,6 @@ const BACKGROUND_RADIUS_MAX_PX = 12;
 const BACKGROUND_PARALLAX_PX = 24;
 export const FULL_HEIGHT_RADIUS_FLATTEN_PX = 48;
 export const DEFAULT_RADIUS_PX = 16;
-// Safari's toolbar collapse/expand is a ~40-60px visualViewport height
-// change with no software keyboard involved — below this, treat a resize as
-// chrome chrome, not a keyboard toggle (base-ui's KEYBOARD_RESIZE_THRESHOLD=60).
-export const KEYBOARD_RESIZE_THRESHOLD_PX = 100;
-// Cap on the pre-focus layout/visual viewport gap treated as browser toolbar
-// (see use-keyboard-viewport's sampleBaseline) — real toolbars are <= ~60px.
-export const KEYBOARD_BASELINE_MAX_PX = 80;
 // zag's MAX_RELEASE_VELOCITY_AGE_MS: a release sample older than this (the
 // finger paused before lifting) carries no meaningful fling intent.
 export const MAX_RELEASE_VELOCITY_AGE_MS = 80;
@@ -119,26 +111,6 @@ export const MAX_RELEASE_VELOCITY_AGE_MS = 80;
 // the overall drag direction is just noise, not a real direction change.
 export const MIN_DISPLACEMENT_FOR_VELOCITY_PX = 24;
 
-/** Input types that don't summon a software keyboard on focus. */
-const NON_TEXT_INPUT_TYPES = new Set([
-  "checkbox",
-  "radio",
-  "range",
-  "color",
-  "file",
-  "image",
-  "button",
-  "submit",
-  "reset",
-  "hidden",
-]);
-
-/**
- * Whether focusing `target` would summon a software keyboard — narrower than
- * a blanket input/textarea/contenteditable match: a `type="range"`/checkbox/
- * etc. input never does, so scheduling keyboard-avoidance for one is
- * pointless and can interrupt an active slider drag.
- */
 /** Clamp the track's raw scroll into [0, maxDetent] and map it to revealed px. */
 export function readRevealed(
   track: HTMLElement,
@@ -159,13 +131,6 @@ export function clamp01(x: number): number {
   return Math.min(1, Math.max(0, x));
 }
 
-export function willOpenKeyboard(target: Element): boolean {
-  if (target instanceof HTMLTextAreaElement) return true;
-  if (target instanceof HTMLElement && target.isContentEditable) return true;
-  if (target instanceof HTMLInputElement) return !NON_TEXT_INPUT_TYPES.has(target.type);
-  return false;
-}
-
 /**
  * Maps the resolved `escapeDismissible` prop onto the modal dialog's
  * `closedby` value. `"any"` (native click-outside light-dismiss) is
@@ -180,28 +145,6 @@ export function willOpenKeyboard(target: Element): boolean {
  */
 export function resolveClosedBy(escapeDismissible: boolean): "closerequest" | "none" {
   return escapeDismissible ? "closerequest" : "none";
-}
-
-export interface VirtualKeyboardApi {
-  overlaysContent: boolean;
-  boundingRect: { x: number; y: number; height: number; width: number };
-  // In overlay mode the keyboard never resizes visualViewport, so this is
-  // the only event that reports it opening or closing.
-  addEventListener: (type: "geometrychange", listener: () => void) => void;
-  removeEventListener: (type: "geometrychange", listener: () => void) => void;
-}
-
-/**
- * The VirtualKeyboard API (Chrome/Android — secure contexts only), read-only:
- * this library never sets `overlaysContent` itself (that's a global,
- * page-wide opt-in with side effects on the rest of the app's layout — a
- * consumer's call to make, not this library's), only uses it if the
- * platform or the consumer's own code has already turned it on.
- */
-export function getVirtualKeyboardApi(): VirtualKeyboardApi | null {
-  if (typeof navigator === "undefined" || typeof location === "undefined") return null;
-  if (location.protocol !== "https:" && location.hostname !== "localhost") return null;
-  return "virtualKeyboard" in navigator ? (navigator.virtualKeyboard as VirtualKeyboardApi) : null;
 }
 
 /**

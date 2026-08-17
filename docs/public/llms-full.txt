@@ -2,7 +2,7 @@
 
 > Bottom sheets for React that feel native. One primitive for bottom sheets, drawers, modal
 > dialogs, side panels, and toasts, built on <dialog> and CSS scroll-snap. Zero dependencies,
-> ~<!--size:index.gzip:0-->18<!--/size--> kB gzipped, React 18+, MIT licensed.
+> ~<!--size:index.gzip:0-->17<!--/size--> kB gzipped, React 18+, MIT licensed.
 
 This file contains the full text of https://scrollsheet.dev/docs, for models and tools that
 can't crawl a live site. The canonical, always-current version lives at that URL.

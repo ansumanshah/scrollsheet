@@ -1,24 +1,78 @@
 import * as React from "react";
 
 import type { SheetContextValue } from "../context";
-import {
-  FOCUS_SCROLL_DEBOUNCE_MS,
-  KEYBOARD_BASELINE_MAX_PX,
-  KEYBOARD_RESIZE_THRESHOLD_PX,
-  type Overlay,
-  type Phase,
-  getVirtualKeyboardApi,
-  jumpScroll,
-  willOpenKeyboard,
-} from "./content-helpers";
+import type { jumpScroll as jumpScrollFn, Overlay, Phase } from "./content-helpers";
 import type { DetentSpec, ResolvedDetent } from "./detents";
 import type { ScrollAnimation } from "../motion/scroll-animator";
+
+export const FOCUS_SCROLL_DEBOUNCE_MS = 250;
+// Safari's toolbar collapse/expand is a ~40-60px visualViewport height
+// change with no software keyboard involved — below this, treat a resize as
+// chrome, not a keyboard toggle.
+export const KEYBOARD_RESIZE_THRESHOLD_PX = 100;
+// Cap on the pre-focus layout/visual viewport gap treated as browser toolbar
+// (see sampleBaseline) — real toolbars are <= ~60px.
+export const KEYBOARD_BASELINE_MAX_PX = 80;
+
+/** Input types that don't summon a software keyboard on focus. */
+const NON_TEXT_INPUT_TYPES = new Set([
+  "checkbox",
+  "radio",
+  "range",
+  "color",
+  "file",
+  "image",
+  "button",
+  "submit",
+  "reset",
+  "hidden",
+]);
+
+/**
+ * Whether focusing `target` would summon a software keyboard — narrower
+ * than a blanket editable match: a range/checkbox input never does, and
+ * scheduling avoidance for one can interrupt an active slider drag.
+ */
+export function willOpenKeyboard(target: Element): boolean {
+  if (target instanceof HTMLTextAreaElement) return true;
+  if (target instanceof HTMLElement && target.isContentEditable) return true;
+  if (target instanceof HTMLInputElement) return !NON_TEXT_INPUT_TYPES.has(target.type);
+  return false;
+}
+
+export interface VirtualKeyboardApi {
+  overlaysContent: boolean;
+  boundingRect: { x: number; y: number; height: number; width: number };
+  // In overlay mode the keyboard never resizes visualViewport, so this is
+  // the only event that reports it opening or closing.
+  addEventListener: (type: "geometrychange", listener: () => void) => void;
+  removeEventListener: (type: "geometrychange", listener: () => void) => void;
+}
+
+/**
+ * The VirtualKeyboard API (Chrome/Android, secure contexts), read-only —
+ * `overlaysContent` is a page-wide opt-in that belongs to the consumer,
+ * never set here.
+ */
+export function getVirtualKeyboardApi(): VirtualKeyboardApi | null {
+  if (typeof navigator === "undefined" || typeof location === "undefined") return null;
+  if (location.protocol !== "https:" && location.hostname !== "localhost") return null;
+  return "virtualKeyboard" in navigator ? (navigator.virtualKeyboard as VirtualKeyboardApi) : null;
+}
 
 export interface UseKeyboardViewportInput {
   present: boolean;
   /** Exempts the next scroll frame from phantom classification — the
    *  resync below is a programmatic write, not anyone's gesture. */
   markProgrammaticScroll: () => void;
+  /** Core helper as a prop: a static value edge would chain this lazy
+   *  chunk back to the core (lazy-chunk-imports.test.ts). */
+  jumpScroll: typeof jumpScrollFn;
+  /** Raw pre-focus layout/visual viewport gap, sampled by core at open —
+   *  this chunk can resolve after focus (its load trigger IS the first
+   *  editable focus), too late to sample an unfocused baseline itself.
+   *  Clamped here, not in core, so the cap has one home. */
+  initialBaselineGapPx?: number;
   side: SheetContextValue["side"];
   /** Reactive (not via ctxRef): the divergence effect must observe changes. */
   activeDetent: DetentSpec;
@@ -59,6 +113,8 @@ export interface UseKeyboardViewportInput {
 export function useKeyboardViewport({
   present,
   markProgrammaticScroll,
+  jumpScroll,
+  initialBaselineGapPx,
   side,
   activeDetent,
   dialogRef,
@@ -73,6 +129,10 @@ export function useKeyboardViewport({
   animRef,
 }: UseKeyboardViewportInput): void {
   const focusedKeyboardElRef = React.useRef<HTMLElement | null>(null);
+  // Last committed (post-threshold) delta. A ref, not effect-closure state:
+  // the effect re-runs on dep churn within one presentation, and a fresh 0
+  // would read the still-open keyboard as a new rising edge and re-promote.
+  const committedDeltaRef = React.useRef(0);
   const focusScrollTimerRef = React.useRef<ReturnType<typeof setTimeout> | null>(null);
   // The detent to restore once the keyboard closes, set only when
   // keyboardExpands actually promoted (null = nothing to restore), plus the
@@ -80,6 +140,11 @@ export function useKeyboardViewport({
   // parked where the promotion put it" apart from "moved since".
   const preExpandDetentRef = React.useRef<DetentSpec | null>(null);
   const promotedSpecRef = React.useRef<DetentSpec | null>(null);
+  // One promotion per keyboard session: divergence clears the restore
+  // bookkeeping above, and without this latch any later vv tick with the
+  // keyboard still up (iOS offsetTop-only scrolls, an effect re-run's
+  // reconcile) would re-promote a sheet the user deliberately moved.
+  const promotedThisSessionRef = React.useRef(false);
 
   const restorePreExpandDetent = React.useCallback(() => {
     const previous = preExpandDetentRef.current;
@@ -118,17 +183,19 @@ export function useKeyboardViewport({
     // estimate here measures against.
     const layoutHeight = () => document.documentElement.clientHeight || window.innerHeight;
     let raf = 0;
-    // Tracks the last *committed* (post-threshold) delta, for concern #1's
-    // gate only (not the keyboard inset itself, which concern #2 owns).
-    let committedDelta = 0;
     // The no-keyboard gap between the layout and visual viewports. On real
     // iPhones the expanded Safari toolbar already makes vv.height smaller
     // than innerHeight before any keyboard, so `innerHeight - vv.height`
     // alone overshoots by the toolbar height and the panel lifts past the
     // keyboard, leaving a strip of page in between. Sampled only while no
     // keyboard-summoning element is focused (the keyboard can't be part of
-    // the gap then) and subtracted from the armed estimate.
-    let baselineDelta = 0;
+    // the gap then) and subtracted from the armed estimate. Seeded from
+    // core's pre-focus sample (clamped here) for the case where this chunk
+    // resolved after focus.
+    let baselineDelta =
+      initialBaselineGapPx !== undefined && initialBaselineGapPx <= KEYBOARD_BASELINE_MAX_PX
+        ? Math.max(0, initialBaselineGapPx)
+        : 0;
 
     /**
      * The keyboard estimate, computed synchronously so the caller can write
@@ -204,16 +271,18 @@ export function useKeyboardViewport({
       const resolved = resolvedRef.current;
       const tallest = resolved[resolved.length - 1];
       if (!tallest) return;
-      if (insetPx > 0 && preExpandDetentRef.current === null) {
+      if (insetPx > 0 && !promotedThisSessionRef.current && preExpandDetentRef.current === null) {
         const active = ctxRef.current.activeDetent;
         if (active === tallest.spec) return;
         const activeHeight = resolveSpec(active)?.height ?? 0;
         if (activeHeight >= tallest.height) return;
+        promotedThisSessionRef.current = true;
         preExpandDetentRef.current = active;
         promotedSpecRef.current = tallest.spec;
         ctxRef.current.setActiveDetent(tallest.spec);
-      } else if (insetPx === 0 && preExpandDetentRef.current !== null) {
-        restorePreExpandDetent();
+      } else if (insetPx === 0) {
+        promotedThisSessionRef.current = false;
+        if (preExpandDetentRef.current !== null) restorePreExpandDetent();
       }
     };
 
@@ -269,9 +338,11 @@ export function useKeyboardViewport({
           // committed, so a real resize/rotation still works while toolbar-
           // animation jitter doesn't visibly snap the sheet.
           const delta =
-            rawDelta < KEYBOARD_RESIZE_THRESHOLD_PX && committedDelta === 0 ? 0 : rawDelta;
-          significant = delta !== 0 || committedDelta !== 0;
-          committedDelta = delta;
+            rawDelta < KEYBOARD_RESIZE_THRESHOLD_PX && committedDeltaRef.current === 0
+              ? 0
+              : rawDelta;
+          significant = delta !== 0 || committedDeltaRef.current !== 0;
+          committedDeltaRef.current = delta;
         }
         updateKeyboardInset();
         if (!significant) return;
@@ -333,6 +404,15 @@ export function useKeyboardViewport({
     // change) — both are needed or the keyboard inset can go stale.
     window.visualViewport?.addEventListener("resize", relayout);
     window.visualViewport?.addEventListener("scroll", relayout);
+    // Late-attach reconcile: this chunk loads on the first editable focus,
+    // so that focusin already happened — arm from the live activeElement
+    // and evaluate the current viewport state instead of waiting for the
+    // next event.
+    const active = document.activeElement;
+    if (active instanceof HTMLElement && panel.contains(active) && willOpenKeyboard(active)) {
+      focusedKeyboardElRef.current = active;
+    }
+    relayout();
     return () => {
       panel.removeEventListener("focusin", onFocusIn);
       panel.removeEventListener("focusout", onFocusOut);
@@ -390,4 +470,10 @@ export function useKeyboardViewport({
       }
     };
   }, [present]);
+}
+
+/** Null-rendering mount surface for the lazy chunk. */
+export function KeyboardViewportFeature(props: UseKeyboardViewportInput): null {
+  useKeyboardViewport(props);
+  return null;
 }

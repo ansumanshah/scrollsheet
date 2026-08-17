@@ -14,6 +14,7 @@ const ALLOWED: Record<string, readonly string[]> = {
   "packages/scrollsheet/src/internal/theme-color.ts": [],
   "packages/scrollsheet/src/internal/use-presentation-flip.ts": ["react"],
   "packages/scrollsheet/src/internal/use-content-morph.ts": ["react"],
+  "packages/scrollsheet/src/internal/use-keyboard-viewport.ts": ["react"],
 };
 
 function staticValueImports(source: string): string[] {

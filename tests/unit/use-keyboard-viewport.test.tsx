@@ -5,6 +5,7 @@ import * as React from "react";
 import type * as ReactDOMClient from "react-dom/client";
 
 import type { SheetContextValue } from "../../packages/scrollsheet/src/context";
+import { jumpScroll } from "../../packages/scrollsheet/src/internal/content-helpers";
 import type { DetentSpec, ResolvedDetent } from "../../packages/scrollsheet/src/internal/detents";
 import { useKeyboardViewport } from "../../packages/scrollsheet/src/internal/use-keyboard-viewport";
 
@@ -105,6 +106,7 @@ function Harness({
   useKeyboardViewport({
     present: true,
     markProgrammaticScroll: () => {},
+    jumpScroll,
     side: "bottom",
     activeDetent,
     dialogRef: dialogRef as React.RefObject<HTMLDivElement | null>,
@@ -160,6 +162,10 @@ const render = (store: ReturnType<typeof makeStore>, extra?: Partial<HarnessProp
 async function focusField() {
   await React.act(async () => {
     const input = document.querySelector("input");
+    // Real focus, not just a synthetic event: the hook's late-attach
+    // reconcile re-arms from document.activeElement whenever its effect
+    // re-runs, and a synthetic-only focus would read as a falling edge.
+    input?.focus();
     input?.dispatchEvent(new Event("focusin", { bubbles: true }));
   });
 }
@@ -212,6 +218,26 @@ describe("keyboardExpands state machine", () => {
     // No restore call: the last transition is the user's own move to 0.85.
     expect(store.calls).toEqual([0.85, 0.3, 0.85]);
     expect(store.active).toBe(0.85);
+  });
+
+  test("a stray vv tick after divergence never re-promotes — one promotion per keyboard session", async () => {
+    const store = makeStore(0.3);
+    await mount(<Harness activeDetent={store.active} setActiveDetent={store.set} />);
+    await focusField();
+    await setKeyboard(300);
+    await render(store);
+    expect(store.active).toBe(0.85);
+
+    // The user drags down to the peek detent while the keyboard stays up.
+    store.set(0.3);
+    await render(store);
+
+    // iOS emits offsetTop-only vv scroll ticks with no height change.
+    await React.act(async () => {
+      vv.dispatch("scroll");
+    });
+    expect(store.active).toBe(0.3);
+    expect(store.calls).toEqual([0.85, 0.3]);
   });
 
   test("unmounting while promoted restores first — the promoted detent must not leak into the next open", async () => {

@@ -53,13 +53,12 @@ test.describe("item 1: keyboard detection is gated on focus, with a resize-delta
       getComputedStyle(el).getPropertyValue("--scrollsheet-keyboard").trim(),
     );
     // The *exposed* inset is what the focus gate owns and this item is
-    // about — it must stay 0 regardless of focus. Track re-measuring
-    // against a genuinely resized viewport (this 300px delta is well past
-    // the general significant-resize threshold, focus-independent by
-    // design — see content.tsx's relayout()) is a *separate*, correct
-    // concern this test isn't about; a real orientation change/resize must
-    // still remeasure with nothing focused at all.
-    expect(keyboard).toBe("0px");
+    // about — it must stay 0 regardless of focus. Unset counts: with no
+    // editable ever focused the keyboard chunk never loads, and every CSS
+    // consumer reads var(--scrollsheet-keyboard, 0px). Track re-measuring
+    // against a genuinely resized viewport is a separate concern this test
+    // isn't about.
+    expect(["", "0px"]).toContain(keyboard);
     void before;
 
     await page.evaluate(() => {

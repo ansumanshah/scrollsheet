@@ -13,12 +13,8 @@ import {
   DRAG_CLICK_SUPPRESS_PX,
   DRAG_PROJECTION_MS,
   DRAG_VELOCITY_WINDOW_MS,
-  FOCUS_SCROLL_DEBOUNCE_MS,
   FULL_HEIGHT_RADIUS_FLATTEN_PX,
-  getVirtualKeyboardApi,
   jumpScroll,
-  KEYBOARD_BASELINE_MAX_PX,
-  KEYBOARD_RESIZE_THRESHOLD_PX,
   MAX_RELEASE_VELOCITY_AGE_MS,
   measureContentHeight,
   MIN_DISPLACEMENT_FOR_VELOCITY_PX,
@@ -30,8 +26,14 @@ import {
   SETTLE_FALLBACK_MS,
   transformSide,
   TRAVEL_MS,
-  willOpenKeyboard,
 } from "../../packages/scrollsheet/src/internal/content-helpers";
+import {
+  FOCUS_SCROLL_DEBOUNCE_MS,
+  getVirtualKeyboardApi,
+  KEYBOARD_BASELINE_MAX_PX,
+  KEYBOARD_RESIZE_THRESHOLD_PX,
+  willOpenKeyboard,
+} from "../../packages/scrollsheet/src/internal/use-keyboard-viewport";
 
 const ALL_SIDES: Side[] = ["bottom", "top", "left", "right"];
 

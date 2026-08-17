@@ -154,7 +154,9 @@ describe("useContentMorph — reduced motion", () => {
 
     expect(startTweenCalls).toHaveLength(0);
     expect(scrollToCalls).toEqual([{ behavior: "instant", top: 500 }]);
-    expect(syncCalls).toHaveLength(1);
+    // Two passes: the setup reconcile (this harness's measure mock always
+    // reports growth, so it morphs at mount) plus the observed resize.
+    expect(syncCalls).toHaveLength(2);
   });
 
   test("motion allowed: starts an animated tween instead of jumping", async () => {

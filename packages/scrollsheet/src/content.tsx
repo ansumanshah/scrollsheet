@@ -61,7 +61,8 @@ import { useEnterExitLeg } from "./internal/use-enter-exit-leg";
 import { presentationFlip } from "./internal/presentation-flip-loader";
 import type { UsePresentationFlipInput } from "./internal/use-presentation-flip";
 import { useBodyFreeze } from "./internal/use-body-freeze";
-import { useKeyboardViewport } from "./internal/use-keyboard-viewport";
+import { keyboardViewport } from "./internal/keyboard-viewport-loader";
+import type { UseKeyboardViewportInput } from "./internal/use-keyboard-viewport";
 import { useNestedScrollbars } from "./internal/use-nested-scrollbars";
 import { useOverlayScrollbar } from "./internal/use-overlay-scrollbar";
 import { useStackRecede } from "./internal/use-stack-recede";
@@ -1157,9 +1158,42 @@ export const Content = /* @__PURE__ */ React.forwardRef<HTMLDivElement, SheetCon
       jumpScroll,
     };
 
-    useKeyboardViewport({
+    // Loads on the first editable focus inside the dialog, so input-less
+    // sheets never fetch the keyboard engine. The pre-focus baseline gap is
+    // sampled here at open (the chunk resolves after focus by definition)
+    // and handed over raw — the chunk owns the clamp.
+    const [kbNeeded, setKbNeeded] = React.useState(false);
+    const initialBaselineGapRef = React.useRef<number | undefined>(undefined);
+    React.useEffect(() => {
+      if (!present) return;
+      const vv = window.visualViewport;
+      if (vv && vv.scale === 1) {
+        const layoutH = document.documentElement.clientHeight || window.innerHeight;
+        initialBaselineGapRef.current = Math.max(0, layoutH - vv.height);
+      }
+      if (kbNeeded) return;
+      const dialog = dialogRef.current;
+      if (!dialog) return;
+      // Cheap overmatch (a checkbox focus loads the chunk pointlessly but
+      // harmlessly); the chunk's willOpenKeyboard applies the precise gate.
+      const detect = (event: FocusEvent) => {
+        const t = event.target;
+        if (
+          t instanceof HTMLElement &&
+          (t.isContentEditable || t.tagName === "INPUT" || t.tagName === "TEXTAREA")
+        ) {
+          setKbNeeded(true);
+        }
+      };
+      dialog.addEventListener("focusin", detect, { capture: true, passive: true });
+      return () => dialog.removeEventListener("focusin", detect, { capture: true });
+    }, [present, kbNeeded]);
+    const kbMod = keyboardViewport.useFeature(kbNeeded);
+    const kbProps: UseKeyboardViewportInput = {
       present,
       markProgrammaticScroll,
+      jumpScroll,
+      initialBaselineGapPx: initialBaselineGapRef.current,
       // Center rides the inert "bottom" here ON PURPOSE and it is
       // load-bearing: the hook's isBottom path writes --scrollsheet-vv-top/
       // -vv-height, which the base track rule sizes off — without them a
@@ -1179,7 +1213,7 @@ export const Content = /* @__PURE__ */ React.forwardRef<HTMLDivElement, SheetCon
       phaseRef,
       ctxRef,
       animRef,
-    });
+    };
 
     // desktopSide re-presenting the sheet while it's already open (see the
     // chunk's own doc comment for why the open-sequence effect above can't
@@ -1495,10 +1529,12 @@ export const Content = /* @__PURE__ */ React.forwardRef<HTMLDivElement, SheetCon
     const flipFeature =
       flipMod && ctx.desktopProfile ? <flipMod.PresentationFlipFeature {...flipProps} /> : null;
     const morphFeature = morphMod ? <morphMod.ContentMorphFeature {...morphProps} /> : null;
+    const kbFeature = kbMod && kbNeeded ? <kbMod.KeyboardViewportFeature {...kbProps} /> : null;
     const innerContent = (
       <>
         {flipFeature}
         {morphFeature}
+        {kbFeature}
         {/* Chrome strips: slices of backdrop snapped to their target dim
             with no opening fade (core.css), because iOS samples its
             status-bar and bottom-bar backings around the first paint after
