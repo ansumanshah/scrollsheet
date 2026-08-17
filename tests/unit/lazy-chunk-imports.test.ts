@@ -12,6 +12,7 @@ import { describe, expect, test } from "bun:test";
 const ALLOWED: Record<string, readonly string[]> = {
   "packages/scrollsheet/src/internal/fallback-sheet.tsx": ["react", "react-dom"],
   "packages/scrollsheet/src/internal/theme-color.ts": [],
+  "packages/scrollsheet/src/internal/use-presentation-flip.ts": ["react"],
 };
 
 function staticValueImports(source: string): string[] {

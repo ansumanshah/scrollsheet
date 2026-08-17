@@ -1,11 +1,15 @@
 import * as React from "react";
 
 import type { SheetContextValue } from "../context";
-import { geometryFor, mapScroll, type Side } from "../motion/geometry";
+import type {
+  geometryFor as geometryForFn,
+  mapScroll as mapScrollFn,
+  Side,
+} from "../motion/geometry";
 import type { ScrollAnimation } from "../motion/scroll-animator";
 import type { DetentSpec, ResolvedDetent } from "./detents";
 import type { ThemeColorController } from "./theme-color";
-import { jumpScroll, type Phase } from "./content-helpers";
+import type { jumpScroll as jumpScrollFn, Phase } from "./content-helpers";
 
 export interface UsePresentationFlipInput {
   present: boolean;
@@ -25,6 +29,14 @@ export interface UsePresentationFlipInput {
   measure: (rebuildSnapStops?: boolean) => void;
   resolveSpec: (spec: DetentSpec) => ResolvedDetent | undefined;
   updateTravel: () => void;
+  /**
+   * Core geometry/scroll helpers arrive as props, not imports: this module
+   * is a lazy chunk, and a static value edge into the sheet core would chain
+   * the chunk graphs back together (see lazy-chunk-imports.test.ts).
+   */
+  geometryFor: typeof geometryForFn;
+  mapScroll: typeof mapScrollFn;
+  jumpScroll: typeof jumpScrollFn;
 }
 
 /**
@@ -42,7 +54,9 @@ export interface UsePresentationFlipInput {
  * `applied` marker is what keeps the ordinary pre-opening-open transition
  * from re-jumping: the open sequence applies the current presentation at
  * "pre", this hook records it there, and a matching marker at "open" is a
- * no-op.
+ * no-op. First mounting while already "open" (the chunk resolving after a
+ * fast first open) records the current presentation the same way — the open
+ * sequence applied it, so it is applied.
  */
 export function usePresentationFlip({
   present,
@@ -61,8 +75,13 @@ export function usePresentationFlip({
   measure,
   resolveSpec,
   updateTravel,
+  geometryFor,
+  mapScroll,
+  jumpScroll,
 }: UsePresentationFlipInput): void {
-  const appliedRef = React.useRef<{ side: Side; center: boolean } | null>(null);
+  const appliedRef = React.useRef<{ side: Side; center: boolean } | null>(
+    phase === "open" ? { side, center } : null,
+  );
 
   // The open sequence at "pre" always sets up the presentation current at
   // that moment — record it as applied so the settle to "open" (and every
@@ -104,5 +123,22 @@ export function usePresentationFlip({
     animRef.current?.cancel();
     jumpScroll(track, geometry.axis, rawTarget);
     updateTravel();
-  }, [present, phase, side, center, measure, resolveSpec, updateTravel]);
+  }, [
+    present,
+    phase,
+    side,
+    center,
+    measure,
+    resolveSpec,
+    updateTravel,
+    geometryFor,
+    mapScroll,
+    jumpScroll,
+  ]);
+}
+
+/** Null-rendering mount surface for the lazy chunk. */
+export function PresentationFlipFeature(props: UsePresentationFlipInput): null {
+  usePresentationFlip(props);
+  return null;
 }
