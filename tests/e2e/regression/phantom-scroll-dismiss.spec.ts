@@ -113,6 +113,48 @@ test("an input-stale TRAIN of ordinary steps still dismisses (screen-reader / mo
   });
 });
 
+test("a move keeps a held gesture fresh past the attribution window", async ({ page }) => {
+  // A continuous >1.5s hold can coalesce a >120px frame under jank; the
+  // move events must keep crediting it. Hover moves (buttons: 0) must not.
+  await page.goto("/");
+  const dialog = await openSheetByTrigger(page, "Basic sheet");
+  await page.waitForTimeout(1700);
+
+  await dialog.evaluate((el) => {
+    el.dispatchEvent(new TouchEvent("touchmove", { bubbles: true }));
+  });
+  await phantomScrollTo(dialog, 0);
+  // Credited: the move refreshed the stamp, so the jump dismisses.
+  await expect(dialog).not.toHaveAttribute("data-scrollsheet-state", "open", {
+    timeout: SPRING_TIMEOUT,
+  });
+});
+
+test("a hover move (buttons: 0) never stamps — the guard stays awake under a resting cursor", async ({
+  page,
+}) => {
+  await page.goto("/");
+  const dialog = await openSheetByTrigger(page, "Basic sheet");
+  const restingTop = await dialog.evaluate(
+    (el) => el.querySelector(".scrollsheet-track")?.scrollTop ?? -1,
+  );
+  await page.waitForTimeout(1700);
+
+  await dialog.evaluate((el) => {
+    el.dispatchEvent(new PointerEvent("pointermove", { bubbles: true, buttons: 0 }));
+  });
+  await phantomScrollTo(dialog, 0);
+  // Not credited: still phantom, wound back.
+  await expect(dialog).toHaveAttribute("data-scrollsheet-state", "open", {
+    timeout: SPRING_TIMEOUT,
+  });
+  await expect
+    .poll(() => dialog.evaluate((el) => el.querySelector(".scrollsheet-track")?.scrollTop ?? -1), {
+      timeout: SPRING_TIMEOUT,
+    })
+    .toBeGreaterThan(restingTop - 2);
+});
+
 test("a tap in the previous presentation never vouches for a reopened sheet's teleport", async ({
   page,
 }) => {

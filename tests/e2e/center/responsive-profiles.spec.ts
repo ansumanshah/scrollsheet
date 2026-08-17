@@ -70,9 +70,8 @@ test("a live center flip never wipes the input stamp (phantom guard)", async ({ 
   await page.setViewportSize(BELOW);
   await page.waitForFunction(
     () =>
-      document
-        .querySelector("dialog.scrollsheet-dialog")
-        ?.getAttribute("data-scrollsheet-side") === "bottom",
+      document.querySelector("dialog.scrollsheet-dialog")?.getAttribute("data-scrollsheet-side") ===
+      "bottom",
     undefined,
     { timeout: SPRING_TIMEOUT },
   );

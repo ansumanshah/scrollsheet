@@ -985,11 +985,21 @@ export const Content = /* @__PURE__ */ React.forwardRef<HTMLDivElement, SheetCon
         lastUserInputRef.current = performance.now();
         phantomScrollRef.current = false;
       };
+      // Moves keep a held gesture fresh past the attribution window (a
+      // continuous >1.5s drag can coalesce a >120px frame under jank).
+      // buttons gate: hover moves must not stamp or the guard goes blind
+      // under any resting cursor.
+      const stampMove = (event: Event) => {
+        if ((event as PointerEvent).buttons !== 0) stamp();
+      };
       const opts = { capture: true, passive: true } as const;
       const events = ["pointerdown", "pointerup", "touchstart", "touchend", "wheel", "keydown"];
+      const moveEvents = ["pointermove", "touchmove"];
       for (const name of events) dialog.addEventListener(name, stamp, opts);
+      for (const name of moveEvents) dialog.addEventListener(name, stampMove, opts);
       return () => {
         for (const name of events) dialog.removeEventListener(name, stamp, opts);
+        for (const name of moveEvents) dialog.removeEventListener(name, stampMove, opts);
       };
     }, [present]);
 
