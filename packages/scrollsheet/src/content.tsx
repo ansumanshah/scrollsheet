@@ -9,6 +9,7 @@ import {
   FULL_HEIGHT_RADIUS_FLATTEN_PX,
   type Overlay,
   type Phase,
+  PROGRAMMATIC_SCROLL_MARK_MS,
   SETTLE_FALLBACK_MS,
   TRAVEL_MS,
   applyBackgroundEffect,
@@ -256,6 +257,12 @@ export const Content = /* @__PURE__ */ React.forwardRef<HTMLDivElement, SheetCon
     /** Track position at the previous scroll frame, for the classifier's
      *  per-event delta. Null = no frame observed yet this attachment. */
     const lastScrollPosRef = React.useRef<number | null>(null);
+    /** performance.now() of the last marked programmatic write (kb resync)
+     *  — its scroll frame is consumed, not classified. */
+    const programmaticScrollMarkRef = React.useRef(0);
+    const markProgrammaticScroll = React.useCallback(() => {
+      programmaticScrollMarkRef.current = performance.now();
+    }, []);
     // fill is a Content prop, not context — measure() (a `[]`-deps useCallback)
     // reads it via ref like every other per-render value it needs.
     const fillRef = React.useRef(fill);
@@ -1039,7 +1046,11 @@ export const Content = /* @__PURE__ */ React.forwardRef<HTMLDivElement, SheetCon
         const pos = track[geometryFor(ctxRef.current.side).scrollProp];
         const prev = lastScrollPosRef.current;
         lastScrollPosRef.current = pos;
+        const marked =
+          performance.now() - programmaticScrollMarkRef.current < PROGRAMMATIC_SCROLL_MARK_MS;
+        if (marked) programmaticScrollMarkRef.current = 0;
         if (
+          !marked &&
           isPhantomScrollStep(
             prev,
             pos,
@@ -1136,6 +1147,7 @@ export const Content = /* @__PURE__ */ React.forwardRef<HTMLDivElement, SheetCon
 
     useKeyboardViewport({
       present,
+      markProgrammaticScroll,
       // Center rides the inert "bottom" here ON PURPOSE and it is
       // load-bearing: the hook's isBottom path writes --scrollsheet-vv-top/
       // -vv-height, which the base track rule sizes off — without them a

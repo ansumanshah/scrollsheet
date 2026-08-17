@@ -50,6 +50,9 @@ export const USER_SCROLL_ATTRIBUTION_MS = 1500;
  * single-jump dismiss. Scaling the floor down would trap AT users.
  */
 export const PHANTOM_SCROLL_JUMP_PX = 120;
+/** One-shot TTL for a marked programmatic write (kb resync) — the mark's
+ *  scroll frame must land inside this or it expires unconsumed. */
+export const PROGRAMMATIC_SCROLL_MARK_MS = 150;
 
 /**
  * The two-factor phantom test, pure so the boundary is unit-testable.

@@ -104,6 +104,7 @@ function Harness({
   ctxRef.current = ctx;
   useKeyboardViewport({
     present: true,
+    markProgrammaticScroll: () => {},
     side: "bottom",
     activeDetent,
     dialogRef: dialogRef as React.RefObject<HTMLDivElement | null>,

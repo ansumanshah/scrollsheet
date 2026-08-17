@@ -16,6 +16,9 @@ import type { ScrollAnimation } from "../motion/scroll-animator";
 
 export interface UseKeyboardViewportInput {
   present: boolean;
+  /** Exempts the next scroll frame from phantom classification — the
+   *  resync below is a programmatic write, not anyone's gesture. */
+  markProgrammaticScroll: () => void;
   side: SheetContextValue["side"];
   /** Reactive (not via ctxRef): the divergence effect must observe changes. */
   activeDetent: DetentSpec;
@@ -55,6 +58,7 @@ export interface UseKeyboardViewportInput {
  */
 export function useKeyboardViewport({
   present,
+  markProgrammaticScroll,
   side,
   activeDetent,
   dialogRef,
@@ -274,6 +278,7 @@ export function useKeyboardViewport({
         measure();
         const target = resolveSpec(ctxRef.current.activeDetent);
         if (track && target && phaseRef.current === "open" && !animRef.current) {
+          markProgrammaticScroll();
           jumpScroll(track, "y", target.height);
         }
         updateTravel();
