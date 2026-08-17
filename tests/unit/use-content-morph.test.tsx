@@ -8,7 +8,10 @@ import type { SheetContextValue } from "../../packages/scrollsheet/src/context";
 import { jumpScroll } from "../../packages/scrollsheet/src/internal/content-helpers";
 import type { ResolvedDetent } from "../../packages/scrollsheet/src/internal/detents";
 import { geometryFor, mapScroll } from "../../packages/scrollsheet/src/motion/geometry";
-import { type UseContentMorphInput, useContentMorph } from "../../packages/scrollsheet/src/internal/use-content-morph";
+import {
+  type UseContentMorphInput,
+  useContentMorph,
+} from "../../packages/scrollsheet/src/internal/use-content-morph";
 import type { ScrollAnimation } from "../../packages/scrollsheet/src/motion/scroll-animator";
 
 /**

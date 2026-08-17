@@ -12,10 +12,10 @@ export interface BundleSize {
 }
 
 export const BUNDLE_SIZES: Record<"index" | "drawer" | "dialog" | "toast" | "all" | "auto", BundleSize> = {
-  index: { gzipKb: 16.91, brotliKb: 15.08 },
-  drawer: { gzipKb: 17.7, brotliKb: 15.75 },
-  dialog: { gzipKb: 16.45, brotliKb: 14.69 },
+  index: { gzipKb: 16.93, brotliKb: 15.13 },
+  drawer: { gzipKb: 17.73, brotliKb: 15.76 },
+  dialog: { gzipKb: 16.48, brotliKb: 14.73 },
   toast: { gzipKb: 6.59, brotliKb: 5.95 },
-  all: { gzipKb: 23.33, brotliKb: 20.73 },
-  auto: { gzipKb: 21.19, brotliKb: 18.54 },
+  all: { gzipKb: 23.35, brotliKb: 20.78 },
+  auto: { gzipKb: 21.21, brotliKb: 18.57 },
 };

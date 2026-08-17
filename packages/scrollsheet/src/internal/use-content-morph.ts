@@ -1,10 +1,7 @@
 import * as React from "react";
 
 import type { SheetContextValue } from "../context";
-import type {
-  geometryFor as geometryForFn,
-  mapScroll as mapScrollFn,
-} from "../motion/geometry";
+import type { geometryFor as geometryForFn, mapScroll as mapScrollFn } from "../motion/geometry";
 import type { ScrollAnimation } from "../motion/scroll-animator";
 import type { DetentSpec, ResolvedDetent } from "./detents";
 import type { jumpScroll as jumpScrollFn, Phase } from "./content-helpers";
@@ -87,6 +84,9 @@ export function useContentMorph({
         // default) can misfire settle() into dismissing the sheet.
         measure(false);
         if (maxDetentRef.current === before) {
+          // Safe against a mid-transit tween only because the tween below
+          // always suspends snap for its whole duration — a non-suspended
+          // tween path would let this rebuild re-snap mid-mutation.
           syncSnapStops();
           return;
         }
@@ -152,7 +152,17 @@ export function useContentMorph({
       observer.disconnect();
       if (raf) cancelAnimationFrame(raf);
     };
-  }, [phase, fill, measure, resolveSpec, syncSnapStops, startTween, geometryFor, mapScroll, jumpScroll]);
+  }, [
+    phase,
+    fill,
+    measure,
+    resolveSpec,
+    syncSnapStops,
+    startTween,
+    geometryFor,
+    mapScroll,
+    jumpScroll,
+  ]);
 }
 
 /** Null-rendering mount surface for the lazy chunk. */

@@ -1165,26 +1165,41 @@ export const Content = /* @__PURE__ */ React.forwardRef<HTMLDivElement, SheetCon
     const [kbNeeded, setKbNeeded] = React.useState(false);
     const initialBaselineGapRef = React.useRef<number | undefined>(undefined);
     React.useEffect(() => {
-      if (!present) return;
-      const vv = window.visualViewport;
-      if (vv && vv.scale === 1) {
-        const layoutH = document.documentElement.clientHeight || window.innerHeight;
-        initialBaselineGapRef.current = Math.max(0, layoutH - vv.height);
-      }
-      if (kbNeeded) return;
+      if (!present || kbNeeded) return;
       const dialog = dialogRef.current;
       if (!dialog) return;
+      // The gap sample must run synchronously inside the focus event — a
+      // passive-effect resample lands frames later, when the keyboard
+      // animation may already be shrinking the visual viewport, and a
+      // poisoned baseline overshoots the inset for the whole session.
+      const sampleGap = () => {
+        const vv = window.visualViewport;
+        if (vv && vv.scale === 1) {
+          const layoutH = document.documentElement.clientHeight || window.innerHeight;
+          initialBaselineGapRef.current = Math.max(0, layoutH - vv.height);
+        }
+      };
+      const isEditable = (t: unknown): t is HTMLElement =>
+        t instanceof HTMLElement &&
+        (t.isContentEditable || t.tagName === "INPUT" || t.tagName === "TEXTAREA");
       // Cheap overmatch (a checkbox focus loads the chunk pointlessly but
       // harmlessly); the chunk's willOpenKeyboard applies the precise gate.
       const detect = (event: FocusEvent) => {
-        const t = event.target;
-        if (
-          t instanceof HTMLElement &&
-          (t.isContentEditable || t.tagName === "INPUT" || t.tagName === "TEXTAREA")
-        ) {
+        if (isEditable(event.target)) {
+          sampleGap();
           setKbNeeded(true);
         }
       };
+      // autoFocus commits during the layout phase, before this effect
+      // attaches — arm from the live activeElement so autofocused sheets
+      // still load the engine (the gap sample is best-effort there; the
+      // chunk's clamp discards a keyboard-contaminated value).
+      if (isEditable(document.activeElement) && dialog.contains(document.activeElement)) {
+        sampleGap();
+        setKbNeeded(true);
+        return;
+      }
+      sampleGap();
       dialog.addEventListener("focusin", detect, { capture: true, passive: true });
       return () => dialog.removeEventListener("focusin", detect, { capture: true });
     }, [present, kbNeeded]);

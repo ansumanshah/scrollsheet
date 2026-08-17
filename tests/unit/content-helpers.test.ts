@@ -353,7 +353,6 @@ describe("offscreenTransform", () => {
     );
   });
 
-
   test("v=0 (fully open) collapses to a zero calc() on every side", () => {
     for (const side of ALL_SIDES) {
       expect(offscreenTransform(side, 0)).toContain("calc(0.000% + 0.000px)");
