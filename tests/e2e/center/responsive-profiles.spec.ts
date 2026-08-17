@@ -50,6 +50,14 @@ test("crossing the breakpoint while open re-presents instantly without crashing"
     timeout: SPRING_TIMEOUT,
   });
   await expect(dialog).toHaveAttribute("data-scrollsheet-state", "open");
+  // Position, not just attributes: the re-jump must land the track at a
+  // real resting detent (a broken flip once left it at the closed stop
+  // with state still "open").
+  await expect
+    .poll(() => dialog.evaluate((el) => el.querySelector(".scrollsheet-track")?.scrollTop ?? -1), {
+      timeout: SPRING_TIMEOUT,
+    })
+    .toBeGreaterThan(0);
 });
 
 test("a live center flip never wipes the input stamp (phantom guard)", async ({ page }) => {

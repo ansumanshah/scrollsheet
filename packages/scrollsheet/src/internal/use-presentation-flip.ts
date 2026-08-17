@@ -29,34 +29,27 @@ export interface UsePresentationFlipInput {
   measure: (rebuildSnapStops?: boolean) => void;
   resolveSpec: (spec: DetentSpec) => ResolvedDetent | undefined;
   updateTravel: () => void;
-  /**
-   * Core geometry/scroll helpers arrive as props, not imports: this module
-   * is a lazy chunk, and a static value edge into the sheet core would chain
-   * the chunk graphs back together (see lazy-chunk-imports.test.ts).
-   */
+  /** Core helpers arrive as props: a static value edge would chain this
+   *  lazy chunk back to the core (lazy-chunk-imports.test.ts). */
   geometryFor: typeof geometryForFn;
   mapScroll: typeof mapScrollFn;
   jumpScroll: typeof jumpScrollFn;
 }
 
 /**
- * `desktopSide` can flip the resolved `side`/`center` while the sheet is
- * already fully open (a viewport crossing `desktopBreakpoint`) — a case the
- * library never had before this prop existed, since `side` was otherwise
- * fixed for a Root's whole mounted lifetime. The open-sequence effect's own
- * geometry setup only runs at `phase === "pre"` (it owns focus/showModal
- * too, which must never replay on a live flip), so a flip landing after
- * that needs this separate, narrower re-jump instead: same target math, no
- * phase/focus side effects, "re-present instantly" with no morph.
+ * Live desktopSide flips while open: the open-sequence effect only sets up
+ * geometry at phase "pre" (it owns focus/showModal, which must never replay
+ * on a flip), so this narrower re-jump handles flips landing after that.
+ * The `applied` marker keeps ordinary opens from re-jumping; a mid-leg flip
+ * reconciles at "open"; first mounting while already "open" (the chunk
+ * resolving after a fast first open) records the current presentation as
+ * applied.
  *
- * `phase` is a real dependency: a flip that lands mid-"opening"/"closing"
- * is reconciled the moment `phase` reaches "open", not dropped. The
- * `applied` marker is what keeps the ordinary pre-opening-open transition
- * from re-jumping: the open sequence applies the current presentation at
- * "pre", this hook records it there, and a matching marker at "open" is a
- * no-op. First mounting while already "open" (the chunk resolving after a
- * fast first open) records the current presentation the same way — the open
- * sequence applied it, so it is applied.
+ * The re-present runs a microtask AFTER the commit, not in this child's own
+ * layout effect: as a lazy-chunk component its layout effects run before
+ * Content's, and measure() against the mid-flip DOM (body still
+ * center-styled) resolves zero detents. The microtask lands after every
+ * layout effect and before paint, so the flip stays visually instant.
  */
 export function usePresentationFlip({
   present,
@@ -83,9 +76,6 @@ export function usePresentationFlip({
     phase === "open" ? { side, center } : null,
   );
 
-  // The open sequence at "pre" always sets up the presentation current at
-  // that moment — record it as applied so the settle to "open" (and every
-  // ordinary open) is recognized as already reconciled.
   React.useLayoutEffect(() => {
     if (phase === "pre") appliedRef.current = { side, center };
   }, [phase, side, center]);
@@ -94,35 +84,40 @@ export function usePresentationFlip({
     if (!present || phase !== "open") return;
     const applied = appliedRef.current;
     if (applied && applied.side === side && applied.center === center) return;
-    // A drag or wheel session owns the scroll position — resolveDrag /
-    // endWheelSession re-target against the by-then-current side on their
-    // own completion, same pair of guards settle() uses.
-    if (dialogRef.current?.hasAttribute("data-scrollsheet-dragging")) return;
-    if (dialogRef.current?.hasAttribute("data-scrollsheet-wheel-session")) return;
-    const track = trackRef.current;
-    if (!track) return;
-    appliedRef.current = { side, center };
-    measure();
-    if (center) {
-      backdropRef.current?.style.setProperty("--scrollsheet-progress", "1");
-      for (const el of [backdropRef.current, topChromeRef.current, bottomChromeDimRef.current]) {
-        el?.style.setProperty("--scrollsheet-dim", "1");
+    queueMicrotask(() => {
+      // Re-check: a rapid second flip or a close may have landed meanwhile.
+      const current = appliedRef.current;
+      if (current && current.side === side && current.center === center) return;
+      // A drag or wheel session owns the scroll position — resolveDrag /
+      // endWheelSession re-target against the by-then-current side on their
+      // own completion, same pair of guards settle() uses.
+      if (dialogRef.current?.hasAttribute("data-scrollsheet-dragging")) return;
+      if (dialogRef.current?.hasAttribute("data-scrollsheet-wheel-session")) return;
+      const track = trackRef.current;
+      if (!track) return;
+      appliedRef.current = { side, center };
+      measure();
+      if (center) {
+        backdropRef.current?.style.setProperty("--scrollsheet-progress", "1");
+        for (const el of [backdropRef.current, topChromeRef.current, bottomChromeDimRef.current]) {
+          el?.style.setProperty("--scrollsheet-dim", "1");
+        }
+        // Same pin the open sequence's center branch makes: center has no
+        // travel frames, so nothing else ever applies the meta blend.
+        themeColorRef.current?.apply(1, true);
+        return;
       }
-      // Same pin the open sequence's center branch makes: center has no
-      // travel frames, so nothing else ever applies the meta blend.
-      themeColorRef.current?.apply(1, true);
-      return;
-    }
-    const geometry = geometryFor(side);
-    const target = resolveSpec(ctxRef.current.activeDetent);
-    const rawTarget = mapScroll(
-      target?.height ?? maxDetentRef.current,
-      maxDetentRef.current,
-      geometry.sign,
-    );
-    animRef.current?.cancel();
-    jumpScroll(track, geometry.axis, rawTarget);
-    updateTravel();
+      const geometry = geometryFor(side);
+      const target = resolveSpec(ctxRef.current.activeDetent);
+      const rawTarget = mapScroll(
+        target?.height ?? maxDetentRef.current,
+        maxDetentRef.current,
+        geometry.sign,
+      );
+      animRef.current?.cancel();
+      jumpScroll(track, geometry.axis, rawTarget);
+      updateTravel();
+    });
   }, [
     present,
     phase,
