@@ -162,6 +162,21 @@ function ResponsiveProfileSheet() {
   );
 }
 
+/** desktopSide to a NON-center side: the flip switches scroll axes. */
+function ResponsiveSideSheet() {
+  return (
+    <Sheet.Root side="bottom" desktopSide="left" detents={[0.4, 0.8]}>
+      <Sheet.Trigger className="btn">Responsive side sheet</Sheet.Trigger>
+      <Sheet.Content className="sheet" aria-label="Responsive side sheet">
+        <Sheet.Handle />
+        <div className="sheet-inner">
+          <Sheet.Title>Responsive side</Sheet.Title>
+        </div>
+      </Sheet.Content>
+    </Sheet.Root>
+  );
+}
+
 /**
  * Radix Dialog compat: an acceptance modal replicating a typical
  * design-system Modal 1:1 — Root/Trigger/Portal/Overlay/Content/Title/
@@ -1836,6 +1851,7 @@ export function App() {
         <ThemeColorSheet />
         <CenterSheet />
         <ResponsiveProfileSheet />
+        <ResponsiveSideSheet />
         <DialogAcceptanceModal trigger="Dialog acceptance modal" />
         <DialogAcceptanceModal
           trigger="Dialog acceptance modal (backdrop blocked)"

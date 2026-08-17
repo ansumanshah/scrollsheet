@@ -17,7 +17,8 @@ const ALLOWED: Record<string, readonly string[]> = {
 
 function staticValueImports(source: string): string[] {
   const specifiers: string[] = [];
-  const importRe = /^import\s+(type\s+)?[^;]*?from\s+["']([^"']+)["']/gm;
+  // Re-exports (`export ... from`) create the same static value edge.
+  const importRe = /^(?:import|export)\s+(type\s+)?[^;]*?from\s+["']([^"']+)["']/gm;
   for (const match of source.matchAll(importRe)) {
     if (match[1]) continue; // `import type` vanishes at build time
     // Type-only NAMED imports (import { type X } ...) still create a value

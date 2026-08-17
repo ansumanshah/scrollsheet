@@ -60,6 +60,56 @@ test("crossing the breakpoint while open re-presents instantly without crashing"
     .toBeGreaterThan(0);
 });
 
+test("a side-only flip re-presents on the new axis and a first gesture judges cleanly", async ({
+  page,
+}) => {
+  // desktopSide to a non-center side switches scroll axes mid-open; the
+  // scroll engine re-attaches (ctx.side dep) so the old axis's position
+  // never classifies the new axis's first frame.
+  await page.setViewportSize(BELOW);
+  await page.goto("/");
+  const dialog = await openSheetByTrigger(page, "Responsive side sheet");
+  await expect(dialog).toHaveAttribute("data-scrollsheet-side", "bottom");
+
+  await page.setViewportSize(ABOVE);
+  await expect(dialog).toHaveAttribute("data-scrollsheet-side", "left", {
+    timeout: SPRING_TIMEOUT,
+  });
+  await expect(dialog).toHaveAttribute("data-scrollsheet-state", "open");
+  // The re-jump lands the track at a real resting position on the NEW axis.
+  await expect
+    .poll(
+      () => dialog.evaluate((el) => el.querySelector(".scrollsheet-track")?.scrollLeft ?? -1),
+      { timeout: SPRING_TIMEOUT },
+    )
+    .toBeGreaterThan(0);
+
+  // Input-stale sub-floor train on the new axis still dismisses (the
+  // stale cross-axis prev must not poison the classifier).
+  await page.waitForTimeout(1700);
+  await dialog.evaluate(async (el) => {
+    const track = el.querySelector(".scrollsheet-track") as HTMLElement;
+    track.style.scrollSnapType = "none";
+    const max = track.scrollWidth - track.clientWidth;
+    for (let left = track.scrollLeft; left < max; left += 40) {
+      track.scrollTo({ left: Math.min(max, left), behavior: "instant" });
+      await new Promise((r) => setTimeout(r, 30));
+    }
+    track.scrollTo({ left: max, behavior: "instant" });
+    track.style.scrollSnapType = "";
+  });
+  await expect
+    .poll(
+      () =>
+        page.evaluate(() => {
+          const el = document.querySelector("dialog.scrollsheet-dialog");
+          return !el || el.getAttribute("data-scrollsheet-state") !== "open";
+        }),
+      { timeout: SPRING_TIMEOUT },
+    )
+    .toBe(true);
+});
+
 test("a live center flip never wipes the input stamp (phantom guard)", async ({ page }) => {
   // Stamp under center, cross the breakpoint, teleport inside the window:
   // the jump must stay credited to the user and dismiss.

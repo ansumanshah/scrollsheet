@@ -14,6 +14,7 @@ import type { jumpScroll as jumpScrollFn, Phase } from "./content-helpers";
 export interface UsePresentationFlipInput {
   present: boolean;
   phase: Phase;
+  phaseRef: React.RefObject<Phase>;
   ctxRef: React.RefObject<SheetContextValue>;
   /** Resolved side/center — root.tsx's desktopSide/breakpoint output. */
   side: Side;
@@ -34,6 +35,10 @@ export interface UsePresentationFlipInput {
   geometryFor: typeof geometryForFn;
   mapScroll: typeof mapScrollFn;
   jumpScroll: typeof jumpScrollFn;
+  /** The re-jump is nobody's gesture — exempt its frame from phantom
+   *  classification (a side-only flip switches scroll axes, so the delta
+   *  against the old axis is garbage). */
+  markProgrammaticScroll: () => void;
 }
 
 /**
@@ -54,6 +59,7 @@ export interface UsePresentationFlipInput {
 export function usePresentationFlip({
   present,
   phase,
+  phaseRef,
   ctxRef,
   side,
   center,
@@ -71,6 +77,7 @@ export function usePresentationFlip({
   geometryFor,
   mapScroll,
   jumpScroll,
+  markProgrammaticScroll,
 }: UsePresentationFlipInput): void {
   const appliedRef = React.useRef<{ side: Side; center: boolean } | null>(
     phase === "open" ? { side, center } : null,
@@ -86,6 +93,7 @@ export function usePresentationFlip({
     if (applied && applied.side === side && applied.center === center) return;
     queueMicrotask(() => {
       // Re-check: a rapid second flip or a close may have landed meanwhile.
+      if (phaseRef.current !== "open") return;
       const current = appliedRef.current;
       if (current && current.side === side && current.center === center) return;
       // A drag or wheel session owns the scroll position — resolveDrag /
@@ -115,6 +123,7 @@ export function usePresentationFlip({
         geometry.sign,
       );
       animRef.current?.cancel();
+      markProgrammaticScroll();
       jumpScroll(track, geometry.axis, rawTarget);
       updateTravel();
     });

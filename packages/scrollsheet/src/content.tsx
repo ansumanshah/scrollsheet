@@ -1032,8 +1032,9 @@ export const Content = /* @__PURE__ */ React.forwardRef<HTMLDivElement, SheetCon
       if (!track) return;
       let raf = 0;
       // Per-attachment baseline: a position this listener never observed
-      // must not classify its first frame (also exempts a center flip's
-      // corrective jump via prev === null).
+      // must not classify its first frame. ctx.side in the deps: a
+      // side-only desktopSide flip switches scroll axes, and a delta
+      // against the old axis is garbage.
       lastScrollPosRef.current = null;
       phantomScrollRef.current = false;
 
@@ -1092,7 +1093,7 @@ export const Content = /* @__PURE__ */ React.forwardRef<HTMLDivElement, SheetCon
         if (raf) cancelAnimationFrame(raf);
         if (settleTimerRef.current) clearTimeout(settleTimerRef.current);
       };
-    }, [present, ctx.center, settle, updateTravel]);
+    }, [present, ctx.center, ctx.side, settle, updateTravel]);
 
     // ── Programmatic detent travel ───────────────────────────────────────────
     React.useEffect(() => {
@@ -1184,6 +1185,7 @@ export const Content = /* @__PURE__ */ React.forwardRef<HTMLDivElement, SheetCon
     const flipProps: UsePresentationFlipInput = {
       present,
       phase,
+      phaseRef,
       ctxRef,
       side: ctx.side,
       center: ctx.center,
@@ -1201,6 +1203,7 @@ export const Content = /* @__PURE__ */ React.forwardRef<HTMLDivElement, SheetCon
       geometryFor,
       mapScroll,
       jumpScroll,
+      markProgrammaticScroll,
     };
 
     useOverlayScrollbar({ present, scrollbar: ctx.scrollbar, panelRef, scrollbarRef });
