@@ -1125,7 +1125,10 @@ export const Content = /* @__PURE__ */ React.forwardRef<HTMLDivElement, SheetCon
       const target = resolveSpec(ctx.activeDetent);
       if (!target) return;
       const rawTarget = mapScroll(target.height, maxDetentRef.current, geometry.sign);
-      if (Math.abs(track[geometry.scrollProp] - rawTarget) <= 2) return;
+      // Near-target only counts at rest: a live tween can be passing
+      // through this position toward a DIFFERENT stop, and skipping here
+      // strands activeDetent away from where that tween lands.
+      if (!tweenActiveRef.current && Math.abs(track[geometry.scrollProp] - rawTarget) <= 2) return;
       animRef.current?.cancel();
       startTween(track, rawTarget, geometry.axis);
     }, [ctx.activeDetent, phase, resolveSpec, startTween]);
