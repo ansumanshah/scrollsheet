@@ -34,7 +34,7 @@ export const USER_SCROLL_ATTRIBUTION_MS = 1500;
  * and no tween/drag/wheel session owning the scroll, is a position nobody
  * chose — CDP's scrollIntoViewIfNeeded under test tooling teleported a
  * mandatory-snap track from its resting detent to the closed stop in ONE
- * step and silently dismissed the sheet (found live 2026-08-16); browser
+ * step and silently dismissed the sheet (found live); browser
  * find-in-page, focus scrolls, and extensions can do the same. settle()
  * winds a flagged excursion back to the active detent instead of
  * dismissing or promoting on it. Residual risk, accepted and documented:
@@ -44,30 +44,19 @@ export const USER_SCROLL_ATTRIBUTION_MS = 1500;
  * inside factor 1's window via any tap, and `phantomScrollGuard={false}`
  * opts a sheet out entirely).
  *
- * KNOWN LIMIT, kept deliberately: a sheet whose resting detent stands
- * shorter than this floor gets no phantom protection — its closed-stop
- * teleport IS a sub-floor step. The floor cannot scale down with the
- * detent: on a compact sheet, a phantom hop and a screen reader's own
- * single-jump dismiss are geometrically identical input-eventless steps,
- * and winding those back would trap AT users on a sheet with no other
- * dismiss affordance. Protecting compact sheets needs a third signal, not
- * a smaller threshold.
+ * KNOWN LIMIT, kept deliberately: sheets resting shorter than this floor
+ * get no protection — their closed-stop hop is a sub-floor step, and on a
+ * compact sheet that hop is geometrically identical to a screen reader's
+ * single-jump dismiss. Scaling the floor down would trap AT users.
  */
 export const PHANTOM_SCROLL_JUMP_PX = 120;
 
 /**
- * The two-factor phantom test, pure so the boundary is unit-testable:
- * a first observation (null prev) is never phantom, and ownership by a
- * tween, drag session, or wheel session always clears the frame.
- * Positional args, not an options object — this runs on every scroll
- * event of every open sheet.
- *
- * `lastUserInputAt === 0` is the "no input this presentation" sentinel and
- * is maximally stale BY DEFINITION, not by subtraction: `now - 0` reads as
- * recent for the first 1.5s of page life, which made the guard blind
- * exactly when a defaultOpen sheet needs it (caught by the reopen
- * regression spec under reduced motion, where the whole cycle finishes
- * inside that window).
+ * The two-factor phantom test, pure so the boundary is unit-testable.
+ * Positional args: this runs on every scroll event of every open sheet.
+ * `lastUserInputAt === 0` (no input this presentation) is stale BY
+ * DEFINITION — `now - 0` reads as recent for the first 1.5s of page life,
+ * which would blind the guard exactly when defaultOpen needs it.
  */
 export function isPhantomScrollStep(
   prev: number | null,

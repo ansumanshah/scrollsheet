@@ -36,13 +36,9 @@ test.describe("scrollend feature-detection fallback", () => {
     const dialog = await openSheetByTrigger(page, "Basic sheet");
     const track = dialog.locator(".scrollsheet-track");
 
-    // A real (not synthetic-event) scrollTop mutation — the browser fires its
-    // own native 'scroll' event for this, same as a genuine gesture would.
-    // We deliberately do NOT dispatch a synthetic 'scrollend': the fallback
-    // must settle on the 'scroll' + debounce timer alone. The keydown stamp
-    // first credits the jump to the user — this spec's subject is the
-    // debounce timer, and an unstamped teleport is the phantom guard's
-    // territory (phantom-scroll-dismiss.spec.ts owns that boundary).
+    // No synthetic 'scrollend': the fallback must settle on 'scroll' + the
+    // debounce timer alone. The stamp credits the jump to the user — the
+    // unstamped-teleport boundary belongs to phantom-scroll-dismiss.spec.ts.
     await dialog.evaluate((el) => {
       el.dispatchEvent(new KeyboardEvent("keydown", { key: "a", bubbles: true }));
     });
@@ -62,7 +58,7 @@ test.describe("scrollend feature-detection fallback", () => {
     const viewportHeight = page.viewportSize()!.height;
     const target = Math.round(viewportHeight * 0.7);
 
-    // Same input stamp as above: the detent jump must read as the user's.
+    // Stamp: the detent jump must read as the user's.
     await dialog.evaluate((el) => {
       el.dispatchEvent(new KeyboardEvent("keydown", { key: "a", bubbles: true }));
     });

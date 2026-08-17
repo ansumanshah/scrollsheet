@@ -323,12 +323,9 @@ test.describe("side sheet: Handle arrow keys are axis-aware", () => {
     const viewportWidth = await track.evaluate((el) => el.clientWidth);
     const maxDetent = Math.round(viewportWidth * SECOND_FRACTION);
 
-    // preventScroll: a programmatic focus() otherwise scrolls the handle
-    // into view — an input-less track teleport the phantom guard correctly
-    // winds back (focus scrolls are in its documented target list), which
-    // then races the first arrow's correction. A real keyboard user Tabs
-    // here (a keydown that stamps the input latch); the focus-scroll was
-    // never this spec's subject.
+    // preventScroll: a programmatic focus-scroll is an input-less teleport
+    // the phantom guard correctly winds back, racing the first arrow. A
+    // real keyboard user Tabs here, which stamps the latch.
     await handle.evaluate((el) => (el as HTMLElement).focus({ preventScroll: true }));
     await page.keyboard.press("ArrowRight");
     let raw = await waitForStableScroll(track, "scrollLeft");

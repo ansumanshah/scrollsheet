@@ -207,10 +207,9 @@ export interface SheetRootProps {
    * detent. Disable only if your integration legitimately jump-scrolls the
    * track programmatically outside the sheet's own APIs.
    *
-   * Covers sheets whose resting detent stands taller than the 120px jump
-   * floor. A compact sheet below it is exempt by design: its closed-stop
-   * hop is indistinguishable from a screen reader's own single-jump
-   * dismiss, and winding that back would trap assistive-tech users.
+   * Covers sheets resting taller than the 120px jump floor; compact sheets
+   * below it are exempt by design — their closed-stop hop is
+   * indistinguishable from a screen reader's single-jump dismiss.
    * @default true
    */
   phantomScrollGuard?: boolean;

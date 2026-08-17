@@ -7,10 +7,8 @@ import {
 } from "../../packages/scrollsheet/src/internal/content-helpers";
 
 /**
- * The two-factor boundary, pinned as executable spec. Every case here maps
- * to a documented contract line (content-helpers' PHANTOM_SCROLL_JUMP_PX
- * doc + the 2026-08-16 review findings) — if one of these flips, the docs
- * and the a11y tradeoff flip with it, not just an implementation detail.
+ * The two-factor boundary as executable spec: if a case here flips, the
+ * PHANTOM_SCROLL_JUMP_PX docs and the a11y tradeoff flip with it.
  */
 
 const NOW = 100_000;
@@ -61,11 +59,8 @@ describe("isPhantomScrollStep", () => {
   });
 
   test("compact-sheet exemption: a closed-stop hop under the floor is trusted BY DESIGN", () => {
-    // A 90px resting detent's full dismiss teleport (review finding 1).
-    // Deliberately uncovered: this hop is geometrically identical to an
-    // assistive single-jump dismiss, and winding it back would trap AT
-    // users. If this expectation ever flips, the a11y tradeoff documented
-    // on PHANTOM_SCROLL_JUMP_PX must be re-decided first.
+    // Identical to an assistive single-jump dismiss; winding it back would
+    // trap AT users (PHANTOM_SCROLL_JUMP_PX doc).
     expect(phantom({ prev: 90, pos: 0, lastInput: 0 })).toBe(false);
   });
 
@@ -84,16 +79,11 @@ describe("isPhantomScrollStep", () => {
   });
 
   test("a reset stamp (0 = no input this presentation) leaves a teleport phantom", () => {
-    // The reopen-cycle fix (review finding 2): per-attachment reset means
-    // the previous session's tap can never vouch for this session's jump.
     expect(phantom({ lastInput: 0 })).toBe(true);
   });
 
   test("the zero sentinel is stale BY DEFINITION, even on a page younger than the window", () => {
-    // now - 0 < 1500 on a young page — subtraction alone would read the
-    // sentinel as fresh input and blind the guard exactly when a
-    // defaultOpen sheet needs it (caught live by the reopen spec under
-    // reduced motion).
+    // Subtraction alone reads 0 as fresh for the first 1.5s of page life.
     expect(isPhantomScrollStep(400, 400 - JUMP, true, 0, 700, false, false, false)).toBe(true);
   });
 

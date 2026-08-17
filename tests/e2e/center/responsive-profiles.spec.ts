@@ -53,15 +53,9 @@ test("crossing the breakpoint while open re-presents instantly without crashing"
 });
 
 test("a live center flip never wipes the input stamp (phantom guard)", async ({ page }) => {
-  // Fix-round review finding: the input-attribution stamp used to reset
-  // inside the scroll-engine effect, which also re-runs on a live
-  // ctx.center flip — so crossing the breakpoint wiped a REAL recent
-  // stamp, and the user's next legitimate jump within the window
-  // misclassified as phantom. The stamp now lives on a [present]-keyed
-  // effect. This drives the exact pairing: stamp under center, flip to
-  // bottom, teleport inside the attribution window — the jump must stay
-  // credited to the user and dismiss.
-  await page.emulateMedia({ reducedMotion: "reduce" }); // timing determinism
+  // Stamp under center, cross the breakpoint, teleport inside the window:
+  // the jump must stay credited to the user and dismiss.
+  await page.emulateMedia({ reducedMotion: "reduce" });
   await page.setViewportSize(ABOVE);
   await page.goto("/");
   const dialog = await openSheetByTrigger(page, TRIGGER);
@@ -82,10 +76,9 @@ test("a live center flip never wipes the input stamp (phantom guard)", async ({ 
     undefined,
     { timeout: SPRING_TIMEOUT },
   );
-  await page.waitForTimeout(150); // flip re-jump settled (reduced motion)
+  await page.waitForTimeout(150);
 
-  // Same self-invalidation as the reopen spec: past the window, fixed and
-  // broken are indistinguishable — decline the verdict, don't hollow-pass.
+  // Past the window, fixed and broken are indistinguishable — skip.
   const elapsed = (await page.evaluate(() => performance.now())) - stampAt;
   test.skip(elapsed > 1400, `flip took ${Math.round(elapsed)}ms — stamp went stale`);
 
@@ -94,9 +87,7 @@ test("a live center flip never wipes the input stamp (phantom guard)", async ({ 
     if (!track) throw new Error("no .scrollsheet-track");
     track.scrollTo({ top: 0, behavior: "instant" });
   });
-  // Settled outcome: credited jump = dismissal. A wiped stamp would read
-  // the teleport as phantom and wind back instead. Polled as a boolean:
-  // under reduced motion webkit unmounts the dialog before a negative
+  // Boolean poll: under reduced motion webkit unmounts before a negative
   // attribute matcher can resolve the locator (absence errors, not passes).
   await expect
     .poll(

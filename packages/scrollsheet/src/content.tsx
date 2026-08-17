@@ -739,15 +739,8 @@ export const Content = /* @__PURE__ */ React.forwardRef<HTMLDivElement, SheetCon
       if (!track) return;
       const current = ctxRef.current;
       const geometry = geometryFor(current.side);
-      /* Origin attribution: a scroll excursion flagged as phantom (a
-         single-event teleport with no recent input — the two factors are
-         documented on PHANTOM_SCROLL_JUMP_PX) gets wound back to the
-         resting detent, never judged as a dismissal or a detent change.
-         A flag set by the classifier, not a bare staleness check here, is
-         deliberate: input that produces no DOM input events at all — a
-         screen reader's own scroll gesture, the long tail of a native
-         momentum coast — still moves in trains of small steps and must
-         keep dismissing exactly as before (review findings, 2026-08-16). */
+      /* A phantom-flagged excursion (see PHANTOM_SCROLL_JUMP_PX) winds back
+         to the resting detent, never judged as a dismissal or detent change. */
       if (phantomScrollRef.current) {
         phantomScrollRef.current = false;
         const target = resolveSpec(current.activeDetent);
@@ -1000,14 +993,9 @@ export const Content = /* @__PURE__ */ React.forwardRef<HTMLDivElement, SheetCon
       };
     }, [present]);
 
-    // Input-stamp lifetime = the PRESENTATION, not the scroll-engine
-    // attachment: a tap in the last session must not credit this one's
-    // first phantom (review finding, live-reproduced: interact, close,
-    // reopen within 1.5s, teleport — dismissed). Keyed on [present] alone,
-    // NOT folded into the scroll engine below — that effect also re-runs on
-    // a live ctx.center flip (desktopSide crossing while open), and wiping
-    // a real recent stamp there would misclassify the user's next legit
-    // jump (fix-round review finding).
+    // Stamp lifetime = the presentation, deliberately NOT the scroll-engine
+    // effect below: that one also re-runs on a live ctx.center flip, which
+    // must not wipe a real recent stamp.
     React.useEffect(() => {
       if (present) lastUserInputRef.current = 0;
     }, [present]);
@@ -1022,10 +1010,9 @@ export const Content = /* @__PURE__ */ React.forwardRef<HTMLDivElement, SheetCon
       const track = trackRef.current;
       if (!track) return;
       let raf = 0;
-      // Fresh observation baseline per LISTENER attachment (reopen AND a
-      // live center flip): a position this listener never observed must not
-      // classify the first frame it does — which also keeps the flip's own
-      // corrective jumpScroll off the classifier (prev === null exemption).
+      // Per-attachment baseline: a position this listener never observed
+      // must not classify its first frame (also exempts a center flip's
+      // corrective jump via prev === null).
       lastScrollPosRef.current = null;
       phantomScrollRef.current = false;
 
