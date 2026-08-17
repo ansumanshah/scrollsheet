@@ -9,12 +9,12 @@ import {
   FULL_HEIGHT_RADIUS_FLATTEN_PX,
   type Overlay,
   type Phase,
-  PROGRAMMATIC_SCROLL_MARK_MS,
   SETTLE_FALLBACK_MS,
   TRAVEL_MS,
   applyBackgroundEffect,
   applyFullHeightRadius,
   clearRecede,
+  isMarkLive,
   isPhantomScrollStep,
   jumpScroll,
   measureContentHeight,
@@ -1014,7 +1014,10 @@ export const Content = /* @__PURE__ */ React.forwardRef<HTMLDivElement, SheetCon
     // effect below: that one also re-runs on a live ctx.center flip, which
     // must not wipe a real recent stamp.
     React.useEffect(() => {
-      if (present) lastUserInputRef.current = 0;
+      if (present) {
+        lastUserInputRef.current = 0;
+        programmaticScrollMarkRef.current = 0;
+      }
     }, [present]);
 
     // ── Scroll engine ────────────────────────────────────────────────────────
@@ -1046,8 +1049,7 @@ export const Content = /* @__PURE__ */ React.forwardRef<HTMLDivElement, SheetCon
         const pos = track[geometryFor(ctxRef.current.side).scrollProp];
         const prev = lastScrollPosRef.current;
         lastScrollPosRef.current = pos;
-        const marked =
-          performance.now() - programmaticScrollMarkRef.current < PROGRAMMATIC_SCROLL_MARK_MS;
+        const marked = isMarkLive(programmaticScrollMarkRef.current, performance.now());
         if (marked) programmaticScrollMarkRef.current = 0;
         if (
           !marked &&

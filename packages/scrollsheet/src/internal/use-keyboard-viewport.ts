@@ -277,7 +277,15 @@ export function useKeyboardViewport({
         if (!significant) return;
         measure();
         const target = resolveSpec(ctxRef.current.activeDetent);
-        if (track && target && phaseRef.current === "open" && !animRef.current) {
+        if (
+          track &&
+          target &&
+          phaseRef.current === "open" &&
+          !animRef.current &&
+          // A same-position write fires no scroll event, so its mark would
+          // linger armed for whatever frame lands next.
+          Math.abs(track.scrollTop - target.height) > 1
+        ) {
           markProgrammaticScroll();
           jumpScroll(track, "y", target.height);
         }

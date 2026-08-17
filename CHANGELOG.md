@@ -4,7 +4,7 @@ All notable changes to this project are documented here.
 
 ## 1.0.2 - Unreleased
 
-- **Fixed: three narrow phantom-guard edges found by the 1.0.1 review.** Held gestures stay credited past the attribution window: `touchmove` and buttons-held `pointermove` now stamp the input latch, and a hover move never does. The keyboard resync's programmatic jump carries a one-shot mark and is never classified. A detent change landing while a wind-back tween passes near its target retargets the tween instead of skipping, so state and position can't diverge.
+- **Fixed: three narrow phantom-guard edges found by the 1.0.1 review.** Held gestures stay credited past the attribution window: `touchmove` and buttons-held `pointermove` now stamp the input latch, and a hover move never does. The keyboard resync's jump carries a one-shot mark so the classifier skips its frame. A detent change landing while a wind-back tween passes near its target retargets the tween instead of skipping, closing a state/position divergence.
 
 ## 1.0.1 - 2026-08-17
 

@@ -54,6 +54,12 @@ export const PHANTOM_SCROLL_JUMP_PX = 120;
  *  scroll frame must land inside this or it expires unconsumed. */
 export const PROGRAMMATIC_SCROLL_MARK_MS = 150;
 
+/** 0 = no mark this presentation, never "marked at the time origin" —
+ *  same sentinel contract as the input stamp. */
+export function isMarkLive(markAt: number, now: number): boolean {
+  return markAt !== 0 && now - markAt < PROGRAMMATIC_SCROLL_MARK_MS;
+}
+
 /**
  * The two-factor phantom test, pure so the boundary is unit-testable.
  * Positional args: this runs on every scroll event of every open sheet.

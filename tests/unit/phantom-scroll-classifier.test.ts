@@ -1,8 +1,10 @@
 import { describe, expect, test } from "bun:test";
 
 import {
+  isMarkLive,
   isPhantomScrollStep,
   PHANTOM_SCROLL_JUMP_PX,
+  PROGRAMMATIC_SCROLL_MARK_MS,
   USER_SCROLL_ATTRIBUTION_MS,
 } from "../../packages/scrollsheet/src/internal/content-helpers";
 
@@ -89,5 +91,19 @@ describe("isPhantomScrollStep", () => {
 
   test("a real stamp on a young page still reads fresh", () => {
     expect(isPhantomScrollStep(400, 400 - JUMP, true, 650, 700, false, false, false)).toBe(false);
+  });
+});
+
+describe("isMarkLive", () => {
+  test("a live mark inside the TTL", () => {
+    expect(isMarkLive(1000, 1000 + PROGRAMMATIC_SCROLL_MARK_MS - 1)).toBe(true);
+  });
+
+  test("expires at the TTL", () => {
+    expect(isMarkLive(1000, 1000 + PROGRAMMATIC_SCROLL_MARK_MS)).toBe(false);
+  });
+
+  test("the zero sentinel is never live, even on a page younger than the TTL", () => {
+    expect(isMarkLive(0, 100)).toBe(false);
   });
 });
