@@ -5,7 +5,9 @@ import * as React from "react";
 import type * as ReactDOMClient from "react-dom/client";
 
 import type { SheetContextValue } from "../../packages/scrollsheet/src/context";
+import { jumpScroll } from "../../packages/scrollsheet/src/internal/content-helpers";
 import type { ResolvedDetent } from "../../packages/scrollsheet/src/internal/detents";
+import { geometryFor, mapScroll } from "../../packages/scrollsheet/src/motion/geometry";
 import { type UseContentMorphInput, useContentMorph } from "../../packages/scrollsheet/src/internal/use-content-morph";
 import type { ScrollAnimation } from "../../packages/scrollsheet/src/motion/scroll-animator";
 
@@ -114,6 +116,9 @@ function buildProps(overrides: Partial<UseContentMorphInput> = {}): UseContentMo
     resolveSpec: () => undefined,
     syncSnapStops: () => {},
     startTween: () => ({ cancel: () => {}, finished: Promise.resolve(true) }),
+    geometryFor,
+    mapScroll,
+    jumpScroll,
     ...overrides,
   };
 }

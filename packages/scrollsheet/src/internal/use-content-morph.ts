@@ -1,10 +1,13 @@
 import * as React from "react";
 
 import type { SheetContextValue } from "../context";
-import { geometryFor, mapScroll } from "../motion/geometry";
+import type {
+  geometryFor as geometryForFn,
+  mapScroll as mapScrollFn,
+} from "../motion/geometry";
 import type { ScrollAnimation } from "../motion/scroll-animator";
 import type { DetentSpec, ResolvedDetent } from "./detents";
-import { jumpScroll, type Phase } from "./content-helpers";
+import type { jumpScroll as jumpScrollFn, Phase } from "./content-helpers";
 
 export interface UseContentMorphInput {
   phase: Phase;
@@ -25,6 +28,11 @@ export interface UseContentMorphInput {
     axis: "x" | "y",
     suspendSnap?: boolean,
   ) => ScrollAnimation;
+  /** Core helpers arrive as props: a static value edge would chain this
+   *  lazy chunk back to the core (lazy-chunk-imports.test.ts). */
+  geometryFor: typeof geometryForFn;
+  mapScroll: typeof mapScrollFn;
+  jumpScroll: typeof jumpScrollFn;
 }
 
 /**
@@ -55,6 +63,9 @@ export function useContentMorph({
   resolveSpec,
   syncSnapStops,
   startTween,
+  geometryFor,
+  mapScroll,
+  jumpScroll,
 }: UseContentMorphInput): void {
   React.useEffect(() => {
     if (phase !== "open" || typeof ResizeObserver === "undefined") return;
@@ -133,10 +144,19 @@ export function useContentMorph({
     } else {
       observer.observe(body);
     }
+    // Reconcile: a resize landing before this chunk resolved left a stale
+    // height; the scheduled morph no-ops when nothing changed.
+    scheduleMorph();
     return () => {
       mutation?.disconnect();
       observer.disconnect();
       if (raf) cancelAnimationFrame(raf);
     };
-  }, [phase, fill, measure, resolveSpec, syncSnapStops, startTween]);
+  }, [phase, fill, measure, resolveSpec, syncSnapStops, startTween, geometryFor, mapScroll, jumpScroll]);
+}
+
+/** Null-rendering mount surface for the lazy chunk. */
+export function ContentMorphFeature(props: UseContentMorphInput): null {
+  useContentMorph(props);
+  return null;
 }

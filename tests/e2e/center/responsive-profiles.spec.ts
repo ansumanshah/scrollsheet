@@ -78,10 +78,9 @@ test("a side-only flip re-presents on the new axis and a first gesture judges cl
   await expect(dialog).toHaveAttribute("data-scrollsheet-state", "open");
   // The re-jump lands the track at a real resting position on the NEW axis.
   await expect
-    .poll(
-      () => dialog.evaluate((el) => el.querySelector(".scrollsheet-track")?.scrollLeft ?? -1),
-      { timeout: SPRING_TIMEOUT },
-    )
+    .poll(() => dialog.evaluate((el) => el.querySelector(".scrollsheet-track")?.scrollLeft ?? -1), {
+      timeout: SPRING_TIMEOUT,
+    })
     .toBeGreaterThan(0);
 
   // Input-stale sub-floor train on the new axis still dismisses (the

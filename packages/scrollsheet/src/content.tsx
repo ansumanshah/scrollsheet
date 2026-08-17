@@ -50,7 +50,8 @@ import type { ThemeColorController } from "./internal/theme-color";
 import { preloadThemeColor } from "./internal/theme-color-loader";
 import { useBackgroundEffect } from "./internal/use-background-effect";
 import { useCloseWatcher } from "./internal/use-close-watcher";
-import { useContentMorph } from "./internal/use-content-morph";
+import { contentMorph } from "./internal/content-morph-loader";
+import type { UseContentMorphInput } from "./internal/use-content-morph";
 import { geometryFor, mapScroll } from "./motion/geometry";
 import { type ScrollAnimation, animateScrollTo } from "./motion/scroll-animator";
 import { isAtScrollBoundary } from "./motion/scroll-handoff";
@@ -1137,7 +1138,8 @@ export const Content = /* @__PURE__ */ React.forwardRef<HTMLDivElement, SheetCon
       startTween(track, rawTarget, geometry.axis);
     }, [ctx.activeDetent, phase, resolveSpec, startTween]);
 
-    useContentMorph({
+    const morphMod = contentMorph.useFeature(true);
+    const morphProps: UseContentMorphInput = {
       phase,
       phaseRef,
       bodyRef,
@@ -1150,7 +1152,10 @@ export const Content = /* @__PURE__ */ React.forwardRef<HTMLDivElement, SheetCon
       resolveSpec,
       syncSnapStops,
       startTween,
-    });
+      geometryFor,
+      mapScroll,
+      jumpScroll,
+    };
 
     useKeyboardViewport({
       present,
@@ -1489,9 +1494,11 @@ export const Content = /* @__PURE__ */ React.forwardRef<HTMLDivElement, SheetCon
     const chromeStrips = !nonModal && ctx.themeColorDimming;
     const flipFeature =
       flipMod && ctx.desktopProfile ? <flipMod.PresentationFlipFeature {...flipProps} /> : null;
+    const morphFeature = morphMod ? <morphMod.ContentMorphFeature {...morphProps} /> : null;
     const innerContent = (
       <>
         {flipFeature}
+        {morphFeature}
         {/* Chrome strips: slices of backdrop snapped to their target dim
             with no opening fade (core.css), because iOS samples its
             status-bar and bottom-bar backings around the first paint after
