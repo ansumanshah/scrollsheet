@@ -4,7 +4,8 @@ All notable changes to this project are documented here.
 
 ## 1.1.0 - Unreleased
 
-- **The `desktopSide` re-present system now loads on demand.** Roots that never configure `desktopSide` stop shipping it: the flip logic moved into a lazily loaded chunk behind the same pattern `themeColorDimming` already uses, with no API or behavior change. First entry in a pay-for-what-you-use pass over the optional systems.
+- **The default import dropped from 18.0 to 16.9 kB gzip.** A pay-for-what-you-use pass moved three systems out of the initial graph, none of them API- or behavior-visible: the keyboard engine loads on the first editable focus (a sheet with no inputs never fetches it), the `desktopSide` re-present system ships only to Roots that configure it, and the content-height morph defers off the critical path. Same mechanism `themeColorDimming` and the no-`<dialog>` fallback already use.
+- **`keyboardExpands` promotes once per keyboard session.** Two state-machine holes closed while making the engine lazy: a stray visualViewport tick after the user dragged away from the promoted detent could re-promote the sheet, and an internal effect re-run could misread a still-open keyboard as a fresh rising edge.
 - **Fixed: three narrow phantom-guard edges found by the 1.0.1 review.** Held gestures stay credited past the attribution window: `touchmove` and buttons-held `pointermove` now stamp the input latch, and a hover move never does. The keyboard resync's jump carries a one-shot mark so the classifier skips its frame. A detent change landing while a wind-back tween passes near its target retargets the tween instead of skipping, closing a state/position divergence.
 
 ## 1.0.1 - 2026-08-17
