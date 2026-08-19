@@ -2,7 +2,7 @@
 
 All notable changes to this project are documented here.
 
-## 1.1.0 - Unreleased
+## 1.1.0 - 2026-08-17
 
 - **The default import dropped from 18.0 to 16.9 kB gzip.** A pay-for-what-you-use pass moved three systems out of the initial graph, none of them API- or behavior-visible: the keyboard engine loads on the first editable focus (a sheet with no inputs never fetches it), the `desktopSide` re-present system ships only to Roots that configure it, and the content-height morph defers off the critical path. Same mechanism `themeColorDimming` and the no-`<dialog>` fallback already use.
 - **`keyboardExpands` promotes once per keyboard session.** Two state-machine holes closed while making the engine lazy: a stray visualViewport tick after the user dragged away from the promoted detent could re-promote the sheet, and an internal effect re-run could misread a still-open keyboard as a fresh rising edge.
