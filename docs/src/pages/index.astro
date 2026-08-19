@@ -173,7 +173,7 @@ const COMPARE_ROWS: {
       "62 kB with sonner",
     ],
     best: 0,
-    note: "JS bundles, measured identically (esbuild, minified, react external, gzip): our whole surface in one import against vaul 1.1.2 plus sonner 2.0.8. Stylesheets on top of each: 5.3 kB ours, 1.0 kB vaul's style.css, zero for sonner (embedded). Totals 30.7 against 31.3.",
+    note: `JS bundles, measured identically (esbuild, minified, react external, gzip): our whole surface in one import against vaul 1.1.2 plus sonner 2.0.8. Stylesheets on top of each: 5.5 kB ours, 1.0 kB vaul's style.css, zero for sonner (embedded). Totals ${(BUNDLE_SIZES.all.gzipKb + 5.5).toFixed(1)} against 31.3.`,
   },
   {
     label: "Runtime dependencies",
