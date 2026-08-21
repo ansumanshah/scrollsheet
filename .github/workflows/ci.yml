@@ -20,6 +20,7 @@ concurrency:
 jobs:
   check:
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     steps:
       - uses: actions/checkout@v7
       - uses: oven-sh/setup-bun@v2
@@ -54,6 +55,7 @@ jobs:
   # every other job depends on is untouched.
   react18:
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     steps:
       - uses: actions/checkout@v7
       - uses: oven-sh/setup-bun@v2
@@ -96,6 +98,7 @@ jobs:
   # never the built package, so this job does not need `bun run build` first.
   e2e:
     runs-on: ubuntu-latest
+    timeout-minutes: 30
     strategy:
       fail-fast: false
       matrix:
@@ -138,6 +141,7 @@ jobs:
 
   docs:
     runs-on: ubuntu-latest
+    timeout-minutes: 20
     steps:
       - uses: actions/checkout@v7
       - uses: oven-sh/setup-bun@v2
@@ -196,6 +200,7 @@ jobs:
     needs: [check, docs]
     if: github.event_name == 'push' && github.ref == 'refs/heads/main' && github.repository == 'ansumanshah/scrollsheet'
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     permissions:
       contents: read
     concurrency:
