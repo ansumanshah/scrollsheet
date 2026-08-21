@@ -26,8 +26,9 @@ import {
   type ImportShape,
   type SizeKey,
   measureShape,
+  measureStylesheets,
 } from "./lib/bundle-measure";
-import { buildSizeReport, findStaleTargets } from "./lib/size-report";
+import { buildSizeReport, buildStylesheetReport, findStaleTargets } from "./lib/size-report";
 
 /** Real measured actual is quoted below; the budget is a drift alarm, not a target to hug against. */
 const BUDGETS: Record<SizeKey, number> = {
@@ -72,7 +73,8 @@ for (const shape of IMPORT_SHAPES as ImportShape[]) {
 }
 
 const report = buildSizeReport(measurements);
-const stale = await findStaleTargets(report);
+const css = buildStylesheetReport(await measureStylesheets());
+const stale = await findStaleTargets(report, css);
 if (stale.length > 0) {
   anyFailed = true;
   console.error(

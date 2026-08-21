@@ -26,13 +26,19 @@
  * actual enforcement gate. `--check` here is for a manual/pre-commit run of
  * just this one concern.
  */
-import { measureAll } from "./lib/bundle-measure";
-import { buildSizeReport, computeFreshnessTargets, repoPath } from "./lib/size-report";
+import { measureAll, measureStylesheets } from "./lib/bundle-measure";
+import {
+  buildSizeReport,
+  buildStylesheetReport,
+  computeFreshnessTargets,
+  repoPath,
+} from "./lib/size-report";
 
 const check = process.argv.includes("--check");
 
 const report = buildSizeReport(await measureAll());
-const targets = await computeFreshnessTargets(report);
+const css = buildStylesheetReport(await measureStylesheets());
+const targets = await computeFreshnessTargets(report, css);
 const stale = targets.filter((t) => t.current !== t.expected);
 
 if (check) {

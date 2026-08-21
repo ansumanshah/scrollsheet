@@ -19,3 +19,11 @@ export const BUNDLE_SIZES: Record<"index" | "drawer" | "dialog" | "toast" | "all
   all: { gzipKb: 23.35, brotliKb: 20.78 },
   auto: { gzipKb: 21.21, brotliKb: 18.57 },
 };
+
+// The shipped stylesheets, gzipped the same way. Consumers link these
+// separately from the JS, so any "JS + CSS" total in public copy should add
+// these rather than quote a hand-typed figure.
+export const STYLESHEET_SIZES: Record<"core" | "toast", BundleSize> = {
+  core: { gzipKb: 4.02, brotliKb: 3.59 },
+  toast: { gzipKb: 1.52, brotliKb: 1.28 },
+};

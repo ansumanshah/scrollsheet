@@ -183,3 +183,31 @@ export async function measureAll(): Promise<Record<SizeKey, BundleSizes>> {
   }
   return out;
 }
+
+/**
+ * The shipped stylesheets. Not import shapes: consumers link these, they
+ * never appear in a JS graph, so they measure by reading the built file
+ * rather than bundling an entry. Generated alongside the shapes so public
+ * copy quoting "JS + CSS" totals can compute both halves instead of
+ * hand-typing one of them (a hand-typed 5.3 went stale unnoticed once).
+ */
+export const STYLESHEETS = [
+  { key: "core", file: "styles.css", label: "scrollsheet/styles.css" },
+  { key: "toast", file: "toast.css", label: "scrollsheet/toast.css" },
+] as const;
+
+export type StylesheetKey = (typeof STYLESHEETS)[number]["key"];
+
+export async function measureStylesheets(): Promise<Record<StylesheetKey, BundleSizes>> {
+  const out = {} as Record<StylesheetKey, BundleSizes>;
+  for (const sheet of STYLESHEETS) {
+    const bytes = new Uint8Array(
+      await Bun.file(join(PACKAGE_DIR, "dist", sheet.file)).arrayBuffer(),
+    );
+    out[sheet.key] = {
+      gzip: Bun.gzipSync(bytes).byteLength,
+      brotli: brotliCompressSync(bytes).byteLength,
+    };
+  }
+  return out;
+}

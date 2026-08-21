@@ -1,8 +1,12 @@
 import { existsSync } from "node:fs";
 import { describe, expect, test } from "bun:test";
 
-import { measureAll } from "../../scripts/lib/bundle-measure";
-import { buildSizeReport, computeFreshnessTargets } from "../../scripts/lib/size-report";
+import { measureAll, measureStylesheets } from "../../scripts/lib/bundle-measure";
+import {
+  buildSizeReport,
+  buildStylesheetReport,
+  computeFreshnessTargets,
+} from "../../scripts/lib/size-report";
 
 // This mirrors the freshness gate test/css-minify.test.ts runs for
 // CORE_CSS/TOAST_CSS, but the "fresh measurement" here is a real
@@ -23,7 +27,8 @@ describe("generated bundle-size numbers", () => {
     "docs/src/lib/bundle-sizes.generated.ts, README.md, llms.txt, .claude/ROADMAP.md, and docs/public/llms-full.txt match a fresh measurement of the built entry (skipped: run `bun run build` first)",
     async () => {
       const report = buildSizeReport(await measureAll());
-      const targets = await computeFreshnessTargets(report);
+      const css = buildStylesheetReport(await measureStylesheets());
+      const targets = await computeFreshnessTargets(report, css);
       const stale = targets.filter((t) => t.current !== t.expected).map((t) => t.path);
       expect(stale).toEqual([]);
     },

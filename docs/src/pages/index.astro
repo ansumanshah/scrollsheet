@@ -6,7 +6,7 @@ import HeroShowcase from "../components/HeroShowcase";
 
 import { examples, exampleGroups } from "../../../examples/index";
 import "../../../examples/examples.css";
-import { BUNDLE_SIZES } from "../lib/bundle-sizes.generated";
+import { BUNDLE_SIZES, STYLESHEET_SIZES } from "../lib/bundle-sizes.generated";
 
 // Raw text for the example gallery's "Styles" tab: the exact, unmodified
 // shared stylesheet and icon set every example imports, so copying it
@@ -151,6 +151,10 @@ const PLATFORM = [
 ];
 
 
+// Both stylesheets: consumers link them separately from the JS, so the
+// "JS + CSS" totals below add them instead of quoting a fixed number.
+const OUR_CSS_KB = STYLESHEET_SIZES.core.gzipKb + STYLESHEET_SIZES.toast.gzipKb;
+
 const COMPARE_LIBS = ["scrollsheet", "vaul", "Silk", "react-modal-sheet"];
 const COMPARE_ROWS: {
   label: string;
@@ -173,7 +177,7 @@ const COMPARE_ROWS: {
       "62 kB with sonner",
     ],
     best: 0,
-    note: `JS bundles, measured identically (esbuild, minified, react external, gzip): our whole surface in one import against vaul 1.1.2 plus sonner 2.0.8. Stylesheets on top of each: 5.5 kB ours, 1.0 kB vaul's style.css, zero for sonner (embedded). Totals ${(BUNDLE_SIZES.all.gzipKb + 5.5).toFixed(1)} against 31.3.`,
+    note: `JS bundles, measured identically (esbuild, minified, react external, gzip): our whole surface in one import against vaul 1.1.2 plus sonner 2.0.8. Stylesheets on top of each: ${OUR_CSS_KB.toFixed(1)} kB ours, 1.0 kB vaul's style.css, zero for sonner (embedded). Totals ${(BUNDLE_SIZES.all.gzipKb + OUR_CSS_KB).toFixed(1)} against 31.3.`,
   },
   {
     label: "Runtime dependencies",
