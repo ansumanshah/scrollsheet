@@ -6,7 +6,7 @@ import { Sheet } from "../../packages/scrollsheet/src/index";
 import { CORE_CSS } from "../../packages/scrollsheet/src/internal/styles";
 
 /**
- * use-nested-scrollbars.ts, exercised against a real mounted <Sheet.Content>
+ * use-nested-scroll.ts, exercised against a real mounted <Sheet.Content>
  * — same real-DOM requirement and happy-dom scoping as nested-handoff.test.tsx.
  * happy-dom does no layout, so clientHeight/scrollHeight default to 0 (no
  * overflow); the ref callback below overrides both via defineProperty before
@@ -110,7 +110,7 @@ async function waitFor(
   return true;
 }
 
-describe("nested scrollbars — use-nested-scrollbars.ts", () => {
+describe("nested scrollbars — use-nested-scroll.ts", () => {
   test("creates a thumb for a marked scroller with overflow under scrollbar='overlay' (the default)", async () => {
     await mount(<Fixture />);
     const { nested } = dialogAndNested();

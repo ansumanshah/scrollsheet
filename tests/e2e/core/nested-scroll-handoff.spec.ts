@@ -120,10 +120,11 @@ test.describe("nested-scroll handoff", () => {
     const client = await page.context().newCDPSession(page);
     try {
       await touchStart(client, x, startY);
-      // Set immediately at touchstart (the element is already at rest at the
-      // boundary) — see content.tsx's own doc comment: "a list already at
-      // rest at touchstart hands off immediately".
-      expect(await readNestedBoundaryAttr(dialog)).toBe(true);
+      // Set at touchstart (the element is already at rest at the boundary):
+      // "a list already at rest at touchstart hands off immediately". Polled
+      // because the handoff lives in a feature chunk that loads once the
+      // list exists.
+      await expect.poll(() => readNestedBoundaryAttr(dialog)).toBe(true);
       // Continuing to swipe down: the list can't scroll past 0, so no
       // 'scroll' event ever fires to re-evaluate it away — stays on for the
       // whole gesture.

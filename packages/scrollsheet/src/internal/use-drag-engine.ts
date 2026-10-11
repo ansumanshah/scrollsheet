@@ -17,6 +17,7 @@ import {
   type Overlay,
   type Phase,
   jumpScroll,
+  readRevealed,
 } from "./content-helpers";
 import {
   clampSequentialDetent,
@@ -125,6 +126,12 @@ export function useDragEngine({
     const posOf = (event: PointerEvent, axis: "x" | "y") =>
       axis === "y" ? event.clientY : event.clientX;
 
+    // Element, not HTMLElement: an icon-only control puts the pointerdown on
+    // its <svg> (or a <path> inside it), which is an SVGElement and fails an
+    // HTMLElement check. closest() and setPointerCapture() are both defined
+    // on Element.
+    const targetOf = (event: Event) => (event.target instanceof Element ? event.target : null);
+
     const isAtMaxWithInternalScroll = () =>
       dialog.hasAttribute("data-scrollsheet-at-max") && panel.scrollTop > 0;
 
@@ -147,8 +154,7 @@ export function useDragEngine({
       // already writes scrollTo() programmatically, nothing else needed.
       // disableDrag gets no such exemption (bails earlier, in onPointerDown).
       if (isTouchLike && ctxRef.current.handleOnly) {
-        const target = event.target instanceof Element ? event.target : null;
-        return !!target?.closest("[data-scrollsheet-handle]");
+        return !!targetOf(event)?.closest("[data-scrollsheet-handle]");
       }
       return false;
     };
@@ -183,8 +189,7 @@ export function useDragEngine({
 
       const geometry = geometryFor(ctxRef.current.side);
       const maxDetent = maxDetentRef.current;
-      const rawNow = Math.min(Math.max(track[geometry.scrollProp], 0), maxDetent);
-      const revealed = mapScroll(rawNow, maxDetent, geometry.sign);
+      const revealed = readRevealed(track, geometry, maxDetent);
 
       // Velocity sanity (zag's adjustReleaseVelocityAgainstDisplacement +
       // MAX_RELEASE_VELOCITY_AGE_MS): a release sample older than ~80ms (the
@@ -506,13 +511,7 @@ export function useDragEngine({
       // gets the same restriction via touch-action in core.css (native
       // scroll drives that path, not this handler).
       if (ctxRef.current.disableDrag) return;
-      // Element, not HTMLElement: an icon-only control puts the pointerdown
-      // on its <svg> (or a <path> inside it), which is an SVGElement and
-      // fails an HTMLElement check. Narrowing that far dropped `target` to
-      // null, skipped the NO_DRAG_SELECTOR exemption below, and let the drag
-      // engine swallow the click on every icon button inside a panel.
-      // closest() and setPointerCapture() are both defined on Element.
-      const target = event.target instanceof Element ? event.target : null;
+      const target = targetOf(event);
       // Sheet.Handle (<button data-scrollsheet-handle>) also matches
       // NO_DRAG_SELECTOR's "button" — checked first and unconditionally: a
       // pointerdown on/inside the handle always starts a drag, bypassing
@@ -565,8 +564,7 @@ export function useDragEngine({
             offsetPx = Math.abs(travelAxis === "y" ? matrix.m42 : matrix.m41);
           }
           const maxDetent = maxDetentRef.current;
-          const rawNow = Math.min(Math.max(track[geometryNow.scrollProp], 0), maxDetent);
-          const revealedNow = mapScroll(rawNow, maxDetent, geometryNow.sign);
+          const revealedNow = readRevealed(track, geometryNow, maxDetent);
           const handedRevealed = Math.max(0, revealedNow - offsetPx);
           panel.style.transform = "";
           jumpScroll(
@@ -600,7 +598,7 @@ export function useDragEngine({
         }
         return;
       }
-      beginDragSession(event, event.target instanceof Element ? event.target : null);
+      beginDragSession(event, targetOf(event));
     };
 
     const beginDragSession = (
@@ -630,8 +628,7 @@ export function useDragEngine({
       dragging = true;
       pointerId = event.pointerId;
       startPos = origin?.pos ?? posOf(event, geometry.axis);
-      const rawStart = Math.min(Math.max(track[geometry.scrollProp], 0), maxDetentRef.current);
-      startRevealed = mapScroll(rawStart, maxDetentRef.current, geometry.sign);
+      startRevealed = readRevealed(track, geometry, maxDetentRef.current);
       startDetentIndex = nearestDetent(startRevealed, resolvedRef.current)?.index ?? -1;
       samples = [{ t: origin?.t ?? performance.now(), pos: startPos }];
       maxMove = 0;
@@ -674,9 +671,8 @@ export function useDragEngine({
             pos: geometry.axis === "y" ? pending.y : pending.x,
             t: pending.t,
           };
-          const captureTarget = event.target instanceof Element ? event.target : null;
           pending = null;
-          beginDragSession(event, captureTarget, origin);
+          beginDragSession(event, targetOf(event), origin);
         } else if (crossDelta > 6 && crossDelta > axisDelta) {
           // Selection wins for the rest of this press.
           pending = null;

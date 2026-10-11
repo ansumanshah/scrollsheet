@@ -433,7 +433,7 @@
 :where([data-scrollsheet-nested-scroll])::-webkit-scrollbar {
   display: none;
 }
-/* Containing block for the injected thumb (use-nested-scrollbars.ts), scoped
+/* Containing block for the injected thumb (use-nested-scroll.ts), scoped
    to the only mode that injects one — overriding position here breaks the
    thumb's positioning. */
 :where(.scrollsheet-dialog[data-scrollsheet-scrollbar="overlay"] [data-scrollsheet-nested-scroll]) {
@@ -863,7 +863,7 @@
 /*
  * Overlay scrollbar thumb (scrollbar='overlay', the default) — one per
  * scroll container, appended as its direct child and sized/positioned via
- * scrollTop/scrollHeight (content.tsx for the panel, use-nested-scrollbars.ts
+ * scrollTop/scrollHeight (content.tsx for the panel, use-nested-scroll.ts
  * for marked nested scrollers), standing in for the native scrollbar (hidden
  * by the default rules above). Animates opacity/transform only
  * (compositor-friendly): positioned with translateY, not top.

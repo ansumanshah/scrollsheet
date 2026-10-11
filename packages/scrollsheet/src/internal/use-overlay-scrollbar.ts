@@ -15,7 +15,7 @@ export interface UseOverlayScrollbarInput {
  * thin auto-hiding thumb standing in for the native scrollbar (hidden by the
  * CSS default, see core.css) — sized/positioned from the panel's own
  * scrollTop/scrollHeight, rAF-throttled. Marked nested scrollers get the same
- * treatment via use-nested-scrollbars.ts, sharing the controller.
+ * treatment via use-nested-scroll.ts, sharing the controller.
  */
 export function useOverlayScrollbar({
   present,

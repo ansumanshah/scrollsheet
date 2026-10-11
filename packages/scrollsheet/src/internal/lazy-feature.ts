@@ -39,9 +39,15 @@ export interface FeatureLoader<T> {
 
 export function createFeatureLoader<T>(importer: () => Promise<T>): FeatureLoader<T> {
   let pending: Promise<T | null> | null = null;
-  const preload = () => (pending ??= importer().catch(() => null));
+  let resident: T | null = null;
+  const preload = () =>
+    (pending ??= importer()
+      .then((m) => (resident = m))
+      .catch(() => null));
+  // A resident chunk resolves in the first render, so a feature that was
+  // preloaded applies in the same commit as the state it guards.
   function useFeature(active: boolean): T | null {
-    const [mod, setMod] = React.useState<T | null>(null);
+    const [mod, setMod] = React.useState<T | null>(() => (active ? resident : null));
     React.useEffect(() => {
       if (!active || mod) return;
       let alive = true;

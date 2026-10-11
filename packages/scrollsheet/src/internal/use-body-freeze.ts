@@ -13,13 +13,6 @@ let frozen: {
 } | null = null;
 let holders = 0;
 
-// Every iOS browser is WebKit, including "Chrome" — platform is the gate,
-// not the UA brand. Modern iPads report as Mac; touch points tell them apart.
-export const isIOS = () =>
-  typeof navigator !== "undefined" &&
-  (/iP(hone|ad|od)/.test(navigator.platform) ||
-    (navigator.userAgent.includes("Mac") && navigator.maxTouchPoints > 1));
-
 /**
  * iOS-only body freeze while a modal sheet is open. Safari composites a
  * SNAPSHOT of the scrolling layer — fixed elements and the top layer both
@@ -32,10 +25,14 @@ export const isIOS = () =>
  * reference drawer implementations ship for their own catalog of iOS
  * modal bugs. Scroll position is restored on the last sheet's close.
  * Skipped in standalone (PWA) display mode, which has no browser chrome.
+ *
+ * A lazy feature chunk (see body-freeze-loader.ts): the iOS gate itself
+ * (`isIOS`, env.ts) lives with the caller, which only loads this module on
+ * that platform — so this hook assumes iOS and checks only display mode.
  */
 export function useBodyFreeze(active: boolean): void {
   React.useEffect(() => {
-    if (!active || !isIOS()) return;
+    if (!active) return;
     if (window.matchMedia("(display-mode: standalone)").matches) return;
     holders += 1;
     if (holders === 1 && frozen === null) {
@@ -78,4 +75,10 @@ export function useBodyFreeze(active: boolean): void {
       }
     };
   }, [active]);
+}
+
+/** Component form, so Content can mount it conditionally once the chunk resolves. */
+export function BodyFreezeFeature({ active }: { active: boolean }): null {
+  useBodyFreeze(active);
+  return null;
 }

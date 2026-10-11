@@ -10,7 +10,7 @@ All notable changes to this project are documented here.
 - **Fixed: the second Android back gesture navigated away** when a Toaster still had toasts left, or when a controlled non-modal sheet refused the first close. A close watcher only fires once; it now re-arms.
 - **Toast fixes for Sonner parity.** Escape in the toast region no longer dismisses a `dismissible: false` toast. `toast.promise` shows no loading toast when `loading` is omitted, and dismisses instead of showing a made-up "Success" or "Error" toast when the settled branch has no handler. `toastOptions.className` on the Toaster now reaches every toast.
 - Fixed: `Sheet.Handle` announced a numeric pixel detent such as `320` as "32000%".
-- The `Sheet` entry grows from 16.9 to 17.4 kB gzip for all of the above.
+- **The `Sheet` entry dropped from 16.9 to 16.4 kB gzip, with all of the above included.** Nested-scroll support (the `data-scrollsheet-nested-scroll` handoff and its overlay thumbs) now loads only when a sheet contains such a region, and the iOS body freeze loads only on iOS. Every entry shrinks by about 1 kB: Drawer 17.2, Dialog 15.9, the zero-config `auto` entry 20.8. Each system behaves as before once loaded, and a failed chunk fetch degrades that one system the same way the keyboard engine already does.
 
 ## 1.1.0 - 2026-08-17
 
