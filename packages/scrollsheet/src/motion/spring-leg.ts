@@ -43,9 +43,23 @@ export interface CurveSelection {
  * stop()'s re-simulation from this config lands on the same curve.
  */
 export function scaleSheetSpring(speed: number): SpringConfig {
-  if (speed === 1) return SHEET_SPRING_CONFIG;
-  const { stiffness = 260, damping = 30 } = SHEET_SPRING_CONFIG;
-  return { ...SHEET_SPRING_CONFIG, stiffness: stiffness * speed * speed, damping: damping * speed };
+  return speed === 1 ? SHEET_SPRING_CONFIG : timeScaleSpring(SHEET_SPRING_CONFIG, speed);
+}
+
+/**
+ * `config` played `k` times faster (k > 1) or slower: stiffness * k^2,
+ * damping * k, velocity * k at the same mass. Keeps the damping ratio, so a
+ * curve generated from the original and played over durationMs / k is
+ * exactly this config's trajectory, which is what stop() re-simulates.
+ */
+export function timeScaleSpring(config: SpringConfig, k: number): SpringConfig {
+  const { stiffness = 260, damping = 30 } = config;
+  return {
+    ...config,
+    stiffness: stiffness * k * k,
+    damping: damping * k,
+    ...(config.velocity !== undefined ? { velocity: config.velocity * k } : {}),
+  };
 }
 
 /** Instant / plain ease-out / velocity-seeded / default spring, in that precedence order. */

@@ -9,6 +9,7 @@ import {
   scaleDismissDuration,
   scaleSheetSpring,
   selectEnterExitCurve,
+  timeScaleSpring,
 } from "../../../packages/scrollsheet/src/motion/spring-leg";
 
 const base = {
@@ -119,6 +120,34 @@ describe("animationSpeed", () => {
     const { config } = selectEnterExitCurve({ ...base, velocity: 2, speed: 2 });
     expect(config.stiffness).toBe(scaleSheetSpring(2).stiffness);
     expect(config.velocity).toBe(2);
+  });
+});
+
+describe("timeScaleSpring", () => {
+  test("a dismiss leg shortened by k reads the same position stop() would find on screen", () => {
+    // The curve is the base spring squeezed into durationMs / k; stop()
+    // samples the config at wall-clock time, so the config must be squeezed
+    // by the same k or an interruption reads the wrong position.
+    const k = SHEET_SPRING.durationMs / 143;
+    const squeezed = timeScaleSpring(SHEET_SPRING_CONFIG, k);
+    for (const wall of [20, 60, 100, 140]) {
+      const onScreen = sampleSpringAt(SHEET_SPRING_CONFIG, wall * k);
+      const read = sampleSpringAt(squeezed, wall);
+      expect(read.value).toBeCloseTo(onScreen.value, 9);
+      expect(read.velocity).toBeCloseTo(onScreen.velocity * k, 6);
+    }
+  });
+
+  test("scales an explicit seed velocity with the clock", () => {
+    expect(timeScaleSpring({ ...SHEET_SPRING_CONFIG, velocity: 2 }, 3).velocity).toBe(6);
+    expect(timeScaleSpring(SHEET_SPRING_CONFIG, 3).velocity).toBeUndefined();
+  });
+
+  test("sampleSpringAt at Infinity is the rest state, not NaN", () => {
+    expect(sampleSpringAt(SHEET_SPRING_CONFIG, Number.POSITIVE_INFINITY)).toEqual({
+      value: 1,
+      velocity: 0,
+    });
   });
 });
 

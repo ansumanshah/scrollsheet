@@ -3,7 +3,7 @@ import * as React from "react";
 import type { SheetContextValue } from "../context";
 import { type AnimateHandle, animate } from "../motion/animate";
 import { geometryFor, mapScroll } from "../motion/geometry";
-import { scaleDismissDuration, selectEnterExitCurve } from "../motion/spring-leg";
+import { scaleDismissDuration, selectEnterExitCurve, timeScaleSpring } from "../motion/spring-leg";
 import {
   CENTER_ZOOM_RANGE,
   type Overlay,
@@ -144,7 +144,14 @@ export function useEnterExitLeg({
           const raw = Math.min(Math.max(track[geometry.scrollProp], 0), range);
           const revealed = mapScroll(raw, range, geometry.sign);
           const fraction = Math.min(1, Math.max(0, revealed) / Math.min(size, range));
-          curve = scaleDismissDuration(curve, fraction);
+          const shortened = scaleDismissDuration(curve, fraction);
+          // stop() re-simulates `config` at wall-clock time, so a leg played
+          // over a shorter duration needs the matching faster config or an
+          // interruption reads the wrong position.
+          if (shortened.durationMs > 0 && shortened.durationMs !== curve.durationMs) {
+            config = timeScaleSpring(config, curve.durationMs / shortened.durationMs);
+          }
+          curve = shortened;
         }
       }
     }
