@@ -100,6 +100,7 @@ export function useEnterExitLeg({
       reduced,
       noTravel,
       linearEasing: env().linearEasing,
+      speed: ctxRef.current.animationSpeed,
     });
     // Center presentation: the leg is a zoom+fade on the panel in place —
     // no travel axis, no track, so neither the offscreen translate below nor

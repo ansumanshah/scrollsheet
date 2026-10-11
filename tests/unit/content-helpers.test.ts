@@ -4,6 +4,7 @@ import {
   recedeTransform,
   type Side,
 } from "../../packages/scrollsheet/src/motion/geometry";
+import { SHEET_SPRING } from "../../packages/scrollsheet/src/motion/spring";
 import {
   applyBackgroundEffect,
   applyFullHeightRadius,
@@ -669,8 +670,23 @@ describe("applyBackgroundEffect", () => {
 
     const eased = makePanel();
     applyBackgroundEffect(eased, "scale", 0.5, false);
-    expect(eased.style.transition).toBe(
-      "transform var(--scrollsheet-dur) var(--scrollsheet-ease), border-radius var(--scrollsheet-dur) var(--scrollsheet-ease)",
+    expect(eased.style.transition).toContain(`transform ${SHEET_SPRING.durationMs}ms`);
+    expect(eased.style.transition).toContain(`border-radius ${SHEET_SPRING.durationMs}ms`);
+  });
+
+  test("the eased transition carries literal timing, never the dialog-scoped vars", () => {
+    // The page wrapper lives outside the dialog, so var(--scrollsheet-dur)
+    // has no value there and would void the whole transition (a 0s snap).
+    const eased = makePanel();
+    applyBackgroundEffect(eased, "scale", 0.5, false);
+    expect(eased.style.transition).not.toContain("var(");
+  });
+
+  test("animationSpeed shortens the eased transition", () => {
+    const fast = makePanel();
+    applyBackgroundEffect(fast, "scale", 0.5, false, 2);
+    expect(fast.style.transition).toContain(
+      `transform ${Math.round(SHEET_SPRING.durationMs / 2)}ms`,
     );
   });
 });

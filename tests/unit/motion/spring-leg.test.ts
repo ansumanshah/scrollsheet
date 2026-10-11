@@ -1,8 +1,13 @@
 import { describe, expect, test } from "bun:test";
 
-import { SHEET_SPRING, SHEET_SPRING_CONFIG } from "../../../packages/scrollsheet/src/motion/spring";
+import {
+  SHEET_SPRING,
+  SHEET_SPRING_CONFIG,
+  sampleSpringAt,
+} from "../../../packages/scrollsheet/src/motion/spring";
 import {
   scaleDismissDuration,
+  scaleSheetSpring,
   selectEnterExitCurve,
 } from "../../../packages/scrollsheet/src/motion/spring-leg";
 
@@ -54,6 +59,48 @@ describe("selectEnterExitCurve precedence", () => {
     const { curve, config } = selectEnterExitCurve(base);
     expect(curve).toBe(SHEET_SPRING);
     expect(config).toBe(SHEET_SPRING_CONFIG);
+  });
+});
+
+describe("animationSpeed", () => {
+  test("speed 1 keeps the shared spring identities", () => {
+    const { curve, config } = selectEnterExitCurve({ ...base, speed: 1 });
+    expect(curve).toBe(SHEET_SPRING);
+    expect(config).toBe(SHEET_SPRING_CONFIG);
+  });
+
+  test("speed 2 halves the duration with the same easing shape", () => {
+    const { curve } = selectEnterExitCurve({ ...base, speed: 2 });
+    expect(curve.easing).toBe(SHEET_SPRING.easing);
+    expect(curve.durationMs).toBe(Math.round(SHEET_SPRING.durationMs / 2));
+  });
+
+  test("the scaled config is the base spring on a faster clock", () => {
+    // stop() re-simulates from the config at elapsed wall time, so the
+    // scaled config at t must equal the base spring at t * speed.
+    const fast = scaleSheetSpring(2);
+    for (const t of [20, 60, 120, 200]) {
+      const a = sampleSpringAt(fast, t);
+      const b = sampleSpringAt(SHEET_SPRING_CONFIG, t * 2);
+      expect(a.value).toBeCloseTo(b.value, 6);
+      expect(a.velocity).toBeCloseTo(b.velocity * 2, 4);
+    }
+  });
+
+  test("the ease-out fallback scales too", () => {
+    const { curve } = selectEnterExitCurve({ ...base, linearEasing: false, speed: 0.5 });
+    expect(curve.durationMs).toBe(SHEET_SPRING.durationMs * 2);
+  });
+
+  test("reduced motion stays instant at any speed", () => {
+    const { curve } = selectEnterExitCurve({ ...base, reduced: true, speed: 0.25 });
+    expect(curve.durationMs).toBe(0);
+  });
+
+  test("a velocity-seeded leg keeps the speed-scaled stiffness", () => {
+    const { config } = selectEnterExitCurve({ ...base, velocity: 2, speed: 2 });
+    expect(config.stiffness).toBe(scaleSheetSpring(2).stiffness);
+    expect(config.velocity).toBe(2);
   });
 });
 

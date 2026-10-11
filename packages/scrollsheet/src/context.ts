@@ -89,6 +89,8 @@ export interface SheetContextValue {
   phantomScrollGuard: boolean;
   /** Bottom sheets: promote to the tallest detent while the software keyboard is up. */
   keyboardExpands: boolean;
+  /** Sanitized `animationSpeed`: a finite multiplier > 0, 1 for the default spring. */
+  animationSpeed: number;
   /** Fires on drag release with the real pointer event and whether the sheet is staying open. */
   onRelease?: (event: PointerEvent, willRemainOpen: boolean) => void;
   titleId: string;

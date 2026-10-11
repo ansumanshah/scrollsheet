@@ -90,10 +90,17 @@ with `desktopSide`; set alone it warns once in dev. See
 | `onTravel` | `(revealedPx: number, progress: number, info: TravelInfo) => void` | |
 | `onRelease` | `(event: PointerEvent, willRemainOpen: boolean) => void` | |
 | `keyboardExpands` | `boolean` | `false` |
+| `animationSpeed` | `number` | `1` |
 | `nonce` | `string` | |
 | `themeColorDimming` | `boolean` | `false` |
 
 </div>
+
+`animationSpeed` multiplies how fast every sheet animation plays: the open/close spring,
+programmatic detent travel, the content-height morph, and the backdrop, recede, and
+`backgroundEffect` transitions. `2` halves every duration and `0.5` doubles it. The spring keeps
+its shape, so a faster sheet adds no overshoot. Finger-driven travel is unaffected and
+`prefers-reduced-motion` still wins. `Drawer.Root` and `Dialog.Root` forward it.
 
 ## Sheet.Content styling hooks
 

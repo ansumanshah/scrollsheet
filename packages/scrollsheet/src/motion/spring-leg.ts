@@ -26,11 +26,26 @@ export interface CurveSelectionInput {
   noTravel: boolean;
   /** `env().linearEasing` — false on Safari 15.4-17.1. */
   linearEasing: boolean;
+  /** `animationSpeed` time multiplier (2 = twice as fast); 1 when omitted. */
+  speed?: number;
 }
 
 export interface CurveSelection {
   curve: SpringCurve;
   config: SpringConfig;
+}
+
+/**
+ * The sheet spring played `speed` times faster. Scaling time by `s` is
+ * stiffness * s^2 and damping * s at the same mass: the damping ratio (the
+ * curve's shape) is unchanged and only the clock runs faster, so the
+ * prebuilt SHEET_SPRING easing still describes it at durationMs / s, and
+ * stop()'s re-simulation from this config lands on the same curve.
+ */
+export function scaleSheetSpring(speed: number): SpringConfig {
+  if (speed === 1) return SHEET_SPRING_CONFIG;
+  const { stiffness = 260, damping = 30 } = SHEET_SPRING_CONFIG;
+  return { ...SHEET_SPRING_CONFIG, stiffness: stiffness * speed * speed, damping: damping * speed };
 }
 
 /** Instant / plain ease-out / velocity-seeded / default spring, in that precedence order. */
@@ -41,21 +56,21 @@ export function selectEnterExitCurve({
   reduced,
   noTravel,
   linearEasing,
+  speed = 1,
 }: CurveSelectionInput): CurveSelection {
+  const config = scaleSheetSpring(speed);
+  const durationMs = Math.round(SHEET_SPRING.durationMs / speed);
   if (reduced || noTravel || Math.abs(to - from) < 1e-3) {
-    return { curve: { easing: "linear", durationMs: 0 }, config: SHEET_SPRING_CONFIG };
+    return { curve: { easing: "linear", durationMs: 0 }, config };
   }
   if (!linearEasing) {
-    return {
-      curve: { easing: "ease-out", durationMs: SHEET_SPRING.durationMs },
-      config: SHEET_SPRING_CONFIG,
-    };
+    return { curve: { easing: "ease-out", durationMs }, config };
   }
   if (velocity !== 0) {
-    const config = { ...SHEET_SPRING_CONFIG, velocity };
-    return { curve: spring(config), config };
+    const seeded = { ...config, velocity };
+    return { curve: spring(seeded), config: seeded };
   }
-  return { curve: SHEET_SPRING, config: SHEET_SPRING_CONFIG };
+  return { curve: speed === 1 ? SHEET_SPRING : { ...SHEET_SPRING, durationMs }, config };
 }
 
 const MIN_DISMISS_DURATION_MS = 140;

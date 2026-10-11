@@ -57,7 +57,11 @@ const collectIgnored = (entries: Array<[string, unknown]>): string[] =>
  */
 export interface DialogRootProps extends Pick<
   SheetRootProps,
-  "actionsRef" | "backdropDismissible" | "escapeDismissible" | "onOpenChangeComplete"
+  | "actionsRef"
+  | "animationSpeed"
+  | "backdropDismissible"
+  | "escapeDismissible"
+  | "onOpenChangeComplete"
 > {
   children?: React.ReactNode;
   open?: boolean;
@@ -82,6 +86,7 @@ export function Root({
   backdropDismissible,
   escapeDismissible,
   onOpenChangeComplete,
+  animationSpeed,
 }: DialogRootProps) {
   return (
     <SheetRoot
@@ -94,6 +99,7 @@ export function Root({
       actionsRef={actionsRef}
       backdropDismissible={backdropDismissible}
       escapeDismissible={escapeDismissible}
+      animationSpeed={animationSpeed}
     >
       {children}
     </SheetRoot>
