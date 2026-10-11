@@ -192,6 +192,16 @@ export function warnCoreStylesMissing(): void {
     warnOnce("css", "scrollsheet: import 'scrollsheet/styles.css'");
 }
 
+/**
+ * Every iOS browser is WebKit, including "Chrome" — platform is the gate, not
+ * the UA brand. Modern iPads report as Mac; touch points tell them apart.
+ * Gates the body-freeze feature chunk (body-freeze-loader.ts).
+ */
+export const isIOS = () =>
+  typeof navigator !== "undefined" &&
+  (/iP(hone|ad|od)/.test(navigator.platform) ||
+    (navigator.userAgent.includes("Mac") && navigator.maxTouchPoints > 1));
+
 /** Live media check, not cached: the OS setting can change mid-session. */
 export function prefersReducedMotion(): boolean {
   return typeof matchMedia === "function" && matchMedia("(prefers-reduced-motion: reduce)").matches;

@@ -5,8 +5,11 @@ import {
   mapScroll,
   recedeTransform,
 } from "../motion/geometry";
+import { jumpScroll } from "../motion/scroll-animator";
 import { SHEET_SPRING } from "../motion/spring";
 import { env } from "./env";
+
+export { jumpScroll };
 
 export type Phase = "pre" | "opening" | "open" | "closing";
 
@@ -147,25 +150,6 @@ export function clamp01(x: number): number {
  */
 export function resolveClosedBy(escapeDismissible: boolean): "closerequest" | "none" {
   return escapeDismissible ? "closerequest" : "none";
-}
-
-/**
- * Jump the track to `raw` (in whichever scroll axis `axis` names) without
- * animating.
- *
- * WebKit 26.5 quirk: on a `scroll-snap-type: mandatory` container with an
- * established snap position, a raw `el.scrollTop = x` assignment applies for
- * one frame then silently reverts to the previous snap point within ~50ms —
- * even when `x` lands exactly on another valid stop. `el.scrollTo({ top,
- * behavior: 'instant' })` does not exhibit this; WebKit treats it as a real
- * scroll command. Chromium and Firefox accept both forms identically, so
- * this is safe unconditionally.
- */
-export function jumpScroll(el: HTMLElement, axis: "x" | "y", raw: number): void {
-  const opts: ScrollToOptions = { behavior: "instant" };
-  if (axis === "y") opts.top = raw;
-  else opts.left = raw;
-  el.scrollTo(opts);
 }
 
 /** Which direction each side's panel leaves the screen in, in translate sign terms. */
@@ -426,18 +410,10 @@ export function measureContentHeight(
  */
 export function applyFullHeightRadius(panel: HTMLElement, side: Side, radiusPx: number): void {
   const r = `${Math.max(0, radiusPx)}px`;
-  switch (side) {
-    case "bottom":
-      panel.style.borderRadius = `${r} ${r} 0 0`;
-      break;
-    case "top":
-      panel.style.borderRadius = `0 0 ${r} ${r}`;
-      break;
-    case "left":
-      panel.style.borderRadius = `0 ${r} ${r} 0`;
-      break;
-    case "right":
-      panel.style.borderRadius = `${r} 0 0 ${r}`;
-      break;
-  }
+  // Corner mask per side, in border-radius order (top-left, top-right,
+  // bottom-right, bottom-left): 1 = the lead edge's corner, 0 = flush.
+  const mask = { bottom: [1, 1, 0, 0], top: [0, 0, 1, 1], left: [0, 1, 1, 0], right: [1, 0, 0, 1] }[
+    side
+  ];
+  panel.style.borderRadius = mask.map((on) => (on ? r : "0")).join(" ");
 }

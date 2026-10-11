@@ -69,8 +69,7 @@ export const Handle = /* @__PURE__ */ React.forwardRef<HTMLButtonElement, SheetH
 
     const move = (delta: number) => {
       if (!multi) return false;
-      const index = specs.findIndex((s) => Object.is(s, ctx.activeDetent));
-      const next = specs[index + delta];
+      const next = specs[activeIndex + delta];
       if (next === undefined) return false;
       ctx.setActiveDetent(next);
       return true;
@@ -109,8 +108,7 @@ export const Handle = /* @__PURE__ */ React.forwardRef<HTMLButtonElement, SheetH
           if (event.defaultPrevented) return;
           // Cycle: advance to the next detent, wrap to the first.
           if (!multi) return;
-          const index = specs.findIndex((s) => Object.is(s, ctx.activeDetent));
-          const next = specs[(index + 1) % specs.length];
+          const next = specs[(activeIndex + 1) % specs.length];
           if (next !== undefined) ctx.setActiveDetent(next);
         }}
         onKeyDown={(event: React.KeyboardEvent<HTMLButtonElement>) => {

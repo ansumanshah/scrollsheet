@@ -38,6 +38,7 @@ import {
   hasClosedBySupport,
   hasDialogSupport,
   hasPopoverSupport,
+  isIOS,
   warnContentAsChildInvalidChild,
   warnCoreStylesMissing,
   warnLargestUndimmedDetentOutOfRange,
@@ -61,10 +62,12 @@ import { useDragEngine } from "./internal/use-drag-engine";
 import { useEnterExitLeg } from "./internal/use-enter-exit-leg";
 import { presentationFlip } from "./internal/presentation-flip-loader";
 import type { UsePresentationFlipInput } from "./internal/use-presentation-flip";
-import { useBodyFreeze } from "./internal/use-body-freeze";
+import { bodyFreeze } from "./internal/body-freeze-loader";
 import { keyboardViewport } from "./internal/keyboard-viewport-loader";
 import type { UseKeyboardViewportInput } from "./internal/use-keyboard-viewport";
-import { useNestedScrollbars } from "./internal/use-nested-scrollbars";
+import { nestedScroll } from "./internal/nested-scroll-loader";
+import type { UseNestedScrollInput } from "./internal/use-nested-scroll";
+import { createThumbController, hasScrollableOverflow } from "./internal/scrollbar-layout";
 import { useOverlayScrollbar } from "./internal/use-overlay-scrollbar";
 import { useStackRecede } from "./internal/use-stack-recede";
 
@@ -315,17 +318,15 @@ export const Content = /* @__PURE__ */ React.forwardRef<HTMLDivElement, SheetCon
     // useCloseWatcher needs it before any early return.
     const nonModal = ctx.modal === false;
 
-    // Dev-only, one-shot: only warns once a consumer actually tries to open a
-    // sheet on a platform with no <dialog> support, not on every mount.
-    React.useEffect(() => {
-      if (!dialogOk && ctx.open) warnMissingDialogSupport();
-    }, [dialogOk, ctx.open]);
-
     // Style injection for the degraded path lives HERE, not inside
     // FallbackSheet: that module must stay import-free so its lazy chunk
-    // never chains to the sheet core (see its own doc comments).
+    // never chains to the sheet core (see its own doc comments). The
+    // dev-only heads-up rides the same effect: it fires once a consumer
+    // actually opens a sheet on a platform with no <dialog>, not on mount.
     React.useEffect(() => {
-      if (degraded) injectStyles(ctx.nonce);
+      if (!degraded) return;
+      if (process.env.NODE_ENV !== "production") warnMissingDialogSupport();
+      injectStyles(ctx.nonce);
     }, [degraded, ctx.nonce]);
 
     // The degraded modal is code-split: the ~96% with <dialog> never ship
@@ -483,7 +484,11 @@ export const Content = /* @__PURE__ */ React.forwardRef<HTMLDivElement, SheetCon
       // which is a legitimate, common pattern (vaul's own default: "fade only
       // at the topmost snap point") that the clamp above already handles
       // correctly with no behavior change worth flagging.
-      if (undimmedSpec !== undefined && resolvedDimStart > maxDetent) {
+      if (
+        process.env.NODE_ENV !== "production" &&
+        undimmedSpec !== undefined &&
+        resolvedDimStart > maxDetent
+      ) {
         warnLargestUndimmedDetentOutOfRange();
       }
       const dimEnd = resolved.find((d) => d.height > dimStart)?.height ?? maxDetent;
@@ -1293,182 +1298,53 @@ export const Content = /* @__PURE__ */ React.forwardRef<HTMLDivElement, SheetCon
     };
 
     useOverlayScrollbar({ present, scrollbar: ctx.scrollbar, panelRef, scrollbarRef });
-    useBodyFreeze(present && ctx.modal);
-    useNestedScrollbars({ present, scrollbar: ctx.scrollbar, dialogRef });
 
-    // ── Nested-scroll handoff ────────────────────────────────────────────────
-    // [data-scrollsheet-nested-scroll] descendants of the body already receive
-    // touch scroll directly (no CSS change needed for that half — see
-    // core.css). This effect watches marked elements' own top boundary and
-    // toggles data-scrollsheet-at-nested-boundary on the dialog, which
-    // re-admits the track/canvas touch-action core.css otherwise blocks under
-    // handleOnly/disableDrag — the SAME swipe then continues as sheet travel
-    // via native scroll-snap, no manual delta-tracking.
-    //
-    // Delegated, not per-node: every listener lives on the dialog itself
-    // (present for the whole session — [present] is the only dep) and
-    // resolves the marked element per event via
-    // event.target.closest("[data-scrollsheet-nested-scroll]"). A content
-    // morph that adds, removes, or replaces marked elements needs no re-wiring
-    // — there is nothing wired to a specific node to begin with, so a session
-    // that opens with zero marked elements still picks up ones a later morph
-    // adds. `scroll` doesn't bubble, so it's listened for in the CAPTURE phase
-    // on the dialog (capture still reaches non-bubbling events on their way
-    // down to the target).
-    //
-    // Gating is per-gesture, not per-rest-state: touch-action is an ancestor
-    // property (setting it on track/canvas affects EVERY touch landing inside
-    // them, not just the one over the nested element), so the only way to keep
-    // handleOnly/disableDrag's "touch anywhere is not a sheet drag" guarantee
-    // intact elsewhere is to only ever flip the attribute while a live touch
-    // sequence that STARTED inside a marked element is in flight. touchstart
-    // opens that element's gesture window (evaluating the boundary right away,
-    // so a list already at rest at touchstart hands off immediately — correct,
-    // that's "reveal more sheet" from the first pixel).
-    //
-    // Gesture windows are tracked by Touch.identifier, not by a global
-    // "any touch still down" count — the earlier count-based gate let an
-    // unrelated concurrent touch (e.g. a simultaneous handle drag with a
-    // second finger) keep a lifted finger's window alive, a 3-touch exploit
-    // of the same "touch anywhere becomes a sheet drag" defeat this effect
-    // exists to prevent. `touchOwner` maps each active identifier to the
-    // element its touchstart landed in; `activeCount` refcounts how many of
-    // an element's own touches are still down. An element's boundary
-    // participation ends exactly when ITS OWN last tracked touch ends,
-    // independent of any other finger touching anywhere else.
-    //
-    // A morph can remove a marked element mid-gesture without firing any
-    // further touch/scroll event for it — touch events have no spec'd
-    // retargeting for a detached target (unlike pointer events), and WebKit
-    // has historically dropped them outright, so a purely reactive sweep
-    // (only running when the next event happens to fire) can leave the
-    // attribute stuck ON for the rest of the session on iOS, our primary
-    // platform. A MutationObserver on the dialog subtree re-runs
-    // applyBoundaryState (which sweeps every tracking structure for
-    // disconnected elements) on any childList removal, so cleanup doesn't
-    // depend on another event ever arriving.
-    //
-    // Shadow-DOM-nested scrollers are out of scope for v1: `scroll` doesn't
-    // compose across a shadow boundary and touch-event retargeting hides a
-    // shadow root's interior from a light-DOM closest() walk.
+    // iOS-only, so only iOS fetches it. The loader starts the fetch at
+    // module evaluation, so a sheet opened by interaction finds the chunk
+    // resident and freezes in the same commit as showModal; only a sheet
+    // already open at first paint on a cold cache can freeze one fetch late.
+    const freezeMod = bodyFreeze.useFeature(mounted && isIOS());
+
+    // ── Nested scrollers ─────────────────────────────────────────────────────
+    // The touch-boundary handoff and the managed overlay thumb for
+    // [data-scrollsheet-nested-scroll] descendants live in one feature chunk,
+    // loaded once such a descendant exists: a querySelector at present, then
+    // an observer for one a later morph adds or an existing element gains as
+    // an attribute — the chunk's own hooks take over discovery (and the sweep
+    // for removals) from there, so this observer disconnects the moment it
+    // finds one.
+    const [nestedNeeded, setNestedNeeded] = React.useState(false);
     React.useEffect(() => {
-      if (!present) return;
+      if (!present || nestedNeeded) return;
       const dialog = dialogRef.current;
       if (!dialog) return;
-
-      const NESTED_SELECTOR = "[data-scrollsheet-nested-scroll]";
-      const touchOwner = new Map<number, HTMLElement>();
-      const activeCount = new Map<HTMLElement, number>();
-      const atBoundary = new Set<HTMLElement>();
-
-      const sweepDisconnected = () => {
-        for (const [id, el] of touchOwner) {
-          if (!el.isConnected) touchOwner.delete(id);
-        }
-        for (const el of activeCount.keys()) {
-          if (!el.isConnected) activeCount.delete(el);
-        }
-        for (const el of atBoundary) {
-          if (!el.isConnected) atBoundary.delete(el);
-        }
+      const check = () => {
+        if (!dialog.querySelector("[data-scrollsheet-nested-scroll]")) return false;
+        setNestedNeeded(true);
+        return true;
       };
-
-      const applyBoundaryState = () => {
-        sweepDisconnected();
-        const has = atBoundary.size > 0;
-        setBoolAttr(dialog, "data-scrollsheet-at-nested-boundary", has);
-      };
-
-      const evaluate = (el: HTMLElement) => {
-        if (!el.isConnected) {
-          atBoundary.delete(el);
-          applyBoundaryState();
-          return;
-        }
-        const at = isAtScrollBoundary(el, "top");
-        if (at === atBoundary.has(el)) return;
-        if (at) atBoundary.add(el);
-        else atBoundary.delete(el);
-        applyBoundaryState();
-      };
-
-      const onTouchStart = (event: TouchEvent) => {
-        // A touchend the browser never delivered (WebKit drops events whose
-        // target was removed) leaves a stale identifier pinning a window open;
-        // reconcile against the live touch list before opening new windows.
-        if (touchOwner.size > 0) {
-          const live = new Set(Array.from(event.touches, (t) => t.identifier));
-          let swept = false;
-          for (const [id, el] of touchOwner) {
-            if (live.has(id)) continue;
-            touchOwner.delete(id);
-            swept = true;
-            const remaining = (activeCount.get(el) ?? 1) - 1;
-            if (remaining <= 0) {
-              activeCount.delete(el);
-              atBoundary.delete(el);
-            } else {
-              activeCount.set(el, remaining);
-            }
-          }
-          if (swept) applyBoundaryState();
-        }
-        for (const touch of Array.from(event.changedTouches)) {
-          const el = (touch.target as Element | null)?.closest<HTMLElement>(NESTED_SELECTOR);
-          if (!el) continue;
-          touchOwner.set(touch.identifier, el);
-          activeCount.set(el, (activeCount.get(el) ?? 0) + 1);
-          evaluate(el);
-        }
-      };
-
-      const onTouchEnd = (event: TouchEvent) => {
-        for (const touch of Array.from(event.changedTouches)) {
-          const el = touchOwner.get(touch.identifier);
-          if (el === undefined) continue;
-          touchOwner.delete(touch.identifier);
-          const remaining = (activeCount.get(el) ?? 1) - 1;
-          if (remaining <= 0) {
-            activeCount.delete(el);
-            if (atBoundary.delete(el)) applyBoundaryState();
-          } else {
-            activeCount.set(el, remaining);
-          }
-        }
-      };
-
-      const onScroll = (event: Event) => {
-        if (activeCount.size === 0) return; // hot path: skip closest() on every ordinary scroll tick
-        const el = (event.target as Element | null)?.closest<HTMLElement>(NESTED_SELECTOR);
-        if (!el || !activeCount.has(el)) return;
-        evaluate(el);
-      };
-
-      const observer = new MutationObserver((records) => {
-        if (touchOwner.size === 0 && atBoundary.size === 0) return;
-        for (const record of records) {
-          if (record.removedNodes.length > 0) {
-            applyBoundaryState();
-            return;
-          }
-        }
+      if (check()) return;
+      const observer = new MutationObserver(() => {
+        if (check()) observer.disconnect();
       });
-      observer.observe(dialog, { childList: true, subtree: true });
-
-      dialog.addEventListener("touchstart", onTouchStart, { passive: true });
-      dialog.addEventListener("touchend", onTouchEnd, { passive: true });
-      dialog.addEventListener("touchcancel", onTouchEnd, { passive: true });
-      dialog.addEventListener("scroll", onScroll, { passive: true, capture: true });
-
-      return () => {
-        observer.disconnect();
-        dialog.removeEventListener("touchstart", onTouchStart);
-        dialog.removeEventListener("touchend", onTouchEnd);
-        dialog.removeEventListener("touchcancel", onTouchEnd);
-        dialog.removeEventListener("scroll", onScroll, true);
-        dialog.removeAttribute("data-scrollsheet-at-nested-boundary");
-      };
-    }, [present]);
+      observer.observe(dialog, {
+        childList: true,
+        subtree: true,
+        attributes: true,
+        attributeFilter: ["data-scrollsheet-nested-scroll"],
+      });
+      return () => observer.disconnect();
+    }, [present, nestedNeeded]);
+    const nestedMod = nestedScroll.useFeature(nestedNeeded);
+    const nestedProps: UseNestedScrollInput = {
+      present,
+      scrollbar: ctx.scrollbar,
+      dialogRef,
+      isAtScrollBoundary,
+      setBoolAttr,
+      createThumbController,
+      hasScrollableOverflow,
+    };
 
     useDragEngine({
       present,
@@ -1579,11 +1455,16 @@ export const Content = /* @__PURE__ */ React.forwardRef<HTMLDivElement, SheetCon
       flipMod && ctx.desktopProfile ? <flipMod.PresentationFlipFeature {...flipProps} /> : null;
     const morphFeature = morphMod ? <morphMod.ContentMorphFeature {...morphProps} /> : null;
     const kbFeature = kbMod && kbNeeded ? <kbMod.KeyboardViewportFeature {...kbProps} /> : null;
+    const nestedFeature =
+      nestedMod && nestedNeeded ? <nestedMod.NestedScrollFeature {...nestedProps} /> : null;
+    const freezeFeature = freezeMod ? <freezeMod.BodyFreezeFeature active={ctx.modal} /> : null;
     const innerContent = (
       <>
         {flipFeature}
         {morphFeature}
         {kbFeature}
+        {nestedFeature}
+        {freezeFeature}
         {/* Chrome strips: slices of backdrop snapped to their target dim
             with no opening fade (core.css), because iOS samples its
             status-bar and bottom-bar backings around the first paint after
@@ -1635,7 +1516,9 @@ export const Content = /* @__PURE__ */ React.forwardRef<HTMLDivElement, SheetCon
                 asChild && React.isValidElement(children) && children.type !== React.Fragment
                   ? children
                   : null;
-              if (asChild && !validChild) warnContentAsChildInvalidChild();
+              if (process.env.NODE_ENV !== "production" && asChild && !validChild) {
+                warnContentAsChildInvalidChild();
+              }
               const panelBody = (
                 <StackContext.Provider value={stackValue}>
                   <div
@@ -1689,75 +1572,6 @@ export const Content = /* @__PURE__ */ React.forwardRef<HTMLDivElement, SheetCon
       </>
     );
 
-    // One attribute set, three host elements: every render branch spreads
-    // this, so a change to any shared attribute is a one-place edit.
-    const sharedProps = {
-      className: "scrollsheet-dialog",
-      "data-scrollsheet-state": phase,
-      "data-scrollsheet-side": ctx.center ? "center" : ctx.side,
-      "data-scrollsheet-sda": sda ? "" : undefined,
-      "data-scrollsheet-scrollbar": ctx.scrollbar,
-      "data-scrollsheet-handle-only": ctx.handleOnly ? "" : undefined,
-      "data-scrollsheet-disable-drag": ctx.disableDrag ? "" : undefined,
-      "data-scrollsheet-behind": childCount > 0 ? "" : undefined,
-      "aria-labelledby": ctx.hasTitle ? ctx.titleId : undefined,
-      "aria-describedby": ctx.hasDescription ? ctx.descriptionId : undefined,
-      "aria-label": !ctx.hasTitle ? panelProps["aria-label"] : undefined,
-      // animationSpeed reaches the CSS-transitioned layers (backdrop, recede)
-      // through the same custom property core.css declares on this element.
-      style:
-        ctx.animationSpeed === 1
-          ? undefined
-          : ({
-              "--scrollsheet-dur": `${Math.round(SHEET_SPRING.durationMs / ctx.animationSpeed)}ms`,
-            } as React.CSSProperties),
-    } as const;
-
-    if (!nonModal) {
-      return createPortal(
-        <>
-          {bottomChromeSentinel}
-          <dialog
-            ref={setDialogRef}
-            {...sharedProps}
-            // Feature-detected: unsupported engines (Safari as of mid-2026) get
-            // no attribute at all. Never "any" — see resolveClosedBy's doc
-            // comment for why. The cancel/close handlers below are unchanged
-            // either way; this only changes which platform signals reach them.
-            closedby={hasClosedBySupport() ? resolveClosedBy(ctx.escapeDismissible) : undefined}
-            onCancel={(event) => {
-              // 'cancel' doesn't bubble in the DOM, but React still replays it up
-              // the *component* tree — so a nested <Sheet.Content> dialog's Esc
-              // reaches an ancestor sheet's onCancel too. Only react to the event
-              // when this dialog is the one that actually fired it.
-              if (event.target !== event.currentTarget) return;
-              event.preventDefault();
-              if (ctx.escapeDismissible) ctx.setOpen(false);
-            }}
-            onClose={(event) => {
-              // Same non-bubbling-but-tree-replayed quirk as onCancel above.
-              if (event.target !== event.currentTarget) return;
-              // The platform closed us directly (form method="dialog", etc.).
-              if (phaseRef.current !== "closing" && phaseRef.current !== "pre") {
-                overlayOpenRef.current = false;
-                restoreFocusFallback(previousFocusRef.current);
-                previousFocusRef.current = null;
-                ctx.setOpen(false);
-                setPhase("pre");
-                // This path never reaches the exit leg (the platform already
-                // removed the dialog — there is nothing left to animate), so
-                // the leg's own completion callback can't fire for it.
-                ctx.onOpenChangeComplete?.(false);
-              }
-            }}
-          >
-            {innerContent}
-          </dialog>
-        </>,
-        document.body,
-      );
-    }
-
     // Non-modal: Esc only closes when focus is inside the sheet (this handler
     // only ever fires for keydowns whose target is this subtree), and there's
     // no native cancel/close event to react to — every close path here is
@@ -1781,45 +1595,84 @@ export const Content = /* @__PURE__ */ React.forwardRef<HTMLDivElement, SheetCon
       }
     };
 
-    if (usePopover) {
-      return createPortal(
-        <>
-          {bottomChromeSentinel}
-          <div
-            // biome-ignore lint: popover is a valid global attribute (Baseline
-            // widely available); @types/react may lag behind the DOM spec.
-            popover="manual"
-            ref={setDialogRef}
-            {...sharedProps}
-            data-scrollsheet-modal="false"
-            role="dialog"
-            aria-modal="false"
-            onKeyDown={onNonModalKeyDown}
-          >
-            {innerContent}
-          </div>
-        </>,
-        document.body,
-      );
-    }
+    // One host element, three shapes. Modal: a `<dialog>` opened with
+    // showModal(). Non-modal: a `<div popover="manual">` (top layer,
+    // non-blocking) where the Popover API exists, else a non-modal `<dialog>`
+    // (`.show()`) — not promoted to the top layer, so subject to ancestor
+    // stacking-context/overflow clipping, an accepted narrower-compat
+    // tradeoff for that rare engine. The shared attribute set below is
+    // spread first so any per-shape attribute is a one-place edit.
+    const Host = (usePopover ? "div" : "dialog") as "dialog";
+    const hostProps: React.ComponentProps<"dialog"> & { "data-scrollsheet-modal"?: string } = nonModal
+      ? {
+          popover: usePopover ? "manual" : undefined,
+          "data-scrollsheet-modal": "false",
+          role: "dialog",
+          "aria-modal": "false",
+          onKeyDown: onNonModalKeyDown,
+        }
+      : {
+          // Feature-detected: unsupported engines (Safari as of mid-2026) get
+          // no attribute at all. Never "any" — see resolveClosedBy's doc
+          // comment for why. The cancel/close handlers below are unchanged
+          // either way; this only changes which platform signals reach them.
+          closedby: hasClosedBySupport() ? resolveClosedBy(ctx.escapeDismissible) : undefined,
+          onCancel: (event) => {
+            // 'cancel' doesn't bubble in the DOM, but React still replays it up
+            // the *component* tree — so a nested <Sheet.Content> dialog's Esc
+            // reaches an ancestor sheet's onCancel too. Only react to the event
+            // when this dialog is the one that actually fired it.
+            if (event.target !== event.currentTarget) return;
+            event.preventDefault();
+            if (ctx.escapeDismissible) ctx.setOpen(false);
+          },
+          onClose: (event) => {
+            // Same non-bubbling-but-tree-replayed quirk as onCancel above.
+            if (event.target !== event.currentTarget) return;
+            // The platform closed us directly (form method="dialog", etc.).
+            if (phaseRef.current !== "closing" && phaseRef.current !== "pre") {
+              overlayOpenRef.current = false;
+              restoreFocusFallback(previousFocusRef.current);
+              previousFocusRef.current = null;
+              ctx.setOpen(false);
+              setPhase("pre");
+              // This path never reaches the exit leg (the platform already
+              // removed the dialog — there is nothing left to animate), so
+              // the leg's own completion callback can't fire for it.
+              ctx.onOpenChangeComplete?.(false);
+            }
+          },
+        };
 
-    // Fallback for platforms with <dialog> but no Popover API: a non-modal
-    // dialog (`.show()`, not `.showModal()`) is not promoted to the top layer,
-    // so it's subject to normal stacking-context/overflow clipping from
-    // ancestors — an accepted, narrower-compat tradeoff for this rare case.
     return createPortal(
       <>
         {bottomChromeSentinel}
-        <dialog
+        <Host
           ref={setDialogRef}
-          {...sharedProps}
-          data-scrollsheet-modal="false"
-          role="dialog"
-          aria-modal="false"
-          onKeyDown={onNonModalKeyDown}
+          className="scrollsheet-dialog"
+          data-scrollsheet-state={phase}
+          data-scrollsheet-side={ctx.center ? "center" : ctx.side}
+          data-scrollsheet-sda={sda ? "" : undefined}
+          data-scrollsheet-scrollbar={ctx.scrollbar}
+          data-scrollsheet-handle-only={ctx.handleOnly ? "" : undefined}
+          data-scrollsheet-disable-drag={ctx.disableDrag ? "" : undefined}
+          data-scrollsheet-behind={childCount > 0 ? "" : undefined}
+          aria-labelledby={ctx.hasTitle ? ctx.titleId : undefined}
+          aria-describedby={ctx.hasDescription ? ctx.descriptionId : undefined}
+          aria-label={!ctx.hasTitle ? panelProps["aria-label"] : undefined}
+          // animationSpeed reaches the CSS-transitioned layers (backdrop, recede)
+          // through the same custom property core.css declares on this element.
+          style={
+            ctx.animationSpeed === 1
+              ? undefined
+              : ({
+                  "--scrollsheet-dur": `${Math.round(SHEET_SPRING.durationMs / ctx.animationSpeed)}ms`,
+                } as React.CSSProperties)
+          }
+          {...hostProps}
         >
           {innerContent}
-        </dialog>
+        </Host>
       </>,
       document.body,
     );

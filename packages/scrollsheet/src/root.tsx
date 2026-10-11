@@ -333,7 +333,9 @@ export function Root({
       open: () => setOpen(true),
       close: () => setOpen(false),
       snapTo: (detent) => {
-        if (!detents.includes(detent)) warnUnresolvableSnapToDetent();
+        if (process.env.NODE_ENV !== "production" && !detents.includes(detent)) {
+          warnUnresolvableSnapToDetent();
+        }
         setActiveDetent(detent);
       },
     }),
