@@ -468,7 +468,7 @@ export function ToasterShell({
   // coupling. Dismisses this Toaster's own newest dismissible toast across
   // every position, mirroring the old Sheet-backed Toaster's single `front`.
   useCloseWatcher({
-    present: toasts.length > 0,
+    present: toasts.some((t) => t.dismissible !== false),
     nonModal: true,
     escapeDismissible: true,
     onClose: () => {

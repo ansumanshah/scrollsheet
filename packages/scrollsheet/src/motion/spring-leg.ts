@@ -67,8 +67,14 @@ export function selectEnterExitCurve({
     return { curve: { easing: "ease-out", durationMs }, config };
   }
   if (velocity !== 0) {
-    const seeded = { ...config, velocity };
-    return { curve: spring(seeded), config: seeded };
+    // Generated at base speed and stretched: the curve is time-normalized,
+    // and spring() refuses anything that settles past its own ceiling,
+    // which a slowed (speed < ~0.25) leg would.
+    const base = spring({ ...SHEET_SPRING_CONFIG, velocity: velocity / speed });
+    return {
+      curve: { ...base, durationMs: Math.round(base.durationMs / speed) },
+      config: { ...config, velocity },
+    };
   }
   return { curve: speed === 1 ? SHEET_SPRING : { ...SHEET_SPRING, durationMs }, config };
 }
@@ -86,6 +92,9 @@ export function scaleDismissDuration(curve: SpringCurve, revealedFraction: numbe
   if (curve.durationMs <= 0 || revealedFraction >= REVEALED_FRACTION_SKIP) return curve;
   return {
     ...curve,
-    durationMs: Math.max(MIN_DISMISS_DURATION_MS, Math.round(curve.durationMs * revealedFraction)),
+    durationMs: Math.max(
+      Math.min(MIN_DISMISS_DURATION_MS, curve.durationMs),
+      Math.round(curve.durationMs * revealedFraction),
+    ),
   };
 }

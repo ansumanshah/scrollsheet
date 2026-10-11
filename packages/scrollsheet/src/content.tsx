@@ -1136,15 +1136,16 @@ export const Content = /* @__PURE__ */ React.forwardRef<HTMLDivElement, SheetCon
       // injectStyles() call (in the open-sequence effect above, well before
       // this one) have had every chance to take effect — no raf needed on
       // top of that, a plain effect already runs after React's paint.
-      // --scrollsheet-dur is set unconditionally on every .scrollsheet-dialog
-      // rule in core.css, so an empty read means the stylesheet never loaded,
-      // not a themed override shadowing it. Unset is exactly "" per the
+      // --scrollsheet-ease is set unconditionally on every .scrollsheet-dialog
+      // rule in core.css (and never inline, unlike -dur under animationSpeed),
+      // so an empty read means the stylesheet never loaded, not a themed
+      // override shadowing it. Unset is exactly "" per the
       // CSSOM custom-property spec (a set-but-unusual value would still come
       // back non-empty, leading space and all), so no .trim() is needed.
       if (
         process.env.NODE_ENV !== "production" &&
         dialogRef.current &&
-        !getComputedStyle(dialogRef.current).getPropertyValue("--scrollsheet-dur")
+        !getComputedStyle(dialogRef.current).getPropertyValue("--scrollsheet-ease")
       ) {
         warnCoreStylesMissing();
       }
@@ -1488,7 +1489,9 @@ export const Content = /* @__PURE__ */ React.forwardRef<HTMLDivElement, SheetCon
     });
 
     useCloseWatcher({
-      present,
+      // ctx.open, not just present: the exit leg keeps present true, and a
+      // watcher armed then would swallow the next back gesture.
+      present: present && ctx.open,
       nonModal,
       escapeDismissible: ctx.escapeDismissible,
       onClose: () => ctx.setOpen(false),

@@ -87,6 +87,24 @@ describe("animationSpeed", () => {
     }
   });
 
+  test("a velocity-seeded leg at a slow speed does not throw and stretches the base curve", () => {
+    // spring() refuses a curve that settles past its ceiling; building the
+    // seeded one at base speed and stretching it keeps slow-motion legal.
+    for (const speed of [0.2, 0.1]) {
+      const { curve, config } = selectEnterExitCurve({ ...base, velocity: 2, speed });
+      expect(curve.easing).toStartWith("linear(");
+      expect(curve.durationMs).toBeGreaterThan(SHEET_SPRING.durationMs * 1.5);
+      expect(config.velocity).toBe(2);
+    }
+  });
+
+  test("sampleSpringAt has no 2s ceiling, so a slowed leg interrupted late reads true values", () => {
+    const slow = scaleSheetSpring(0.1);
+    const a = sampleSpringAt(slow, 3000);
+    const b = sampleSpringAt(SHEET_SPRING_CONFIG, 300);
+    expect(a.value).toBeCloseTo(b.value, 6);
+  });
+
   test("the ease-out fallback scales too", () => {
     const { curve } = selectEnterExitCurve({ ...base, linearEasing: false, speed: 0.5 });
     expect(curve.durationMs).toBe(SHEET_SPRING.durationMs * 2);
@@ -117,6 +135,10 @@ describe("scaleDismissDuration", () => {
 
   test("skips near-fully-revealed sheets", () => {
     expect(scaleDismissDuration(curve, 0.99)).toBe(curve);
+  });
+
+  test("the floor never exceeds the curve itself (fast speeds)", () => {
+    expect(scaleDismissDuration({ easing: "linear", durationMs: 48 }, 0.5).durationMs).toBe(48);
   });
 
   test("no-op on an instant curve", () => {
