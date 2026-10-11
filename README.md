@@ -2,6 +2,13 @@
 
 Bottom sheets for React that feel native. Because they are.
 
+[![npm](https://img.shields.io/npm/v/scrollsheet?color=111)](https://www.npmjs.com/package/scrollsheet)
+[![CI](https://img.shields.io/github/actions/workflow/status/ansumanshah/scrollsheet/ci.yml?branch=main&label=CI)](https://github.com/ansumanshah/scrollsheet/actions/workflows/ci.yml)
+[![dependencies: 0](https://img.shields.io/badge/dependencies-0-brightgreen)](https://www.npmjs.com/package/scrollsheet?activeTab=dependencies)
+[![license: MIT](https://img.shields.io/npm/l/scrollsheet?color=111)](LICENSE)
+
+**[Live demos & docs](https://scrollsheet.dev)** · **[Migrate from vaul](https://scrollsheet.dev/docs/migrating/from-vaul)** · **[Migrate from Sonner](https://scrollsheet.dev/docs/migrating/from-sonner)**
+
 <img src="docs/public/hero.gif" width="290" align="right" alt="A bottom sheet dragged between detents 1:1 and flick-dismissed, rendered in a native dialog">
 
 One primitive for bottom sheets, drawers, modal dialogs, side panels, and toasts. A real `<dialog>` in the top layer. The browser's own scroll engine for gestures. Spring physics compiled to CSS `linear()`. <!--size:index.gzip:1-->16.9<!--/size--> kB gzipped, <!--size:index.brotli:1-->15.1<!--/size--> kB brotli, plus a 3.9 kB stylesheet. React 18+.
@@ -147,5 +154,7 @@ bun run verify     # the full gate
 ```
 
 See [CONTRIBUTING.md](https://github.com/ansumanshah/scrollsheet/blob/main/CONTRIBUTING.md) and the [CHANGELOG](https://github.com/ansumanshah/scrollsheet/blob/main/CHANGELOG.md).
+
+If scrollsheet saves you a pointer-event bug, a star on GitHub is the cheapest way to help other people find it.
 
 MIT © [Ansuman Shah](https://github.com/ansumanshah)
