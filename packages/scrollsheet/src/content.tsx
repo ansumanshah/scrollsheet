@@ -1112,6 +1112,20 @@ export const Content = /* @__PURE__ */ React.forwardRef<HTMLDivElement, SheetCon
       };
     }, [present, ctx.center, ctx.side, settle, updateTravel]);
 
+    // ── Detents changed while open ───────────────────────────────────────────
+    // measure() otherwise only runs on open, resize, keyboard, and morph, so
+    // a detents list swapped while open (data arriving, a wizard step) kept
+    // the old snap stops and resolved activeDetent against them. Keyed on a
+    // value signature, not identity: inline arrays are new every render.
+    const detentsKey = `${ctx.detents.join("|")}/${ctx.largestUndimmedDetent ?? ""}`;
+    const measuredDetentsKeyRef = React.useRef(detentsKey);
+    React.useEffect(() => {
+      if (phase !== "open" || measuredDetentsKeyRef.current === detentsKey) return;
+      measuredDetentsKeyRef.current = detentsKey;
+      measure();
+      updateTravel();
+    }, [detentsKey, phase, measure, updateTravel]);
+
     // ── Programmatic detent travel ───────────────────────────────────────────
     React.useEffect(() => {
       if (phase !== "open") return;
@@ -1152,7 +1166,9 @@ export const Content = /* @__PURE__ */ React.forwardRef<HTMLDivElement, SheetCon
       if (!tweenActiveRef.current && Math.abs(track[geometry.scrollProp] - rawTarget) <= 2) return;
       animRef.current?.cancel();
       startTween(track, rawTarget, geometry.axis);
-    }, [ctx.activeDetent, phase, resolveSpec, startTween]);
+      // detentsKey: the measure above can move the active detent's resting
+      // height without activeDetent itself changing.
+    }, [ctx.activeDetent, detentsKey, phase, resolveSpec, startTween]);
 
     const morphMod = contentMorph.useFeature(true);
     const morphProps: UseContentMorphInput = {
