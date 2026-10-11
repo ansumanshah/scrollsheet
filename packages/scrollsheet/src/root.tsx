@@ -51,7 +51,9 @@ export interface SheetRootProps {
   /**
    * The stops the sheet can rest at, UISheetPresentationController-style.
    * `'content'` (natural height), `'medium'` (50%), `'full'`, a 0–1 fraction,
-   * or `'320px'`.
+   * or `'320px'`. List them shortest first: the sheet sorts by height, but
+   * `<Sheet.Handle>`'s click cycle, arrow keys, and slider value follow
+   * this array's order.
    * @default ['content']
    */
   detents?: readonly DetentSpec[];
