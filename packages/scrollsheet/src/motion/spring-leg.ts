@@ -26,11 +26,40 @@ export interface CurveSelectionInput {
   noTravel: boolean;
   /** `env().linearEasing` — false on Safari 15.4-17.1. */
   linearEasing: boolean;
+  /** `animationSpeed` time multiplier (2 = twice as fast); 1 when omitted. */
+  speed?: number;
 }
 
 export interface CurveSelection {
   curve: SpringCurve;
   config: SpringConfig;
+}
+
+/**
+ * The sheet spring played `speed` times faster. Scaling time by `s` is
+ * stiffness * s^2 and damping * s at the same mass: the damping ratio (the
+ * curve's shape) is unchanged and only the clock runs faster, so the
+ * prebuilt SHEET_SPRING easing still describes it at durationMs / s, and
+ * stop()'s re-simulation from this config lands on the same curve.
+ */
+export function scaleSheetSpring(speed: number): SpringConfig {
+  return speed === 1 ? SHEET_SPRING_CONFIG : timeScaleSpring(SHEET_SPRING_CONFIG, speed);
+}
+
+/**
+ * `config` played `k` times faster (k > 1) or slower: stiffness * k^2,
+ * damping * k, velocity * k at the same mass. Keeps the damping ratio, so a
+ * curve generated from the original and played over durationMs / k is
+ * exactly this config's trajectory, which is what stop() re-simulates.
+ */
+export function timeScaleSpring(config: SpringConfig, k: number): SpringConfig {
+  const { stiffness = 260, damping = 30 } = config;
+  return {
+    ...config,
+    stiffness: stiffness * k * k,
+    damping: damping * k,
+    ...(config.velocity !== undefined ? { velocity: config.velocity * k } : {}),
+  };
 }
 
 /** Instant / plain ease-out / velocity-seeded / default spring, in that precedence order. */
@@ -41,21 +70,27 @@ export function selectEnterExitCurve({
   reduced,
   noTravel,
   linearEasing,
+  speed = 1,
 }: CurveSelectionInput): CurveSelection {
+  const config = scaleSheetSpring(speed);
+  const durationMs = Math.round(SHEET_SPRING.durationMs / speed);
   if (reduced || noTravel || Math.abs(to - from) < 1e-3) {
-    return { curve: { easing: "linear", durationMs: 0 }, config: SHEET_SPRING_CONFIG };
+    return { curve: { easing: "linear", durationMs: 0 }, config };
   }
   if (!linearEasing) {
-    return {
-      curve: { easing: "ease-out", durationMs: SHEET_SPRING.durationMs },
-      config: SHEET_SPRING_CONFIG,
-    };
+    return { curve: { easing: "ease-out", durationMs }, config };
   }
   if (velocity !== 0) {
-    const config = { ...SHEET_SPRING_CONFIG, velocity };
-    return { curve: spring(config), config };
+    // Generated at base speed and stretched: the curve is time-normalized,
+    // and spring() refuses anything that settles past its own ceiling,
+    // which a slowed (speed < ~0.25) leg would.
+    const base = spring({ ...SHEET_SPRING_CONFIG, velocity: velocity / speed });
+    return {
+      curve: { ...base, durationMs: Math.round(base.durationMs / speed) },
+      config: { ...config, velocity },
+    };
   }
-  return { curve: SHEET_SPRING, config: SHEET_SPRING_CONFIG };
+  return { curve: speed === 1 ? SHEET_SPRING : { ...SHEET_SPRING, durationMs }, config };
 }
 
 const MIN_DISMISS_DURATION_MS = 140;
@@ -71,6 +106,9 @@ export function scaleDismissDuration(curve: SpringCurve, revealedFraction: numbe
   if (curve.durationMs <= 0 || revealedFraction >= REVEALED_FRACTION_SKIP) return curve;
   return {
     ...curve,
-    durationMs: Math.max(MIN_DISMISS_DURATION_MS, Math.round(curve.durationMs * revealedFraction)),
+    durationMs: Math.max(
+      Math.min(MIN_DISMISS_DURATION_MS, curve.durationMs),
+      Math.round(curve.durationMs * revealedFraction),
+    ),
   };
 }

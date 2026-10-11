@@ -51,7 +51,9 @@ export interface SheetRootProps {
   /**
    * The stops the sheet can rest at, UISheetPresentationController-style.
    * `'content'` (natural height), `'medium'` (50%), `'full'`, a 0–1 fraction,
-   * or `'320px'`.
+   * or `'320px'`. List them shortest first: the sheet sorts by height, but
+   * `<Sheet.Handle>`'s click cycle, arrow keys, and slider value follow
+   * this array's order.
    * @default ['content']
    */
   detents?: readonly DetentSpec[];
@@ -229,6 +231,18 @@ export interface SheetRootProps {
    */
   keyboardExpands?: boolean;
   /**
+   * Plays every sheet animation this many times faster: the open/close
+   * spring, programmatic detent travel (Handle, `snapTo`, controlled
+   * `activeDetent`), the content-height morph, and the backdrop/recede/
+   * `backgroundEffect` transitions. `2` halves every duration, `0.5`
+   * doubles it. The spring keeps its shape (same damping ratio, no added
+   * overshoot); only its clock changes. Finger-driven travel is unaffected,
+   * and `prefers-reduced-motion` still wins. Non-finite or non-positive
+   * values fall back to 1.
+   * @default 1
+   */
+  animationSpeed?: number;
+  /**
    * Fires once a drag session resolves, with the real pointer event (the
    * `buttons===0` recovery path may pass the triggering `pointermove`
    * instead of a `pointerup`) and whether the sheet is staying open —
@@ -298,6 +312,7 @@ export function Root({
   closeThreshold = 0.5,
   phantomScrollGuard = true,
   keyboardExpands = false,
+  animationSpeed: animationSpeedProp = 1,
   onRelease,
 }: SheetRootProps) {
   const [open, setOpen] = useControllableState<boolean>({
@@ -349,6 +364,8 @@ export function Root({
   // 4-side geometry union never widens — see SheetContextValue.center.
   const center = effectiveSide === "center";
   const resolvedSide: Side = center ? "bottom" : effectiveSide;
+  const animationSpeed =
+    Number.isFinite(animationSpeedProp) && animationSpeedProp > 0 ? animationSpeedProp : 1;
 
   const value = React.useMemo(
     () => ({
@@ -381,6 +398,7 @@ export function Root({
       closeThreshold,
       phantomScrollGuard,
       keyboardExpands,
+      animationSpeed,
       onRelease,
       canvasEl,
       setCanvasEl,
@@ -418,6 +436,7 @@ export function Root({
       closeThreshold,
       phantomScrollGuard,
       keyboardExpands,
+      animationSpeed,
       onRelease,
       canvasEl,
       reactId,

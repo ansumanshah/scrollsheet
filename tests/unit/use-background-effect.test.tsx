@@ -4,6 +4,7 @@ import { afterAll, afterEach, beforeAll, describe, expect, test } from "bun:test
 import * as React from "react";
 import type * as ReactDOMClient from "react-dom/client";
 
+import type { SheetContextValue } from "../../packages/scrollsheet/src/context";
 import {
   useBackgroundEffect,
   type UseBackgroundEffectInput,
@@ -58,8 +59,13 @@ function appendNode(el: HTMLElement): HTMLElement {
   return el;
 }
 
-function Harness(props: UseBackgroundEffectInput) {
-  useBackgroundEffect(props);
+const DEFAULT_CTX = { current: { animationSpeed: 1 } as SheetContextValue };
+
+function Harness(
+  props: Omit<UseBackgroundEffectInput, "ctxRef"> &
+    Partial<Pick<UseBackgroundEffectInput, "ctxRef">>,
+) {
+  useBackgroundEffect({ ctxRef: DEFAULT_CTX, ...props });
   return null;
 }
 

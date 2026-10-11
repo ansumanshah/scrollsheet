@@ -174,4 +174,19 @@ describe("useCloseWatcher — CloseWatcher stubbed in", () => {
     expect(FakeCloseWatcher.instances.length).toBe(2);
     expect(FakeCloseWatcher.instances[1]?.destroyed).toBe(false);
   });
+
+  test("re-arms after a close while still present — a close request is one-shot per spec", async () => {
+    (globalThis.window as Record<string, unknown>).CloseWatcher = FakeCloseWatcher;
+    let calls = 0;
+    await mount(<Harness present nonModal escapeDismissible onClose={() => (calls += 1)} />);
+    const first = FakeCloseWatcher.instances.at(-1);
+    await React.act(async () => first?.close());
+    // The owner refused or had more to dismiss: the next back gesture must
+    // still land on a live watcher instead of navigating the page.
+    const second = FakeCloseWatcher.instances.at(-1);
+    expect(second).not.toBe(first);
+    expect(second?.destroyed).toBe(false);
+    await React.act(async () => second?.close());
+    expect(calls).toBe(2);
+  });
 });

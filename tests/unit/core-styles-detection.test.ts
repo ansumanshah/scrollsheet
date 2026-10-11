@@ -26,6 +26,10 @@ function readDur(el: Element): string {
   return getComputedStyle(el).getPropertyValue("--scrollsheet-dur").trim();
 }
 
+function readEase(el: Element): string {
+  return getComputedStyle(el).getPropertyValue("--scrollsheet-ease").trim();
+}
+
 describe("core stylesheet detection", () => {
   test("resolves empty before injectStyles runs, non-empty once it has", () => {
     const dialog = document.createElement("div");
@@ -35,6 +39,21 @@ describe("core stylesheet detection", () => {
       expect(readDur(dialog)).toBe("");
       injectStyles();
       expect(readDur(dialog)).not.toBe("");
+    } finally {
+      dialog.remove();
+    }
+  });
+
+  test("animationSpeed's inline --scrollsheet-dur cannot mask a missing stylesheet; --scrollsheet-ease still can't be inline", () => {
+    // content.tsx probes -ease because animationSpeed sets -dur inline on
+    // the dialog, which would make a -dur probe read non-empty with no CSS.
+    const dialog = document.createElement("div");
+    dialog.className = "scrollsheet-dialog-probe";
+    dialog.style.setProperty("--scrollsheet-dur", "237ms");
+    document.body.appendChild(dialog);
+    try {
+      expect(readDur(dialog)).toBe("237ms");
+      expect(readEase(dialog)).toBe("");
     } finally {
       dialog.remove();
     }

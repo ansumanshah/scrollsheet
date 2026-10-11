@@ -187,6 +187,43 @@ describe("toast.getToasts() / toast.getHistory() (fix 9)", () => {
 });
 
 describe("toast.promise", () => {
+  async function flush() {
+    for (let i = 0; i < 6; i += 1) await Promise.resolve();
+  }
+
+  test("no `loading` means no loading toast, matching Sonner", async () => {
+    let resolvePromise!: (value: string) => void;
+    const p = new Promise<string>((resolve) => {
+      resolvePromise = resolve;
+    });
+    const id = toast.promise(p, { success: "Saved", position: "top-center" });
+    expect(_getSonnerSnapshotForTests()).toHaveLength(0);
+    resolvePromise("ok");
+    await flush();
+    const snapshot = _getSonnerSnapshotForTests();
+    expect(snapshot).toHaveLength(1);
+    // The call's own options still reach the settled toast.
+    expect(snapshot[0]).toMatchObject({
+      id: Number(id),
+      type: "success",
+      title: "Saved",
+      position: "top-center",
+    });
+  });
+
+  test("a resolve with no `success` handler dismisses the loading toast instead of inventing a title", async () => {
+    toast.promise(Promise.resolve(1), { loading: "Saving", error: "Failed" });
+    expect(_getSonnerSnapshotForTests()).toHaveLength(1);
+    await flush();
+    expect(_getSonnerSnapshotForTests()).toHaveLength(0);
+  });
+
+  test("a rejection with no `error` handler dismisses the loading toast", async () => {
+    toast.promise(Promise.reject(new Error("x")), { loading: "Saving", success: "Saved" });
+    await flush();
+    expect(_getSonnerSnapshotForTests()).toHaveLength(0);
+  });
+
   test("shows loading immediately, then resolves to success in place (same id)", async () => {
     let resolvePromise!: (value: string) => void;
     const p = new Promise<string>((resolve) => {

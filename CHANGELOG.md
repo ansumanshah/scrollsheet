@@ -2,6 +2,16 @@
 
 All notable changes to this project are documented here.
 
+## 1.2.0 - 2026-10-11
+
+- **`animationSpeed` on `Sheet.Root` makes every sheet animation faster or slower** ([#1](https://github.com/ansumanshah/scrollsheet/issues/1)). `2` halves every duration and `0.5` doubles it: the open/close spring, programmatic detent travel, the content-height morph, and the backdrop, recede, and `backgroundEffect` transitions. The spring keeps its shape (same damping ratio, no added overshoot), and an interrupted leg still hands its velocity to the next one. Finger-driven travel is unaffected and `prefers-reduced-motion` still wins. `Drawer.Root` and `Dialog.Root` forward it.
+- **Fixed: `backgroundEffect` snapped instead of easing with the sheet.** The page wrapper sits outside the dialog, so the `--scrollsheet-dur` and `--scrollsheet-ease` variables its transition referenced had no value there, which voided the whole declaration. It now carries literal spring timing.
+- **Fixed: changing `detents` (or vaul `snapPoints`) while a sheet was open had no effect.** The snap stops kept the old list and a new `activeDetent` resolved against it. The sheet now re-measures and moves to the new stop.
+- **Fixed: the second Android back gesture navigated away** when a Toaster still had toasts left, or when a controlled non-modal sheet refused the first close. A close watcher only fires once; it now re-arms.
+- **Toast fixes for Sonner parity.** Escape in the toast region no longer dismisses a `dismissible: false` toast. `toast.promise` shows no loading toast when `loading` is omitted, and dismisses instead of showing a made-up "Success" or "Error" toast when the settled branch has no handler. `toastOptions.className` on the Toaster now reaches every toast.
+- Fixed: `Sheet.Handle` announced a numeric pixel detent such as `320` as "32000%".
+- The `Sheet` entry grows from 16.9 to 17.4 kB gzip for all of the above.
+
 ## 1.1.0 - 2026-08-17
 
 - **The default import dropped from 18.0 to 16.9 kB gzip.** A pay-for-what-you-use pass moved three optional systems out of the initial graph: the keyboard engine loads on the first editable focus, so a sheet with no inputs never fetches it; the `desktopSide` re-present system ships only to Roots that configure it; and the content-height morph defers off the critical path. No API changed, and each system behaves as it always did once loaded. If one of those chunk fetches fails, that single system stays off (no keyboard inset tracking, no morph spring) and the sheet keeps working, the same degradation `themeColorDimming` and the no-`<dialog>` fallback already use.

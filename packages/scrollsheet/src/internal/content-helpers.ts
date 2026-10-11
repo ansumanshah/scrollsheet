@@ -5,6 +5,8 @@ import {
   mapScroll,
   recedeTransform,
 } from "../motion/geometry";
+import { SHEET_SPRING } from "../motion/spring";
+import { env } from "./env";
 
 export type Phase = "pre" | "opening" | "open" | "closing";
 
@@ -313,6 +315,19 @@ export function applyRecede(
 }
 
 /**
+ * The sheet spring as a literal `transition` value, `speed` times faster.
+ * The page wrapper backgroundEffect drives sits outside the dialog, where
+ * core.css's --scrollsheet-dur/--scrollsheet-ease never inherit, and a
+ * var() with no value invalidates the whole declaration: a 0s snap.
+ */
+export function springTransition(speed: number, ...props: string[]): string {
+  const timing = `${Math.round(SHEET_SPRING.durationMs / speed)}ms ${
+    env().linearEasing ? SHEET_SPRING.easing : "ease-out"
+  }`;
+  return props.map((prop) => `${prop} ${timing}`).join(", ");
+}
+
+/**
  * Direct style write applying the background-effect card look to the page
  * wrapper marked `data-scrollsheet-background`, for this sheet's own travel
  * progress (0–1). `translateY` for `'scale'` is expressed via `env()`
@@ -324,11 +339,10 @@ export function applyBackgroundEffect(
   effect: "scale" | "parallax",
   progress: number,
   live: boolean,
+  speed = 1,
 ): void {
   const clamped = clamp01(progress);
-  el.style.transition = live
-    ? "none"
-    : "transform var(--scrollsheet-dur) var(--scrollsheet-ease), border-radius var(--scrollsheet-dur) var(--scrollsheet-ease)";
+  el.style.transition = live ? "none" : springTransition(speed, "transform", "border-radius");
   if (effect === "scale") {
     const scale = 1 - clamped * BACKGROUND_SCALE_DELTA;
     el.style.transformOrigin = "50% 0%";

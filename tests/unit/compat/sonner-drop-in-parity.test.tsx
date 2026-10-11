@@ -649,3 +649,51 @@ describe("testId and closeButtonAriaLabel (fix 10)", () => {
     );
   });
 });
+
+describe("Escape and toastOptions.className", () => {
+  test("Escape in the region never dismisses a dismissible: false toast", async () => {
+    await mount(<Toaster />);
+    await React.act(async () => {
+      toast("Locked", { dismissible: false, duration: 60_000 });
+    });
+    const ol = document.querySelector<HTMLElement>("[data-scrollsheet-toaster]");
+    ol?.focus();
+    await React.act(async () => {
+      ol?.dispatchEvent(
+        new KeyboardEvent("keydown", { key: "Escape", code: "Escape", bubbles: true }),
+      );
+    });
+    await React.act(() => sleep(500));
+    expect(document.querySelectorAll(".scrollsheet-toast")).toHaveLength(1);
+  });
+
+  test("Escape skips a locked front toast and dismisses the newest dismissible one", async () => {
+    await mount(<Toaster />);
+    await React.act(async () => {
+      toast("Open", { duration: 60_000 });
+      toast("Locked", { dismissible: false, duration: 60_000 });
+    });
+    const ol = document.querySelector<HTMLElement>("[data-scrollsheet-toaster]");
+    ol?.focus();
+    await React.act(async () => {
+      ol?.dispatchEvent(
+        new KeyboardEvent("keydown", { key: "Escape", code: "Escape", bubbles: true }),
+      );
+    });
+    await React.act(() => sleep(500));
+    const titles = [...document.querySelectorAll(".scrollsheet-toast-title")].map(
+      (el) => el.textContent,
+    );
+    expect(titles).toEqual(["Locked"]);
+  });
+
+  test("toastOptions.className lands on every row, under the toast's own className", async () => {
+    await mount(<Toaster toastOptions={{ className: "base-toast" }} />);
+    await React.act(async () => {
+      toast("Hi", { className: "own-toast", duration: 60_000 });
+    });
+    const el = row();
+    expect(el.classList.contains("base-toast")).toBe(true);
+    expect(el.className.indexOf("base-toast")).toBeLessThan(el.className.indexOf("own-toast"));
+  });
+});

@@ -56,6 +56,7 @@ import { geometryFor, mapScroll } from "./motion/geometry";
 import { type ScrollAnimation, animateScrollTo } from "./motion/scroll-animator";
 import { isAtScrollBoundary } from "./motion/scroll-handoff";
 import { syncSnapStops as syncSnapStopsImpl } from "./motion/snap-stops";
+import { SHEET_SPRING } from "./motion/spring";
 import { useDragEngine } from "./internal/use-drag-engine";
 import { useEnterExitLeg } from "./internal/use-enter-exit-leg";
 import { presentationFlip } from "./internal/presentation-flip-loader";
@@ -673,7 +674,13 @@ export const Content = /* @__PURE__ */ React.forwardRef<HTMLDivElement, SheetCon
       const bgTarget = backgroundTargetRef.current;
       const effect = resolveBackgroundEffect();
       if (bgTarget && effect) {
-        applyBackgroundEffect(bgTarget, effect, travelProgress, phaseRef.current === "open");
+        applyBackgroundEffect(
+          bgTarget,
+          effect,
+          travelProgress,
+          phaseRef.current === "open",
+          ctxRef.current.animationSpeed,
+        );
         backgroundAppliedRef.current = effect;
       } else if (bgTarget && backgroundAppliedRef.current) {
         // The rule stopped qualifying while the sheet stayed open — a rotation
@@ -682,7 +689,13 @@ export const Content = /* @__PURE__ */ React.forwardRef<HTMLDivElement, SheetCon
         // back to rest with the effect that was actually applied; skipping the
         // branch instead would freeze it at its last qualifying frame for the
         // rest of the session.
-        applyBackgroundEffect(bgTarget, backgroundAppliedRef.current, 0, false);
+        applyBackgroundEffect(
+          bgTarget,
+          backgroundAppliedRef.current,
+          0,
+          false,
+          ctxRef.current.animationSpeed,
+        );
         backgroundAppliedRef.current = null;
       }
     }, []);
@@ -703,7 +716,8 @@ export const Content = /* @__PURE__ */ React.forwardRef<HTMLDivElement, SheetCon
         axis: "x" | "y",
         suspendSnap = false,
       ): ScrollAnimation => {
-        const animation = animateScrollTo(track, target, TRAVEL_MS, axis, suspendSnap);
+        const durationMs = TRAVEL_MS / ctxRef.current.animationSpeed;
+        const animation = animateScrollTo(track, target, durationMs, axis, suspendSnap);
         animRef.current = animation;
         tweenActiveRef.current = true;
         let cleared = false;
@@ -717,7 +731,7 @@ export const Content = /* @__PURE__ */ React.forwardRef<HTMLDivElement, SheetCon
           tweenActiveRef.current = false;
         };
         animation.finished.finally(clear);
-        setTimeout(clear, TRAVEL_MS + 100);
+        setTimeout(clear, durationMs + 100);
         return animation;
       },
       [],
@@ -978,6 +992,7 @@ export const Content = /* @__PURE__ */ React.forwardRef<HTMLDivElement, SheetCon
       backgroundRef: ctx.backgroundRef,
       backgroundTargetRef,
       backgroundAppliedRef,
+      ctxRef,
     });
 
     // ── Input attribution latch ──────────────────────────────────────────────
@@ -1097,6 +1112,20 @@ export const Content = /* @__PURE__ */ React.forwardRef<HTMLDivElement, SheetCon
       };
     }, [present, ctx.center, ctx.side, settle, updateTravel]);
 
+    // ── Detents changed while open ───────────────────────────────────────────
+    // measure() otherwise only runs on open, resize, keyboard, and morph, so
+    // a detents list swapped while open (data arriving, a wizard step) kept
+    // the old snap stops and resolved activeDetent against them. Keyed on a
+    // value signature, not identity: inline arrays are new every render.
+    const detentsKey = `${ctx.detents.join("|")}/${ctx.largestUndimmedDetent ?? ""}`;
+    const measuredDetentsKeyRef = React.useRef(detentsKey);
+    React.useEffect(() => {
+      if (phase !== "open" || measuredDetentsKeyRef.current === detentsKey) return;
+      measuredDetentsKeyRef.current = detentsKey;
+      measure();
+      updateTravel();
+    }, [detentsKey, phase, measure, updateTravel]);
+
     // ── Programmatic detent travel ───────────────────────────────────────────
     React.useEffect(() => {
       if (phase !== "open") return;
@@ -1107,15 +1136,16 @@ export const Content = /* @__PURE__ */ React.forwardRef<HTMLDivElement, SheetCon
       // injectStyles() call (in the open-sequence effect above, well before
       // this one) have had every chance to take effect — no raf needed on
       // top of that, a plain effect already runs after React's paint.
-      // --scrollsheet-dur is set unconditionally on every .scrollsheet-dialog
-      // rule in core.css, so an empty read means the stylesheet never loaded,
-      // not a themed override shadowing it. Unset is exactly "" per the
+      // --scrollsheet-ease is set unconditionally on every .scrollsheet-dialog
+      // rule in core.css (and never inline, unlike -dur under animationSpeed),
+      // so an empty read means the stylesheet never loaded, not a themed
+      // override shadowing it. Unset is exactly "" per the
       // CSSOM custom-property spec (a set-but-unusual value would still come
       // back non-empty, leading space and all), so no .trim() is needed.
       if (
         process.env.NODE_ENV !== "production" &&
         dialogRef.current &&
-        !getComputedStyle(dialogRef.current).getPropertyValue("--scrollsheet-dur")
+        !getComputedStyle(dialogRef.current).getPropertyValue("--scrollsheet-ease")
       ) {
         warnCoreStylesMissing();
       }
@@ -1137,7 +1167,9 @@ export const Content = /* @__PURE__ */ React.forwardRef<HTMLDivElement, SheetCon
       if (!tweenActiveRef.current && Math.abs(track[geometry.scrollProp] - rawTarget) <= 2) return;
       animRef.current?.cancel();
       startTween(track, rawTarget, geometry.axis);
-    }, [ctx.activeDetent, phase, resolveSpec, startTween]);
+      // detentsKey: the measure above can move the active detent's resting
+      // height without activeDetent itself changing.
+    }, [ctx.activeDetent, detentsKey, phase, resolveSpec, startTween]);
 
     const morphMod = contentMorph.useFeature(true);
     const morphProps: UseContentMorphInput = {
@@ -1457,7 +1489,9 @@ export const Content = /* @__PURE__ */ React.forwardRef<HTMLDivElement, SheetCon
     });
 
     useCloseWatcher({
-      present,
+      // ctx.open, not just present: the exit leg keeps present true, and a
+      // watcher armed then would swallow the next back gesture.
+      present: present && ctx.open,
       nonModal,
       escapeDismissible: ctx.escapeDismissible,
       onClose: () => ctx.setOpen(false),
@@ -1669,6 +1703,14 @@ export const Content = /* @__PURE__ */ React.forwardRef<HTMLDivElement, SheetCon
       "aria-labelledby": ctx.hasTitle ? ctx.titleId : undefined,
       "aria-describedby": ctx.hasDescription ? ctx.descriptionId : undefined,
       "aria-label": !ctx.hasTitle ? panelProps["aria-label"] : undefined,
+      // animationSpeed reaches the CSS-transitioned layers (backdrop, recede)
+      // through the same custom property core.css declares on this element.
+      style:
+        ctx.animationSpeed === 1
+          ? undefined
+          : ({
+              "--scrollsheet-dur": `${Math.round(SHEET_SPRING.durationMs / ctx.animationSpeed)}ms`,
+            } as React.CSSProperties),
     } as const;
 
     if (!nonModal) {

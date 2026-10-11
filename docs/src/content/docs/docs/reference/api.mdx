@@ -90,10 +90,17 @@ with `desktopSide`; set alone it warns once in dev. See
 | `onTravel` | `(revealedPx: number, progress: number, info: TravelInfo) => void` | |
 | `onRelease` | `(event: PointerEvent, willRemainOpen: boolean) => void` | |
 | `keyboardExpands` | `boolean` | `false` |
+| `animationSpeed` | `number` | `1` |
 | `nonce` | `string` | |
 | `themeColorDimming` | `boolean` | `false` |
 
 </div>
+
+`animationSpeed` multiplies how fast every sheet animation plays: the open/close spring,
+programmatic detent travel, the content-height morph, and the backdrop, recede, and
+`backgroundEffect` transitions. `2` halves every duration and `0.5` doubles it. The spring keeps
+its shape, so a faster sheet adds no overshoot. Finger-driven travel is unaffected and
+`prefers-reduced-motion` still wins. `Drawer.Root` and `Dialog.Root` forward it.
 
 ## Sheet.Content styling hooks
 
@@ -155,7 +162,7 @@ with `desktopSide`; set alone it warns once in dev. See
 | --- | --- |
 | `Sheet.Content` | `<div>`, the `<dialog>`, backdrop, scroll track, and panel together. `aria-label` sets the accessible name when there's no `Sheet.Title`. `fill` stretches the body to the panel for full-height inner-scroll layouts (see [Full-height content](/docs/scrolling-and-keyboard/keyboard#full-height-content)) |
 | `Sheet.Trigger` | `<button>`, opens on click. `asChild` renders your own element instead |
-| `Sheet.Handle` | `<button>`, drag grip; arrows/Home/End move detents, announces as a slider with 2+ detents. `asChild` supported |
+| `Sheet.Handle` | `<button>`, drag grip; arrows/Home/End move detents, announces as a slider with 2+ detents. Order follows the `detents` array, so list shortest first. `asChild` supported |
 | `Sheet.Title` / `Sheet.Description` | `<h2>` / `<p>`, auto-wires `aria-labelledby` / `aria-describedby` |
 | `Sheet.Close` | `<button>`, closes on click. `asChild` supported |
 | `DetentSpec` | `'full' \| 'medium' \| 'content' \| number \| ${number}px` |

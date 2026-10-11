@@ -29,7 +29,8 @@ function detentLabel(spec: DetentSpec | undefined): string {
   if (spec === "full") return "Full";
   if (spec === "medium") return "Half";
   if (spec === "content") return "Fit content";
-  if (typeof spec === "number") return `${Math.round(spec * 100)}%`;
+  // Numbers above 1 resolve as px (detents.ts), not as a fraction.
+  if (typeof spec === "number") return spec > 1 ? `${spec}px` : `${Math.round(spec * 100)}%`;
   return spec ?? "";
 }
 

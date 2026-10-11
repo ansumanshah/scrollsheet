@@ -205,7 +205,9 @@ export function sampleSpringAt(
 ): { value: number; velocity: number } {
   const { stiffness = 260, damping = 30, mass = 1, velocity = 0 } = config;
   const resolveAt = createSpringSolver(stiffness, damping, mass, velocity);
-  const t = Math.min(Math.max(0, atMs), MAX_MS) / 1000;
+  // Closed form, so no ceiling: a speed-scaled leg can outlast MAX_MS.
+  if (atMs === Number.POSITIVE_INFINITY) return { value: 1, velocity: 0 };
+  const t = Number.isNaN(atMs) ? 0 : Math.max(0, atMs) / 1000;
   return resolveAt(t);
 }
 
