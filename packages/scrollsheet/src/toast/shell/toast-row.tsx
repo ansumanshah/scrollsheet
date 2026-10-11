@@ -75,6 +75,8 @@ export interface ToastRowProps {
   onDismiss: (record: ToastRecord) => void;
   observe: (id: number | string, el: HTMLElement | null) => void;
   toasterClassNames?: ToastClassnames;
+  /** The Toaster's own `toastOptions.className`, under the record's own `className`. */
+  toasterClassName?: string;
   icons?: ToastIcons;
   toasterCloseButtonAriaLabel?: string;
   /** The Toaster's own `toastOptions.style` — every row's base inline styles, under the record's own `style`. */
@@ -101,6 +103,7 @@ export function ToastRow({
   onDismiss,
   observe,
   toasterClassNames,
+  toasterClassName,
   icons,
   toasterCloseButtonAriaLabel,
   toasterStyle,
@@ -157,6 +160,7 @@ export function ToastRow({
   const rootClassName = cn(
     "scrollsheet-toast",
     legacy("sonner-toast"),
+    toasterClassName,
     record.className,
     toasterClassNames?.toast,
     record.classNames?.toast,

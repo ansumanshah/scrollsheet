@@ -385,9 +385,10 @@ function isPromiseExtendedResult(value: unknown): value is ToastPromiseExtendedR
   return typeof value === "object" && value !== null && !React.isValidElement(value);
 }
 
-/** Applies a settled `success`/`error` handler's return value to the toast — either a plain node (becomes the title) or an extended-result object (its `message` becomes the title, every other field merges onto the record, and can itself override `description`). */
+/** Applies a settled `success`/`error` handler's return value to the toast — either a plain node (becomes the title) or an extended-result object (its `message` becomes the title, every other field merges onto the record, and can itself override `description`). `base` is the call's own options, so a promise with no loading toast still creates its settled toast with them. */
 function applyPromiseSettlement(
   id: number | string,
+  base: Omit<Partial<ToastRecord>, "id" | "createdAt">,
   resolved: React.ReactNode | ToastPromiseExtendedResult,
   fallbackTitle: React.ReactNode,
   description: React.ReactNode,
@@ -395,10 +396,10 @@ function applyPromiseSettlement(
 ): void {
   if (isPromiseExtendedResult(resolved)) {
     const { message, ...rest } = resolved;
-    upsert(id, { description, ...rest, title: message ?? fallbackTitle, type }, type);
+    upsert(id, { ...base, description, ...rest, title: message ?? fallbackTitle, type }, type);
     return;
   }
-  upsert(id, { title: resolved ?? fallbackTitle, description, type }, type);
+  upsert(id, { ...base, title: resolved ?? fallbackTitle, description, type }, type);
 }
 
 function promiseImpl<T>(
@@ -413,16 +414,21 @@ function promiseImpl<T>(
   // (matches real Sonner's own `typeof data.description !== 'function' ?
   // data.description : undefined` on its loading toast).
   const { loading, success, error, finally: onFinally, description, ...rest } = data;
-  const id = upsert(
-    data.id,
-    {
-      ...rest,
-      description: typeof description === "function" ? undefined : description,
-      title: loading,
-      type: "loading",
-    },
-    "loading",
-  );
+  // Sonner parity: no `loading` means no loading toast, and a settled branch
+  // with no handler of its own dismisses rather than inventing a title.
+  const id = data.id ?? nextId();
+  if (loading !== undefined) {
+    upsert(
+      id,
+      {
+        ...rest,
+        description: typeof description === "function" ? undefined : description,
+        title: loading,
+        type: "loading",
+      },
+      "loading",
+    );
+  }
   const settle = typeof promiseOrFn === "function" ? promiseOrFn() : promiseOrFn;
 
   // Settled outcome tracked for `.unwrap()` below — resolved off this same
@@ -442,7 +448,7 @@ function promiseImpl<T>(
         const resolvedDescription =
           typeof description === "function" ? await description(statusMessage) : description;
         const resolved = typeof error === "function" ? await error(statusMessage) : error;
-        applyPromiseSettlement(id, resolved, "Error", resolvedDescription, "error");
+        applyPromiseSettlement(id, rest, resolved, "Error", resolvedDescription, "error");
         return;
       }
       if (result instanceof Error) {
@@ -450,21 +456,29 @@ function promiseImpl<T>(
         const resolvedDescription =
           typeof description === "function" ? await description(result) : description;
         const resolved = typeof error === "function" ? await error(result) : error;
-        applyPromiseSettlement(id, resolved, "Error", resolvedDescription, "error");
+        applyPromiseSettlement(id, rest, resolved, "Error", resolvedDescription, "error");
         return;
       }
       settled = { ok: true, value: result };
+      if (success === undefined) {
+        dismiss(id);
+        return;
+      }
       const resolvedDescription =
         typeof description === "function" ? await description(result) : description;
       const resolved = typeof success === "function" ? await success(result) : success;
-      applyPromiseSettlement(id, resolved, "Success", resolvedDescription, "success");
+      applyPromiseSettlement(id, rest, resolved, "Success", resolvedDescription, "success");
     })
     .catch(async (err: unknown) => {
       settled = { ok: false, reason: err };
+      if (error === undefined) {
+        dismiss(id);
+        return;
+      }
       const resolvedDescription =
         typeof description === "function" ? await description(err) : description;
       const resolved = typeof error === "function" ? await error(err) : error;
-      applyPromiseSettlement(id, resolved, "Error", resolvedDescription, "error");
+      applyPromiseSettlement(id, rest, resolved, "Error", resolvedDescription, "error");
     })
     .finally(() => onFinally?.());
 

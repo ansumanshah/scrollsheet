@@ -224,6 +224,7 @@ function PositionGroup({
             onDismiss={dismissRow}
             observe={observe}
             toasterClassNames={toastOptions?.classNames}
+            toasterClassName={toastOptions?.className}
             sonnerCompat={sonnerCompat}
             icons={icons}
             toasterCloseButtonAriaLabel={toastOptions?.closeButtonAriaLabel}
@@ -382,7 +383,9 @@ export function ToasterShell({
       }
       const [focusedPosition] = focusedEntry;
       const positionToasts = selectPositionToasts(toasts, focusedPosition, defaultPosition);
-      const front = positionToasts[positionToasts.length - 1];
+      // Same gate as swipe, the close button, and the back gesture: a
+      // dismissible: false toast never leaves on Esc.
+      const front = findNewestDismissible(positionToasts);
       if (front) dismissRow(front);
     };
     document.addEventListener("keydown", handleKeyDown);
