@@ -67,14 +67,14 @@ Same component, same props, same focus behavior. [Guide](https://scrollsheet.dev
 
 | Component | What it is |
 | --- | --- |
-| `Sheet.Root` | State owner. `open` / `onOpenChange`, `detents` / `activeDetent`, `side` (any edge or `'center'`), `desktopSide` / `desktopBreakpoint`, `modal`, the `dismissible` family, `actionsRef` (`open()` / `close()` / `snapTo(detent)`), plus travel, keyboard, and gesture tuning props |
+| `Sheet.Root` | State owner. `open` / `onOpenChange`, `detents` / `activeDetent`, `side` (any edge or `'center'`), `desktopSide` / `desktopBreakpoint`, `modal`, the `dismissible` family, `actionsRef` (`open()` / `close()` / `snapTo(detent)`), plus travel, keyboard, animation (`animationSpeed`), and gesture tuning props (`handleOnly`, `disableDrag`, `closeThreshold`, `phantomScrollGuard`) |
 | `Sheet.Trigger` | Button wired with `aria-haspopup` / `aria-expanded` |
-| `Sheet.Content` | The `<dialog>`, backdrop, scroll track, and panel |
+| `Sheet.Content` | The `<dialog>`, backdrop, scroll track, and panel. `fill` stretches the body for a fixed header over an inner-scroll list; `asChild` renders your element as the panel |
 | `Sheet.Handle` | Grabber pill: click cycles detents, arrows move, down-arrow at the lowest detent dismisses. `variant="floating"` overlays full-bleed content; `variant="outside"` floats the pill in the backdrop above the sheet |
 | `Sheet.Title` / `Sheet.Description` | Wire `aria-labelledby` / `aria-describedby` |
 | `Sheet.Close` | Closes on click. Self-closing `<Sheet.Close />` renders a styled ✕ button, top-right, 44px hit area, `aria-label` included |
 
-Also exported: `DetentSpec`, `Side`, `SheetActions`, `TravelInfo`, `spring(config?)`, `isSupported()`. Styling hooks (`data-scrollsheet-state`, `--scrollsheet-progress`, `--scrollsheet-travel: none`, and the rest) and the full prop reference: [scrollsheet.dev/docs/reference/api](https://scrollsheet.dev/docs/reference/api).
+Also exported: `DetentSpec`, `Side`, `SheetActions`, `TravelInfo`, `spring(config?)` with `SpringConfig` and `SpringCurve`, `isSupported()`, `injectStylesInto` and `injectToastStylesInto` (Shadow DOM, `scrollsheet/auto` only), and the `Drawer`, `Dialog`, `Toaster`, `toast`, `useToasts`, and `useSonner` compat exports. Styling hooks (`data-scrollsheet-state`, `--scrollsheet-progress`, `--scrollsheet-travel: none`, and the rest) and the full prop reference: [scrollsheet.dev/docs/reference/api](https://scrollsheet.dev/docs/reference/api).
 
 ### Also built in
 

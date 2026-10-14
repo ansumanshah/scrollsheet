@@ -48,12 +48,12 @@ independently from the same entry) or need a feature the adapter doesn't expose 
 
 | vaul prop | scrollsheet prop | Notes |
 | --- | --- | --- |
-| `direction` | `side` | same 4 values: `'top'` \| `'bottom'` \| `'left'` \| `'right'` |
+| `direction` | `side` | same 4 values: `'top'` \| `'bottom'` \| `'left'` \| `'right'` (`side` also accepts `'center'`) |
 | `shouldScaleBackground` | `backgroundEffect="scale"` | mark your wrapper `data-scrollsheet-background` (was `data-vaul-drawer-wrapper`), or pass `backgroundRef` to target an element directly |
 | `snapPoints` | `detents` | see conversion table below |
 | `activeSnapPoint` | `activeDetent` | convert the same way as `snapPoints` |
 | `setActiveSnapPoint` | `onActiveDetentChange` | |
-| `fadeFromIndex` | `largestUndimmedDetent` | resolve the index against your `detents` array yourself: `largestUndimmedDetent={detents[fadeFromIndex]}` |
+| `fadeFromIndex` | `largestUndimmedDetent` | resolve the index against your `detents` array yourself: `largestUndimmedDetent={detents[fadeFromIndex]}`. vaul's default with `snapPoints` set is the last index (no dim until the top snap point); the adapter keeps that, native `Sheet.Root` dims across the full range unless you set this |
 | `closeThreshold` | `closeThreshold` | default changes, see below |
 | `onAnimationEnd` | `onOpenChangeComplete` | fires when the transition visually finishes, not on a timer |
 | `onClose` | fold into `onOpenChange` | `onOpenChange={(open) => { if (!open) handleClose(); }}` |
@@ -68,7 +68,7 @@ independently from the same entry) or need a feature the adapter doesn't expose 
 
 `Drawer.Root` forwards these untranslated (no vaul equivalent, no name collision):
 `backdropDismissible`, `escapeDismissible`, `keyboardExpands`, `onTravel`, `scrollbar`,
-`actionsRef`. Reach for them when you need one scrollsheet feature without converting the
+`actionsRef`, `animationSpeed`. Reach for them when you need one scrollsheet feature without converting the
 whole tree to native `Sheet.*`.
 
 ### snapPoints to detents value conversion

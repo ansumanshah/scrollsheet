@@ -18,6 +18,16 @@ DOCS - https://scrollsheet.dev/docs
 npm, pnpm and yarn work the same way. No peer dependencies beyond React and React DOM, 18 or newer.
 ESM only, no CommonJS build.
 
+    import { Sheet } from 'scrollsheet';
+    import 'scrollsheet/styles.css';
+
+Entry points: scrollsheet (CSS-external: import scrollsheet/styles.css, plus scrollsheet/toast.css
+for toasts), scrollsheet/auto (the same exports with the stylesheets embedded and injected on
+first open; use it for no-bundler-CSS setups, Shadow DOM, and CSP with nonce), and
+scrollsheet/motion (experimental React-free spring, WAAPI, and scroll-tween core). Never mix the
+default entry and /auto in one app. Sheet.* is client-only: in Next.js App Router, add 'use client'
+to the file that renders it.
+
 ## Styling
 
     .sheet {
@@ -27,9 +37,14 @@ ESM only, no CommonJS build.
     }
 
 scrollsheet ships mechanics only (position, transform, scroll-snap, backdrop, focus
-containment), injected as CSS the first time a sheet opens. The className on Sheet.Content
-lands on the panel, so style it like any card. For CSP, pass nonce to Sheet.Root, or skip
-injection and import scrollsheet/styles.css yourself.
+containment), in scrollsheet/styles.css, which you import once per app. The className on
+Sheet.Content lands on the panel, so style it like any card. No bundler CSS handling, Shadow DOM,
+or a strict CSP? Import from scrollsheet/auto instead: the stylesheet is embedded and injected on
+first open, and nonce on Sheet.Root covers CSP.
+
+Sheets render light everywhere by default, whatever the OS scheme. Set data-scrollsheet-theme="dark"
+on an ancestor (usually <html>) to force dark, or "system" to track prefers-color-scheme. Your own
+--scrollsheet-bg, --scrollsheet-fg, --scrollsheet-handle and similar variables win in every mode.
 
 ## Tailwind
 
@@ -56,8 +71,11 @@ zero-specificity :where() rules, so a Tailwind utility always overrides it.
 
 A detent is a resting height, resolved to a scroll-snap stop. 'content' measures natural
 height, 'medium' is 50% of viewport, 'full' is viewport minus a top inset, and any other number
-is a fraction, or pixels above 1. onTravel(px, progress) fires every frame the sheet moves,
-also published as --scrollsheet-progress.
+is a fraction, or pixels above 1. List detents shortest first: the Handle's click cycle, arrow
+keys, and slider value follow the order of your array. onTravel(px, progress, info) fires every
+frame the sheet moves, also published as --scrollsheet-progress. info.range is [0, tallest detent]
+in px and info.progressAtDetents maps each resolved detent height to its 0-1 progress; info is
+mutated in place every frame, so read it synchronously.
 
 ## Imperative control
 
@@ -158,6 +176,19 @@ sheets scroll on the x axis instead of y, so detents are widths, not heights. Th
 arrow-key axis flips to Left/Right for horizontal sides automatically, and the panel's
 border-radius/shadow default rounds the lead edge (the one opposite the anchored side).
 
+## Centered dialog and responsive profiles
+
+    <Sheet.Root side="center">
+    <Sheet.Root side="bottom" desktopSide="center" desktopBreakpoint={1024}>
+
+side="center" renders a content-sized modal in the middle of the viewport: zoom+fade instead of
+travel, no detents, no drag. Your CSS owns the width; core only guards it with
+--scrollsheet-center-max-inline (default min(560px, 100%)), --scrollsheet-center-max-block, and
+--scrollsheet-center-gutter (default 20px). desktopSide takes the same five values as side and
+replaces the presentation once the viewport reaches desktopBreakpoint (default 768, only
+meaningful paired with desktopSide). It resolves after mount through matchMedia, so server render
+and first paint use side, and crossing the breakpoint while open re-presents instantly.
+
 ## Non-modal
 
     <Sheet.Root modal={false}>
@@ -170,23 +201,21 @@ underneath should keep working while the sheet is up.
 
 ## Toasts
 
-    const [open, setOpen] = useState(false);
+    import { Toaster, toast } from 'scrollsheet';
+    import 'scrollsheet/toast.css';
 
-    useEffect(() => {
-      if (!open) return;
-      const timer = setTimeout(() => setOpen(false), 4000);
-      return () => clearTimeout(timer);
-    }, [open]);
+    <Toaster />;
+    toast('Saved to your list');
+    toast.success('Synced', { description: 'Two seconds ago.' });
+    toast('Archived', { action: { label: 'Undo', onClick: restore } });
 
-    <Sheet.Root modal={false} open={open} onOpenChange={setOpen} detents={['content']}>
-
-A toast is just modal={false} plus a plain timer closing it, the same controlled open any other
-sheet uses, if you want to roll your own.
-
-Migrating an existing Sonner integration instead of writing this by hand? scrollsheet's Sonner
-compat layer is a drop-in for toast()/Toaster, its own architecture matching real Sonner's
-per-toast DOM and positioning rather than this Sheet-based pattern, see Migrate from Sonner
-below.
+toast() and <Toaster> are part of the package, on their own per-toast DOM (no Sheet.Root
+involved): a persistent card per toast, all six positions with per-toast override, stacking that
+hides overflow instead of evicting it, and 2-axis swipe-to-dismiss. toast.promise(), useToasts(),
+classNames, and per-type icons are included. Toaster props: id, position, visibleToasts (3),
+duration (4000), closeButton, expand, gap (14), offset (24), swipeDirections, toastOptions, icons,
+hotkey (['altKey', 'KeyT']), containerAriaLabel, nonce, className, style, and sonnerCompat (true).
+Style with .scrollsheet-toast classes and --scrollsheet-toast-* custom properties.
 
 ## Page transitions
 
@@ -231,9 +260,27 @@ One accuracy divergence, deliberate: onRelease's second argument is the real ope
 outcome here, true only when the sheet is staying open. Real vaul always passes true when
 snapPoints is set, even on a release that dismisses the drawer.
 
-Lifecycle callbacks map onto scrollsheet's two: onOpenStart/onCloseStart become onOpenChange
-(fires at the state flip, not animation-finish); onOpenEnd/onCloseEnd become
-onOpenChangeComplete(open) (fires once the transition visually finishes).
+Lifecycle callbacks: onAnimationEnd(open) fires once the transition visually finishes (the native
+prop is onOpenChangeComplete), and onClose fires on every dismiss path, layered on onOpenChange.
+Scrollsheet-native props with no vaul counterpart (backdropDismissible, escapeDismissible,
+keyboardExpands, onTravel, scrollbar, actionsRef, animationSpeed) forward through Drawer.Root
+untranslated.
+
+## Migrate from Radix Dialog
+
+    - import * as Dialog from '@radix-ui/react-dialog';
+    + import { Dialog } from 'scrollsheet';
+
+Dialog.Root, Trigger, Portal, Overlay, Content, Title, Description, and Close all exist and
+render the centered presentation (a real <dialog> in the top layer, zoom+fade on a spring).
+Root takes open, defaultOpen, onOpenChange, and modal, plus actionsRef, animationSpeed,
+backdropDismissible, escapeDismissible, and onOpenChangeComplete. Content stamps
+data-state="open" | "closed" so existing animation CSS keeps matching. Radix-only props
+(onPointerDownOutside, onInteractOutside, onEscapeKeyDown, onOpenAutoFocus, onCloseAutoFocus,
+onFocusOutside, forceMount, Portal container) are stripped and warn once in dev;
+onPointerDownOutside and onInteractOutside map to backdropDismissible={false}, and
+onEscapeKeyDown maps to escapeDismissible={false}. Dismissal fires on backdrop click, not
+pointerdown. Overlay renders nothing; restyle the real backdrop with --scrollsheet-backdrop.
 
 ## Migrate from Sonner
 
@@ -246,7 +293,7 @@ portaled through one shared <section> in document.body, positioned with CSS inst
 inside a shared sheet panel. toast(), .success(), .error(), .info(), .warning(), .loading(),
 .message(), .custom(jsx), .promise(), and .dismiss(id?) all work before or after any <Toaster>
 mounts, backed by the same module-level queue Sonner itself uses. A repeated id updates a toast
-in place instead of pushing a second one, and multiple <Toaster toasterId="..."> instances route
+in place instead of pushing a second one, and multiple <Toaster id="..."> instances (toasterId is the deprecated prop name) route
 independently: a toast() call with a matching toasterId only shows on that instance, everything
 else on the default, un-keyed one.
 
@@ -264,7 +311,7 @@ keyboard expand, or a hidden tab.
 Honest gaps, this being v1: theme stays the static light card; dark and system warn once rather
 than silently no-op. richColors isn't implemented and warns once. toast.dismiss() with no id
 clears every toast across every mounted <Toaster>, matching real Sonner's own dismiss() exactly.
-useSonner() returns every toast across every toaster, unfiltered; a <Toaster toasterId> does its
+useSonner() returns every toast across every toaster, unfiltered; a <Toaster id> does its
 own filtering internally. A toast fired while a modal Sheet.Root is open renders behind it
 rather than above it, matching real Sonner's own limitation against a native <dialog> elsewhere
 on the page.
@@ -283,8 +330,9 @@ stylesheet embedded, injected on first render.
 | Firefox | 112+ | behind a flag, see below |
 
 Safari 16.4 to 17.1 parses <dialog> but not CSS linear(), so the spring falls back to a plain
-ease-out at the same duration. Below Safari 15.4 there is no <dialog> at all, so the sheet does
-not open. scrollend falls back to a ~120ms debounced scroll-silence check where unsupported.
+ease-out at the same duration. Below Safari 15.4 there is no <dialog> at all, so the sheet falls
+back to a plain fixed-position modal (backdrop, tap-to-close, Escape, no detents or drag;
+isSupported() reports which path a browser takes). scrollend falls back to a ~120ms debounced scroll-silence check where unsupported.
 
 The backdrop dim and --scrollsheet-progress run as CSS scroll-driven animations
 (animation-timeline: scroll()) on engines that support them, off the main thread entirely,
@@ -307,12 +355,14 @@ the library's own backdrop-click handling would only risk a double-fire for no g
 without closedBy (Safari, as of this writing) keep the existing manual Esc/backdrop dismissal,
 unchanged. Non-modal sheets (modal={false}) don't get a platform close watcher for free the way a
 modal showModal() dialog does, so a dismissible one creates its own via CloseWatcher (Chrome
-144+) so Android back closes it instead of navigating the page. Touch-primary devices only: Esc
+126+, Firefox 149+) so Android back closes it instead of navigating the page. Touch-primary devices only: Esc
 is also a platform close signal wherever CloseWatcher exists, and non-modal Esc is deliberately
 scoped to focus inside the sheet, so a desktop watcher would steal the page's Esc. Real-device
 verification on that path is still pending.
 
 ## API
+
+Full reference with every default: https://scrollsheet.dev/docs/reference/api
 
 ### Sheet.Root
 
@@ -326,30 +376,44 @@ verification on that path is still pending.
 | detents | readonly DetentSpec[] | ['content'] |
 | activeDetent | DetentSpec | controlled |
 | onActiveDetentChange | (detent: DetentSpec) => void | |
+| sequentialDetents | boolean | false |
 | dismissible | boolean | true |
 | escapeDismissible | boolean | dismissible |
 | backdropDismissible | boolean | dismissible |
-| nonce | string | |
-| themeColorDimming | boolean | false |
-| onTravel | (revealedPx: number, progress: number) => void | |
-| side | 'bottom' \| 'top' \| 'left' \| 'right' | 'bottom' |
+| closeThreshold | number (0-1) | 0.5 |
+| side | 'bottom' \| 'top' \| 'left' \| 'right' \| 'center' | 'bottom' |
+| desktopSide | 'bottom' \| 'top' \| 'left' \| 'right' \| 'center' | unset: side applies at every width |
+| desktopBreakpoint | number | 768 |
 | modal | boolean | true |
-| backgroundEffect | 'scale' \| 'parallax' | off |
+| backgroundEffect | 'scale' \| 'parallax' \| 'none' | 'scale' for a full-height mobile bottom sheet opened from inside the marked wrapper, else off |
+| backgroundRef | React.RefObject<HTMLElement \| null> | targets backgroundEffect directly |
 | scrollbar | 'overlay' \| 'hidden' \| 'native' | 'overlay' |
 | largestUndimmedDetent | DetentSpec | dims across the full range |
 | handleOnly | boolean | false |
 | disableDrag | boolean | false |
-| sequentialDetents | boolean | false |
-| closeThreshold | number (0-1) | 0.5 |
-| keyboardExpands | boolean | false |
+| onTravel | (revealedPx: number, progress: number, info: TravelInfo) => void | |
 | onRelease | (event: PointerEvent, willRemainOpen: boolean) => void | |
+| keyboardExpands | boolean | false |
+| phantomScrollGuard | boolean | true |
+| animationSpeed | number | 1 |
+| nonce | string | |
+| themeColorDimming | boolean | false |
+
+### Sheet.Content, Sheet.Handle
+
+| Prop | Type | Default |
+|---|---|---|
+| Content fill | boolean | false |
+| Content asChild | boolean | false |
+| Handle variant | 'inside' \| 'floating' \| 'outside' | 'inside' |
+| Handle asChild | boolean | false |
 
 ### Sheet.Content styling hooks
 
 | Attribute / property | Where | Values |
 |---|---|---|
 | data-scrollsheet-state | <dialog> | pre \| opening \| open \| closing |
-| data-scrollsheet-side | <dialog> | bottom \| top \| left \| right |
+| data-scrollsheet-side | <dialog> | bottom \| top \| left \| right \| center |
 | data-scrollsheet-modal | <dialog> | "false" when modal={false}, absent otherwise |
 | data-scrollsheet-scrollbar | <dialog> | overlay \| hidden \| native |
 | data-scrollsheet-at-max | <dialog> | present at tallest detent |
@@ -358,35 +422,58 @@ verification on that path is still pending.
 | data-scrollsheet-handle-only | <dialog> | present when handleOnly |
 | data-scrollsheet-disable-drag | <dialog> | present when disableDrag |
 | data-scrollsheet-detached | <dialog> | present once --scrollsheet-inset-bottom is set (the inset-card recipe) |
+| data-scrollsheet-sda | <dialog> | present once CSS scroll-driven animations own the backdrop dim |
+| data-scrollsheet-has-handle | <dialog> | present while a Sheet.Handle is rendered |
+| data-scrollsheet-rtl | <dialog> | present when the panel's computed direction is rtl |
+| data-scrollsheet-fill | panel and body | present when fill |
 | data-scrollsheet-no-drag | anywhere | opts an element out of desktop drag |
 | data-scrollsheet-backdrop | backdrop element | present on the built-in backdrop, for restyling it |
+| data-scrollsheet-background | your page wrapper | marks the backgroundEffect target |
+| data-scrollsheet-nested-scroll | an inner scroller | scrolls first, then hands off to sheet travel |
+| data-scrollsheet-theme | an ancestor | dark \| system, anything else renders light |
 | --scrollsheet-progress | backdrop element | 0 to 1, same value as onTravel. Set on the backdrop, not the dialog, so read it there (siblings don't inherit) |
 | --scrollsheet-stack-progress | parent panel | 0 to 1, set while a child sheet is open |
 | --scrollsheet-max-detent | <dialog> | tallest resolved detent, px |
 | --scrollsheet-keyboard | <dialog> | on-screen-keyboard inset, px |
 | --scrollsheet-backdrop | panel (set by you) | any CSS color |
 | --scrollsheet-handle / -handle-hover | panel (set by you) | handle pill color, resting / hover |
-| --scrollsheet-safe-area | panel (set by you) | usually env(safe-area-inset-bottom) |
+| --scrollsheet-safe-area | panel (set by you) | usually env(safe-area-inset-bottom); -top, -left, -right exist too |
 | --scrollsheet-radius | panel (set by you) | corner radius, default 16px |
-| --scrollsheet-bg | panel (set by you) | panel background color |
+| --scrollsheet-bg / --scrollsheet-fg | panel (set by you) | panel background / text color |
 | --scrollsheet-shadow | panel (set by you) | panel box-shadow |
+| --scrollsheet-close-bg / -close-bg-hover / -close-color / -close-color-hover | panel (set by you) | the self-closing <Sheet.Close /> button |
 | --scrollsheet-inset-x / -top / -bottom / -left / -right / -y | panel (set by you) | px offsets for the "inset card" recipe |
 | --scrollsheet-scrollbar-width / -color | panel (set by you) | overlay scrollbar thumb, default 4px; also styles nested-scroller thumbs |
 | --scrollsheet-focus-ring / -width | handle (set by you) | keyboard focus ring on Sheet.Handle |
+| --scrollsheet-travel | panel (set by you) | none turns off enter and exit travel |
+| --scrollsheet-max-inline / -desktop-margin | panel (set by you) | docked desktop column width cap (640px) and edge margin (24px) |
+| --scrollsheet-center-max-inline / -center-max-block / -center-gutter | panel (set by you) | side="center" guards: min(560px, 100%), 100%, 20px |
 
 ### Other exports
 
 | Export | Extends / type |
 |---|---|
+| Sheet | namespace object: Root, Trigger, Content, Handle, Title, Description, Close |
 | Sheet.Trigger | <button>, opens on click. asChild renders your own element instead |
-| Sheet.Handle | <button>, drag grip; arrows/Home/End move detents, announces as a slider with 2+ detents. asChild supported |
+| Sheet.Handle | <button>, drag grip; arrows/Home/End move detents, announces as a slider with 2+ detents. List detents shortest first. asChild supported |
 | Sheet.Title / Sheet.Description | <h2> / <p>, auto-wires aria-labelledby / aria-describedby. asChild supported |
-| Sheet.Close | <button>, closes on click. asChild supported |
+| Sheet.Close | <button>, closes on click. asChild supported. With no children it renders a styled X button |
 | DetentSpec | 'full' \| 'medium' \| 'content' \| number \| `${number}px` |
-| Side | 'bottom' \| 'top' \| 'left' \| 'right' |
+| Side | 'bottom' \| 'top' \| 'left' \| 'right' (side and desktopSide also accept 'center') |
 | SheetActions | { open(): void; close(): void; snapTo(detent: DetentSpec): void } |
-| spring(config?) | { stiffness, damping, mass, velocity, restDelta } -> { easing, durationMs } |
+| TravelInfo | { range: readonly [number, number]; progressAtDetents: ReadonlyMap<number, number> } |
+| spring(config?) | { stiffness, damping, mass, velocity, restDelta } -> { easing, durationMs } (defaults 260, 30, 1, 0, 0.001) |
 | isSupported() | () => boolean, false on the ~4% of browsers with no <dialog> |
+| injectStylesInto(root, nonce?) / injectToastStylesInto(root, nonce?) | adopt the core / toast stylesheet into a shadow root; scrollsheet/auto only |
+| Drawer | vaul-compatible namespace: Root, NestedRoot, Trigger, Portal, Overlay, Content, Handle, Title, Description, Close |
+| Dialog | Radix-compatible namespace (centered presentation): Root, Trigger, Portal, Overlay, Content, Title, Description, Close |
+| Toaster, toast, useToasts, useSonner | per-toast-DOM toasts; toast.success/error/info/warning/loading/message/custom/promise/dismiss/getToasts/getHistory |
+
+### scrollsheet/motion (experimental)
+
+spring, sampleSpringAt, animate, animateScrollTo, geometryFor, mapScroll, recedeTransform, and the
+types SpringConfig, SpringCurve, AnimateHandle, ScrollAnimation, Side, SideGeometry. No semver
+promise yet.
 
 ====================================================================
 END OF FILE

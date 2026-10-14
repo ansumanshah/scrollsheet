@@ -43,7 +43,7 @@ migration; leave `sonnerCompat` alone and keep your Sonner CSS as-is.
 | Behavior | Detail |
 | --- | --- |
 | Repeated `id` | Updates that toast in place instead of stacking a duplicate |
-| `toasterId` | A `toast()` call with a matching `toasterId` shows only on that instance; everything else lands on the default un-keyed one |
+| `toasterId` | A `toast()` call with a matching `toasterId` shows only on that instance, the one rendered as `<Toaster id="...">`; everything else lands on the default un-keyed one. `<Toaster toasterId>` still works but is deprecated |
 | `position` | All six Sonner positions render; a toast's own `position` overrides the `Toaster`'s default for just that one toast |
 | Stack | Every toast is a real, persistent card, not a ghost placeholder; collapsed ones sit behind the front one and expand to the full list on hover or `Alt+T` (configurable via `hotkey`). `Escape` dismisses the front toast, or collapses the stack back if the hotkey opened it, though a stack the pointer is still hovering stays expanded until the pointer leaves |
 | `visibleToasts` | Caps how many toasts show at once, default 3 like Sonner. Toasts past the cap stay mounted but hidden, timers still running, and fade in the moment a slot frees; nothing gets evicted. Minimum 1: `0` or negative still shows one |
@@ -74,7 +74,7 @@ zeroes all of them, the same contract the core primitive keeps everywhere else.
 | `theme` | Static light card; `dark` and `system` warn once instead of silently no-op |
 | `richColors` | Not implemented, warns once |
 | `toast.dismiss()` with no `id` | Clears every toast across every mounted `<Toaster>`, matching real Sonner exactly |
-| `useSonner()` | Returns every toast across every toaster, unfiltered; `<Toaster toasterId>` filters internally |
+| `useSonner()` | Returns every toast across every toaster, unfiltered; `<Toaster id>` filters internally |
 | Behind a modal sheet | A toast fired while a modal `Sheet.Root` is open renders behind it rather than above it, matching real Sonner's own limitation against a native `<dialog>` elsewhere on the page |
 
 </div>
@@ -97,6 +97,6 @@ and similar); that compilation destroys the runtime variables the stylesheets' g
 />
 <LinkCard
   title="Toasts"
-  description="A toast is modal={false} plus a plain timer closing it, the same controlled open prop any other sheet uses."
+  description="toast() and Toaster ship in the package: per-toast DOM, six positions, swipe to dismiss, Sonner-compatible API."
   href="/docs/toasts"
 />

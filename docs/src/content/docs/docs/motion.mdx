@@ -5,8 +5,9 @@ description: onTravel and --scrollsheet-progress are the integration boundary fo
 
 import DocExample from '../../../components/DocExample.astro';
 
-scrollsheet's own motion lives in `scrollsheet/motion` (spring, WAAPI, the scroll tween) and never
-reaches for a separate animation library. `onTravel` and `--scrollsheet-progress` are the
+scrollsheet's own motion lives in `scrollsheet/motion` (spring, WAAPI, the scroll tween; listed in
+the [API reference](/docs/reference/api#scrollsheetmotion)) and never reaches for a separate
+animation library. `onTravel` and `--scrollsheet-progress` are the
 integration boundary if you already animate with something else: data comes out of the sheet,
 no engine goes in.
 

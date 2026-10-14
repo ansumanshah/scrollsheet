@@ -61,7 +61,8 @@ strip the warnings entirely.
   className's width wins below the guard; raise the variable for wider dialogs.
 - Extras radix does not have, free to adopt after the swap: `actionsRef`
   (imperative open/close), `onOpenChangeComplete` (fires after the exit
-  animation), a no-`<dialog>` static fallback for ~4% of browsers.
+  animation), `animationSpeed`, a no-`<dialog>` static fallback for ~4% of
+  browsers.
 
 ## Step 2 (optional): convert to native primitives
 

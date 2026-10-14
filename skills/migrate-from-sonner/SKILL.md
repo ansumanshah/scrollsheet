@@ -148,10 +148,11 @@ silent parity.
 ## Shadow DOM
 
 The Sonner compat layer's auto-injected styles land in `document.head`, same as core scrollsheet.
-Inside a shadow root, call once before any `Toaster` opens:
+Inside a shadow root, import from `scrollsheet/auto` (the default entry embeds no CSS, so its
+injectors do nothing) and call once before any `Toaster` opens:
 
 ```tsx
-import { injectToastStylesInto } from 'scrollsheet';
+import { Toaster, toast, injectToastStylesInto } from 'scrollsheet/auto';
 injectToastStylesInto(shadowRoot, nonce);
 ```
 
@@ -161,11 +162,13 @@ unless something actually imports it.
 
 ## Optional: native migration
 
-If you want a toast shape the adapter's rendering doesn't cover (a fully custom stack layout,
-say), scrollsheet's own toast pattern is a plain `Sheet.Root` with `modal={false}` plus a timer
-closing it — see the docs "Toasts" page and the `build-with-scrollsheet` skill. This is a
-separate, from-scratch pattern; it doesn't share code with the `Toaster`/`toast()` adapter above,
-which runs on its own per-toast-DOM shell, not on `Sheet.Root`.
+Nothing to convert: `Toaster`, `toast()`, and `useToasts()` are scrollsheet's native toast API,
+not a shim, and they run on their own per-toast DOM rather than on `Sheet.Root`. New code can use
+the neutral names (`useToasts`, `ToastPosition`, `.scrollsheet-toast*`, `--scrollsheet-toast-*`) and
+set `<Toaster sonnerCompat={false}>` to drop the `.sonner-*` and `data-sonner-*` mirrors. For a
+toast shape the `Toaster` can't render, build one from a `Sheet.Root` with `modal={false}` and your
+own timer closing it; the full `Toaster` and `toast()` API is in
+https://scrollsheet.dev/docs/reference/api#toasts.
 
 ## After migrating
 
