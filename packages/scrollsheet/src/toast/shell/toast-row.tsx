@@ -58,7 +58,6 @@ export interface ToastRowProps {
   index: number;
   /** Total live rows in this row's own position group — z-index is `total - index`, matching real Sonner. */
   total: number;
-  toastsBefore: number;
   stackOffset: number;
   /** This record's own last-measured height, or `undefined` before its first ResizeObserver fire. */
   height: number | undefined;
@@ -89,7 +88,6 @@ export function ToastRow({
   record,
   index,
   total,
-  toastsBefore,
   stackOffset,
   height,
   frontHeight,
@@ -143,7 +141,7 @@ export function ToastRow({
   // merge order (internal vars, then toastOptions.style, then toast.style),
   // so a per-toast `style` can reposition a row or override any variable.
   const style = {
-    "--scrollsheet-toast-toasts-before": toastsBefore,
+    "--scrollsheet-toast-toasts-before": index,
     "--scrollsheet-toast-stack-offset": `${stackOffset}px`,
     "--scrollsheet-toast-front-height": frontHeight !== undefined ? `${frontHeight}px` : "0px",
     "--scrollsheet-toast-initial-height": height !== undefined ? `${height}px` : "auto",

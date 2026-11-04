@@ -60,7 +60,12 @@ import {
 } from "./drawer";
 import { DialogAcceptanceModal } from "./dialog";
 import { FlickSheets, FooterSheets } from "./footer";
-import { SonnerFixture, SonnerQueueFixture, SonnerShrinkFixture } from "./toast";
+import {
+  SonnerFixture,
+  SonnerModalFixture,
+  SonnerQueueFixture,
+  SonnerShrinkFixture,
+} from "./toast";
 
 export function App() {
   return (
@@ -168,6 +173,7 @@ export function App() {
         <SonnerFixture />
         <SonnerQueueFixture />
         <SonnerShrinkFixture />
+        <SonnerModalFixture />
       </div>
       <section className="filler">
         {Array.from({ length: 20 }, (_, i) => (

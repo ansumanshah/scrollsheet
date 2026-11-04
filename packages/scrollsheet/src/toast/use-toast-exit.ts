@@ -35,7 +35,6 @@ export interface ExitAwareRow {
   exiting: boolean;
 }
 
-const EMPTY_RECORDS: readonly ToastRecord[] = [];
 const EMPTY_MAP: ReadonlyMap<number | string, ToastRecord> = new Map();
 
 function toIdMap(records: readonly ToastRecord[]): Map<number | string, ToastRecord> {
@@ -51,24 +50,7 @@ function sameIds(
   return true;
 }
 
-/**
- * `live` is the caller's own already-windowed visible list (front-only, or
- * expandedRows) — NOT the raw store. `queued` distinguishes WHY an id might
- * disappear from `live`: still present in `queued` means it merely left the
- * render window (non-dismissible-saturation hold-out, selectToastWindow) and
- * is still fully alive in the store — not a real removal, so it gets no exit
- * animation and no hold; it renders again, fresh, the moment a slot frees.
- * Only an id missing from BOTH `live` and `queued` is a genuine store removal
- * and earns the exit-hold treatment below. (With a correct caller this
- * distinction is structurally redundant — a previously-visible id can never
- * re-enter `queued` — but the hook enforces it itself rather than trusting
- * the caller.)
- */
-export function useToastExit(
-  live: readonly ToastRecord[],
-  queued: readonly ToastRecord[] = EMPTY_RECORDS,
-  exitMs: number = EXIT_MS,
-): ExitAwareRow[] {
+export function useToastExit(live: readonly ToastRecord[]): ExitAwareRow[] {
   const [exiting, setExiting] = React.useState<ReadonlyMap<number | string, ToastRecord>>(
     () => EMPTY_MAP,
   );
@@ -84,11 +66,9 @@ export function useToastExit(
   let renderExiting = exiting;
 
   if (!sameIds(prevLive, liveIds)) {
-    const queuedIds = new Set(queued.map((r) => r.id));
     const justRemoved: ToastRecord[] = [];
     for (const [id, record] of prevLive) {
       if (liveIds.has(id)) continue;
-      if (queuedIds.has(id)) continue; // scrolled out of the window, not removed from the store.
       justRemoved.push(record);
     }
     setPrevLive(toIdMap(live));
@@ -118,7 +98,7 @@ export function useToastExit(
             return next;
           });
         },
-        reduced ? 0 : exitMs,
+        reduced ? 0 : EXIT_MS,
       );
       timersRef.current.set(id, timer);
     }
@@ -128,7 +108,7 @@ export function useToastExit(
         timersRef.current.delete(id);
       }
     }
-  }, [exiting, exitMs]);
+  }, [exiting]);
 
   React.useEffect(() => {
     const timers = timersRef.current;

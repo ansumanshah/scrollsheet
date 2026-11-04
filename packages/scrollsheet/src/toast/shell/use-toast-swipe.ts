@@ -20,7 +20,6 @@
  */
 
 import * as React from "react";
-import { prefersReducedMotion } from "../../internal/env";
 import type { SwipeDirection } from "../state";
 import {
   computeSwipeAxisAmount,
@@ -45,6 +44,13 @@ interface SwipeAmount {
 
 const ZERO_AMOUNT: SwipeAmount = { x: 0, y: 0 };
 
+function unwindSwipe(el: HTMLElement): void {
+  el.setAttribute("data-swiping", "false");
+  el.setAttribute("data-swiped", "false");
+  el.style.setProperty("--scrollsheet-toast-swipe-x", "0px");
+  el.style.setProperty("--scrollsheet-toast-swipe-y", "0px");
+}
+
 /**
  * `elRef` is the row's own DOM node (direct style/attribute target).
  * `enabled` gates the whole gesture — the caller computes it the same way
@@ -54,11 +60,9 @@ const ZERO_AMOUNT: SwipeAmount = { x: 0, y: 0 };
  * (index.tsx:147/317). `directions` is this row's own already-resolved
  * swipeDirections — a per-position default or the Toaster's own override,
  * resolved once by the caller (toaster-shell.tsx's PositionGroup), not
- * recomputed per row per move. `onSwipeDismiss` fires once the release CSS
- * animation ([data-swipe-out="true"]) finishes — or, under reduced motion,
- * immediately (see the release() branch below) — never synchronously on
- * threshold-cross, so the visual dismiss and the actual toast.dismiss() call
- * land on the same frame.
+ * recomputed per row per move. `onSwipeDismiss` fires on release, as real
+ * Sonner's does, so the next toast promotes while this one flies out on the
+ * exit hold rather than sitting blank behind it.
  */
 export function useToastSwipe(
   elRef: React.RefObject<HTMLElement | null>,
@@ -149,31 +153,21 @@ export function useToastSwipe(
     if (allowed && shouldDismissOnSwipeRelease(amount, velocity)) {
       const direction = resolveSwipeOutDirection(axis, amount);
       el.setAttribute("data-swipe-direction", direction);
-      if (prefersReducedMotion()) {
-        // No CSS animation plays under reduced motion (toast.css neutralizes
-        // it), so no animationend event will ever fire — dismiss
-        // immediately instead of waiting for one, matching the old hook's
-        // own reduced-motion branch.
-        el.setAttribute("data-swipe-out", "true");
-        onSwipeDismissRef.current();
-        return;
-      }
-      const onAnimEnd = () => {
-        el.removeEventListener("animationend", onAnimEnd);
-        onSwipeDismissRef.current();
-      };
-      el.addEventListener("animationend", onAnimEnd);
+      // data-removed and a collapsing stack both retarget this variable, which
+      // the swipe-out keyframes read live: pin it or the card jumps mid-flight.
+      el.style.setProperty(
+        "--scrollsheet-toast-y",
+        getComputedStyle(el).getPropertyValue("--scrollsheet-toast-y"),
+      );
       el.setAttribute("data-swipe-out", "true");
+      onSwipeDismissRef.current();
       return;
     }
 
     // Snap back: clearing data-swiping first restores the eased `transition`
     // (toast.css), so resetting the vars to 0 right after animates smoothly
     // back to rest instead of popping.
-    el.setAttribute("data-swiping", "false");
-    el.setAttribute("data-swiped", "false");
-    el.style.setProperty("--scrollsheet-toast-swipe-x", "0px");
-    el.style.setProperty("--scrollsheet-toast-swipe-y", "0px");
+    unwindSwipe(el);
   }, [elRef, directions]);
 
   const onPointerUp = React.useCallback(
@@ -198,10 +192,7 @@ export function useToastSwipe(
       if (!el) return;
       if (el.hasPointerCapture(event.pointerId)) el.releasePointerCapture(event.pointerId);
       // Cancellation unwinds the gesture even after crossing a dismissal threshold.
-      el.setAttribute("data-swiping", "false");
-      el.setAttribute("data-swiped", "false");
-      el.style.setProperty("--scrollsheet-toast-swipe-x", "0px");
-      el.style.setProperty("--scrollsheet-toast-swipe-y", "0px");
+      unwindSwipe(el);
     },
     [elRef],
   );
