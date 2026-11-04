@@ -56,6 +56,7 @@ import {
   DrawerSharedWrapperSheets,
   DrawerContentAsChildSheet,
   DrawerContentAsChildFragmentSheet,
+  DrawerSelectableTextSheet,
 } from "./drawer";
 import { DialogAcceptanceModal } from "./dialog";
 import { FlickSheets, FooterSheets } from "./footer";
@@ -147,6 +148,8 @@ export function App() {
         />
         <ActionsRefSheet />
         <DrawerFadeFromIndexOmittedSheet />
+        <DrawerSelectableTextSheet trigger="Drawer selectable text sheet" />
+        <DrawerSelectableTextSheet handleOnly trigger="Drawer selectable text handleOnly sheet" />
         <NestedScrollHandoffSheet trigger="Nested scroll handoff sheet" />
         <NestedScrollHandoffSheet
           trigger="Nested scroll handoff sheet (starts empty)"
