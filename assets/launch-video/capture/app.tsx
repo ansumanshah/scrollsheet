@@ -1,7 +1,12 @@
 import * as React from "react";
 import { createRoot } from "react-dom/client";
 
-import { Drawer, Sheet, Toaster, toast } from "../../../packages/scrollsheet/src/index";
+import { Drawer, Sheet, Toaster, spring, toast } from "../../../packages/scrollsheet/src/index";
+
+document.documentElement.style.setProperty(
+  "--toggle-spring",
+  spring({ stiffness: 320, damping: 30 }).easing,
+);
 
 interface Cafe {
   name: string;

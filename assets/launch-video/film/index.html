@@ -1,0 +1,200 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>scrollsheet launch film</title>
+    <style>
+      :root {
+        --ink: #0a0a0b;
+        --violet: #534ab7;
+        --lavender: #afa9ec;
+        --paper: #f2f1ee;
+        --muted: #a8a49c;
+        --sans: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+        --mono: ui-monospace, "SF Mono", "Cascadia Code", Menlo, Consolas, monospace;
+      }
+      * {
+        box-sizing: border-box;
+      }
+      html,
+      body {
+        margin: 0;
+        width: 100%;
+        height: 100%;
+        overflow: hidden;
+        background: var(--ink);
+        font-family: var(--sans);
+        -webkit-font-smoothing: antialiased;
+        font-kerning: normal;
+      }
+      #stage {
+        position: fixed;
+        inset: 0;
+        overflow: hidden;
+      }
+      .layer {
+        position: absolute;
+        inset: 0;
+      }
+      .wipe {
+        position: absolute;
+        left: 0;
+        right: 0;
+        top: 0;
+        height: 120%;
+        border-radius: 64px 64px 0 0;
+      }
+      .title {
+        position: absolute;
+        font-weight: 700;
+        letter-spacing: -0.035em;
+        white-space: nowrap;
+      }
+      .line {
+        display: block;
+        overflow: hidden;
+        padding: 0.06em 0.05em 0.16em;
+        margin: -0.06em -0.05em -0.16em;
+      }
+      .word {
+        display: inline-block;
+        white-space: pre;
+      }
+      .mono {
+        font-family: var(--mono);
+        font-weight: 600;
+        letter-spacing: -0.03em;
+      }
+      .readout {
+        position: absolute;
+        font-family: var(--mono);
+        white-space: nowrap;
+        font-variant-numeric: tabular-nums;
+      }
+      #device {
+        position: absolute;
+        left: 0;
+        top: 0;
+        transform-origin: 0 0;
+        overflow: hidden;
+        background: #1c1b20;
+      }
+      #screen {
+        position: absolute;
+        overflow: hidden;
+        background: #ece9e2;
+      }
+      #screen img {
+        display: block;
+        width: 100%;
+        height: 100%;
+      }
+      #finger {
+        position: absolute;
+        left: 0;
+        top: 0;
+        width: 46px;
+        height: 46px;
+        margin: -23px 0 0 -23px;
+        border-radius: 50%;
+        background: rgb(12 11 10 / 0.3);
+        box-shadow: 0 0 0 3px rgb(255 255 255 / 0.95);
+      }
+      #cursor {
+        position: absolute;
+        left: 0;
+        top: 0;
+        width: 30px;
+        height: 30px;
+        transform-origin: 0 0;
+      }
+      #keyboard {
+        position: absolute;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: #d3d5da;
+        display: grid;
+        align-content: start;
+        gap: 11px;
+        padding: 10px 4px 0;
+      }
+      .kb-row {
+        display: flex;
+        justify-content: center;
+        gap: 6px;
+      }
+      .kb-key {
+        flex: 0 0 31px;
+        height: 44px;
+        border-radius: 6px;
+        background: #fff;
+        box-shadow: 0 1px 0 rgb(0 0 0 / 0.25);
+        display: grid;
+        place-items: center;
+        font-size: 20px;
+        color: #0c0b0a;
+      }
+      .kb-wide {
+        flex: 0 0 196px;
+      }
+      .kb-mid {
+        flex: 0 0 46px;
+        background: #adb0b8;
+      }
+      #ticks {
+        position: absolute;
+        left: 0;
+        top: 0;
+      }
+      .tick {
+        position: absolute;
+        right: 0;
+        display: flex;
+        align-items: center;
+        gap: 16px;
+        font-family: var(--mono);
+        font-weight: 600;
+        white-space: nowrap;
+      }
+      .tick i {
+        display: block;
+        height: 3px;
+        background: currentColor;
+      }
+      #needle {
+        position: absolute;
+        right: 0;
+        height: 3px;
+        background: #fff;
+      }
+      .diff-row {
+        position: absolute;
+        left: 0;
+        right: 0;
+        display: flex;
+        align-items: center;
+        font-family: var(--mono);
+        font-weight: 500;
+        white-space: pre;
+      }
+      .diff-row b {
+        flex: none;
+        font-weight: 700;
+      }
+      #mark {
+        position: absolute;
+        overflow: hidden;
+        background: var(--violet);
+      }
+      #mark div {
+        position: absolute;
+        background: #fff;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="stage"></div>
+    <script type="module" src="./film.js"></script>
+  </body>
+</html>

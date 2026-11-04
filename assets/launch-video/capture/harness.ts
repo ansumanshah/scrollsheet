@@ -1,4 +1,4 @@
-import { chromium, type Browser, type BrowserContext, type CDPSession, type Page } from "@playwright/test";
+import type { Browser, BrowserContext, CDPSession, Page } from "@playwright/test";
 import { mkdirSync, rmSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 
@@ -114,6 +114,7 @@ export class Take {
   private cursorAt: Point | null = null;
   private pressed = false;
   readonly metrics: FrameMetrics[] = [];
+  readonly marks: Record<string, number> = {};
 
   private constructor(
     readonly page: Page,
@@ -177,6 +178,11 @@ export class Take {
         caret: "initial",
       });
     }
+  }
+
+  /** Names the next frame, so the film can sync type to the capture instead of hard-coding times. */
+  mark(name: string): void {
+    this.marks[name] = this.frameIndex;
   }
 
   hold(seconds: number): Promise<void> {
@@ -276,7 +282,7 @@ export class Take {
   }
 
   async end(): Promise<void> {
-    writeFileSync(join(this.dir, "metrics.json"), JSON.stringify(this.metrics));
+    writeFileSync(join(this.dir, "metrics.json"), JSON.stringify({ frames: this.metrics, marks: this.marks }));
     await this.context.close();
   }
 }

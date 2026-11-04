@@ -185,12 +185,13 @@
         height: 24px;
         border-radius: 50%;
         background: #fff;
+        transition: translate 420ms var(--toggle-spring, ease-out);
       }
       .toggle.on {
         background: var(--violet);
       }
       .toggle.on::after {
-        left: 23px;
+        translate: 20px 0;
       }
       .primary,
       .secondary {

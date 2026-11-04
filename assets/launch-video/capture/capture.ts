@@ -1,5 +1,5 @@
 import { chromium } from "@playwright/test";
-import { copyFileSync, mkdirSync } from "node:fs";
+import { mkdirSync } from "node:fs";
 import { dirname, join } from "node:path";
 
 import { Take } from "./harness";
@@ -52,5 +52,3 @@ export async function capture(names: string[]): Promise<void> {
 }
 
 if (import.meta.main) await capture(process.argv.slice(2));
-
-export { copyFileSync };
