@@ -6,7 +6,7 @@ Sheets use a native `<dialog>` and CSS scroll snap, with spring motion expressed
 
 <p align="center">
   <a href="https://scrollsheet.dev/">
-    <img src="https://scrollsheet.dev/hero.gif?v=1.2.2" width="290" alt="A bottom sheet opening, snapping between detents, and closing">
+    <img src="https://raw.githubusercontent.com/ansumanshah/scrollsheet/2e04c4b374039c4840e4189f36437bb8854638bb/docs/public/hero.gif" width="290" alt="A bottom sheet opening, snapping between detents, and closing">
   </a>
 </p>
 
