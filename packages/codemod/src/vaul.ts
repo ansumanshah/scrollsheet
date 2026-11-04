@@ -1,5 +1,11 @@
 import jscodeshift from "jscodeshift";
-import type { ASTPath, Collection, ImportDeclaration, JSXAttribute, JSXOpeningElement } from "jscodeshift";
+import type {
+  ASTPath,
+  Collection,
+  ImportDeclaration,
+  JSXAttribute,
+  JSXOpeningElement,
+} from "jscodeshift";
 
 export type FindingKind = "ignored" | "changed" | "manual" | "info";
 
@@ -33,14 +39,16 @@ const SCROLLSHEET_CSS = "scrollsheet/styles.css";
 
 /** Props <Drawer.Root> accepts and drops, with the nearest replacement. */
 const ROOT_IGNORED: Record<string, string> = {
-  setBackgroundColorOnScale: "scrollsheet's backgroundEffect handles the page behind; style it with CSS.",
+  setBackgroundColorOnScale:
+    "scrollsheet's backgroundEffect handles the page behind; style it with CSS.",
   noBodyStyles: "The modal body freeze is scrollsheet's own and is not configurable.",
   disablePreventScroll: "Scroll locking is scrollsheet's own and is not configurable.",
   preventScrollRestoration: "Not applicable: scrollsheet does not restore scroll on close.",
   repositionInputs: "Keyboard avoidance is automatic and has no switch.",
   scrollLockTimeout: "Not applicable: there is no scroll lock timer.",
   onDrag: "Use onTravel on the same Drawer.Root for live progress.",
-  container: "The native <dialog> always renders in the top layer, so there is no portal container.",
+  container:
+    "The native <dialog> always renders in the top layer, so there is no portal container.",
   fixed: "scrollsheet has a single keyboard strategy.",
   autoFocus: "The native <dialog> manages focus. Put autofocus on a field to focus it on open.",
   nested: "Nesting is automatic. Drawer.NestedRoot is an alias of Drawer.Root.",
@@ -48,11 +56,14 @@ const ROOT_IGNORED: Record<string, string> = {
 
 /** Radix Dialog.Content props vaul forwards and scrollsheet strips. */
 const CONTENT_IGNORED: Record<string, string> = {
-  onPointerDownOutside: "To block backdrop-tap dismissal, set backdropDismissible={false} on Drawer.Root.",
-  onInteractOutside: "To block backdrop-tap dismissal, set backdropDismissible={false} on Drawer.Root.",
+  onPointerDownOutside:
+    "To block backdrop-tap dismissal, set backdropDismissible={false} on Drawer.Root.",
+  onInteractOutside:
+    "To block backdrop-tap dismissal, set backdropDismissible={false} on Drawer.Root.",
   onFocusOutside: "Focus is contained by the native <dialog>, so this never fires.",
   onEscapeKeyDown: "To block Esc, set escapeDismissible={false} on Drawer.Root.",
-  onOpenAutoFocus: "The native <dialog> manages focus. Put autofocus on a field to focus it on open.",
+  onOpenAutoFocus:
+    "The native <dialog> manages focus. Put autofocus on a field to focus it on open.",
   onCloseAutoFocus: "The native <dialog> manages focus on close.",
   forceMount: "Content mounts when the drawer opens and unmounts after it closes.",
 };
@@ -118,7 +129,11 @@ export function transformVaul(source: string, options: TransformOptions = {}): T
   }
 
   findings.sort((a, b) => a.line - b.line || a.column - b.column);
-  return { output: changed ? root.toSource({ quote: dominantQuote(source) }) : source, changed, findings };
+  return {
+    output: changed ? root.toSource({ quote: dominantQuote(source) }) : source,
+    changed,
+    findings,
+  };
 
   function rewriteImports(collection: Collection) {
     collection.find(j.ImportDeclaration).forEach((path) => {
@@ -231,7 +246,9 @@ export function transformVaul(source: string, options: TransformOptions = {}): T
       })
       .forEach((path) => {
         const arg = path.node.arguments[0] as { value: string };
-        path.node.arguments[0] = j.stringLiteral(arg.value === VAUL ? SCROLLSHEET : SCROLLSHEET_CSS);
+        path.node.arguments[0] = j.stringLiteral(
+          arg.value === VAUL ? SCROLLSHEET : SCROLLSHEET_CSS,
+        );
         changed = true;
         if (arg.value === VAUL) {
           report(
@@ -363,7 +380,10 @@ export function transformVaul(source: string, options: TransformOptions = {}): T
       }
 
       if (
-        (member === "Root" || member === "NestedRoot" || member === "Content" || member === "Portal") &&
+        (member === "Root" ||
+          member === "NestedRoot" ||
+          member === "Content" ||
+          member === "Portal") &&
         attrs.some((attr) => attr.type === "JSXSpreadAttribute")
       ) {
         report(
@@ -384,7 +404,9 @@ function dominantQuote(source: string): "single" | "double" {
   return single > double ? "single" : "double";
 }
 
-function specifierKey(specifier: ImportDeclaration["specifiers"] extends (infer S)[] | undefined ? S : never): string {
+function specifierKey(
+  specifier: ImportDeclaration["specifiers"] extends (infer S)[] | undefined ? S : never,
+): string {
   if (specifier.type !== "ImportSpecifier") return specifier.type;
   const imported = text(specifier.imported.name);
   return `${imported}:${text(specifier.local?.name ?? imported)}`;
@@ -392,6 +414,9 @@ function specifierKey(specifier: ImportDeclaration["specifiers"] extends (infer 
 
 /** Rewrites `@import 'vaul/style.css'` in stylesheets. */
 export function transformVaulCss(source: string): TransformResult {
-  const output = source.replace(/(@import\s+(?:url\()?\s*["'])vaul\/style\.css(["'])/g, `$1${SCROLLSHEET_CSS}$2`);
+  const output = source.replace(
+    /(@import\s+(?:url\()?\s*["'])vaul\/style\.css(["'])/g,
+    `$1${SCROLLSHEET_CSS}$2`,
+  );
   return { output, changed: output !== source, findings: [] };
 }
