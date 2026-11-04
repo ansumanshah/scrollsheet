@@ -1894,3 +1894,95 @@
 .ex-center-panel {
   width: min(360px, 100%);
 }
+
+/* Registry components. The shadcn items style themselves with Tailwind
+   classes; the docs site has no Tailwind, so the same elements are styled
+   here through their data-slot attributes. */
+.ex-select-demo {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  width: min(320px, 100%);
+}
+[data-slot="mobile-select-trigger"] {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  width: 100%;
+  min-height: 44px;
+  padding: 0 14px;
+  border: 1px solid var(--ex-border-strong);
+  border-radius: var(--ex-radius-sm);
+  background: var(--ex-bg-elevated);
+  color: var(--ex-fg);
+  font: inherit;
+  font-size: 0.95rem;
+  text-align: left;
+  cursor: pointer;
+}
+[data-slot="mobile-select-trigger"] > span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+[data-slot="mobile-select-header"] {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 4px 20px 8px;
+}
+[data-slot="mobile-select-header"] h2 {
+  margin: 0;
+  font-size: 1.05rem;
+}
+[data-slot="mobile-select-search"] {
+  padding: 0 20px 8px;
+}
+[data-slot="mobile-select-search"] input {
+  width: 100%;
+  box-sizing: border-box;
+  min-height: 44px;
+  padding: 0 14px;
+  border: 1px solid var(--ex-border-strong);
+  border-radius: var(--ex-radius-sm);
+  background: var(--ex-bg-elevated);
+  color: var(--ex-fg);
+  font: inherit;
+  font-size: 16px;
+}
+[data-slot="mobile-select-search"] input:focus-visible {
+  outline: 2px solid var(--ex-accent);
+  outline-offset: 1px;
+}
+[data-slot="mobile-select-list"] {
+  padding: 0 12px;
+}
+[data-slot="mobile-select-group"] {
+  padding: 12px 8px 4px;
+  color: var(--ex-fg-muted);
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+[data-slot="mobile-select-option"] {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-height: 44px;
+  padding: 0 8px;
+  border-radius: var(--ex-radius-sm);
+  color: var(--ex-fg);
+  font-size: 0.95rem;
+  cursor: pointer;
+}
+[data-slot="mobile-select-option"][data-active] {
+  background: var(--ex-bg-inset);
+}
+[data-slot="mobile-select-option"][aria-selected="true"] {
+  color: var(--ex-accent);
+  font-weight: 600;
+}
+[data-slot="mobile-select-option"][aria-disabled="true"] {
+  opacity: 0.45;
+  cursor: not-allowed;
+}

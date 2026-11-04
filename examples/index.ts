@@ -19,6 +19,7 @@ import FullScreenExample from "./full-screen";
 import NestedExample from "./nested";
 import NestedDrillExample from "./nested-drill";
 import ResponsiveExample from "./responsive";
+import MobileSelectExample from "./mobile-select";
 
 export type ExampleGroupId =
   | "media"
@@ -129,6 +130,14 @@ export const examples: ExampleEntry[] = [
     description: '`side="center"`: a dialog that fits its content and opens with zoom and fade.',
     group: "actions",
     component: CenterExample,
+  },
+  {
+    name: "mobile-select",
+    title: "Mobile select",
+    description:
+      "A searchable select in a bottom sheet: combobox over a listbox, accent-insensitive filter, keyboard-aware.",
+    group: "actions",
+    component: MobileSelectExample,
   },
   {
     name: "confirm",

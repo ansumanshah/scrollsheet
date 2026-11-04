@@ -126,7 +126,7 @@ function MobileSelect({
         </svg>
       </Sheet.Trigger>
       {name ? <input type="hidden" name={name} value={selected ?? ""} /> : null}
-      <Sheet.Content fill className="bg-background rounded-t-xl">
+      <Sheet.Content fill data-slot="mobile-select-content" className="bg-background rounded-t-xl">
         <MobileSelectPanel
           title={title}
           options={options}
@@ -196,10 +196,10 @@ function MobileSelectPanel({
     const list = listRef.current
     const node = activeIndex < 0 ? null : document.getElementById(optionId(activeIndex))
     if (!list || !node) return
-    const top = node.offsetTop - list.offsetTop
-    if (top < list.scrollTop) list.scrollTop = top
-    else if (top + node.offsetHeight > list.scrollTop + list.clientHeight)
-      list.scrollTop = top + node.offsetHeight - list.clientHeight
+    const listBox = list.getBoundingClientRect()
+    const nodeBox = node.getBoundingClientRect()
+    if (nodeBox.top < listBox.top) list.scrollTop += nodeBox.top - listBox.top
+    else if (nodeBox.bottom > listBox.bottom) list.scrollTop += nodeBox.bottom - listBox.bottom
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [activeIndex, uid])
 
@@ -273,12 +273,12 @@ function MobileSelectPanel({
   return (
     <>
       <Sheet.Handle />
-      <div className="flex items-center justify-between px-4 pt-1 pb-2">
+      <div data-slot="mobile-select-header" className="flex items-center justify-between px-4 pt-1 pb-2">
         <Sheet.Title className="text-base font-semibold">{title}</Sheet.Title>
         <Sheet.Close />
       </div>
       {searchable ? (
-        <div className="px-4 pb-2">
+        <div data-slot="mobile-select-search" className="px-4 pb-2">
           <input
             ref={inputRef}
             type="text"
@@ -306,6 +306,7 @@ function MobileSelectPanel({
       <div
         ref={listRef}
         id={listId}
+        data-slot="mobile-select-list"
         role="listbox"
         aria-label={title}
         tabIndex={searchable ? undefined : 0}
@@ -329,6 +330,7 @@ function MobileSelectPanel({
             {section.group ? (
               <div
                 id={`${uid}-group-${sectionIndex}`}
+                data-slot="mobile-select-group"
                 role="presentation"
                 className="text-muted-foreground px-2 pt-3 pb-1 text-xs font-medium"
               >
@@ -340,6 +342,7 @@ function MobileSelectPanel({
                 key={option.value}
                 id={optionId(index)}
                 role="option"
+                data-slot="mobile-select-option"
                 aria-selected={option.value === selected}
                 aria-disabled={option.disabled || undefined}
                 data-value={option.value}
