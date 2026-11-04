@@ -4,6 +4,7 @@ import { SPRING_TIMEOUT } from "../../helpers";
 test.describe("command-palette on desktop", () => {
   test.beforeEach(async ({ page }) => {
     await page.goto("/registry");
+    await page.locator("html[data-ready]").waitFor({ state: "attached" });
   });
 
   test("Ctrl+K opens a centered card with the search field focused, and toggles closed", async ({

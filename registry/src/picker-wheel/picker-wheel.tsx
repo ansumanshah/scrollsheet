@@ -93,10 +93,24 @@ function PickerColumn({ label, options, value, onValueChange }: PickerColumnProp
     if (!el) return
     setCentered(selectedIndex)
     if (animation.current) return
-    if (indexAt(el) !== selectedIndex || el.scrollTop % ITEM_HEIGHT !== 0) {
-      scrollToIndex(selectedIndex, mounted.current)
+    const sync = () => {
+      if (indexAt(el) !== selectedIndex || el.scrollTop % ITEM_HEIGHT !== 0) {
+        scrollToIndex(selectedIndex, mounted.current)
+      }
+      mounted.current = true
     }
-    mounted.current = true
+    if (el.clientHeight > 0) {
+      sync()
+      return
+    }
+    // Mounted inside a dialog that is not laid out yet: a scroll would clamp to 0.
+    const observer = new ResizeObserver(() => {
+      if (el.clientHeight === 0) return
+      observer.disconnect()
+      sync()
+    })
+    observer.observe(el)
+    return () => observer.disconnect()
   }, [selectedIndex, options, indexAt, scrollToIndex])
 
   // A scroll that settles on a row commits it. Programmatic moves are

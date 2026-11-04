@@ -1975,6 +1975,16 @@
   font-size: 0.95rem;
   cursor: pointer;
 }
+[data-slot="mobile-select-option"] > span:first-child {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-width: 0;
+}
+[data-slot="mobile-select-option"] > span:first-child > span:nth-child(2) {
+  color: var(--ex-fg-muted);
+  font-size: 0.78rem;
+}
 [data-slot="mobile-select-option"][data-active] {
   background: var(--ex-bg-inset);
 }

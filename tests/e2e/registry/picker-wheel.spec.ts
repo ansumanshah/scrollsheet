@@ -39,6 +39,17 @@ test.describe("picker-wheel", () => {
     await expect(fruit).toHaveCSS("overscroll-behavior-y", "contain");
   });
 
+  test("opens scrolled to the value without StrictMode's double effect run", async ({ page }) => {
+    await page.goto("/registry?strict=0");
+    const dialog = await openByName(page, "Pick fruit");
+    await expect
+      .poll(() => top(dialog.getByRole("listbox", { name: "Fruit" })))
+      .toBe(1 * ITEM);
+    await expect
+      .poll(() => top(dialog.getByRole("listbox", { name: "Size" })))
+      .toBe(1 * ITEM);
+  });
+
   test("a settled scroll becomes the value, applied by Done", async ({ page }) => {
     const dialog = await openByName(page, "Pick fruit");
     const fruit = dialog.getByRole("listbox", { name: "Fruit" });

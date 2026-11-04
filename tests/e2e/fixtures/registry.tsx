@@ -23,7 +23,34 @@ const COUNTRIES = [
   })),
 ];
 
+// Module-level on purpose: stable option arrays mean no re-render ever re-runs
+// the wheel's scroll sync, so the first mount has to land on the value.
+const FRUIT_COLUMNS = [
+  {
+    id: "fruit",
+    label: "Fruit",
+    options: ["apple", "banana", "cherry", "date", "elderberry", "fig", "grape"].map((v) => ({
+      value: v,
+      label: v[0]!.toUpperCase() + v.slice(1),
+    })),
+  },
+  {
+    id: "size",
+    label: "Size",
+    options: [
+      { value: "s", label: "Small" },
+      { value: "m", label: "Medium" },
+      { value: "l", label: "Large" },
+    ],
+  },
+];
+
 function Fixtures() {
+  // Child effects (the palette's window hotkey) run before this one, so the
+  // flag means every listener is attached.
+  React.useEffect(() => {
+    document.documentElement.dataset.ready = "";
+  }, []);
   const [value, setValue] = React.useState<string | undefined>();
   const [ran, setRan] = React.useState("none");
   const [picked, setPicked] = React.useState("none");
@@ -78,24 +105,7 @@ function Fixtures() {
           title="Fruit"
           value={fruit}
           onValueChange={setFruit}
-          columns={[
-            {
-              id: "fruit",
-              label: "Fruit",
-              options: ["apple", "banana", "cherry", "date", "elderberry", "fig", "grape"].map(
-                (v) => ({ value: v, label: v[0]!.toUpperCase() + v.slice(1) }),
-              ),
-            },
-            {
-              id: "size",
-              label: "Size",
-              options: [
-                { value: "s", label: "Small" },
-                { value: "m", label: "Medium" },
-                { value: "l", label: "Large" },
-              ],
-            },
-          ]}
+          columns={FRUIT_COLUMNS}
           trigger={
             <button type="button" className="btn">
               Pick fruit
@@ -134,8 +144,7 @@ function Fixtures() {
 
 const rootEl = document.getElementById("root");
 if (!rootEl) throw new Error("scrollsheet registry fixtures: missing #root");
-createRoot(rootEl).render(
-  <React.StrictMode>
-    <Fixtures />
-  </React.StrictMode>,
-);
+// ?strict=0 mounts without StrictMode: its double effect run hides bugs that
+// only show when an effect runs once, on a freshly mounted dialog.
+const strict = new URLSearchParams(location.search).get("strict") !== "0";
+createRoot(rootEl).render(strict ? <React.StrictMode><Fixtures /></React.StrictMode> : <Fixtures />);
