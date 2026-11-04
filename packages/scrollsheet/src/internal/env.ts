@@ -145,6 +145,23 @@ export function _resetSnapToWarningForTests(): void {
 let warnedContentAsChildInvalidChild = false;
 
 /**
+ * Sticky is bounded by its parent box, so a footer inside a shorter wrapper
+ * follows the wrapper's end instead of the sheet's visible edge, with no error.
+ */
+export function warnFooterNested(footer: Element, body: Element): void {
+  if (process.env.NODE_ENV === "production") return;
+  for (let el = footer.parentElement; el && el !== body; el = el.parentElement) {
+    if (getComputedStyle(el).display !== "contents") {
+      warnOnce(
+        "footer",
+        "scrollsheet: render Sheet.Footer as a direct child of Sheet.Content, or inside a wrapper with display: contents, or it will not stay pinned.",
+      );
+      return;
+    }
+  }
+}
+
+/**
  * One-time dev-only warning: `Sheet.Content asChild` requires `children` to
  * be a single non-Fragment React element — the same contract `Slot` enforces
  * for Trigger/Handle/Title/Description, plus an explicit Fragment exclusion

@@ -52,7 +52,10 @@ describe("generated CORE_CSS", () => {
     // with the old OS-tracking behavior kept as an opt-in
     // [data-scrollsheet-theme="system"] variant — doubling each of those
     // three rule pairs instead of replacing them.
-    expect(CORE_CSS.length).toBeLessThan(27_200);
+    // Raised to 28.6k (28473 actual) for Sheet.Footer's sticky pinning, its
+    // per-side safe-area and keyboard rules, and the pre-state display rule
+    // that lets a child's autoFocus land before showModal().
+    expect(CORE_CSS.length).toBeLessThan(28_600);
   });
 
   test("keeps brace structure balanced", () => {

@@ -30,6 +30,7 @@ import 'scrollsheet/styles.css';
 | `Sheet.Root` | nothing itself | owns state. Skip `Trigger` and drive `open`/`onOpenChange` yourself for a fully controlled sheet |
 | `Sheet.Trigger` | `<button>` | opens on click. `asChild` renders your own element instead. `aria-haspopup`/`aria-expanded` wired automatically |
 | `Sheet.Content` | `<dialog>` + backdrop + scroll track + panel | everything you put inside renders on the panel. `className` styles the panel like a card. `fill` stretches the body (see below); `asChild` renders your single child element as the panel |
+| `Sheet.Footer` | `<div>`, pinned to the visible bottom edge | stays on screen at every detent and above the keyboard, absorbs the bottom safe-area inset. Direct child of `Content`, or inside a `display: contents` form. `asChild` supported |
 | `Sheet.Handle` | `<button>`, grab pill | click cycles detents, arrows move between them, down-arrow at the lowest detent dismisses. `variant`: `'inside'` (default), `'floating'` (overlays full-bleed content), `'outside'` (pill floats in the backdrop, bottom sheets only). `asChild` supported |
 | `Sheet.Title` | `<h2>` | wires `aria-labelledby` automatically when rendered |
 | `Sheet.Description` | `<p>` | wires `aria-describedby` automatically when rendered |
@@ -235,7 +236,7 @@ markup (trigger only, no dialog). No `window`/`document` access at module scope.
 | `backgroundEffect="scale"` does nothing | the target wrapper was not found | mark the wrapper, or pass `backgroundRef`; the full-height/opener rule applies only when `backgroundEffect` is omitted |
 | Two sheets on one page fight over background scale | both rely on the implicit `[data-scrollsheet-background]` document query | give each its own `backgroundRef` |
 | Nested sheet doesn't recede its parent | the child `Sheet.Root` isn't actually rendered inside the parent's `Sheet.Content` in the React tree | nesting detection is structural: move it inside `Content`, not just visually overlapping |
-| Focus behaves oddly on open | expected: `showModal()` moves focus to the panel container by default | put a native `autofocus` on a field inside `Content` if you want the keyboard to come up immediately |
+| Focus behaves oddly on open | expected: `showModal()` moves focus to the panel container by default | put `autoFocus` on a field inside `Content` if you want the keyboard to come up immediately (iOS only raises it when the sheet opened from a tap) |
 
 ## Reference
 

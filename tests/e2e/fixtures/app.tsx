@@ -1,4 +1,5 @@
 import {
+  AutofocusSheets,
   SideSheet,
   SinglePxSideSheet,
   BasicSheet,
@@ -57,6 +58,7 @@ import {
   DrawerContentAsChildFragmentSheet,
 } from "./drawer";
 import { DialogAcceptanceModal } from "./dialog";
+import { FlickSheets, FooterSheets } from "./footer";
 import { SonnerFixture, SonnerQueueFixture, SonnerShrinkFixture } from "./toast";
 
 export function App() {
@@ -94,6 +96,9 @@ export function App() {
         <InputTypesSheet />
         <KeyboardExpandSheet />
         <SideKeyboardSheet />
+        <AutofocusSheets />
+        <FooterSheets />
+        <FlickSheets />
         <NoHandleSheet side="bottom" trigger="No handle bottom" />
         <NoHandleSheet side="top" trigger="No handle top" />
         <NoHandleSheet side="left" trigger="No handle left" />

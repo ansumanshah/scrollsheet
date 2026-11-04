@@ -7,8 +7,9 @@ import { LinkCard } from '@astrojs/starlight/components';
 import DocExample from '../../../components/DocExample.astro';
 
 `showModal()` contains focus inside a modal sheet. Opening moves focus to the panel so the
-mobile keyboard stays closed. Closing returns focus to the trigger. Add native `autofocus` to a
-field inside `Sheet.Content` to focus it and open the keyboard on entry.
+mobile keyboard stays closed. Closing returns focus to the trigger. Add `autoFocus` (or the native
+`autofocus` attribute) to a field inside `Sheet.Content` to focus it on entry. iOS raises the
+keyboard only when the sheet opens from a tap, since it ignores focus outside a user gesture.
 
 With two or more `detents`, `Sheet.Handle` exposes `role="slider"` with the matching
 `aria-valuemin`/`-valuemax`/`-valuenow`/`-valuetext`, and moves between stops with Up/Down (or

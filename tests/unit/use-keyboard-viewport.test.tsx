@@ -109,7 +109,7 @@ function Harness({
   ctxRef.current = ctx;
   useKeyboardViewport({
     present,
-    initialBaselineGapPx,
+    initialBaselineGapRef: { current: initialBaselineGapPx },
     markProgrammaticScroll: () => {},
     jumpScroll,
     side: "bottom",

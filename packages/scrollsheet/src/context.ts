@@ -78,6 +78,7 @@ export interface SheetContextValue {
   disableDrag: boolean;
   /** A release never skips an intermediate detent. */
   sequentialDetents: boolean;
+  flick: "step" | "project" | undefined;
   /** Fraction (0-1) of the first detent below which a release dismisses. */
   closeThreshold: number;
   /**

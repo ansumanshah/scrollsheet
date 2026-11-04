@@ -1,5 +1,5 @@
 import { describe, expect, test } from "bun:test";
-import { fillProgressAtDetents } from "../../packages/scrollsheet/src/content";
+import { fillProgressAtDetents } from "../../packages/scrollsheet/src/internal/content-helpers";
 import type { ResolvedDetent } from "../../packages/scrollsheet/src/internal/detents";
 
 const detent = (

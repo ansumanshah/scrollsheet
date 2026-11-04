@@ -240,9 +240,15 @@ export function useDragEngine({
         return;
       }
 
+      const step = current.flick === "step";
       if (
         current.dismissible &&
-        isBelowCloseThreshold(projected, firstDetentRef.current, current.closeThreshold)
+        isBelowCloseThreshold(
+          // Only the first detent has nothing below it to step to.
+          step && startDetentIndex > 0 ? revealed : projected,
+          firstDetentRef.current,
+          current.closeThreshold,
+        )
       ) {
         current.onRelease?.(event, false);
         current.setOpen(false);
@@ -252,13 +258,24 @@ export function useDragEngine({
       // sequentialDetents: a fast fling never skips past the neighbor of
       // the detent this drag started from, regardless of how far the
       // velocity projection carried `projected`.
-      if (nearest && current.sequentialDetents) {
+      if (nearest && (current.sequentialDetents || step)) {
         nearest = clampSequentialDetent(nearest, startDetentIndex, resolvedRef.current);
+      }
+      if (step && Math.abs(revealedVelocity) > 0.3) {
+        nearest =
+          resolvedRef.current[startDetentIndex + Math.sign(revealedVelocity)] ?? nearest;
       }
       if (nearest) {
         animRef.current?.cancel();
         const rawTarget = mapScroll(nearest.height, maxDetent, geometry.sign);
-        startTween(track, rawTarget, geometry.axis, true);
+        const landing = nearest.spec;
+        // A click never moved, and its own handler picks the detent after this.
+        const moved = maxMove > DRAG_CLICK_SUPPRESS_PX;
+        // The tween's own scrollends are suppressed and its last frame may not
+        // move a whole pixel, so settle() is not guaranteed to run after it.
+        void startTween(track, rawTarget, geometry.axis, true).finished.then((completed) => {
+          if (completed && moved) ctxRef.current.setActiveDetent(landing);
+        });
       }
       current.onRelease?.(event, true);
     };

@@ -35,6 +35,31 @@ export const Description = /* @__PURE__ */ React.forwardRef<
   return <Comp {...props} ref={ref} id={ctx.descriptionId} />;
 });
 
+export interface SheetFooterProps extends React.ComponentProps<"div"> {
+  /** Render the child element instead of a `<div>`, merging props into it. */
+  asChild?: boolean;
+}
+
+/**
+ * Stays at the sheet's visible bottom edge at every detent, above the keyboard,
+ * and absorbs the home-indicator inset so its background runs under it.
+ * Render it as a direct child of `Sheet.Content`, or inside a wrapper with
+ * `display: contents` (a `<form>`, say).
+ */
+export const Footer = /* @__PURE__ */ React.forwardRef<HTMLDivElement, SheetFooterProps>(
+  function Footer({ asChild, className, ...props }, ref) {
+    const Comp: React.ElementType = asChild ? Slot : "div";
+    return (
+      <Comp
+        {...props}
+        ref={ref}
+        className={cn("scrollsheet-footer", className)}
+        data-scrollsheet-footer=""
+      />
+    );
+  },
+);
+
 export interface SheetCloseProps extends React.ComponentProps<"button"> {
   /** Render the child element instead of a `<button>`, merging props into it. */
   asChild?: boolean;

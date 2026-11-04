@@ -23,8 +23,13 @@ import { Root as SheetRoot, type SheetRootProps } from "../root";
 import { Trigger } from "../trigger";
 import { Content as SheetContent, type SheetContentProps } from "../content";
 import { Handle as SheetHandle } from "../handle";
-import { Close, Description, Title } from "../misc";
-import type { SheetCloseProps, SheetDescriptionProps, SheetTitleProps } from "../misc";
+import { Close, Description, Footer, Title } from "../misc";
+import type {
+  SheetCloseProps,
+  SheetDescriptionProps,
+  SheetFooterProps,
+  SheetTitleProps,
+} from "../misc";
 import type { SheetHandleProps } from "../handle";
 import type { SheetTriggerProps } from "../trigger";
 import type { DetentSpec } from "../internal/detents";
@@ -139,7 +144,7 @@ export function composeOpenChange(
  * props that have no vaul counterpart and forward to `Sheet.Root`
  * untranslated: `backdropDismissible` (the escape hatch vaul served with the
  * Radix onPointerDownOutside/onInteractOutside preventDefault idiom),
- * `escapeDismissible` (same for onEscapeKeyDown), `keyboardExpands`,
+ * `escapeDismissible` (same for onEscapeKeyDown), `flick`, `keyboardExpands`,
  * `onTravel` (the live counterpart of vaul's ignored `onDrag`), `scrollbar`,
  * `animationSpeed`, and `actionsRef`. Only props with no vaul name-collision are forwarded —
  * anything vaul also has (`closeThreshold`, `modal`, `dismissible`, …) keeps
@@ -152,6 +157,7 @@ export interface DrawerRootProps extends Pick<
   | "backdropDismissible"
   | "escapeDismissible"
   | "keyboardExpands"
+  | "flick"
   | "onTravel"
   | "scrollbar"
 > {
@@ -278,6 +284,7 @@ export function Root(props: DrawerRootProps) {
     backdropDismissible,
     escapeDismissible,
     keyboardExpands,
+    flick,
     onTravel,
     scrollbar,
     animationSpeed,
@@ -413,6 +420,7 @@ export function Root(props: DrawerRootProps) {
         backdropDismissible={backdropDismissible}
         escapeDismissible={escapeDismissible}
         keyboardExpands={keyboardExpands}
+        flick={flick}
         onTravel={onTravel}
         scrollbar={scrollbar}
         animationSpeed={animationSpeed}
@@ -645,11 +653,12 @@ const DrawerClose = /* @__PURE__ */ React.forwardRef<HTMLButtonElement, SheetClo
   },
 );
 
-export { Title, Description, DrawerClose as Close };
+export { Title, Description, DrawerClose as Close, Footer };
 export type {
   SheetTitleProps as DrawerTitleProps,
   SheetDescriptionProps as DrawerDescriptionProps,
   SheetCloseProps as DrawerCloseProps,
+  SheetFooterProps as DrawerFooterProps,
 };
 
 /* ── Namespace ────────────────────────────────────────────────────────── */
@@ -666,4 +675,5 @@ export const Drawer = {
   Title,
   Description,
   Handle,
+  Footer,
 };
