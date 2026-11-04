@@ -473,3 +473,13 @@
   color: #e8e6f0;
   font-size: inherit;
 }
+
+.seo__note {
+  margin-top: 18px;
+  color: var(--fg-muted);
+}
+
+.seo__note a {
+  color: var(--accent);
+  text-underline-offset: 3px;
+}

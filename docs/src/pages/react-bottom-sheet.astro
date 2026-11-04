@@ -35,8 +35,8 @@ const faqs: Faq[] = [
   {
     id: "best-react-bottom-sheet",
     question: "Which React bottom sheet library should I use?",
-    answerHtml: `It depends on what you already have. <a href="/compare/react-modal-sheet">react-modal-sheet</a> is a good fit if Motion is already in your app. <a href="/compare/vaul">vaul</a> is the most installed, and its README says the repo is unmaintained. scrollsheet is the option with no dependencies and native modal behavior, and it is the youngest of the three. Each comparison page lists what scrollsheet does worse.`,
-    answerText: `It depends on what you already have. react-modal-sheet is a good fit if Motion is already in your app. vaul is the most installed, and its README says the repo is unmaintained. scrollsheet is the option with no dependencies and native modal behavior, and it is the youngest of the three. Each comparison page lists what scrollsheet does worse.`,
+    answerHtml: `It depends on what you already have. <a href="/compare/react-modal-sheet">react-modal-sheet</a> is a good fit if Motion is already in your app. <a href="/compare/vaul">vaul</a> is the most installed, and its README says the repo is unmaintained. <a href="/compare/base-ui">Base UI's Drawer</a> is maintained and unstyled, and is what shadcn/ui's Base UI flavour uses. scrollsheet is the option with no dependencies and native modal behavior, and it is the youngest of the four. Each comparison page lists what scrollsheet does worse.`,
+    answerText: `It depends on what you already have. react-modal-sheet is a good fit if Motion is already in your app. vaul is the most installed, and its README says the repo is unmaintained. Base UI's Drawer is maintained and unstyled, and is what shadcn/ui's Base UI flavour uses. scrollsheet is the option with no dependencies and native modal behavior, and it is the youngest of the four. Each comparison page lists what scrollsheet does worse.`,
   },
   {
     id: "snap-points",
@@ -132,13 +132,14 @@ const faqs: Faq[] = [
 
   <h2>Which library</h2>
   <p>
-    Three libraries cover most React bottom sheet needs, and the right one depends on what your
+    Four libraries cover most React bottom sheet needs, and the right one depends on what your
     app already ships.
   </p>
   <ul>
     <li><a href="/compare/vaul">vaul</a>: the most installed. Its README says the repo is unmaintained. scrollsheet's <code>Drawer</code> takes common vaul props.</li>
+    <li><a href="/compare/base-ui">Base UI Drawer</a>: maintained, unstyled, part of a larger component library. The Drawer shadcn/ui's Base UI flavour uses.</li>
     <li><a href="/compare/react-modal-sheet">react-modal-sheet</a>: built on Motion, active, and lighter if Motion is already in your bundle.</li>
-    <li>scrollsheet: no dependencies, native modal behavior, and the newest of the three. Dragging needs CSS scroll-snap, and browsers without <code>&lt;dialog&gt;</code> get a static modal without dragging.</li>
+    <li>scrollsheet: no dependencies, native modal behavior, and the newest of the four. Dragging needs CSS scroll-snap, and browsers without <code>&lt;dialog&gt;</code> get a static modal without dragging.</li>
   </ul>
   <p>
     Radix Dialog is a dialog, not a sheet. <a href="/compare/radix-dialog">That comparison</a>{" "}

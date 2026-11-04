@@ -230,10 +230,10 @@ const description = `React bottom sheets, drawers, dialogs, side panels, and toa
   </Fragment>
   <section class="container hero">
     <div class="hero-copy">
-      <h1>Drop-in bottom sheets for React</h1>
+      <h1>Bottom sheets for React in {Math.round(BUNDLE_SIZES.index.gzipKb)}&nbsp;kB</h1>
       <p class="hero-lede">
-        Detents, nested sheets, side panels and toasts in {Math.round(BUNDLE_SIZES.index.gzipKb)}&nbsp;kB
-        gzipped, with no dependencies. Drawer accepts common vaul props.
+        Gzipped Sheet import, with detents, nested sheets and side panels. No runtime
+        dependencies. The Drawer export accepts common vaul props.
       </p>
       <div class="hero-actions">
         <InstallBox />
@@ -294,12 +294,21 @@ const description = `React bottom sheets, drawers, dialogs, side panels, and toa
   <section class="container section" aria-labelledby="alternatives-heading">
     <div class="section-head">
       <h2 id="alternatives-heading">Compared with the alternatives</h2>
+      <p>
+        New to bottom sheets? Start with the <a href="/react-bottom-sheet">React bottom sheet guide</a>.
+      </p>
     </div>
     <ul class="seo__links">
       <li>
         <a href="/compare/vaul">
           <strong>vs vaul</strong>
           <span>A two-line import swap, and the vaul options Drawer ignores.</span>
+        </a>
+      </li>
+      <li>
+        <a href="/compare/base-ui">
+          <strong>vs Base UI Drawer</strong>
+          <span>Unstyled and maintained, against a styled package with fewer dependencies.</span>
         </a>
       </li>
       <li>
@@ -312,12 +321,6 @@ const description = `React bottom sheets, drawers, dialogs, side panels, and toa
         <a href="/compare/radix-dialog">
           <strong>vs Radix Dialog</strong>
           <span>Native dialog against a JavaScript focus scope, and when to keep Radix.</span>
-        </a>
-      </li>
-      <li>
-        <a href="/react-bottom-sheet">
-          <strong>React bottom sheets</strong>
-          <span>What a phone-ready sheet needs, with demos.</span>
         </a>
       </li>
     </ul>

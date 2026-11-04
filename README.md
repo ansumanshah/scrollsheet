@@ -9,7 +9,7 @@ React bottom sheets, drawers, dialogs, side panels, and toasts.
 
 **[Live demos](https://scrollsheet.dev/#examples)** · **[Docs](https://scrollsheet.dev/docs/)** · **[Migrate from vaul](https://scrollsheet.dev/docs/migrating/from-vaul)** · **[Migrate from Sonner](https://scrollsheet.dev/docs/migrating/from-sonner)** · **[Migrate from Radix Dialog](https://scrollsheet.dev/docs/migrating/from-radix-dialog)**
 
-Compared with [vaul](https://scrollsheet.dev/compare/vaul), [react-modal-sheet](https://scrollsheet.dev/compare/react-modal-sheet) and [Radix Dialog](https://scrollsheet.dev/compare/radix-dialog), including what scrollsheet does worse.
+Compared with [vaul](https://scrollsheet.dev/compare/vaul), [Base UI](https://scrollsheet.dev/compare/base-ui), [react-modal-sheet](https://scrollsheet.dev/compare/react-modal-sheet) and [Radix Dialog](https://scrollsheet.dev/compare/radix-dialog), including what scrollsheet does worse.
 
 Sheets use a native `<dialog>` and CSS scroll snap, with spring motion expressed as CSS `linear()`. <!--size:index.gzip:1-->16.3<!--/size--> kB gzipped, <!--size:index.brotli:1-->14.7<!--/size--> kB brotli, plus a 3.9 kB stylesheet. React 18+; no runtime dependencies.
 

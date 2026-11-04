@@ -83,8 +83,8 @@ const faqs: Faq[] = [
   {
     id: "vaul-shadcn",
     question: "I use the shadcn/ui Drawer. Can I switch?",
-    answerHtml: `shadcn/ui's Radix-based <code>drawer.tsx</code> imports <code>Drawer</code> from vaul (checked in the shadcn/ui repository on 19 Oct 2026). Because the file lives in your repo, the import is yours to change, and the same adapter notes apply. Its newer Base UI variants use Base UI's own drawer instead, so check which one you installed.`,
-    answerText: `shadcn/ui's Radix-based drawer.tsx imports Drawer from vaul (checked in the shadcn/ui repository on 19 Oct 2026). Because the file lives in your repo, the import is yours to change, and the same adapter notes apply. Its newer Base UI variants use Base UI's own drawer instead, so check which one you installed.`,
+    answerHtml: `shadcn/ui's Radix flavour <code>drawer.tsx</code> imports <code>Drawer</code> from vaul (checked in the shadcn/ui repository on 4 Nov 2026). Because the file lives in your repo, the import is yours to change, and the same adapter notes apply. Its Base UI flavour moved to Base UI's Drawer on 2 Jul 2026, so check which flavour you installed. See <a href="/compare/base-ui">scrollsheet vs Base UI</a>.`,
+    answerText: `shadcn/ui's Radix flavour drawer.tsx imports Drawer from vaul (checked in the shadcn/ui repository on 4 Nov 2026). Because the file lives in your repo, the import is yours to change, and the same adapter notes apply. Its Base UI flavour moved to Base UI's Drawer on 2 Jul 2026, so check which flavour you installed.`,
   },
   {
     id: "vaul-browsers",
@@ -146,6 +146,14 @@ const faqs: Faq[] = [
   <p>
     scrollsheet is new: its first npm release was in August 2026. vaul has years of production
     use behind it and scrollsheet does not.
+  </p>
+
+  <h2>Leaving vaul for something else</h2>
+  <p>
+    If you are moving your components to Base UI, its Drawer is maintained and covers snap
+    points and swipe release. See <a href="/compare/base-ui">scrollsheet vs Base UI</a>. If
+    Motion is already in your app, <a href="/compare/react-modal-sheet">react-modal-sheet</a>
+    is the other option. scrollsheet fits best when you stay on the Radix side.
   </p>
 
   <h2>See it drag</h2>

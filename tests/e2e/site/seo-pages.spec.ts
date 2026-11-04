@@ -14,6 +14,7 @@ const PAGES = [
     demo: true,
   },
   { path: "/compare/radix-dialog/", h1: "scrollsheet vs Radix Dialog", faq: true, demo: true },
+  { path: "/compare/base-ui/", h1: "scrollsheet vs Base UI Drawer", faq: true, demo: true },
   { path: "/react-bottom-sheet/", h1: "React bottom sheet", faq: true, demo: true },
   { path: "/compare/", h1: "Compare scrollsheet", faq: false, demo: false },
 ] as const;
@@ -88,12 +89,15 @@ test("homepage links into every search page and the vaul guide", async ({ page }
     "/compare/vaul",
     "/compare/react-modal-sheet",
     "/compare/radix-dialog",
+    "/compare/base-ui",
     "/react-bottom-sheet",
     "/docs/migrating/from-vaul",
   ]) {
     await expect(page.locator(`main a[href="${href}"]`).first()).toBeVisible();
   }
-  const readme = page.locator('.hero-migrate a[href="https://github.com/emilkowalski/vaul#readme"]');
+  const readme = page.locator(
+    '.hero-migrate a[href="https://github.com/emilkowalski/vaul#readme"]',
+  );
   await expect(readme).toBeVisible();
 });
 
