@@ -54,6 +54,20 @@ async function expectInset(page: Page, trigger: string, expected: string) {
     .toBe(expected);
 }
 
+test("autoFocus lands and arms the keyboard in a sheet opened over a modal", async ({ page }) => {
+  await page.goto("/");
+  const parent = await openOverlayByTrigger(page, "Autofocus parent");
+  await parent.getByRole("button", { name: "Autofocus nested" }).click();
+  const input = page.getByLabel("Autofocus nested input");
+  await expect(input).toBeFocused();
+  await expect(input).not.toHaveAttribute("data-blurred", "true");
+  await setViewportGap(page, 300);
+  await expectInset(page, "Autofocus nested", "300px");
+  await expect(
+    page.getByRole("dialog", { name: "Autofocus nested" }).getByTestId("autofocus-active"),
+  ).toHaveText("0.85", { timeout: SPRING_TIMEOUT });
+});
+
 for (const trigger of MODES) {
   test.describe(trigger, () => {
     test("the field holds focus once the sheet has settled open", async ({ page }) => {

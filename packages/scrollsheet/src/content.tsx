@@ -600,6 +600,27 @@ export const Content = /* @__PURE__ */ React.forwardRef<HTMLDivElement, SheetCon
       }
     }, [resolveSpec, startTween]);
 
+    const openOverlay = (dialog: HTMLElement) => {
+      if (overlayOpenRef.current) return;
+      // Trigger-recorded opener wins; focus is the fallback for programmatic
+      // opens and is wrong on Safari (buttons never focus on click/tap).
+      openerElementRef.current = ctx.openerRef.current ?? previousFocusRef.current;
+      ctx.openerRef.current = null;
+      // A field autofocused during this commit keeps focus through the
+      // platform's focusing steps, which honor [autofocus]: moving it away
+      // and back would fire the field's blur handlers on open.
+      const held = dialog.contains(document.activeElement) ? document.activeElement : null;
+      held?.setAttribute("autofocus", "");
+      if ("showModal" in dialog) {
+        if (ctx.modal) (dialog as HTMLDialogElement).showModal();
+        else (dialog as HTMLDialogElement).show();
+      } else {
+        (dialog as HTMLDivElement & { showPopover: () => void }).showPopover();
+      }
+      held?.removeAttribute("autofocus");
+      overlayOpenRef.current = true;
+    };
+
     // ── Open sequence ────────────────────────────────────────────────────────
     React.useLayoutEffect(() => {
       if (!present || !ctx.open || phase !== "pre") return;
@@ -609,25 +630,7 @@ export const Content = /* @__PURE__ */ React.forwardRef<HTMLDivElement, SheetCon
       if (!dialog || !track || !panel) return;
       const geometry = geometryFor(ctx.side);
 
-      if (!overlayOpenRef.current) {
-        // Trigger-recorded opener wins; focus is the fallback for programmatic
-        // opens and is wrong on Safari (buttons never focus on click/tap).
-        openerElementRef.current = ctx.openerRef.current ?? previousFocusRef.current;
-        ctx.openerRef.current = null;
-        // A field autofocused during this commit keeps focus through the
-        // platform's focusing steps, which honor [autofocus]: moving it away
-        // and back would fire the field's blur handlers on open.
-        const held = dialog.contains(document.activeElement) ? document.activeElement : null;
-        held?.setAttribute("autofocus", "");
-        if ("showModal" in dialog) {
-          if (ctx.modal) (dialog as HTMLDialogElement).showModal();
-          else (dialog as HTMLDialogElement).show();
-        } else {
-          (dialog as HTMLDivElement & { showPopover: () => void }).showPopover();
-        }
-        held?.removeAttribute("autofocus");
-        overlayOpenRef.current = true;
-      }
+      openOverlay(dialog);
       measure();
       if (ctx.center) {
         // No travel: the backdrop's dim rides the state-transition CSS
@@ -1266,7 +1269,17 @@ export const Content = /* @__PURE__ */ React.forwardRef<HTMLDivElement, SheetCon
           />
         )}
         {!nonModal && (
-          <div ref={backdropRef} className="scrollsheet-backdrop" data-scrollsheet-backdrop />
+          <div
+            // Over an open modal this overlay is inert until it opens itself, and
+            // focus() on an inert field is a no-op. Refs attach in tree order, so
+            // this lands ahead of the autoFocus of anything after the backdrop.
+            ref={(el) => {
+              backdropRef.current = el;
+              if (el && parentStack && ctx.open) openOverlay(el.parentElement!);
+            }}
+            className="scrollsheet-backdrop"
+            data-scrollsheet-backdrop
+          />
         )}
         <div
           ref={trackRef}
