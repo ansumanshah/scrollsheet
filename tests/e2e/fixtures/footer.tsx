@@ -104,6 +104,31 @@ function FooterMorphSheet() {
   );
 }
 
+/** State lives below Content, so a change inside the wrapper never re-renders it. */
+function FooterContentsForm() {
+  const [extra, setExtra] = React.useState(false);
+  return (
+    <form style={{ display: "contents" }}>
+      <button type="button" onClick={() => setExtra((on) => !on)}>
+        Toggle extra
+      </button>
+      {extra && <div data-testid="footer-extra" style={{ height: 200 }} />}
+      <Sheet.Footer style={{ padding: 16 }}>Total</Sheet.Footer>
+    </form>
+  );
+}
+
+function FooterContentsSheet() {
+  return (
+    <Sheet.Root detents={["content"]}>
+      <Sheet.Trigger className="btn">Footer contents</Sheet.Trigger>
+      <Sheet.Content className="sheet" aria-label="Footer contents">
+        <FooterContentsForm />
+      </Sheet.Content>
+    </Sheet.Root>
+  );
+}
+
 function FooterNestedSheet() {
   return (
     <Sheet.Root detents={[0.4]}>
@@ -122,6 +147,7 @@ export function FooterSheets() {
   return (
     <>
       <FooterMorphSheet />
+      <FooterContentsSheet />
       <FooterNestedSheet />
       <FooterSheet trigger="Footer detents" detents={[0.3, 0.6, "full"]} />
       <FooterSheet trigger="Footer content" detents={["content"]} rows={3} />
