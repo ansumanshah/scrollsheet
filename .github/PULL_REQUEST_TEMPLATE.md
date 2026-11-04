@@ -9,7 +9,7 @@
 - [ ] `bun run build`
 - [ ] `bun test tests/unit`
 - [ ] `bun run test:e2e:fast`
-- [ ] `bunx playwright test`
+- [ ] `bun run test:e2e --workers=3`
 - [ ] `bun run size`
 - [ ] `bun run pack:check`
 - [ ] `bun run check:registry`

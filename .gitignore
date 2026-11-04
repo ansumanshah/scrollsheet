@@ -14,3 +14,7 @@ docs/public/llms.txt
 # Copied into the package at build time so npm renders them; root files are the source.
 packages/scrollsheet/README.md
 packages/scrollsheet/LICENSE
+
+# Machine-local agent configuration and hooks
+.codex/
+.worktrees/

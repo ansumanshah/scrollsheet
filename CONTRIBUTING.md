@@ -20,7 +20,7 @@ bun run check:compat    # authored CSS against .browserslistrc
 bun run build           # required before unit tests read dist/
 bun test tests/unit
 bun run test:e2e:fast    # chromium-mobile only
-bunx playwright test    # full browser matrix and local visual/performance projects
+bun run test:e2e --workers=3 # full browser matrix and local visual/performance projects
 bun run size            # per-import gzip budgets and size-document freshness
 bun run pack:check
 bun run check:registry
@@ -31,8 +31,7 @@ bun run test:site         # site smoke, builds the docs site first
 build/test configs. The docs workspace has its own `bun run --cwd docs typecheck`.
 The TypeScript 6 dependency supplies declaration generation and Astro's checker;
 source typechecking uses Bun's built-in checker. The latest `@astrojs/check` rejects
-the TypeScript 7 npm package.
-Local probes in `tests/e2e/_bughunt/` are outside the maintained typecheck suite.
+the TypeScript 7 npm package as of `@astrojs/check` 0.9.12.
 `check:compat` checks CSS only; JavaScript browser-API linting is not part of this gate.
 
 The package's JavaScript and bundle-size probes use Bun's bundler. `bun-plugin-dts`
@@ -72,7 +71,7 @@ The build regenerates these modules before unit tests check the CSS output.
 - [ ] bun run build
 - [ ] bun test tests/unit
 - [ ] bun run test:e2e:fast
-- [ ] bunx playwright test
+- [ ] bun run test:e2e --workers=3
 - [ ] bun run size
 - [ ] bun run pack:check
 - [ ] bun run check:registry

@@ -13,6 +13,5 @@
     "noEmit": true,
     "types": ["bun"]
   },
-  "include": ["packages/scrollsheet/src", "tests", "scripts", "*.config.ts"],
-  "exclude": ["tests/e2e/_bughunt"]
+  "include": ["packages/scrollsheet/src", "tests", "scripts", "*.config.ts"]
 }
