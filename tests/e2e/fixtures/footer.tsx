@@ -104,6 +104,31 @@ function FooterMorphSheet() {
   );
 }
 
+/** State lives below Content, so a change inside the wrapper never re-renders it. */
+function FooterContentsForm() {
+  const [extra, setExtra] = React.useState(false);
+  return (
+    <form style={{ display: "contents" }}>
+      <button type="button" onClick={() => setExtra((on) => !on)}>
+        Toggle extra
+      </button>
+      {extra && <div data-testid="footer-extra" style={{ height: 200 }} />}
+      <Sheet.Footer style={{ padding: 16 }}>Total</Sheet.Footer>
+    </form>
+  );
+}
+
+function FooterContentsSheet() {
+  return (
+    <Sheet.Root detents={["content"]}>
+      <Sheet.Trigger className="btn">Footer contents</Sheet.Trigger>
+      <Sheet.Content className="sheet" aria-label="Footer contents">
+        <FooterContentsForm />
+      </Sheet.Content>
+    </Sheet.Root>
+  );
+}
+
 function FooterNestedSheet() {
   return (
     <Sheet.Root detents={[0.4]}>
@@ -122,6 +147,7 @@ export function FooterSheets() {
   return (
     <>
       <FooterMorphSheet />
+      <FooterContentsSheet />
       <FooterNestedSheet />
       <FooterSheet trigger="Footer detents" detents={[0.3, 0.6, "full"]} />
       <FooterSheet trigger="Footer content" detents={["content"]} rows={3} />
@@ -152,16 +178,26 @@ export function FlickSheets() {
     <>
       <FlickSheet flick="step" trigger="Flick step" />
       <FlickSheet trigger="Flick project" />
+      <FlickSheet flick="step" trigger="Flick step non-modal" modal={false} />
     </>
   );
 }
 
-function FlickSheet({ flick, trigger }: { flick?: "step"; trigger: string }) {
+function FlickSheet({
+  flick,
+  trigger,
+  modal,
+}: {
+  flick?: "step";
+  trigger: string;
+  modal?: boolean;
+}) {
   const [active, setActive] = React.useState<DetentSpec>(0.25);
   return (
     <Sheet.Root
       detents={[0.25, 0.45, 0.65, 0.85]}
       flick={flick}
+      modal={modal}
       activeDetent={active}
       onActiveDetentChange={setActive}
     >

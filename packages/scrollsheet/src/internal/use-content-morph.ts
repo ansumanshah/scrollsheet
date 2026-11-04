@@ -121,13 +121,23 @@ export function useContentMorph({
     };
 
     const observer = new ResizeObserver(scheduleMorph);
+    // ResizeObserver never reports for elements that weren't observed when
+    // they appeared (or that left the DOM) — childList changes both re-sync
+    // the watch set and are themselves content-height changes.
+    const mutation = new MutationObserver(() => {
+      observer.disconnect();
+      observeBody();
+      scheduleMorph();
+    });
     // Mirrors measure()'s own switch: once fill or a footer stretches body, its
     // box no longer changes with content, so the observer watches every direct
     // child — the same set the stretch-neutralized measurement reads. A
     // single-child watch missed changes in later children (a second view
     // mounting, a list growing) and left the panel at a stale height. A
-    // display:contents wrapper has no box to observe, so its children stand in.
+    // display:contents wrapper has no box to observe, so its children stand in
+    // and its childList is watched like body's.
     const observeChildren = (parent: Element) => {
+      mutation.observe(parent, { childList: true });
       for (const child of parent.children) {
         if (getComputedStyle(child).display === "contents") observeChildren(child);
         else observer.observe(child);
@@ -137,16 +147,8 @@ export function useContentMorph({
       if (fill || body.querySelector("[data-scrollsheet-footer]")) observeChildren(body);
       else observer.observe(body);
     };
-    observeBody();
-    // ResizeObserver never reports for elements that weren't observed when
-    // they appeared (or that left the DOM) — childList changes both re-sync
-    // the watch set and are themselves content-height changes.
-    const mutation = new MutationObserver(() => {
-      observer.disconnect();
-      observeBody();
-      scheduleMorph();
-    });
     mutation.observe(body, { childList: true });
+    observeBody();
     // Reconcile: a resize landing before this chunk resolved left a stale
     // height; the scheduled morph no-ops when nothing changed.
     scheduleMorph();

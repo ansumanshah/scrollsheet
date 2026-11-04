@@ -5,7 +5,7 @@ All notable changes to this project are documented here.
 ## 1.3.0 - 2026-11-05
 
 - **`Sheet.Footer` stays on the sheet's visible bottom edge at every detent and above the keyboard.** It absorbs the bottom safe-area inset and is also available as `Drawer.Footer`.
-- **`flick="step"` moves exactly one detent on a fast release.** Only a flick from the first detent can dismiss. The default stays velocity projection.
+- **`flick="step"` moves exactly one detent on a fast release.** A slow release settles to the nearest detent, as it does without `flick`. Only a flick from the first detent can dismiss. The default stays velocity projection.
 - **`autoFocus` now works inside a sheet.** The field keeps focus through `showModal()` without firing blur, and arms the keyboard engine with a toolbar baseline taken before focus.
 - **`onActiveDetentChange` now reports the detent a mouse drag lands on.** It could previously miss the final detent after a mouse or scripted drag.
 - **Toasts stay above modal sheets.** A page-level `Toaster` no longer sits dimmed behind an open modal, and its actions work there. Inside a third-party `<dialog>` that has a CSS `transform`, toasts position against that dialog; the Sonner migration guide notes this.
@@ -14,7 +14,7 @@ All notable changes to this project are documented here.
 - **`scrollsheet-codemod` moves a project off vaul.** `npx scrollsheet-codemod vaul src` rewrites the imports and reports each prop to check, with file and line.
 - **The site has a new homepage and comparison pages.** Pages for vaul, Base UI, react-modal-sheet, and Radix Dialog include what scrollsheet does worse, alongside a React bottom sheet guide.
 - **Docs accessibility is fixed.** Faint text meets contrast in both themes, and the example tabs no longer carry an invalid role.
-- **The Sheet entry grew from 16.3 to 16.6 kB gzip, with the core stylesheet at 4.2 kB.** The footer and the fixes above account for it. Drawer, Dialog, and the `auto` entry budgets each rose by 0.1 kB, and the combined import by 0.4 kB.
+- **The Sheet entry grew from 16.3 to 16.6 kB gzip, with the core stylesheet at 4.2 kB.** The footer and the fixes above account for it. Drawer and Dialog budgets rose by 0.2 kB, the `auto` entry by 0.1 kB, and the combined import by 0.4 kB.
 - **`content.tsx` is split to stay under the repository's file size limit.** Detent measurement moved to its own hook, with no public API change.
 
 ## 1.2.3 - 2026-11-04

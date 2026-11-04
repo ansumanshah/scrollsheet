@@ -321,6 +321,21 @@ test.describe("content changes while open", () => {
       .toBeCloseTo(tall, 0);
   });
 
+  test("an element mounting inside a display:contents wrapper grows the max detent", async ({
+    page,
+  }) => {
+    const { overlay } = await open(page, "Footer contents");
+    const maxDetent = () =>
+      overlay.evaluate((el) =>
+        parseFloat(getComputedStyle(el).getPropertyValue("--scrollsheet-max-detent")),
+      );
+    const before = await maxDetent();
+    await overlay.getByRole("button", { name: "Toggle extra" }).click();
+    await expect
+      .poll(maxDetent, { timeout: SPRING_TIMEOUT })
+      .toBeGreaterThanOrEqual(before + 190);
+  });
+
   test("a footer mounting or leaving while open re-measures the sheet around it", async ({
     page,
   }) => {

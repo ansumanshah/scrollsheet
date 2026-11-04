@@ -1,4 +1,4 @@
-import { type Page, expect, test } from "@playwright/test";
+import { type Locator, type Page, expect, test } from "@playwright/test";
 import { openOverlayByTrigger } from "../helpers";
 
 // Release velocity is wall-clock real, so a loaded machine can read a flick as
@@ -108,4 +108,71 @@ test("step stamps the attribute native snap reads; project leaves stops skippabl
     "scroll-snap-stop",
     "normal",
   );
+});
+
+const stopHeight = (track: Locator, stop: number) =>
+  track.evaluate((el, f) => Math.round(f * el.clientHeight), stop);
+
+test("step: a slow drag past a stop settles on the nearest stop", async ({ page }) => {
+  await page.goto("/");
+  const overlay = await openOverlayByTrigger(page, "Flick step");
+  const track = overlay.locator(".scrollsheet-track");
+  const box = await overlay.locator(".scrollsheet-panel").boundingBox();
+  if (!box) throw new Error("panel has no box");
+  const x = box.x + box.width / 2;
+  const y = box.y + 40;
+  const distance = (await stopHeight(track, 0.65)) - (await stopHeight(track, 0.25));
+  await page.mouse.move(x, y);
+  await page.mouse.down();
+  await page.mouse.move(x, y - distance, { steps: 20 });
+  await page.waitForTimeout(200);
+  await page.mouse.up();
+  await expect(active(page, "Flick step")).toHaveText("0.65", { timeout: SETTLE_TIMEOUT });
+  await page.waitForTimeout(600);
+  await expect(active(page, "Flick step")).toHaveText("0.65");
+});
+
+test("step: a native scroll landing past a stop reports where it landed", async ({ page }) => {
+  await page.goto("/");
+  const overlay = await openOverlayByTrigger(page, "Flick step");
+  const track = overlay.locator(".scrollsheet-track");
+  await page.waitForTimeout(600);
+  const target = await stopHeight(track, 0.65);
+  // The stamped pointerup credits the jump to a user, past the phantom-scroll guard.
+  await track.evaluate((el, top) => {
+    el.dispatchEvent(new PointerEvent("pointerup", { bubbles: true }));
+    el.scrollTo({ top, behavior: "instant" });
+  }, target);
+  await expect(active(page, "Flick step")).toHaveText("0.65", { timeout: SETTLE_TIMEOUT });
+});
+
+test("step: a touch tap with a few pixels of jitter is not a flick", async ({ page }) => {
+  await page.goto("/");
+  const overlay = await openOverlayByTrigger(page, "Flick step non-modal");
+  const track = overlay.locator(".scrollsheet-track");
+  await page.waitForTimeout(600);
+  const before = await track.evaluate((el) => el.scrollTop);
+  // Synthetic so the 3px lands inside the 10ms a real tap's jitter takes.
+  await active(page, "Flick step non-modal").evaluate((el) => {
+    const { x, y } = el.getBoundingClientRect();
+    const fire = (type: string, clientY: number) =>
+      el.dispatchEvent(
+        new PointerEvent(type, {
+          bubbles: true,
+          cancelable: true,
+          pointerId: 7,
+          pointerType: "touch",
+          clientX: x + 1,
+          clientY,
+        }),
+      );
+    fire("pointerdown", y + 4);
+    const end = performance.now() + 5;
+    while (performance.now() < end);
+    fire("pointermove", y + 1);
+    fire("pointerup", y + 1);
+  });
+  await page.waitForTimeout(600);
+  expect(Math.abs((await track.evaluate((el) => el.scrollTop)) - before)).toBeLessThan(5);
+  await expect(active(page, "Flick step non-modal")).toHaveText("0.25");
 });

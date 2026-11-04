@@ -512,6 +512,13 @@ export function AutofocusSheets() {
       <AutofocusSheet mode="attr" trigger="Autofocus attr" />
       <AutofocusSheet mode="effect" trigger="Autofocus effect" />
       <AutofocusSheet mode="prop" trigger="Autofocus non-modal" modal={false} />
+      <Sheet.Root detents={[0.6]}>
+        <Sheet.Trigger className="btn">Autofocus parent</Sheet.Trigger>
+        <Sheet.Content className="sheet" aria-label="Autofocus parent">
+          <Sheet.Title>Autofocus parent</Sheet.Title>
+          <AutofocusSheet mode="prop" trigger="Autofocus nested" />
+        </Sheet.Content>
+      </Sheet.Root>
     </>
   );
 }
