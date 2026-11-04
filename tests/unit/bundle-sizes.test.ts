@@ -1,4 +1,5 @@
 import { existsSync } from "node:fs";
+import { fileURLToPath } from "node:url";
 import { describe, expect, test } from "bun:test";
 
 import { measureAll, measureStylesheets } from "../../scripts/lib/bundle-measure";
@@ -11,7 +12,7 @@ import {
 // Measurements read the built package, so build before running this suite.
 // scripts/check-size.ts enforces the same freshness check after the build in CI.
 const distReady = existsSync(
-  new URL("../../packages/scrollsheet/dist/index.mjs", import.meta.url).pathname,
+  fileURLToPath(new URL("../../packages/scrollsheet/dist/index.mjs", import.meta.url)),
 );
 
 describe("generated bundle-size numbers", () => {

@@ -1,6 +1,7 @@
 import { mkdir, mkdtemp, rm, symlink } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
+import { fileURLToPath } from "node:url";
 import { expect, test } from "bun:test";
 
 test("published declarations resolve for a strict NodeNext consumer", async () => {
@@ -8,7 +9,7 @@ test("published declarations resolve for a strict NodeNext consumer", async () =
   try {
     await mkdir(join(dir, "node_modules"));
     await symlink(
-      new URL("../../packages/scrollsheet", import.meta.url).pathname,
+      fileURLToPath(new URL("../../packages/scrollsheet", import.meta.url)),
       join(dir, "node_modules", "scrollsheet"),
       "dir",
     );

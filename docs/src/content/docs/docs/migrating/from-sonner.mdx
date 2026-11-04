@@ -1,6 +1,6 @@
 ---
 title: Migrate from Sonner
-description: Migrate toast, useSonner, and Toaster with six positions, per-toast overrides, and swipe-to-dismiss; check the compatibility gaps.
+description: Move from Sonner to scrollsheet and check the compatibility gaps.
 ---
 
 import { Aside, LinkCard } from '@astrojs/starlight/components';
@@ -22,9 +22,8 @@ The methods (`toast()`, `.success()`, `.error()`, `.info()`, `.warning()`, `.loa
 ## CSS compatibility
 
 <Aside type="tip" title="Supported CSS aliases">
-`useSonner` is the same function as `useToasts` (the rest of these docs teach the latter); pick
-whichever reads better in your codebase. With `sonnerCompat` enabled (the default), supported
-toast slots carry the neutral name (`.scrollsheet-toast`,
+`useSonner` is an alias of `useToasts`, the name used elsewhere in these docs. With
+`sonnerCompat` enabled (the default), supported toast slots carry the neutral name (`.scrollsheet-toast`,
 `data-scrollsheet-toaster`, `--scrollsheet-toast-gap`, ...) and the corresponding Sonner alias
 (`.sonner-toast`, `data-sonner-toaster`, `--sonner-gap` as a fallback), so those selectors can continue matching. Check custom selectors and animations in your app;
 the adapter does not reproduce every Sonner DOM detail.
@@ -34,7 +33,7 @@ the adapter does not reproduce every Sonner DOM detail.
 
 <DocExample
   name="toast"
-  caption="Fire it a few times in a row and watch the queue stack, newest on top."
+  caption="Add several toasts to see the stack, newest on top."
 />
 
 <div className="table-scroll prop-table">
@@ -44,8 +43,8 @@ the adapter does not reproduce every Sonner DOM detail.
 | Repeated `id` | Updates that toast in place instead of stacking a duplicate |
 | `toasterId` | A `toast()` call with a matching `toasterId` shows only on that instance, the one rendered as `<Toaster id="...">`; everything else lands on the default un-keyed one. `<Toaster toasterId>` still works but is deprecated |
 | `position` | All six Sonner positions render; a toast's own `position` overrides the `Toaster`'s default for just that one toast |
-| Stack | Every toast is a real, persistent card, not a ghost placeholder; collapsed ones sit behind the front one and expand to the full list on hover or `Alt+T` (configurable via `hotkey`). `Escape` dismisses the front toast, or collapses the stack back if the hotkey opened it, though a stack the pointer is still hovering stays expanded until the pointer leaves |
-| `visibleToasts` | Caps how many toasts show at once, default 3 like Sonner. Toasts past the cap stay mounted but hidden, timers still running, and fade in the moment a slot frees; nothing gets evicted. Minimum 1: `0` or negative still shows one |
+| Stack | Each toast keeps its card. The stack expands on hover or `Alt+T` (configurable via `hotkey`). `Escape` dismisses the front toast, or collapses the stack back if the hotkey opened it, though a stack the pointer is still hovering stays expanded until the pointer leaves |
+| `visibleToasts` | Caps how many toasts show at once, default 3. Extra toasts stay mounted and hidden with their timers running. They fade in when a slot opens. Minimum 1: `0` or negative still shows one |
 | Auto-dismiss | Uses the toast's own `duration`, or the `Toaster`'s. Pauses on hover, any pointer down on the stack (including mid-swipe), keyboard expand, and a hidden tab, resuming with the time left rather than a fresh countdown; updating a live toast's `duration` re-arms the timer from the new value |
 | Action / cancel buttons | Cancel runs its handler and dismisses only when the toast is dismissible; action always runs its handler and dismisses unless it calls `event.preventDefault()` |
 | `classNames.default` | Applies to neutral toasts, alongside `classNames.toast`; per-type classes apply to their matching toast type |
@@ -62,7 +61,7 @@ the adapter does not reproduce every Sonner DOM detail.
 Swipe-to-dismiss tracks both axes: drag past 45px or flick it fast enough and it dismisses,
 release short of that and it springs back. Enter/exit, the stack's expand/collapse, and the
 swipe itself are all CSS transitions, not a JS animation loop; `prefers-reduced-motion: reduce`
-zeroes all of them, the same contract the core primitive keeps everywhere else.
+disables these transitions.
 
 ## What changes
 
@@ -85,18 +84,17 @@ zeroes all of them, the same contract the core primitive keeps everywhere else.
 Sonner injects its styles automatically; scrollsheet's default entry expects
 `scrollsheet/toast.css`. Add `scrollsheet/styles.css` too if the app uses sheets or dialogs.
 
-For sonner's zero-setup behavior, import `toast` and `Toaster` from `scrollsheet/auto`:
-embedded styles, injected on first render. The `auto` entry is also the right one for design
-systems whose CSS pipeline statically compiles custom properties away (postcss-css-variables
-and similar); that compilation destroys the runtime variables the stylesheets' geometry runs on.
+To inject styles on first render, import `toast` and `Toaster` from `scrollsheet/auto`.
+Also use this entry if your CSS pipeline compiles away custom properties, such as with
+postcss-css-variables. The layout needs those variables at runtime.
 
 <LinkCard
   title="Migrate from vaul"
-  description="Vaul's Drawer namespace mapped onto scrollsheet, with supported props, CSS hooks, and migration differences."
+  description="Move from Vaul to scrollsheet and check the behavior differences."
   href="/docs/migrating/from-vaul"
 />
 <LinkCard
   title="Toasts"
-  description="toast() and Toaster ship in the package: per-toast DOM, six positions, swipe to dismiss, Sonner-compatible API."
+  description="Show toasts with six positions, swipe dismissal, and a Sonner-compatible API."
   href="/docs/toasts"
 />

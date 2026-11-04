@@ -19,15 +19,17 @@ toast.success('Synced', { description: 'Two seconds ago.' });
 toast('Archived', { action: { label: 'Undo', onClick: restore } });
 ```
 
-`toast()` and `<Toaster>` are part of the package, on their own primitives: a persistent
-element per toast, all six positions with per-toast override, stacking that hides overflow
-instead of dismissing it, and 2-axis swipe-to-dismiss. `toast.promise()`, `useToasts()`,
-`classNames`, and per-type `icons` are all there; the
-[API reference](/docs/reference/api#toasts) lists every `toast()` method and `Toaster` prop.
+`toast()` and `<Toaster>` support six positions, per-toast overrides, stacking, and two-axis
+swipe dismissal. Each toast keeps its DOM element; overflow toasts are hidden rather than
+dismissed.
+
+Use `toast.promise()` for async work, `useToasts()` to read the queue, and `classNames` or
+per-type `icons` to style it. See the [API reference](/docs/reference/api#toasts) for every method
+and prop.
 
 <DocExample
   name="toast"
-  caption="Fire a few. They stack, self-dismiss, and swipe away."
+  caption="Add a few toasts. They stack, dismiss after a timeout, and support swipe dismissal."
 />
 
 Coming from Sonner? Start by changing the import and adding the stylesheet, then check the
@@ -41,6 +43,6 @@ Coming from Sonner? Start by changing the import and adding the stylesheet, then
 
 <LinkCard
   title="Migrate from Sonner"
-  description="What carries over unchanged, the sonner-* CSS names that keep working, and the documented v1 gaps."
+  description="Supported Sonner APIs, CSS aliases, and compatibility gaps."
   href="/docs/migrating/from-sonner"
 />

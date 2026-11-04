@@ -41,8 +41,8 @@ export default function ResponsiveExample() {
           <Sheet.Title>Invite a teammate</Sheet.Title>
           <Sheet.Description>
             {isDesktop
-              ? "Viewport is 720px or wider: a centered dialog with zoom and fade, same component."
-              : "Viewport is under 720px: a bottom sheet with drag and detents, same component."}
+              ? "At 720px or wider, this opens as a centered dialog."
+              : "Below 720px, this opens as a draggable bottom sheet."}
           </Sheet.Description>
           <div className="ex-field">
             <label className="ex-label" htmlFor="ex-invite-email">

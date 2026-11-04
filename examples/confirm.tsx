@@ -24,8 +24,8 @@ export default function ConfirmExample() {
           </div>
           <Sheet.Title>Discard unsaved changes?</Sheet.Title>
           <Sheet.Description>
-            You have edits that have not been saved yet. They will be lost if you leave now. Swipe,
-            backdrop tap, and Esc are disabled here, only the buttons below close this.
+            Discarding will erase your unsaved edits. Use a button below to close this sheet. Swiping,
+            tapping the backdrop, and Escape are disabled.
           </Sheet.Description>
           <div className="ex-actions">
             <button

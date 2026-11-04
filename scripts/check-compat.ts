@@ -4,9 +4,9 @@
  * dist CSS are excluded; progressive enhancements keep their @supports guards.
  * Run standalone: bun run check:compat
  */
-export {}; // top-level await requires this file to be a module, not a script
+import { fileURLToPath } from "node:url";
 
-const REPO_ROOT = new URL("..", import.meta.url).pathname;
+const REPO_ROOT = fileURLToPath(new URL("..", import.meta.url));
 
 const CSS_FILES = [
   "packages/scrollsheet/src/internal/core.css",
@@ -41,9 +41,10 @@ async function checkCss(): Promise<boolean> {
     return false;
   }
 
-  const doiuseBin = new URL("../node_modules/.bin/doiuse", import.meta.url).pathname;
+  const doiuseBin = fileURLToPath(new URL("../node_modules/.bin/doiuse", import.meta.url));
   const proc = Bun.spawn(
     [
+      process.execPath,
       doiuseBin,
       "-b",
       queries.join(", "),

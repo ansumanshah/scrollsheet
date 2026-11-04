@@ -4,21 +4,7 @@ import { SPRING_TIMEOUT, openSheetByTrigger, waitForStableScrollTop } from "../h
 /**
  * The v0.4 detent-behavior props: largestUndimmedDetent, handleOnly,
  * disableDrag, sequentialDetents, closeThreshold, onRelease. Each fixture
- * lives in e2e/fixtures/app.tsx, next to the feature it exercises.
- *
- * A mandatory-scroll-snap container on Chromium silently rejects
- * intermediate programmatic scrollTo() writes issued outside a real
- * touch/wheel gesture (confirmed via direct instrumentation, same
- * characteristic desktop-drag.spec.ts documents) — a synthetic page.mouse
- * drag's per-move jumpScroll() calls never visibly move `track.scrollTop`
- * mid-gesture. Every outcome here is therefore checked via the drag's real
- * *effect* (data-scrollsheet-dragging while the pointer is held,
- * dismiss/stay-open on release, onRelease's own payload) rather than reading
- * back scrollTop mid-drag, and closeThreshold — which needs a precise
- * *resting* revealed position, not a velocity projection — is driven
- * straight through the native-scroll settle() path (scrollTop + a synthetic
- * `scrollend`, the same technique detents.spec.ts's dismiss test uses)
- * instead of a mouse drag at all.
+ * lives in e2e/fixtures/sheet.tsx, next to the feature it exercises.
  */
 
 /**
@@ -382,25 +368,28 @@ test.describe("sequentialDetents", () => {
 });
 
 test.describe("closeThreshold", () => {
-  // An *undamped* drag (no settling moves at the end, unlike `mouseDrag`
-  // above) — release-time velocity, not `revealed`'s frozen starting
-  // position (see the file doc comment), is what resolveDrag's projection
-  // actually judges here. The fixture uses an extreme closeThreshold (0.99,
-  // not just 0.9) specifically so a *small*, gentle drag reliably crosses
-  // its dismiss line on both Chromium and WebKit without also crossing the
-  // 0.5 default's much farther one — calibrated empirically against both
-  // engines (a magnitude comfortable on one alone tended to be flaky on the
-  // other). Same (0.5, 'full') detents on both fixtures, so the threshold is
-  // what makes the difference, not the drag.
+  // Same detents and held position on both fixtures: release without flick
+  // velocity so only closeThreshold decides whether the sheet dismisses.
   const DRAG_PX = 25;
 
-  async function undampedDrag(page: Page, x: number, startY: number, endY: number) {
+  async function heldDrag(page: Page, dialog: Locator, x: number, startY: number, endY: number) {
     await page.mouse.move(x, startY);
     await page.mouse.down();
     const steps = 16;
     for (let i = 1; i <= steps; i++) {
       await page.mouse.move(x, startY + ((endY - startY) * i) / steps);
     }
+    // A held release exceeds the engine's 80ms velocity cutoff.
+    await page.waitForTimeout(100);
+    await expect(dialog).toHaveAttribute("data-scrollsheet-dragging", "");
+    const revealedFraction = await dialog.locator(".scrollsheet-track").evaluate((el) => {
+      const firstDetent = Number.parseFloat(
+        getComputedStyle(el).getPropertyValue("--scrollsheet-first-detent"),
+      );
+      return el.scrollTop / firstDetent;
+    });
+    expect(revealedFraction).toBeGreaterThan(0.5);
+    expect(revealedFraction).toBeLessThan(0.99);
     await page.mouse.up();
   }
 
@@ -413,11 +402,12 @@ test.describe("closeThreshold", () => {
     const defaultTitle = defaultDialog.getByRole("heading", { name: "Full height", exact: true });
     const defaultBox = await defaultTitle.boundingBox();
     if (!defaultBox) throw new Error("title bounding box unavailable");
-    await undampedDrag(
+    await heldDrag(
       page,
+      defaultDialog,
       defaultBox.x + defaultBox.width / 2,
       defaultBox.y + defaultBox.height / 2,
-      defaultBox.y + DRAG_PX,
+      defaultBox.y + defaultBox.height / 2 + DRAG_PX,
     );
     await expect(defaultDialog).toHaveAttribute("data-scrollsheet-state", "open", {
       timeout: SPRING_TIMEOUT,
@@ -434,11 +424,12 @@ test.describe("closeThreshold", () => {
     });
     const thresholdBox = await thresholdTitle.boundingBox();
     if (!thresholdBox) throw new Error("title bounding box unavailable");
-    await undampedDrag(
+    await heldDrag(
       page,
+      thresholdDialog,
       thresholdBox.x + thresholdBox.width / 2,
       thresholdBox.y + thresholdBox.height / 2,
-      thresholdBox.y + DRAG_PX,
+      thresholdBox.y + thresholdBox.height / 2 + DRAG_PX,
     );
     await expect(page.locator("dialog.scrollsheet-dialog")).toHaveCount(0, {
       timeout: SPRING_TIMEOUT,

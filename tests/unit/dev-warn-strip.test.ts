@@ -1,4 +1,5 @@
 import { existsSync } from "node:fs";
+import { fileURLToPath } from "node:url";
 import { describe, expect, test } from "bun:test";
 
 // Freshness-gate style, same reasoning as tests/unit/bundle-sizes.test.ts:
@@ -8,8 +9,8 @@ import { describe, expect, test } from "bun:test";
 // `bun run build` in CI's check job.
 const distRoot = new URL("../../packages/scrollsheet/dist/", import.meta.url);
 const distReady =
-  existsSync(new URL("index.mjs", distRoot).pathname) &&
-  existsSync(new URL("dev/index.mjs", distRoot).pathname);
+  existsSync(fileURLToPath(new URL("index.mjs", distRoot))) &&
+  existsSync(fileURLToPath(new URL("dev/index.mjs", distRoot)));
 
 /**
  * Every `*.mjs` under dist/, split into the production graphs (dist/, dist/
@@ -21,7 +22,7 @@ async function collectMjs(): Promise<{ prod: string; dev: string }> {
   const { Glob } = await import("bun");
   let prod = "";
   let dev = "";
-  for await (const file of new Glob("**/*.mjs").scan(distRoot.pathname)) {
+  for await (const file of new Glob("**/*.mjs").scan(fileURLToPath(distRoot))) {
     const text = await Bun.file(new URL(file, distRoot)).text();
     if (file.startsWith("dev/")) dev += text;
     else prod += text;

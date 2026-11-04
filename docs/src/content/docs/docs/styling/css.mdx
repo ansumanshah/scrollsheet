@@ -54,9 +54,8 @@ The `themeColorDimming` controller is a separate chunk, fetched when the prop is
 
 ## Dark mode
 
-Light is the default palette everywhere. An app with no theming of its own never flips dark just
-because the visitor's OS is set to dark: the panel, handle, and close button all keep their
-light-mode colors regardless of `prefers-color-scheme`.
+The panel, handle, and close button use light colors by default, regardless of
+`prefers-color-scheme`.
 
 Opt into dark by setting `data-scrollsheet-theme="dark"` on an ancestor, typically `<html>`:
 
@@ -78,14 +77,14 @@ from the rest of the page, set the tokens on that sheet instead.
 Your own `--scrollsheet-bg`, `--scrollsheet-fg`, `--scrollsheet-handle`,
 `--scrollsheet-handle-hover`, `--scrollsheet-close-bg`, `--scrollsheet-close-color`,
 `--scrollsheet-close-bg-hover`, and `--scrollsheet-close-color-hover` overrides win in every
-mode: the attribute only changes which built-in fallback color those variables fall back to.
+mode. The attribute only changes their built-in fallback colors.
 
 ## Toast styling
 
 `Toaster` renders each card as `.scrollsheet-toast` (icon: `.scrollsheet-toast-icon`, body:
 `.scrollsheet-toast-body`, title: `.scrollsheet-toast-title`, description:
 `.scrollsheet-toast-description`, actions: `.scrollsheet-toast-action` /
-`.scrollsheet-toast-cancel` / `.scrollsheet-toast-close`) and reads its layout knobs from
+`.scrollsheet-toast-cancel` / `.scrollsheet-toast-close`) and reads layout values from
 `--scrollsheet-toast-*` custom properties: `--scrollsheet-toast-gap`,
 `--scrollsheet-toast-offset`, `--scrollsheet-toast-mobile-offset`. Override either the same way
 you'd style any card:
@@ -98,9 +97,9 @@ you'd style any card:
 
 ## Sonner compatibility
 
-Arrived with an existing Sonner integration? Its `import { toast, Toaster } from 'scrollsheet'`
-compat layer stamps corresponding `sonner-*` classes and `data-sonner-*` attributes on supported
-slots. Check existing selectors against the rendered markup. See
-[Migrate from Sonner](/docs/migrating/from-sonner). Starting fresh, with no Sonner CSS to keep
-matching? `<Toaster sonnerCompat={false}>` drops the mirrored names and renders the neutral
-`.scrollsheet-*` classes and attributes only.
+For existing Sonner styles, `import { toast, Toaster } from 'scrollsheet'` adds `sonner-*` classes
+and `data-sonner-*` attributes to supported slots. Check your selectors against the rendered
+markup. See [Migrate from Sonner](/docs/migrating/from-sonner).
+
+If you do not need Sonner CSS names, use `<Toaster sonnerCompat={false}>` to render only
+`.scrollsheet-*` classes and attributes.

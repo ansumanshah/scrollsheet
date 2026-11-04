@@ -2,6 +2,14 @@
 
 All notable changes to this project are documented here.
 
+## 1.2.3 - 2026-11-04
+
+- **Held pointer releases respect the dismissal threshold.** Read the actual released position before restoring native scroll snapping, so a paused drag below `closeThreshold` closes as documented.
+- **Package checks validate both embedded stylesheets in both auto builds.** Missing core or toast CSS, an unstyled development graph, and CSS leaking into the external-CSS entry now fail verification.
+- **Verification supports checkout paths containing spaces.** Build probes, packing, and declaration-consumer tests decode filesystem URLs correctly.
+- **Dependency and workflow maintenance are hardened.** Audit dependencies in local and CI checks, pin action commits, update Bun and Actions dependencies through Dependabot, and use the patched minimatch release for CSS compatibility tooling.
+- **README badges and navigation are current.** Add version, CI, dependency, and license badges with links to demos, documentation, and migration guides.
+
 ## 1.2.2 - 2026-11-04
 
 - **The README demo uses an absolute URL and a separate block.** GitHub and npm can load the refreshed browser recording without wrapping body text around it. The GIF is under 2 MB.

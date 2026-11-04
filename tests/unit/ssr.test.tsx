@@ -119,18 +119,7 @@ describe("SSR — Drawer (vaul compat)", () => {
   });
 });
 
-/**
- * Toaster/toast's own SSR proof used to live here too (its own chunk, same
- * "doesn't touch window/document at import or render time" concern as
- * Sheet/Drawer above) — deleted at the sonner cutover per the test-shed
- * audit's own flagged note (`.claude/test-shed-audit.md` row 26): now that
- * the shell (`shell/toaster-shell.tsx`) IS the public `Toaster`, this block
- * duplicated `compat/toast-shell.test.tsx`'s own "SSR safety" describe,
- * which proves the stronger claim anyway — the shell's client-only mount
- * gate means `renderToString` emits nothing at all (`toBe("")`), not just
- * "no dialog markup" — against the exact component this file's old copy was
- * standing in for.
- */
+// Toast SSR coverage lives in compat/toast-shell.test.tsx.
 
 /**
  * The actual hydration-mismatch proof the module doc comment above reasons

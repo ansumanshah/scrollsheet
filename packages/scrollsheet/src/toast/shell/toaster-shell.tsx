@@ -1,22 +1,9 @@
 "use client";
 
 /**
- * The sonner-architecture Toaster shell — see .claude/sonner-port-design.md.
- * `../index.tsx` exports this as the public `Toaster` — this IS the toast
- * layer's component now, no Sheet-backed alternative left to fall back to.
- *
- * Zero dependency on Sheet.Root/Sheet.Content/content.tsx: a bare
- * `createPortal(..., document.body)` of one `<section>` plus one `<ol>` per
- * position, matching real Sonner's own DOM shape. Every live record (visible
- * or hidden past `visibleToasts`) gets exactly one persistent `<ToastRow>` —
- * hide-not-evict, not collapsed-front-card-plus-ghosts — so front-promotion
- * and expand/collapse are both just props changing on an already-mounted
- * node, never a remount.
- *
- * Every row gets 2-axis swipe-to-dismiss (./use-toast-swipe.ts) alongside
- * close-button / action / cancel / timer-expire / hotkey-Escape /
- * focus-scoped Escape / CloseWatcher — the last group ported unchanged from
- * the mechanical tier below.
+ * One shared body portal groups persistent toast rows by position. Hidden
+ * rows stay mounted so promotion and expansion preserve each row's state.
+ * Keep this independent of Sheet so toast-only imports exclude its engine.
  */
 import * as React from "react";
 import { createPortal } from "react-dom";
