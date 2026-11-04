@@ -133,11 +133,11 @@ export const SHOTS: Record<string, ShotSpec> = {
     run: async (take) => {
       await take.hold(0.35);
       take.mark("first");
-      await take.tap(await take.center('[data-save="Ember & Oak"]'));
+      await take.tap(await take.center('[data-save="The Roasting Room"]'));
       await take.hold(0.55);
       await take.tap(await take.center('[data-save="Third Wave Coffee"]'));
       await take.hold(0.5);
-      await take.tap(await take.center('[data-save="The Roasting Room"]'));
+      await take.tap(await take.center('[data-save="Ember & Oak"]'));
       await take.hold(1.5);
     },
   },

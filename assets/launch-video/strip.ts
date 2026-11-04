@@ -23,9 +23,18 @@ const every = Math.max(1, Math.round(((Number(end) - Number(start)) * 60) / 24))
 spawnSync(
   "ffmpeg",
   [
-    "-y", "-loglevel", "error", "-i", video,
-    "-vf", `select='not(mod(n\\,${every}))',scale=${tall ? 200 : 320}:-1,tile=${tall ? "12x2" : "6x4"}`,
-    "-fps_mode", "vfr", "-frames:v", "1", join(OUT, `strip-${label}.png`),
+    "-y",
+    "-loglevel",
+    "error",
+    "-i",
+    video,
+    "-vf",
+    `select='not(mod(n\\,${every}))',scale=${tall ? 200 : 320}:-1,tile=${tall ? "12x2" : "6x4"}`,
+    "-fps_mode",
+    "vfr",
+    "-frames:v",
+    "1",
+    join(OUT, `strip-${label}.png`),
   ],
   { stdio: "inherit" },
 );

@@ -3,6 +3,7 @@
 // bun assets/launch-video/build.ts --draft    30 fps wide and tall drafts plus contact sheets in out/
 // bun assets/launch-video/build.ts --no-capture   reuse captured frames
 // bun assets/launch-video/build.ts --shots proof,desk   recapture only these shots
+// bun assets/launch-video/build.ts --reuse-masters   re-encode from the masters in out/
 import { spawnSync } from "node:child_process";
 import { existsSync, mkdirSync, statSync, writeFileSync } from "node:fs";
 import { dirname, join } from "node:path";
@@ -53,47 +54,39 @@ function contact(video: string, name: string, tile: string, width: number, fps: 
   );
 }
 
-/** Two-pass encode to a byte target, so the budget is met on the first try. */
-function encode(input: string, output: string, bytes: number, seconds: number): void {
-  const kbps = Math.floor((bytes * 8 * 0.97) / seconds / 1000);
+/** Two-pass encode to a byte budget. x264 can overshoot its target, so measure and retry. */
+function encode(input: string, output: string, limit: number, seconds: number): void {
   const pass = join(OUT, "x264pass");
-  const base = [
-    "-y",
-    "-loglevel",
-    "error",
-    "-i",
-    input,
-    "-an",
-    "-c:v",
-    "libx264",
-    "-preset",
-    "slow",
-    "-profile:v",
-    "high",
-    "-pix_fmt",
-    "yuv420p",
-    "-b:v",
-    `${kbps}k`,
-    "-maxrate",
-    `${kbps * 3}k`,
-    "-bufsize",
-    `${kbps * 4}k`,
-    "-colorspace",
-    "bt709",
-    "-color_primaries",
-    "bt709",
-    "-color_trc",
-    "bt709",
-    "-passlogfile",
-    pass,
-  ];
-  run("ffmpeg", ...base, "-pass", "1", "-f", "null", "/dev/null");
-  run("ffmpeg", ...base, "-pass", "2", "-movflags", "+faststart", output);
+  let target = limit * 0.94;
+  for (let attempt = 0; attempt < 5; attempt++) {
+    const kbps = Math.floor((target * 8) / seconds / 1000);
+    const base = [
+      "-y", "-loglevel", "error", "-i", input, "-an",
+      "-c:v", "libx264", "-preset", "slow", "-profile:v", "high", "-pix_fmt", "yuv420p",
+      "-b:v", `${kbps}k`, "-maxrate", `${kbps * 3}k`, "-bufsize", `${kbps * 4}k`,
+      "-colorspace", "bt709", "-color_primaries", "bt709", "-color_trc", "bt709",
+      "-passlogfile", pass,
+    ];
+    run("ffmpeg", ...base, "-pass", "1", "-f", "null", "/dev/null");
+    run("ffmpeg", ...base, "-pass", "2", "-movflags", "+faststart", output);
+    const size = statSync(output).size;
+    console.log(`  ${output}: ${(size / 1_000_000).toFixed(2)} MB at ${kbps} kbps`);
+    if (size < limit) return;
+    target *= (limit * 0.98) / size;
+  }
+  throw new Error(`${output} never met ${limit} bytes`);
+}
+
+function durationOf(file: string): number {
+  const r = spawnSync("ffprobe", ["-v", "error", "-show_entries", "format=duration", "-of", "csv=p=0", file], {
+    encoding: "utf8",
+  });
+  return Number(r.stdout.trim());
 }
 
 const shotsArg = value("shots");
 if (shotsArg) await capture(shotsArg.split(","));
-else if (!flag("no-capture") && !flag("draft")) await capture([]);
+else if (!flag("no-capture") && !flag("draft") && !flag("reuse-masters")) await capture([]);
 writeFilmData();
 
 if (flag("draft")) {
@@ -120,14 +113,26 @@ mkdirSync(PUBLIC, { recursive: true });
 const FILM_FPS = 60;
 const wideMaster = join(OUT, "master-wide.mp4");
 const tallMaster = join(OUT, "master-tall.mp4");
-const seconds = await render({ out: wideMaster, width: 1920, height: 1080, fps: FILM_FPS });
-await render({ out: tallMaster, width: 1080, height: 1920, fps: FILM_FPS });
+if (!flag("reuse-masters")) {
+  await render({ out: wideMaster, width: 1920, height: 1080, fps: FILM_FPS });
+  await render({ out: tallMaster, width: 1080, height: 1920, fps: FILM_FPS });
+}
+const seconds = durationOf(wideMaster);
 const wideOut = join(PUBLIC, "scrollsheet-launch.mp4");
 const tallOut = join(PUBLIC, "scrollsheet-launch-vertical.mp4");
 encode(wideMaster, wideOut, LIMITS.film, seconds);
 encode(tallMaster, tallOut, LIMITS.tall, seconds);
 
-const posterAt = Number(value("poster") ?? process.env.POSTER_T ?? 4);
+// Poster: the second drag of the proof shot, finger down, sheet in motion, readout mid-count.
+const proof = JSON.parse(await Bun.file(join(OUT, "frames/proof/metrics.json")).text()) as {
+  frames: { finger: unknown; scrollTop: number }[];
+  marks: Record<string, number>;
+};
+const secondDrag = (proof.marks.scroll ?? 0) + 70;
+const posterFrame = proof.frames.findIndex(
+  (m, i) => i > secondDrag && m.finger !== null && m.scrollTop < 470,
+);
+const posterAt = posterFrame / FILM_FPS;
 await still({
   out: join(PUBLIC, "scrollsheet-launch-poster.jpg"),
   width: 1920,
