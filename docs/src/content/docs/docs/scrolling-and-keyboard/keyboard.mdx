@@ -1,6 +1,6 @@
 ---
 title: Keyboard
-description: scrollsheet reads visualViewport and writes the on-screen keyboard inset to --scrollsheet-keyboard automatically, no prop required.
+description: Make room for the on-screen keyboard with --scrollsheet-keyboard.
 ---
 
 import DocExample from '../../../../components/DocExample.astro';
@@ -22,20 +22,17 @@ should still be checked on the devices and embedded browsers your app supports.
 
 ## Promoting to a taller detent
 
-A sheet resting at a short peek detent has no room to show a field the keyboard covers, so
-`keyboardExpands` on `Sheet.Root` promotes to the tallest detent the moment the keyboard
-actually appears, and restores the peek detent when it closes, unless a drag or a controlled
-change moved the sheet in between.
+Set `keyboardExpands` on `Sheet.Root` to move to the tallest detent when the keyboard opens.
+When it closes, the sheet returns to its previous detent unless a drag or controlled change
+moved it in the meantime.
 
-The gate is a measured nonzero inset, never focus alone: a desktop click into an input expands
-nothing.
+This requires a measured keyboard inset. Focusing a desktop input does not expand the sheet.
 
 ## Keyboard clearance on side sheets
 
-Top, left, and right sheets are pinned to their edge, so the panel itself never moves for the
-keyboard. Their content still can, though: the same inset becomes bottom clearance on
-`[data-scrollsheet-body]` plus `scroll-padding` on the panel, so a focused field near the
-bottom of a side drawer scrolls clear instead of sitting under the keyboard.
+Top, left, and right panels stay pinned to their edge. The keyboard inset adds bottom
+clearance to `[data-scrollsheet-body]` and `scroll-padding` to the panel, so focused fields
+can scroll above the keyboard.
 
 <DocExample
   name="profile-form"
@@ -44,8 +41,8 @@ bottom of a side drawer scrolls clear instead of sitting under the keyboard.
 
 ## Full-height content
 
-`<Sheet.Content fill>` stretches the body to the panel (flex column) so a fixed header plus an
-independently scrolling list needs no CSS chain of your own:
+`<Sheet.Content fill>` stretches the body to the panel as a flex column. Use it for a fixed
+header and an independently scrolling list:
 
 ```tsx
 <Sheet.Content fill className="sheet">
@@ -63,7 +60,7 @@ detent and content-morph both read the content's natural size across all of the 
 
 ## Without the fill prop
 
-Doing it by hand instead, same result:
+Apply the same layout in CSS:
 
 ```css
 .sheet { display: flex; flex-direction: column; }
@@ -71,5 +68,4 @@ Doing it by hand instead, same result:
 .sheet .results { flex: 1; min-height: 0; overflow-y: auto; }
 ```
 
-`[data-scrollsheet-body]` is the wrapper the library already renders around your content; `fill`
-just sets these two rules for you off one attribute.
+`[data-scrollsheet-body]` wraps your content. The `fill` prop applies these two rules.

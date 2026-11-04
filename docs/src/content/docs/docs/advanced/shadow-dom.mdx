@@ -1,6 +1,6 @@
 ---
 title: Shadow DOM
-description: injectStylesInto adopts the core stylesheet into a shadow root, since document.head styles don't cross the boundary on their own.
+description: Add scrollsheet styles to a shadow root with injectStylesInto.
 ---
 
 import { Aside, LinkCard } from '@astrojs/starlight/components';
@@ -20,21 +20,17 @@ injectStylesInto(shadowRoot);
 
 ## How it works
 
-It adopts the core stylesheet into the root via `adoptedStyleSheets`, so a trigger and its
-surrounding markup living behind shadow encapsulation get properly scoped styles instead of
-reaching across the boundary for `document.head`'s tag.
+The helper adds the core stylesheet to the shadow root through `adoptedStyleSheets`. This
+styles the trigger and surrounding markup, which cannot inherit styles from `document.head`.
 
-On an engine with no constructable stylesheets (Safari < 16.4) it falls back to a `<style>` tag
-appended inside the root itself, still scoped, just not adopted. The `<dialog>` itself still
-portals to `document.body` regardless: this only scopes the trigger/surrounding markup's
-stylesheet, not where the sheet renders, because scrollsheet chooses `document.body` as its portal target. Put custom panel classes in
-a document-level stylesheet too: shadow-scoped component CSS cannot style the portaled panel.
+Without constructable stylesheets (Safari < 16.4), it appends a `<style>` tag inside the shadow
+root. The `<dialog>` still portals to `document.body`. Put custom panel classes in a
+document-level stylesheet too; shadow-scoped CSS cannot style the portaled panel.
 
 ## Toast styles
 
-`injectToastStylesInto` is a sibling export for the toast stylesheet, not folded into
-`injectStylesInto`: it targets separate CSS that a core-only consumer's bundle tree-shakes away
-unless something actually imports it:
+Use `injectToastStylesInto` for the separate toast stylesheet. Apps that only use sheets do
+not include it:
 
 ```tsx
 import { injectToastStylesInto } from 'scrollsheet/auto';
@@ -43,18 +39,17 @@ injectToastStylesInto(shadowRoot);
 ```
 
 <Aside type="note">
-  Both take an optional `nonce`, for a CSP `style-src 'nonce-...'` policy. It only does anything
-  on the `<style>`-tag fallback path: a nonce authorizes an inline style element, not a
-  constructed `CSSStyleSheet`, so the `adoptedStyleSheets` path has nothing for it to gate.
+  Both accept an optional `nonce` for CSP `style-src 'nonce-...'` policies. It applies only to
+  the `<style>` fallback; constructed `CSSStyleSheet` objects do not use a nonce.
 </Aside>
 
 <LinkCard
   title="API reference"
-  description="Full prop reference for Sheet.Root, the styling hooks on Sheet.Content, and every other named export."
+  description="Props, styling hooks, and exports."
   href="/docs/reference/api"
 />
 <LinkCard
   title="Scrollable content inside a sheet"
-  description="Mark an inner scroller with data-scrollsheet-nested-scroll so a swipe scrolls the list first and hands off to sheet travel at the edge."
+  description="Scroll a list, then move the sheet when the list reaches its edge."
   href="/docs/scrolling-and-keyboard/scrollable-content"
 />

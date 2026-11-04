@@ -1,6 +1,6 @@
 ---
 title: Responsive profiles
-description: 'side="bottom" desktopSide="center": a mobile bottom sheet that becomes a desktop dialog, drawer, or side panel at the breakpoint, two props instead of a matchMedia hook.'
+description: Change a sheet's presentation at a viewport breakpoint with desktopSide.
 ---
 
 import { Aside, LinkCard } from '@astrojs/starlight/components';
@@ -8,7 +8,7 @@ import DocExample from '../../../../components/DocExample.astro';
 
 <DocExample
   name="responsive"
-  caption="Under 720px it drags like a sheet; at 720px and wider the same component opens as a centered dialog. Resize to cross the line."
+  caption="Below 720px, drag it as a bottom sheet. At 720px and wider, it opens as a centered dialog."
 />
 
 ```tsx
@@ -19,29 +19,27 @@ The same content renders as a bottom sheet below the breakpoint and a centered d
 
 ## The breakpoint
 
-`desktopSide` takes over at `desktopBreakpoint`, `768` by default: the same line the
-[desktop presentation](/docs/presentation/desktop-presentation) CSS switches on, so a sheet using
-either mechanism changes shape at the same viewport width. Override it per `Sheet.Root`:
+`desktopSide` applies at `desktopBreakpoint`, which defaults to `768` pixels. This matches the
+[desktop presentation](/docs/presentation/desktop-presentation) CSS breakpoint. Override it per
+`Sheet.Root`:
 
 ```tsx
 <Sheet.Root side="bottom" desktopSide="center" desktopBreakpoint={1024}>
 ```
 
-`desktopBreakpoint` only means something paired with `desktopSide`. Set alone it warns once in
-dev and does nothing, because there's nothing for the crossing to switch between.
+`desktopBreakpoint` requires `desktopSide`. Used alone, it has no effect and warns once in
+development.
 
 ## Crossing while open
 
-Resize past the breakpoint with the sheet already open and it re-presents instantly: no morph,
-no dismiss-and-reopen, just a new presentation on the same open sheet. Resize back down and it
-flips back the same way, in either direction, as many times as the viewport crosses the line.
+An open sheet changes presentation instantly when the viewport crosses the breakpoint. It
+stays open, with no transition, and changes back when the viewport crosses again.
 
 ## First paint
 
-Server render and the first client paint both resolve to the base `side`. The `matchMedia`
-subscription that can promote it to `desktopSide` only lands after mount, never during render, so
-hydration never disagrees with the server about which side it is. For `defaultOpen` or an early programmatic open, account for this post-mount change when
-designing the initial presentation.
+The server render and first client paint both use `side`. A `matchMedia` subscription applies
+`desktopSide` after mount, keeping hydration consistent. Account for this initial change when
+using `defaultOpen` or opening the sheet programmatically before mount completes.
 
 ## Any side, either way
 
@@ -53,9 +51,8 @@ desktop:
 <Sheet.Root side="bottom" desktopSide="left">
 ```
 
-A right panel on mobile that centers itself on desktop, a top sheet that becomes a right drawer,
-whatever the layout calls for. `desktopSide` is just the presentation `side` swaps to, not a
-fixed mobile-to-desktop story.
+You can also change a right panel to a centered dialog or a top sheet to a right drawer.
+Any pair of sides is supported.
 
 <Aside type="note">
 `disableDrag`, `detents`, and the rest of the props stay exactly as documented for whichever side
@@ -65,15 +62,13 @@ same as `side="center"` always is. See [Centered dialog](/docs/presentation/cent
 
 ## vs. desktop presentation
 
-[Desktop presentation](/docs/presentation/desktop-presentation) is CSS: past 768px, core restyles
-the *same* `side` into a docked drawer or a squared-off edge, no prop involved. `desktopSide`
-replaces the presentation outright, swapping which side is even in effect. Reach for the CSS
-default when a wider viewport should just make the current side look native to a pointer and
-keyboard. Reach for `desktopSide` when desktop should read as a different kind of surface
-entirely, most often a bottom sheet becoming a centered dialog.
+[Desktop presentation](/docs/presentation/desktop-presentation) changes styling above 768px
+without changing `side`. It docks bottom sheets as drawers and squares off side-sheet edges.
+Use `desktopSide` when the side itself should change, such as a bottom sheet becoming a
+centered dialog.
 
 <LinkCard
   title="API reference"
-  description="Full prop reference for Sheet.Root, the styling hooks on Sheet.Content, and every other named export."
+  description="Props, styling hooks, and exports."
   href="/docs/reference/api"
 />

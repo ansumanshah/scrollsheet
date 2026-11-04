@@ -26,13 +26,14 @@ import { Aside, LinkCard } from '@astrojs/starlight/components';
 </Aside>
 
 <Aside type="caution" title="Scroll-driven animation gaps">
-  The backdrop dim and `--scrollsheet-progress` run as CSS scroll-driven animations
-  (`animation-timeline: scroll()`), on engines that support them,
-  feature-detected once and stamped `data-scrollsheet-sda` on the dialog. Where unavailable,
-  the same values update every frame from `onTravel`'s own JavaScript write
-  instead. Two pieces stay JS-driven on every engine regardless: a stacked sheet's parent-panel
-  recede (a sibling top-layer `<dialog>`, not a descendant the track's timeline can reach) and
-  `backgroundEffect` (its target sits outside the dialog entirely).
+  Where supported, CSS scroll-driven animations (`animation-timeline: scroll()`) control
+  backdrop dimming and `--scrollsheet-progress`. The dialog gets `data-scrollsheet-sda` when
+  this support is detected. Otherwise, JavaScript updates the values each frame through
+  `onTravel`.
+
+  Parent-panel receding and `backgroundEffect` always use JavaScript. Their targets sit outside
+  the sheet's scroll timeline: the parent is a sibling top-layer dialog, and the background is
+  outside the dialog.
 </Aside>
 
 <Aside type="caution" title="Close-request routing">
@@ -68,8 +69,8 @@ native dialog support. Unknown traffic is included in that estimate, not evidenc
 
 The fallback keeps the content available without reproducing the native dialog or gesture engine.
 
-Want your own UI instead of the built-in fallback? Check `isSupported()`
-client-side, after mount, so server and client agree on the first render:
+To provide your own fallback, check `isSupported()` after mount. This keeps the server and
+first client render consistent:
 
 ```tsx
 import { useEffect, useState } from 'react';
@@ -85,6 +86,6 @@ return <Sheet.Root open={open} onOpenChange={(next) => { if (!next) onClose(); }
 
 <LinkCard
   title="API reference"
-  description="Full prop reference for Sheet.Root, the styling hooks on Sheet.Content, and every other named export."
+  description="Props, styling hooks, and exports."
   href="/docs/reference/api"
 />

@@ -38,20 +38,6 @@ type SideCase = {
   viewportSizeProp: "width" | "height";
 };
 
-/**
- * Playwright 1.62's Linux WebKit build regressed x-axis snap travel toward
- * the fully-open stop on mirrored (sign:-1) sheets: a tween or programmatic
- * write toward raw 0 gets re-snapped to the previous stop by a compositor
- * animation that starts before an inline scroll-snap-type:none suspension
- * takes effect (probed: with the suspension given a frame to apply, raw 0
- * sticks and survives snap restore). macOS WebKit and the pre-1.62 Linux
- * build both pass these exact tests on the same src, and the vertical
- * sign:-1 side (top) is unaffected — an engine-port regression, not product
- * behavior. Revisit on the next Playwright bump.
- */
-const isLinuxWebKit = (browserName: string) =>
-  browserName === "webkit" && process.platform === "linux";
-
 const CASES: SideCase[] = [
   {
     trigger: "Side left",
@@ -105,12 +91,7 @@ for (const { trigger, scrollProp, otherProp, sign, viewportSizeProp } of CASES) 
 
     test(`${trigger}: the handle travels to the second detent (80%) on the same axis`, async ({
       page,
-      browserName,
     }) => {
-      test.fixme(
-        trigger === "Side left" && isLinuxWebKit(browserName),
-        "Linux WebKit x-axis snap regression — see isLinuxWebKit doc comment",
-      );
       await page.goto("/");
       const dialog = await openSheetByTrigger(page, trigger);
       const track = dialog.locator(".scrollsheet-track");
@@ -219,12 +200,7 @@ test.describe("side sheet: drag-to-dismiss on the correct axis", () => {
 test.describe("side sheet: on-screen geometry at full reveal", () => {
   test("Side left: panel is fully on-screen (x >= 0) at the second detent", async ({
     page,
-    browserName,
   }) => {
-    test.fixme(
-      isLinuxWebKit(browserName),
-      "Linux WebKit x-axis snap regression — see isLinuxWebKit doc comment",
-    );
     await page.goto("/");
     const dialog = await openSheetByTrigger(page, "Side left");
     await dialog.locator("[data-scrollsheet-handle]").click();

@@ -1,6 +1,6 @@
 ---
 title: Centered dialog
-description: side="center" renders a content-sized modal in the middle of the viewport, zoom+fade instead of travel, no detents or drag, your CSS owns the width.
+description: Center a content-sized dialog with side="center". Set its width in CSS.
 ---
 
 import { Aside, LinkCard } from '@astrojs/starlight/components';
@@ -8,7 +8,7 @@ import DocExample from '../../../../components/DocExample.astro';
 
 <DocExample
   name="center"
-  caption="Content-sized, centered, zoom+fade. The example's own class sets the width; drag does nothing here."
+  caption="A centered dialog with zoom and fade. Its CSS class sets the width; dragging is disabled."
 />
 
 ```tsx
@@ -22,16 +22,13 @@ import DocExample from '../../../../components/DocExample.astro';
 </Sheet.Root>
 ```
 
-With `side="center"`, the panel is content-sized and placed in the middle of the viewport instead of anchored to an edge:
-no travel range, no detents, no drag. It opens and closes with a zoom+fade (scale from 0.95 to
-1, with opacity) on the same spring every other sheet uses, instead of the slide a bottom or side
-sheet plays.
+`side="center"` places a content-sized panel in the middle of the viewport. It has no travel,
+detents, or drag. It opens and closes with a spring-driven zoom (scale 0.95 to 1) and fade.
 
 ## Width is yours
 
-Core sets no width on the panel, only guard rails: `max-inline-size` defaults to
-`min(560px, 100%)` so a dialog with no styling at all never touches the viewport edges. Size it
-the same way you'd size any card:
+The panel has no fixed width. Its default `max-inline-size` is `min(560px, 100%)`. Set the
+width in your own CSS:
 
 ```css
 .sheet {
@@ -39,7 +36,7 @@ the same way you'd size any card:
 }
 ```
 
-Wider dialog? Raise the guard rail instead of fighting it:
+For a wider dialog, raise the maximum:
 
 ```css
 .sheet {
@@ -47,14 +44,13 @@ Wider dialog? Raise the guard rail instead of fighting it:
 }
 ```
 
-`--scrollsheet-center-gutter` (default `20px`) is the minimum breathing room against the
+`--scrollsheet-center-gutter` (default `20px`) is the minimum gap from the
 viewport edge on small screens, independent of the width you choose.
 
 ## Keyboard
 
-A centered dialog with a text input shifts up above the on-screen keyboard automatically. It
-reads the same `--scrollsheet-keyboard` inset the bottom sheet engine already writes, so there's
-no separate keyboard mode to opt into.
+A centered dialog with a text input shifts above the on-screen keyboard automatically, using
+`--scrollsheet-keyboard`. No extra prop is needed.
 
 ## Dismissal
 
@@ -76,16 +72,14 @@ stacking, or native focus containment.
 
 ## Center vs. a bottom sheet
 
-Reach for `center` when the content is a short, self-contained decision that reads naturally as
-a dialog: a confirmation, a one-field form, an alert. Keep the default bottom (or side)
-presentation for anything a thumb should be able to drag: multi-step flows, longer scrollable
-content, or a sheet meant to feel native on a phone. `side="center"` is a fixed choice, not a
-breakpoint. For a sheet that should dock as a centered dialog on desktop but stay a full-bleed
-bottom sheet on mobile, see [Responsive profiles](/docs/presentation/responsive-profiles)
-instead: `desktopSide="center"` gets you exactly that as two props.
+Use `center` for short dialogs such as confirmations, single-field forms, or alerts. Use a
+bottom or side sheet for draggable flows and longer scrollable content.
+
+`side="center"` applies at every viewport width. To keep a bottom sheet on mobile and center it
+on desktop, add `desktopSide="center"`. See [Responsive profiles](/docs/presentation/responsive-profiles).
 
 <LinkCard
   title="API reference"
-  description="Full prop reference for Sheet.Root, the styling hooks on Sheet.Content, and every other named export."
+  description="Props, styling hooks, and exports."
   href="/docs/reference/api"
 />

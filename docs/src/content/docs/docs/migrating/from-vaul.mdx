@@ -1,6 +1,6 @@
 ---
 title: Migrate from vaul
-description: Vaul's Drawer namespace mapped onto scrollsheet, with supported props, CSS hooks, and migration differences.
+description: Move from Vaul to scrollsheet and check the behavior differences.
 ---
 
 import { Aside, LinkCard } from '@astrojs/starlight/components';
@@ -29,7 +29,7 @@ The `Drawer.*` namespace translates supported Vaul props onto `Sheet.*`. Nesting
 | --- | --- |
 | `snapPoints`, `activeSnapPoint`, `direction` (all 4 edges), `modal={false}`, `onAnimationEnd`, `onClose`, `fadeFromIndex`, `handleOnly`, `snapToSequentialPoint`, `onRelease`, `preventCycle` (on `Drawer.Handle`), `asChild` | Mapped to scrollsheet behavior; see callback and threshold differences below |
 | `shouldScaleBackground` | `backgroundEffect`; your `[data-vaul-drawer-wrapper]` is picked up automatically |
-| `closeThreshold` | A real feature; the adapter converts conventions (vaul counts the drag away, scrollsheet counts what remains), so vaul's `0.25` default keeps its feel. Only live when `snapPoints` is unset, matching vaul |
+| `closeThreshold` | Converts Vaul's dragged-away fraction to scrollsheet's remaining-visible fraction, preserving Vaul's `0.25` default. Applies only when `snapPoints` is unset, matching Vaul |
 | `onAnimationEnd(open)` | Fires once the open or close transition visually finishes, not on a timer. On native `Sheet.Root` the prop is `onOpenChangeComplete` |
 | `onClose` | Fires on every dismiss path (swipe, Esc, backdrop, imperative close), layered on `onOpenChange`. On native `Sheet.Root`, check `open === false` in `onOpenChange` |
 | `onPointerDownOutside` / `onInteractOutside` with `preventDefault()` | `backdropDismissible={false}` on `Drawer.Root` (blocks backdrop tap, keeps drag and Esc); the `onEscapeKeyDown` version is `escapeDismissible={false}` |
@@ -38,7 +38,7 @@ The `Drawer.*` namespace translates supported Vaul props onto `Sheet.*`. Nesting
 
 Scrollsheet-native props with no vaul counterpart (`backdropDismissible`, `escapeDismissible`,
 `keyboardExpands`, `onTravel`, `scrollbar`, `actionsRef`, `animationSpeed`) forward through `Drawer.Root`
-untranslated, so one native feature never forces a full conversion to `Sheet.*`.
+unchanged. You can use them without converting to `Sheet.*`.
 
 ## Width
 
@@ -77,6 +77,6 @@ new code can use `data-scrollsheet-no-drag`.
 
 <LinkCard
   title="Migrate from Sonner"
-  description="Migrate toast, useToasts, and Toaster with six positions, per-toast overrides, and swipe-to-dismiss; check the compatibility gaps."
+  description="Move from Sonner to scrollsheet and check the compatibility gaps."
   href="/docs/migrating/from-sonner"
 />

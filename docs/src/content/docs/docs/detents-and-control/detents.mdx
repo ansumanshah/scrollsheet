@@ -27,13 +27,12 @@ the same height collapse into one, and a spec that resolves to 0 or less is drop
 
 ## Tracking travel
 
-`onTravel(px, progress, info)` fires every frame the sheet moves, also published as
-`--scrollsheet-progress`. The third argument carries `range` (`[0, maxDetent]`, px) and
-`progressAtDetents`, a `Map` from each detent's resolved px height to its own 0-1 progress, for
-driving something off a specific detent instead of only the nearest one.
+`onTravel(px, progress, info)` fires every frame the sheet moves. Progress is also available as
+`--scrollsheet-progress`. The third argument contains `range` (`[0, maxDetent]`, px) and
+`progressAtDetents`, a `Map` from each detent's resolved pixel height to its own 0–1 progress.
+Use it to animate against a specific detent.
 
-It's reused and mutated in place every frame, not allocated fresh: read it synchronously,
-don't hold onto the reference.
+The info object is reused and updated each frame. Read it synchronously; do not keep the reference.
 
 <DocExample
   name="snap-heights"

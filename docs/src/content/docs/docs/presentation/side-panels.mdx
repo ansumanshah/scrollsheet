@@ -1,6 +1,6 @@
 ---
 title: Side panels
-description: side anchors a sheet to bottom, top, left, or right; left and right sheets scroll on the x axis and their detents are widths.
+description: Open a sheet from any edge. Left and right detents set its width.
 ---
 
 import DocExample from '../../../../components/DocExample.astro';
@@ -12,12 +12,11 @@ import DocExample from '../../../../components/DocExample.astro';
 </Sheet.Root>
 ```
 
-`side` anchors the sheet to `'bottom'` (the default), `'top'`, `'left'`, or `'right'`. Left and
-right sheets scroll on the x axis instead of y, so detents are widths, not heights. The handle's
-arrow-key axis flips to Left/Right for horizontal sides automatically, and the panel's
-`border-radius`/shadow default rounds the lead edge (the one opposite the anchored side).
+Set `side` to `'bottom'` (the default), `'top'`, `'left'`, or `'right'`. Left and right sheets use
+horizontal scrolling, with detents measured as widths. Their handles use Left/Right arrow keys.
+Default styling rounds and shadows the edge opposite the anchored side.
 
 <DocExample
   name="sidebar"
-  caption="It opens from the left edge here. Use Left and Right arrow keys on the handle, not Up and Down."
+  caption="The drawer opens from the left. Use Left and Right arrow keys on the handle."
 />
