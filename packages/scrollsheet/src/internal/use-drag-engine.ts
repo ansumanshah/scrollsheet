@@ -181,7 +181,9 @@ export function useDragEngine({
         snapSuspended = false;
       }
       dialog.removeAttribute("data-scrollsheet-dragging");
-      if (maxMove > DRAG_CLICK_SUPPRESS_PX) {
+      // Below this a press is a tap: its few pixels can still measure as speed.
+      const moved = maxMove > DRAG_CLICK_SUPPRESS_PX;
+      if (moved) {
         suppressClick = true;
         // Safety net: the browser's own click follows pointerup within a
         // frame or two, but if none arrives (pointer left the window, etc.)
@@ -201,7 +203,7 @@ export function useDragEngine({
       const first = samples[0];
       const last = samples[samples.length - 1];
       let velocityPos = 0;
-      if (first && last && last.t > first.t) {
+      if (moved && first && last && last.t > first.t) {
         const stale = performance.now() - last.t > MAX_RELEASE_VELOCITY_AGE_MS;
         if (!stale) {
           const rawVelocity = (last.pos - first.pos) / (last.t - first.t);
@@ -225,7 +227,7 @@ export function useDragEngine({
       // let go) resumes toward the detent it was opening to — the frozen
       // partial position is where the *animation* was, not where the user
       // dragged to, so the dismiss projection below must not judge it.
-      if (wasEnterGrab && maxMove <= DRAG_CLICK_SUPPRESS_PX) {
+      if (wasEnterGrab && !moved) {
         const target = resolveSpec(current.activeDetent);
         if (target) {
           animRef.current?.cancel();
@@ -240,7 +242,7 @@ export function useDragEngine({
         return;
       }
 
-      const step = current.flick === "step";
+      const step = current.flick === "step" && Math.abs(revealedVelocity) > 0.3;
       if (
         current.dismissible &&
         isBelowCloseThreshold(
@@ -258,10 +260,10 @@ export function useDragEngine({
       // sequentialDetents: a fast fling never skips past the neighbor of
       // the detent this drag started from, regardless of how far the
       // velocity projection carried `projected`.
-      if (nearest && (current.sequentialDetents || step)) {
+      if (nearest && current.sequentialDetents) {
         nearest = clampSequentialDetent(nearest, startDetentIndex, resolvedRef.current);
       }
-      if (step && Math.abs(revealedVelocity) > 0.3) {
+      if (step) {
         nearest =
           resolvedRef.current[startDetentIndex + Math.sign(revealedVelocity)] ?? nearest;
       }
@@ -270,7 +272,6 @@ export function useDragEngine({
         const rawTarget = mapScroll(nearest.height, maxDetent, geometry.sign);
         const landing = nearest.spec;
         // A click never moved, and its own handler picks the detent after this.
-        const moved = maxMove > DRAG_CLICK_SUPPRESS_PX;
         // The tween's own scrollends are suppressed and its last frame may not
         // move a whole pixel, so settle() is not guaranteed to run after it.
         void startTween(track, rawTarget, geometry.axis, true).finished.then((completed) => {

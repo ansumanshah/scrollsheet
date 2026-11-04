@@ -588,7 +588,7 @@ export const Content = /* @__PURE__ */ React.forwardRef<HTMLDivElement, SheetCon
       // onto a non-adjacent stop — clamp relative to the *last settled*
       // activeDetent, not this gesture's start (settle() has no drag session
       // to read a start detent from).
-      if (nearest && (current.sequentialDetents || current.flick === "step")) {
+      if (nearest && current.sequentialDetents) {
         nearest = clampSequentialDetent(
           nearest,
           resolveSpec(current.activeDetent)?.index ?? -1,

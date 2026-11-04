@@ -152,16 +152,26 @@ export function FlickSheets() {
     <>
       <FlickSheet flick="step" trigger="Flick step" />
       <FlickSheet trigger="Flick project" />
+      <FlickSheet flick="step" trigger="Flick step non-modal" modal={false} />
     </>
   );
 }
 
-function FlickSheet({ flick, trigger }: { flick?: "step"; trigger: string }) {
+function FlickSheet({
+  flick,
+  trigger,
+  modal,
+}: {
+  flick?: "step";
+  trigger: string;
+  modal?: boolean;
+}) {
   const [active, setActive] = React.useState<DetentSpec>(0.25);
   return (
     <Sheet.Root
       detents={[0.25, 0.45, 0.65, 0.85]}
       flick={flick}
+      modal={modal}
       activeDetent={active}
       onActiveDetentChange={setActive}
     >
