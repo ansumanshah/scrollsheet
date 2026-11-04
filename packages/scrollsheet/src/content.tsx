@@ -21,6 +21,7 @@ import {
   jumpScroll,
   readRevealed,
   round3,
+  sampleViewportGap,
   sdaOwnsBackdrop,
   resolveClosedBy,
   restoreFocusFallback,
@@ -226,11 +227,23 @@ export const Content = /* @__PURE__ */ React.forwardRef<HTMLDivElement, SheetCon
     }, []);
     // reads it via ref like every other per-render value it needs.
     const fillRef = React.useRef(fill);
+    const present = dialogOk && mounted && (ctx.open || phase !== "pre");
+    const initialBaselineGapRef = React.useRef<number | undefined>(undefined);
     React.useInsertionEffect(() => {
       ctxRef.current = ctx;
       phaseRef.current = phase;
       parentStackRef.current = parentStack;
       fillRef.current = fill;
+      // Ahead of the layout phase, where React runs a child's autoFocus: past
+      // that, the focused element and the viewport gap both describe the sheet
+      // rather than the page it opened over. The stylesheet must be in by then
+      // too, so that autoFocus can land (the "pre" rule in core.css).
+      if (present && ctx.open && !overlayOpenRef.current) {
+        injectStyles(ctx.nonce);
+        const preOpenFocus = document.activeElement;
+        previousFocusRef.current = preOpenFocus instanceof HTMLElement ? preOpenFocus : null;
+        sampleViewportGap(initialBaselineGapRef);
+      }
     });
 
     /**
@@ -262,7 +275,6 @@ export const Content = /* @__PURE__ */ React.forwardRef<HTMLDivElement, SheetCon
       return "scale";
     }, []);
 
-    const present = dialogOk && mounted && (ctx.open || phase !== "pre");
     // No enter/exit legs on the degraded path (no WAAPI travel to run), so it
     // tracks ctx.open directly instead of the phase machine — it appears and
     // disappears rather than animating.
@@ -597,24 +609,23 @@ export const Content = /* @__PURE__ */ React.forwardRef<HTMLDivElement, SheetCon
       if (!dialog || !track || !panel) return;
       const geometry = geometryFor(ctx.side);
 
-      injectStyles(ctx.nonce);
       if (!overlayOpenRef.current) {
-        // Snapshot focus the same instant showModal()/showPopover() would, so
-        // a manual restore-fallback on close (see restoreFocusFallback)
-        // targets exactly what the platform's own focus-restoration algorithm
-        // would (dialog) or what we restore ourselves (popover/non-modal).
-        const preOpenFocus = document.activeElement;
-        previousFocusRef.current = preOpenFocus instanceof HTMLElement ? preOpenFocus : null;
         // Trigger-recorded opener wins; focus is the fallback for programmatic
         // opens and is wrong on Safari (buttons never focus on click/tap).
         openerElementRef.current = ctx.openerRef.current ?? previousFocusRef.current;
         ctx.openerRef.current = null;
+        // A field autofocused during this commit keeps focus through the
+        // platform's focusing steps, which honor [autofocus]: moving it away
+        // and back would fire the field's blur handlers on open.
+        const held = dialog.contains(document.activeElement) ? document.activeElement : null;
+        held?.setAttribute("autofocus", "");
         if ("showModal" in dialog) {
           if (ctx.modal) (dialog as HTMLDialogElement).showModal();
           else (dialog as HTMLDialogElement).show();
         } else {
           (dialog as HTMLDivElement & { showPopover: () => void }).showPopover();
         }
+        held?.removeAttribute("autofocus");
         overlayOpenRef.current = true;
       }
       measure();
@@ -669,7 +680,6 @@ export const Content = /* @__PURE__ */ React.forwardRef<HTMLDivElement, SheetCon
       ctx.open,
       phase,
       ctx.activeDetent,
-      ctx.nonce,
       ctx.side,
       // ctx.side stays "bottom" across a bottom<->center flip (center is the
       // flag, not the side), so the flag must invalidate this effect itself.
@@ -976,47 +986,33 @@ export const Content = /* @__PURE__ */ React.forwardRef<HTMLDivElement, SheetCon
     };
 
     // Loads on the first editable focus inside the dialog, so input-less
-    // sheets never fetch the keyboard engine. The pre-focus baseline gap is
-    // sampled here at open (the chunk resolves after focus by definition)
-    // and handed over raw — the chunk owns the clamp.
+    // sheets never fetch the keyboard engine.
     const [kbNeeded, setKbNeeded] = React.useState(false);
-    const initialBaselineGapRef = React.useRef<number | undefined>(undefined);
     React.useEffect(() => {
       if (!present || kbNeeded) return;
       const dialog = dialogRef.current;
       if (!dialog) return;
-      // The gap sample must run synchronously inside the focus event — a
-      // passive-effect resample lands frames later, when the keyboard
-      // animation may already be shrinking the visual viewport, and a
-      // poisoned baseline overshoots the inset for the whole session.
-      const sampleGap = () => {
-        const vv = window.visualViewport;
-        if (vv && vv.scale === 1) {
-          const layoutH = document.documentElement.clientHeight || window.innerHeight;
-          initialBaselineGapRef.current = Math.max(0, layoutH - vv.height);
-        }
-      };
       const isEditable = (t: unknown): t is HTMLElement =>
         t instanceof HTMLElement &&
         (t.isContentEditable || t.tagName === "INPUT" || t.tagName === "TEXTAREA");
-      // Cheap overmatch (a checkbox focus loads the chunk pointlessly but
-      // harmlessly); the chunk's willOpenKeyboard applies the precise gate.
-      const detect = (event: FocusEvent) => {
-        if (isEditable(event.target)) {
-          sampleGap();
-          setKbNeeded(true);
-        }
-      };
-      // autoFocus commits during the layout phase, before this effect
-      // attaches — arm from the live activeElement so autofocused sheets
-      // still load the engine (the gap sample is best-effort there; the
-      // chunk's clamp discards a keyboard-contaminated value).
+      // Focus that landed before this effect (autofocus, a child's own effect)
+      // keeps the sample taken at open: resampling here could catch the
+      // keyboard mid-rise, and a value under the toolbar cap would then poison
+      // the inset for the whole session.
       if (isEditable(document.activeElement) && dialog.contains(document.activeElement)) {
-        sampleGap();
         setKbNeeded(true);
         return;
       }
-      sampleGap();
+      // Cheap overmatch (a checkbox focus loads the chunk pointlessly but
+      // harmlessly); the chunk's willOpenKeyboard applies the precise gate.
+      // The toolbar may have moved since open, and inside the focus event the
+      // keyboard has not started yet, so this is the one safe resample.
+      const detect = (event: FocusEvent) => {
+        if (isEditable(event.target)) {
+          sampleViewportGap(initialBaselineGapRef);
+          setKbNeeded(true);
+        }
+      };
       dialog.addEventListener("focusin", detect, { capture: true, passive: true });
       return () => dialog.removeEventListener("focusin", detect, { capture: true });
     }, [present, kbNeeded]);
@@ -1025,7 +1021,7 @@ export const Content = /* @__PURE__ */ React.forwardRef<HTMLDivElement, SheetCon
       present,
       markProgrammaticScroll,
       jumpScroll,
-      initialBaselineGapPx: initialBaselineGapRef.current,
+      initialBaselineGapRef,
       // Center rides the inert "bottom" here ON PURPOSE and it is
       // load-bearing: the hook's isBottom path writes --scrollsheet-vv-top/
       // -vv-height, which the base track rule sizes off — without them a

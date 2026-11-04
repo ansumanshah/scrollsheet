@@ -1,4 +1,5 @@
 import {
+  AutofocusSheets,
   SideSheet,
   SinglePxSideSheet,
   BasicSheet,
@@ -94,6 +95,7 @@ export function App() {
         <InputTypesSheet />
         <KeyboardExpandSheet />
         <SideKeyboardSheet />
+        <AutofocusSheets />
         <NoHandleSheet side="bottom" trigger="No handle bottom" />
         <NoHandleSheet side="top" trigger="No handle top" />
         <NoHandleSheet side="left" trigger="No handle left" />

@@ -44,6 +44,12 @@
   --scrollsheet-ease: ${SHEET_SPRING.easing};
   --scrollsheet-dur: ${SHEET_SPRING.durationMs}ms;
 }
+/* Rendered for the one commit before showModal()/showPopover(). React runs a
+   child's autoFocus in that commit, and a closed overlay's display:none would
+   make its focus() a silent no-op. Same task as the open, so it never paints. */
+.scrollsheet-dialog[data-scrollsheet-state="pre"] {
+  display: block;
+}
 .scrollsheet-dialog::backdrop {
   /* we draw our own backdrop so it can track scroll progress */
   background: transparent;

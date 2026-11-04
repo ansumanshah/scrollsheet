@@ -461,3 +461,17 @@ export function round3(x: number): string {
 export function sdaOwnsBackdrop(sdaSupported: boolean, phase: Phase): boolean {
   return sdaSupported && phase === "open";
 }
+
+/**
+ * Raw layout/visual viewport gap, handed to the keyboard chunk as its toolbar
+ * baseline. Only meaningful before the keyboard starts rising: the chunk
+ * rejects a value over its cap but cannot tell a partly risen keyboard under
+ * it. Reads the ICB, not innerHeight, for the reason the chunk documents.
+ */
+export function sampleViewportGap(target: { current: number | undefined }): void {
+  const vv = window.visualViewport;
+  if (vv && vv.scale === 1) {
+    const layoutH = document.documentElement.clientHeight || window.innerHeight;
+    target.current = Math.max(0, layoutH - vv.height);
+  }
+}

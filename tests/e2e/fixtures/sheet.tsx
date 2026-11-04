@@ -448,6 +448,74 @@ export function KeyboardExpandSheet() {
   );
 }
 
+type AutofocusMode = "prop" | "attr" | "effect";
+
+function AutofocusField({ mode, label }: { mode: AutofocusMode; label: string }) {
+  const ref = React.useRef<HTMLInputElement>(null);
+  React.useEffect(() => {
+    if (mode === "effect") ref.current?.focus();
+  }, [mode]);
+  return (
+    <input
+      ref={(el) => {
+        ref.current = el;
+        // A raw attribute, since React strips the autoFocus prop from the DOM.
+        if (mode === "attr") el?.setAttribute("autofocus", "");
+      }}
+      type="text"
+      aria-label={label}
+      autoFocus={mode === "prop"}
+      onBlur={(event) => {
+        event.currentTarget.dataset.blurred = "true";
+      }}
+    />
+  );
+}
+
+/** One sheet per way a field can take focus at open, for the keyboard arming specs. */
+function AutofocusSheet({
+  mode,
+  trigger,
+  modal = true,
+}: {
+  mode: AutofocusMode;
+  trigger: string;
+  modal?: boolean;
+}) {
+  const [active, setActive] = React.useState<DetentSpec>(0.3);
+  return (
+    <Sheet.Root
+      detents={[0.3, 0.85]}
+      keyboardExpands
+      modal={modal}
+      activeDetent={active}
+      onActiveDetentChange={setActive}
+    >
+      <Sheet.Trigger className="btn">{trigger}</Sheet.Trigger>
+      <Sheet.Content className="sheet" aria-label={trigger}>
+        <Sheet.Handle />
+        <div className="sheet-inner">
+          <Sheet.Title>{trigger}</Sheet.Title>
+          <code data-testid="autofocus-active">{String(active)}</code>
+          <Sheet.Close>Close autofocus sheet</Sheet.Close>
+          <AutofocusField mode={mode} label={`${trigger} input`} />
+        </div>
+      </Sheet.Content>
+    </Sheet.Root>
+  );
+}
+
+export function AutofocusSheets() {
+  return (
+    <>
+      <AutofocusSheet mode="prop" trigger="Autofocus prop" />
+      <AutofocusSheet mode="attr" trigger="Autofocus attr" />
+      <AutofocusSheet mode="effect" trigger="Autofocus effect" />
+      <AutofocusSheet mode="prop" trigger="Autofocus non-modal" modal={false} />
+    </>
+  );
+}
+
 /** A right-side drawer with a text field, for the edge-anchored keyboard-clearance specs. */
 export function SideKeyboardSheet() {
   return (
