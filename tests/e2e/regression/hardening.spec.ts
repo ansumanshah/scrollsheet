@@ -155,36 +155,39 @@ test.describe("item 5: pinch-zoom guard", () => {
 });
 
 test.describe("item 6: keyboard-avoidance focus matcher excludes non-text inputs", () => {
-  // DEFERRED (scope-freeze — not fighting worth burning more time on): the
-  // "positive" case (text input scrolls into view) proved unexpectedly
-  // flaky specifically on the "Input types sheet" fixture (timing out
-  // waiting for a scrollTop change that the identical pattern gets
-  // reliably on regressions.spec.ts's B03/"Keyboard" fixture) — root cause
-  // not yet isolated. The "negative" case (range/checkbox do NOT scroll)
-  // was already dropped as unreliably assertable end-to-end: verified
-  // interactively that focusing *any* element, range/checkbox included,
-  // already moves panel.scrollTop via the browser's own native
-  // "scroll the newly-focused element into view" behavior, independent of
-  // this library's willOpenKeyboard-gated effect — the two can't be told
-  // apart by observing scrollTop alone. willOpenKeyboard's actual exclusion
-  // logic (content.tsx: NON_TEXT_INPUT_TYPES) is a small, easily
-  // code-reviewed allowlist change; B03 already covers the underlying
-  // scrollIntoView-on-focus mechanism working at all.
-  test.skip("focusing a text input scrolls it into view within the sheet's own scroll container", async ({
-    page,
-  }) => {
+  test("only keyboard-summoning inputs request the library's focus scroll", async ({ page }) => {
     await page.goto("/");
     const dialog = await openSheetByTrigger(page, "Input types sheet");
-    const panel = dialog.locator(".scrollsheet-panel");
-    await panel.evaluate((el) => {
-      el.scrollTop = el.scrollHeight;
+    await dialog.locator("input").evaluateAll((inputs) => {
+      for (const input of inputs) {
+        const original = input.scrollIntoView.bind(input);
+        input.setAttribute("data-focus-scroll-count", "0");
+        input.scrollIntoView = (options) => {
+          input.setAttribute(
+            "data-focus-scroll-count",
+            String(Number(input.getAttribute("data-focus-scroll-count")) + 1),
+          );
+          input.setAttribute("data-focus-scroll-options", JSON.stringify(options));
+          original(options);
+        };
+      }
     });
-    const baseline = await panel.evaluate((el) => el.scrollTop);
 
-    await dialog.getByLabel("Text input").focus();
-    await expect
-      .poll(async () => panel.evaluate((el) => el.scrollTop), { timeout: SPRING_TIMEOUT })
-      .not.toBe(baseline);
+    // Native focus scrolling does not call the JS method; observe the library's
+    // debounced request instead of conflating it with the browser's scrollTop.
+    for (const label of ["Range input", "Checkbox input"]) {
+      const input = dialog.getByLabel(label);
+      await input.focus();
+      await page.waitForTimeout(350); // beyond the 250ms focus-scroll debounce
+      await expect(input).toHaveAttribute("data-focus-scroll-count", "0");
+    }
+    const text = dialog.getByLabel("Text input");
+    await text.focus();
+    await expect(text).toHaveAttribute("data-focus-scroll-count", "1");
+    await expect(text).toHaveAttribute(
+      "data-focus-scroll-options",
+      JSON.stringify({ block: "nearest", inline: "nearest" }),
+    );
   });
 });
 
@@ -309,49 +312,63 @@ test.describe("item 4: a second pointer mid-drag is ignored", () => {
 });
 
 test.describe("item 7: release-velocity sanity", () => {
-  // DEFERRED (scope-freeze): this end-to-end repro proved fragile — a
-  // synthetic page.mouse drag's exact sample timing/count doesn't
-  // reliably land the "clear net direction, one small noisy reversal"
-  // shape this needs across engines/retries, and two adjustments (reducing
-  // the reversal magnitude, then the whole drag's step size) didn't fully
-  // stabilize it within a reasonable amount of further time. The guard
-  // itself (content.tsx's resolveDrag: MAX_RELEASE_VELOCITY_AGE_MS
-  // staleness check + net-displacement-sign agreement before trusting
-  // rawVelocity) is implemented and small enough to verify by code review;
-  // revisit this test with either a lower-level synthetic-pointer-event
-  // harness (bypassing page.mouse's own gesture timing) or a real-device
-  // check.
-  test.skip("a single reversed-direction sample right before release doesn't override a clear net drag direction", async ({
+  test("a single reversed-direction sample right before release doesn't override a clear net drag direction", async ({
     page,
   }) => {
     await page.goto("/");
     const dialog = await openSheetByTrigger(page, "Full height sheet");
-    const panel = dialog.getByRole("heading", { name: "Full height", exact: true });
+    const panel = dialog.locator(".scrollsheet-panel");
     const track = dialog.locator(".scrollsheet-track");
     const before = await track.evaluate((el) => el.scrollTop);
+    const max = await track.evaluate((el) => el.scrollHeight - el.clientHeight);
+    const travel = (max - before) * 0.7;
+    expect(travel).toBeGreaterThan(24);
 
-    const box = await panel.boundingBox();
-    if (!box) throw new Error("title bounding box unavailable");
-    const x = box.x + box.width / 2;
-    const startY = box.y + box.height / 2;
+    await panel.evaluate((el, travel) => {
+      const box = el.getBoundingClientRect();
+      const x = box.x + box.width / 2;
+      const y = box.y + 20;
+      const original = Object.getOwnPropertyDescriptor(performance, "now");
+      const start = performance.now();
+      let elapsed = 0;
+      Object.defineProperty(performance, "now", {
+        configurable: true,
+        value: () => start + elapsed,
+      });
+      const dispatch = (type: string, offset: number, time: number) => {
+        elapsed = time;
+        el.dispatchEvent(
+          new PointerEvent(type, {
+            pointerId: 17,
+            pointerType: "mouse",
+            button: 0,
+            buttons: type === "pointerup" ? 0 : 1,
+            clientX: x,
+            clientY: y + offset,
+            bubbles: true,
+          }),
+        );
+      };
+      try {
+        dispatch("pointerdown", 0, 0);
+        dispatch("pointermove", -travel - 15, 150);
+        // The first sample falls outside the 100ms window. Only the 15px
+        // reversal remains: without sign agreement its projection dismisses.
+        dispatch("pointermove", -travel, 154);
+        dispatch("pointerup", -travel, 155);
+      } finally {
+        if (original) Object.defineProperty(performance, "now", original);
+        else Reflect.deleteProperty(performance, "now");
+      }
+    }, travel);
 
-    await page.mouse.move(x, startY);
-    await page.mouse.down();
-    // Clear net movement toward "open" (up, for a bottom sheet) — well past
-    // the 24px net-displacement threshold the sanity check gates on. The
-    // final reversed sample is a small blip (15px), not big enough to flip
-    // the *net* displacement's own sign — it's testing that a noisy
-    // last-instant bounce doesn't override the drag's clear overall
-    // direction, not a real change of direction.
-    for (let i = 1; i <= 8; i++) await page.mouse.move(x, startY - i * 20);
-    await page.mouse.move(x, startY - 160 + 15);
-    await page.mouse.up();
-
-    // Must still land further *open* than where it started, not snap back
-    // toward/past the start — the reversed sample must not have flung it
-    // the wrong way.
-    const after = await waitForStableScrollTop(track);
-    expect(after).toBeGreaterThan(before);
+    await expect(dialog).toHaveAttribute("data-scrollsheet-state", "open");
+    await expect
+      .poll(async () => {
+        const after = await track.evaluateAll((tracks) => tracks[0]?.scrollTop ?? -1);
+        return Math.abs(after - max);
+      })
+      .toBeLessThanOrEqual(3);
   });
 });
 
