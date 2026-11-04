@@ -14,8 +14,7 @@ export default function ProfileFormExample() {
         <div className="ex-panel-body">
           <Sheet.Title>Edit profile</Sheet.Title>
           <Sheet.Description>
-            On a real device, focus a field below and confirm the on-screen keyboard never covers
-            it.
+            Drag the handle up to see the full form. Tap a field to try the keyboard.
           </Sheet.Description>
           <div className="ex-field">
             <label className="ex-label" htmlFor="ex-profile-name">
@@ -48,7 +47,7 @@ export default function ProfileFormExample() {
               id="ex-profile-bio"
               className="ex-textarea"
               rows={3}
-              defaultValue="Product designer working on developer tools. Coffee, trail running, and side projects that never ship."
+              defaultValue="I design tools for developers."
             />
           </div>
           <button

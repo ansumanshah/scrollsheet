@@ -44,8 +44,8 @@ export default function SidesExample() {
           <div className="ex-panel-pad">
             <Sheet.Title>side="{side}"</Sheet.Title>
             <Sheet.Description>
-              Same component, anchored to the {side} edge. Drag it back off that edge
-              to dismiss, or tap the backdrop.
+              This sheet opens from the {side} edge. Drag it toward that edge
+              to close, or tap the backdrop.
             </Sheet.Description>
           </div>
         </Sheet.Content>

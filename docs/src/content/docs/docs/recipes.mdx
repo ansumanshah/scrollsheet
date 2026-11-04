@@ -3,9 +3,8 @@ title: Recipes
 description: 'Seven installable patterns via the shadcn CLI: drawer, sheet, dialog, toast, confirm, share sheet, and sidebar, each one file in components/ui/ wrapping the primitives.'
 ---
 
-Every recipe is a shadcn registry item. One command writes one file into `components/ui/`
-with shadcn's default styling applied, wrapping the same primitives the rest of these docs
-document. It's your file after that: restyle it, cut what you don't need.
+Each recipe is a shadcn registry item that wraps scrollsheet primitives with shadcn's default
+styling. Install it into `components/ui/`, then edit it to suit your app.
 
 ```sh
 bunx shadcn@latest add https://scrollsheet.dev/r/drawer.json
@@ -15,10 +14,9 @@ Swap `drawer.json` for any item below.
 
 ## drawer
 
-The shadcn/ui drawer API you already know, backed by scrollsheet instead of vaul:
+The shadcn/ui drawer API backed by scrollsheet:
 `Drawer`, `DrawerTrigger`, `DrawerContent`, `DrawerTitle`, `DrawerDescription`,
-`DrawerClose`, plus `DrawerHandle`. Same JSX, but the element is a native `<dialog>` and
-the gesture is CSS scroll-snap.
+`DrawerClose`, plus `DrawerHandle`. It uses a native `<dialog>` and CSS scroll-snap.
 
 ## sheet
 
@@ -33,8 +31,8 @@ no detents, a native `<dialog>` in the top layer instead of Radix.
 
 ## toast
 
-The built-in toast system as a mount-once `Toaster`: per-toast DOM, six positions,
-stacking, swipe to dismiss, Sonner-compatible API.
+Mount `Toaster` once for stacked toasts with six positions, swipe dismissal, and a
+Sonner-compatible API.
 
 ## confirm
 
