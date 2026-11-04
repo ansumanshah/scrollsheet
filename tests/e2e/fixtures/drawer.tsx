@@ -253,3 +253,27 @@ export function DrawerContentAsChildFragmentSheet() {
     </Drawer.Root>
   );
 }
+
+/** vaul compat: selectable body text inside a Drawer (vaul #346); handleOnly toggles the variant. */
+export function DrawerSelectableTextSheet({
+  handleOnly,
+  trigger,
+}: {
+  handleOnly?: boolean;
+  trigger: string;
+}) {
+  return (
+    <Drawer.Root handleOnly={handleOnly}>
+      <Drawer.Trigger className="btn">{trigger}</Drawer.Trigger>
+      <Drawer.Content className="sheet" aria-label={trigger}>
+        <Drawer.Handle />
+        <div className="sheet-inner" style={{ height: 320 }}>
+          <Drawer.Title>{trigger}</Drawer.Title>
+          <p data-testid="selectable-copy" style={{ margin: "16px 0", width: "max-content" }}>
+            Selectable alpha bravo charlie delta echo
+          </p>
+        </div>
+      </Drawer.Content>
+    </Drawer.Root>
+  );
+}
