@@ -2,6 +2,8 @@ import type { Browser, BrowserContext, CDPSession, Page } from "@playwright/test
 import { mkdirSync, rmSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 
+import { spring } from "../film/motion.js";
+
 export const FPS = 60;
 
 export interface Point {
@@ -161,8 +163,13 @@ export class Take {
       this.clockAccum -= step;
       this.clockMs += step;
       await this.page.clock.runFor(step);
-      await this.page.evaluate((now) => (window as unknown as VideoWindow).__video.settle(now), this.clockMs);
-      const read = await this.page.evaluate(() => (window as unknown as VideoWindow).__video.read());
+      await this.page.evaluate(
+        (now) => (window as unknown as VideoWindow).__video.settle(now),
+        this.clockMs,
+      );
+      const read = await this.page.evaluate(() =>
+        (window as unknown as VideoWindow).__video.read(),
+      );
       this.frameIndex += 1;
       this.metrics.push({
         ...read,
@@ -190,7 +197,9 @@ export class Take {
   }
 
   now(): Promise<FrameMetrics> {
-    return this.page.evaluate(() => (window as unknown as VideoWindow).__video.read()) as Promise<FrameMetrics>;
+    return this.page.evaluate(() =>
+      (window as unknown as VideoWindow).__video.read(),
+    ) as Promise<FrameMetrics>;
   }
 
   async center(selector: string): Promise<Point> {
@@ -199,7 +208,10 @@ export class Take {
     return { x: box.x + box.width / 2, y: box.y + box.height / 2 };
   }
 
-  private async touch(type: "touchStart" | "touchMove" | "touchEnd", p: Point | null): Promise<void> {
+  private async touch(
+    type: "touchStart" | "touchMove" | "touchEnd",
+    p: Point | null,
+  ): Promise<void> {
     await this.cdp.send("Input.dispatchTouchEvent", {
       type,
       touchPoints: p ? [{ x: p.x, y: p.y }] : [],
@@ -252,14 +264,35 @@ export class Take {
     await this.touch("touchEnd", null);
   }
 
+  /** A pointer-level swipe through real touch input, for surfaces with their own swipe handling. */
+  async swipe(from: Point, to: Point, frames: number): Promise<void> {
+    this.fingerAt = from;
+    this.fingerVisible = true;
+    await this.frame(6);
+    await this.touch("touchStart", from);
+    await this.frame(1);
+    const full = spring(frames / FPS, 150, 24);
+    for (let f = 1; f <= frames; f++) {
+      const k = spring(f / FPS, 150, 24) / full;
+      const at = { x: from.x + (to.x - from.x) * k, y: from.y + (to.y - from.y) * k };
+      await this.touch("touchMove", at);
+      this.fingerAt = at;
+      await this.frame(1);
+    }
+    await this.touch("touchEnd", null);
+    this.fingerVisible = false;
+    await this.frame(1);
+  }
+
   async setKeyboard(px: number): Promise<void> {
     await this.page.evaluate((v) => (window as unknown as VideoWindow).__video.setKeyboard(v), px);
   }
 
   async mouseTo(to: Point, frames: number, curve: (x: number) => number): Promise<void> {
     const from = this.cursorAt ?? { x: to.x + 120, y: to.y + 180 };
+    const full = curve(frames / FPS);
     for (let f = 1; f <= frames; f++) {
-      const k = curve(f / FPS);
+      const k = curve(f / FPS) / full;
       this.cursorAt = { x: from.x + (to.x - from.x) * k, y: from.y + (to.y - from.y) * k };
       await this.page.mouse.move(this.cursorAt.x, this.cursorAt.y);
       await this.frame(1);
@@ -282,7 +315,10 @@ export class Take {
   }
 
   async end(): Promise<void> {
-    writeFileSync(join(this.dir, "metrics.json"), JSON.stringify({ frames: this.metrics, marks: this.marks }));
+    writeFileSync(
+      join(this.dir, "metrics.json"),
+      JSON.stringify({ frames: this.metrics, marks: this.marks }),
+    );
     await this.context.close();
   }
 }

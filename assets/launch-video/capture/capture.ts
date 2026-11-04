@@ -24,7 +24,8 @@ export async function capture(names: string[]): Promise<void> {
     port: 0,
     fetch(req) {
       const path = new URL(req.url).pathname;
-      if (path === "/app.js") return new Response(js, { headers: { "content-type": "text/javascript" } });
+      if (path === "/app.js")
+        return new Response(js, { headers: { "content-type": "text/javascript" } });
       if (path === "/") return new Response(html, { headers: { "content-type": "text/html" } });
       return new Response("not found", { status: 404 });
     },

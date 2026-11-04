@@ -40,7 +40,8 @@ async function drag(take: Take, stop: number, opts: DragOptions = {}): Promise<v
 
 async function stops(take: Take, count: number): Promise<number[]> {
   const found = (await take.now()).stops;
-  if (found.length !== count) throw new Error(`expected ${count} stops, got ${JSON.stringify(found)}`);
+  if (found.length !== count)
+    throw new Error(`expected ${count} stops, got ${JSON.stringify(found)}`);
   return found;
 }
 
@@ -136,15 +137,18 @@ export const SHOTS: Record<string, ShotSpec> = {
     scene: "toasts",
     ...PHONE,
     run: async (take) => {
-      await take.tap(await take.center('[data-demo="open"]'));
-      await take.hold(0.55);
+      await take.hold(0.35);
       take.mark("first");
       await take.tap(await take.center('[data-save="Ember & Oak"]'));
       await take.hold(0.55);
-      await take.tap(await take.center('[data-save="The Roasting Room"]'));
+      await take.tap(await take.center('[data-save="Third Wave Coffee"]'));
       await take.hold(0.5);
-      await take.tap(await take.center('[data-save="Slate Cafe"]'));
-      await take.hold(1.2);
+      await take.tap(await take.center('[data-save="The Roasting Room"]'));
+      await take.hold(0.85);
+      take.mark("swipe");
+      const toastAt = await take.center(".scrollsheet-toast >> nth=-1");
+      await take.swipe(toastAt, { x: toastAt.x, y: toastAt.y - 150 }, 20);
+      await take.hold(1.1);
     },
   },
 

@@ -22,6 +22,7 @@ export const SPRING = {
 /** A value with many targets: one spring per change, never a restart. keys: [[time, value], ...] */
 export function track(t, keys, k = 170, d = 26) {
   let v = keys[0][1];
-  for (let i = 1; i < keys.length; i++) v += (keys[i][1] - keys[i - 1][1]) * spring(t - keys[i][0], k, d);
+  for (let i = 1; i < keys.length; i++)
+    v += (keys[i][1] - keys[i - 1][1]) * spring(t - keys[i][0], k, d);
   return v;
 }

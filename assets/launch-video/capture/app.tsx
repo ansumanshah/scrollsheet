@@ -52,9 +52,17 @@ function MapBackdrop() {
     [935, -40, 935, 1320],
   ];
   return (
-    <svg className="map" viewBox="0 0 1280 1280" preserveAspectRatio="xMidYMid slice" aria-hidden="true">
+    <svg
+      className="map"
+      viewBox="0 0 1280 1280"
+      preserveAspectRatio="xMidYMid slice"
+      aria-hidden="true"
+    >
       <rect width="1280" height="1280" fill="#ece9e2" />
-      <path d="M-20 1140 C 240 1040 420 1180 690 1120 S 1120 980 1320 1080 V 1320 H -20 Z" fill="#d9d6ee" />
+      <path
+        d="M-20 1140 C 240 1040 420 1180 690 1120 S 1120 980 1320 1080 V 1320 H -20 Z"
+        fill="#d9d6ee"
+      />
       <rect x="500" y="110" width="250" height="230" rx="18" fill="#dbe3d3" />
       <rect x="880" y="580" width="170" height="240" rx="18" fill="#dbe3d3" />
       {lanes.map(([x1, y1, x2, y2], i) => (
@@ -70,7 +78,15 @@ function MapBackdrop() {
         [260, 820, "#b7903a"],
         [960, 240, "#46566e"],
       ].map(([cx, cy, fill], i) => (
-        <circle key={i} cx={cx} cy={cy} r="20" fill={fill as string} stroke="#fff" strokeWidth="7" />
+        <circle
+          key={i}
+          cx={cx}
+          cy={cy}
+          r="20"
+          fill={fill as string}
+          stroke="#fff"
+          strokeWidth="7"
+        />
       ))}
       <circle cx="640" cy="420" r="62" fill="#534ab7" opacity="0.14" />
       <circle cx="640" cy="420" r="23" fill="#534ab7" stroke="#fff" strokeWidth="9" />
@@ -87,7 +103,12 @@ function CafeRow({ cafe, onSave }: { cafe: Cafe; onSave?: (name: string) => void
         <span className="row-meta">{cafe.meta}</span>
       </span>
       {onSave ? (
-        <button type="button" className="save" data-save={cafe.name} onClick={() => onSave(cafe.name)}>
+        <button
+          type="button"
+          className="save"
+          data-save={cafe.name}
+          onClick={() => onSave(cafe.name)}
+        >
           Save
         </button>
       ) : (
@@ -100,11 +121,9 @@ function CafeRow({ cafe, onSave }: { cafe: Cafe; onSave?: (name: string) => void
 function FinderBody({
   query,
   setQuery,
-  onSave,
 }: {
   query: string;
   setQuery: (q: string) => void;
-  onSave?: (name: string) => void;
 }) {
   const rows = CAFES.filter((c) => c.name.toLowerCase().includes(query.toLowerCase()));
   return (
@@ -120,7 +139,7 @@ function FinderBody({
         onChange={(e) => setQuery(e.target.value)}
       />
       {rows.map((c) => (
-        <CafeRow key={c.name} cafe={c} onSave={onSave} />
+        <CafeRow key={c.name} cafe={c} />
       ))}
     </div>
   );
@@ -145,24 +164,17 @@ function Finder() {
 }
 
 function Toasts() {
-  const [query, setQuery] = React.useState("");
+  const save = (name: string) =>
+    toast(`Saved ${name}`, { action: { label: "Undo", onClick: () => {} } });
   return (
     <div className="page">
       <MapBackdrop />
       <Toaster position="top-center" visibleToasts={3} duration={60000} />
-      <Sheet.Root detents={[0.7]}>
-        <Sheet.Trigger className="trigger" data-demo="open">
-          Find coffee
-        </Sheet.Trigger>
-        <Sheet.Content className="panel" aria-label="Coffee nearby">
-          <Sheet.Handle />
-          <FinderBody
-            query={query}
-            setQuery={setQuery}
-            onSave={(name) => toast(`Saved ${name}`, { action: { label: "Undo", onClick: () => {} } })}
-          />
-        </Sheet.Content>
-      </Sheet.Root>
+      <div className="card">
+        {CAFES.slice(0, 3).map((c) => (
+          <CafeRow key={c.name} cafe={c} onSave={save} />
+        ))}
+      </div>
     </div>
   );
 }
@@ -179,7 +191,7 @@ function VaulSwap() {
           <Drawer.Handle />
           <div className="body">
             <Drawer.Title className="title">Coffee nearby</Drawer.Title>
-            <Drawer.Description className="desc">Same Drawer.* markup</Drawer.Description>
+            <Drawer.Description className="desc">9 open now</Drawer.Description>
             {CAFES.map((c) => (
               <CafeRow key={c.name} cafe={c} />
             ))}
@@ -237,8 +249,15 @@ function Desk() {
             <Sheet.Handle />
             <div className="body">
               <Sheet.Title className="title">Save Ember & Oak?</Sheet.Title>
-              <Sheet.Description className="desc">Add it to a list you can share.</Sheet.Description>
-              <input className="search" type="text" aria-label="List name" defaultValue="Morning coffee" />
+              <Sheet.Description className="desc">
+                Add it to a list you can share.
+              </Sheet.Description>
+              <input
+                className="search"
+                type="text"
+                aria-label="List name"
+                defaultValue="Morning coffee"
+              />
               <div className="actions">
                 <Sheet.Close className="secondary">Cancel</Sheet.Close>
                 <Sheet.Close className="primary">Save</Sheet.Close>

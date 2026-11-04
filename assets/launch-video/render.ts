@@ -49,17 +49,39 @@ export async function render(opts: RenderOptions): Promise<number> {
   await page.goto(`http://localhost:${server.port}/film/index.html?cut=${opts.cut ?? "film"}`);
   await page.waitForFunction(() => (window as unknown as { __ready?: boolean }).__ready === true);
   await page.evaluate(() => document.fonts.ready);
-  const duration = await page.evaluate(() => (window as unknown as { __duration: number }).__duration);
+  const duration = await page.evaluate(
+    () => (window as unknown as { __duration: number }).__duration,
+  );
 
   const ff = spawn(
     "ffmpeg",
     [
-      "-y", "-loglevel", "error",
-      "-f", "image2pipe", "-framerate", String(opts.fps), "-i", "-",
-      "-vf", "scale=out_color_matrix=bt709:out_range=tv,format=yuv420p",
-      "-c:v", "libx264", "-preset", "fast", "-crf", String(opts.crf ?? 12),
-      "-colorspace", "bt709", "-color_primaries", "bt709", "-color_trc", "bt709",
-      "-r", String(opts.fps), opts.out,
+      "-y",
+      "-loglevel",
+      "error",
+      "-f",
+      "image2pipe",
+      "-framerate",
+      String(opts.fps),
+      "-i",
+      "-",
+      "-vf",
+      "scale=out_color_matrix=bt709:out_range=tv,format=yuv420p",
+      "-c:v",
+      "libx264",
+      "-preset",
+      "fast",
+      "-crf",
+      String(opts.crf ?? 12),
+      "-colorspace",
+      "bt709",
+      "-color_primaries",
+      "bt709",
+      "-color_trc",
+      "bt709",
+      "-r",
+      String(opts.fps),
+      opts.out,
     ],
     { stdio: ["pipe", "inherit", "inherit"] },
   );
@@ -68,10 +90,14 @@ export async function render(opts: RenderOptions): Promise<number> {
   const total = Math.round((to - from) * opts.fps);
   const started = Date.now();
   for (let i = 0; i < total; i++) {
-    await page.evaluate((t) => (window as unknown as { seek(t: number): Promise<void> }).seek(t), from + i / opts.fps);
+    await page.evaluate(
+      (t) => (window as unknown as { seek(t: number): Promise<void> }).seek(t),
+      from + i / opts.fps,
+    );
     const shot = await page.screenshot({ type: "jpeg", quality: 96 });
     if (!ff.stdin.write(shot)) await new Promise((r) => ff.stdin.once("drain", r));
-    if (i % (opts.fps * 10) === 0) console.log(`  ${(i / opts.fps).toFixed(0)}s of ${(total / opts.fps).toFixed(0)}s`);
+    if (i % (opts.fps * 10) === 0)
+      console.log(`  ${(i / opts.fps).toFixed(0)}s of ${(total / opts.fps).toFixed(0)}s`);
   }
   ff.stdin.end();
   await new Promise((r) => ff.on("close", r));
@@ -82,7 +108,13 @@ export async function render(opts: RenderOptions): Promise<number> {
 }
 
 /** Writes one exact frame, for the poster. */
-export async function still(opts: { out: string; width: number; height: number; t: number; quality: number }): Promise<void> {
+export async function still(opts: {
+  out: string;
+  width: number;
+  height: number;
+  t: number;
+  quality: number;
+}): Promise<void> {
   const root = resolve(HERE);
   const server = Bun.serve({
     port: 0,
@@ -90,7 +122,9 @@ export async function still(opts: { out: string; width: number; height: number; 
       const file = join(root, decodeURIComponent(new URL(req.url).pathname));
       const f = Bun.file(file);
       if (!(await f.exists())) return new Response("not found", { status: 404 });
-      return new Response(f, { headers: { "content-type": MIME[extname(file)] ?? "application/octet-stream" } });
+      return new Response(f, {
+        headers: { "content-type": MIME[extname(file)] ?? "application/octet-stream" },
+      });
     },
   });
   const browser = await chromium.launch();
@@ -98,7 +132,10 @@ export async function still(opts: { out: string; width: number; height: number; 
   await page.goto(`http://localhost:${server.port}/film/index.html`);
   await page.waitForFunction(() => (window as unknown as { __ready?: boolean }).__ready === true);
   await page.evaluate(() => document.fonts.ready);
-  await page.evaluate((t) => (window as unknown as { seek(t: number): Promise<void> }).seek(t), opts.t);
+  await page.evaluate(
+    (t) => (window as unknown as { seek(t: number): Promise<void> }).seek(t),
+    opts.t,
+  );
   await page.screenshot({ path: opts.out, type: "jpeg", quality: opts.quality });
   await browser.close();
   server.stop(true);

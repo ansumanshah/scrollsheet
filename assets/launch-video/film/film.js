@@ -51,19 +51,30 @@ T.end = T.size + 3.7;
 T.done = T.end + 4.6;
 window.__duration = CUT === "loop" ? secs("loop") : T.done;
 
+const show = (node, on) => {
+  node.style.display = on ? "" : "none";
+};
+
 const bgLayer = el("div", stage, { className: "layer" });
 const sceneLayer = el("div", stage, { className: "layer" });
 const wipeLayer = el("div", stage, { className: "layer" });
 
-// Wipes are the mark's three sheets rising; the last becomes the next background.
+// Wipes are the mark's three sheets rising; the last becomes the next background. Each panel
+// travels past the top edge so its rounded corners clear the frame, which gives every wipe an
+// exact cover time: the moment scenes swap underneath it.
+const WIPE_STAGGER = 0.06;
+const WIPE_LIFT = 90;
+const wipeY = (dt) => (1 - spring(dt, ...DEFAULT)) * (H + 140) - WIPE_LIFT;
+let COVER = 0;
+while (wipeY(COVER) > 0) COVER += 1 / 240;
+const coverDelay = COVER + WIPE_STAGGER * 2;
 const WIPES = [
-  { at: T.keyboard - 0.56, color: VIOLET },
-  { at: T.desk - 0.56, color: INK },
-  { at: T.toasts - 0.56, color: PAPER },
-  { at: T.size - 0.56, color: VIOLET },
-  { at: T.end - 0.56, color: INK },
+  { at: T.keyboard - coverDelay, color: VIOLET },
+  { at: T.desk - coverDelay, color: INK },
+  { at: T.toasts - coverDelay, color: PAPER },
+  { at: T.size - coverDelay, color: VIOLET },
+  { at: T.end - coverDelay, color: INK },
 ];
-const wipeRise = (dt) => (1 - spring(dt, ...DEFAULT)) * 1.1;
 const wipePanels = [0.3, 0.55, 1].map((opacity) => {
   const node = el("div", wipeLayer, { className: "wipe" });
   node.style.opacity = opacity;
@@ -75,18 +86,16 @@ function paintWipes(t) {
   let active = null;
   for (const w of WIPES) {
     if (t >= w.at) {
-      active = w;
-      if (wipeRise(t - w.at - 0.12) < 0.004) bg = w.color;
+      if (t >= w.at + coverDelay) bg = w.color;
+      else active = w;
     }
   }
   bgLayer.style.background = bg;
-  const running = active && wipeRise(t - active.at - 0.12) >= 0.004;
-  wipeLayer.style.visibility = running ? "visible" : "hidden";
-  if (!running) return;
+  show(wipeLayer, !!active);
+  if (!active) return;
   wipePanels.forEach((panel, i) => {
-    const y = wipeRise(t - active.at - i * 0.06);
     panel.style.background = active.color;
-    panel.style.transform = `translate3d(0, ${y * H}px, 0)`;
+    panel.style.transform = `translate3d(0, ${wipeY(t - active.at - i * WIPE_STAGGER)}px, 0)`;
   });
 }
 
@@ -158,21 +167,21 @@ const L = TALL
   ? {
       titleX: 72,
       titleY: 118,
-      titleSize: 112,
-      codeSize: 44,
+      titleSize: 128,
+      codeSize: 46,
       readX: 76,
-      readY: 386,
+      readY: 420,
       phoneH: 1200,
       phoneCx: W / 2 + 40,
       phoneCy: 1250,
     }
   : {
-      titleX: 118,
-      titleY: 262,
-      titleSize: 112,
-      codeSize: 40,
-      readX: 122,
-      readY: 530,
+      titleX: 110,
+      titleY: 230,
+      titleSize: 136,
+      codeSize: 50,
+      readX: 116,
+      readY: 548,
       phoneH: 980,
       phoneCx: 1370,
       phoneCy: H / 2,
@@ -221,7 +230,8 @@ async function paintDevice({ shot, frame, cx, cy, scale, bezel = 11, radiusK = 1
 
   const fp = frames[index].finger;
   finger.style.visibility = fp ? "visible" : "hidden";
-  if (fp) finger.style.transform = `translate3d(${fp.x * scale}px, ${fp.y * scale}px, 0) scale(${scale})`;
+  if (fp)
+    finger.style.transform = `translate3d(${fp.x * scale}px, ${fp.y * scale}px, 0) scale(${scale})`;
 
   const cp = m.cursor;
   cursor.style.visibility = cp ? "visible" : "hidden";
@@ -251,7 +261,7 @@ async function paintDevice({ shot, frame, cx, cy, scale, bezel = 11, radiusK = 1
 
 // ---- Detent ticks: placed at the real landing heights the capture measured. ----
 const ticksRoot = el("div", sceneLayer, { id: "ticks" });
-const tickLabels = ['0.35', '0.7', '"full"'];
+const tickLabels = ["0.35", "0.7", '"full"'];
 const tickEls = tickLabels.map((label) => {
   const row = el("div", ticksRoot, { className: "tick" });
   el("span", row, { textContent: label });
@@ -262,7 +272,7 @@ const needle = el("div", ticksRoot, { id: "needle" });
 
 function paintTicks(t, geo, tIn, tOut, activeStop) {
   const on = t >= tIn && t < tOut + 0.4;
-  ticksRoot.style.visibility = on ? "visible" : "hidden";
+  show(ticksRoot, on);
   if (!on) return;
   const size = TALL ? 34 : 32;
   const stops = geo.m.stops.slice(1);
@@ -297,28 +307,33 @@ const tScroll = makeTitle(
   [[plain("This drag")], [plain("is a "), plain("scroll", LAVENDER, true), plain(".")]],
   { x: L.titleX, y: L.titleY, size: L.titleSize },
 );
-const tDetents = makeTitle(
-  proofLayer,
-  [[plain("Detents are")], [plain("snap points.")]],
-  { x: L.titleX, y: L.titleY, size: L.titleSize },
-);
+const tDetents = makeTitle(proofLayer, [[plain("Detents are")], [plain("snap points.")]], {
+  x: L.titleX,
+  y: L.titleY,
+  size: L.titleSize,
+});
 const rDialog = makeReadout(proofLayer, { x: L.readX, y: L.readY, size: L.codeSize });
 const rScrollLabel = makeReadout(proofLayer, { x: L.readX, y: L.readY, size: L.codeSize });
 const rScrollValue = makeReadout(proofLayer, {
   x: L.readX - 6,
   y: L.readY + L.codeSize * 1.5,
-  size: TALL ? 150 : 190,
+  size: TALL ? 170 : 220,
   color: "#fff",
   weight: 600,
 });
 const rScrollNote = makeReadout(proofLayer, {
   x: L.readX,
-  y: L.readY + L.codeSize * 1.5 + (TALL ? 190 : 236),
+  y: L.readY + L.codeSize * 1.5 + (TALL ? 200 : 258),
   size: L.codeSize * 0.8,
   color: MUTED,
 });
 rScrollNote.node.style.fontFamily = "var(--sans)";
-const rDetentCode = makeReadout(proofLayer, { x: L.readX, y: L.readY, size: L.codeSize, color: LAVENDER });
+const rDetentCode = makeReadout(proofLayer, {
+  x: L.readX,
+  y: L.readY,
+  size: L.codeSize,
+  color: LAVENDER,
+});
 const rSnapType = makeReadout(proofLayer, {
   x: L.readX,
   y: L.readY + L.codeSize * 1.7,
@@ -329,9 +344,9 @@ const rSnapType = makeReadout(proofLayer, {
 async function paintProof(t) {
   const dt = t - T.proof;
   const on = t < T.keyboard;
-  proofLayer.style.visibility = on ? "visible" : "hidden";
+  show(proofLayer, on);
   if (!on) {
-    ticksRoot.style.visibility = "hidden";
+    show(ticksRoot, false);
     return;
   }
   const scrollAt = mark("proof", "scroll");
@@ -365,11 +380,11 @@ async function paintProof(t) {
 // ---- Scene: keyboard. ----
 const kbLayer = el("div", sceneLayer, { className: "layer" });
 const kbTitleX = TALL ? L.titleX : 900;
-const tKeyboard = makeTitle(
-  kbLayer,
-  [[plain("Keyboard up,")], [plain("field in view.")]],
-  { x: kbTitleX, y: L.titleY, size: L.titleSize },
-);
+const tKeyboard = makeTitle(kbLayer, [[plain("Keyboard up,")], [plain("field in view.")]], {
+  x: kbTitleX,
+  y: L.titleY,
+  size: L.titleSize,
+});
 const rKeyboard = makeReadout(kbLayer, {
   x: TALL ? L.readX : kbTitleX + 4,
   y: L.readY,
@@ -378,8 +393,8 @@ const rKeyboard = makeReadout(kbLayer, {
 });
 
 async function paintKeyboard(t) {
-  const on = t >= T.keyboard - 0.1 && t < T.desk;
-  kbLayer.style.visibility = on ? "visible" : "hidden";
+  const on = t >= T.keyboard && t < T.desk;
+  show(kbLayer, on);
   if (!on) return;
   const dt = t - T.keyboard;
   await paintDevice({
@@ -395,39 +410,52 @@ async function paintKeyboard(t) {
 
 // ---- Scene: desk. A window, then the same dialog narrowing into a bottom sheet. ----
 const deskLayer = el("div", sceneLayer, { className: "layer" });
-const deskCapX = TALL ? L.titleX : 118;
-const deskCapY = TALL ? 118 : 870;
-const deskSize = TALL ? 96 : 76;
-const tSide = makeTitle(deskLayer, [[plain("Any edge.")]], { x: deskCapX, y: deskCapY, size: deskSize });
-const tCenter = makeTitle(deskLayer, [[plain("Or centered.")]], { x: deskCapX, y: deskCapY, size: deskSize });
+const deskCapX = TALL ? L.titleX : 336;
+const deskCapY = TALL ? 118 : 874;
+const deskSize = TALL ? 128 : 96;
+const tSide = makeTitle(deskLayer, [[plain("Any edge.")]], {
+  x: deskCapX,
+  y: deskCapY,
+  size: deskSize,
+});
+const tCenter = makeTitle(deskLayer, [[plain("Or centered.")]], {
+  x: deskCapX,
+  y: deskCapY,
+  size: deskSize,
+});
 const tNarrow = makeTitle(deskLayer, [[plain("Same component")], [plain("under 768 px.")]], {
   x: L.titleX,
   y: L.titleY,
   size: L.titleSize,
 });
 const rSide = makeReadout(deskLayer, {
-  x: TALL ? L.readX : 660,
-  y: TALL ? 246 : deskCapY + 26,
+  x: TALL ? L.readX : 960,
+  y: TALL ? 290 : deskCapY + 26,
   size: L.codeSize,
   color: LAVENDER,
 });
 const rCenter = makeReadout(deskLayer, {
-  x: TALL ? L.readX : 660,
-  y: TALL ? 246 : deskCapY + 26,
+  x: TALL ? L.readX : 960,
+  y: TALL ? 290 : deskCapY + 26,
   size: L.codeSize,
   color: LAVENDER,
 });
-const rNarrow = makeReadout(deskLayer, { x: L.readX, y: L.readY, size: L.codeSize, color: LAVENDER });
+const rNarrow = makeReadout(deskLayer, {
+  x: L.readX,
+  y: L.readY,
+  size: L.codeSize,
+  color: LAVENDER,
+});
 
 async function paintDesk(t) {
-  const on = t >= T.desk - 0.1 && t < T.toasts;
-  deskLayer.style.visibility = on ? "visible" : "hidden";
+  const on = t >= T.desk && t < T.toasts;
+  show(deskLayer, on);
   if (!on) return;
   const dt = t - T.desk;
   const narrowAt = mark("desk", "narrow");
-  const deskScale = TALL ? 996 / 1280 : 800 / 800;
+  const deskScale = TALL ? 996 / 1280 : 1;
   const deskCx = TALL ? W / 2 : W / 2;
-  const deskCy = TALL ? 780 : 442;
+  const deskCy = TALL ? 880 : 438;
   const n = spring(dt - narrowAt, ...HEAVY);
   const scale = deskScale + (phoneScale - deskScale) * n;
   const cx = deskCx + (L.phoneCx - deskCx) * n;
@@ -468,8 +496,8 @@ const rToastSize = makeReadout(toastLayer, {
 rToastSize.node.style.fontFamily = "var(--sans)";
 
 async function paintToasts(t) {
-  const on = t >= T.toasts - 0.1 && t < T.vaul;
-  toastLayer.style.visibility = on ? "visible" : "hidden";
+  const on = t >= T.toasts && t < T.vaul;
+  show(toastLayer, on);
   if (!on) return;
   await paintDevice({
     shot: "toasts",
@@ -486,22 +514,22 @@ async function paintToasts(t) {
 const vaulLayer = el("div", sceneLayer, { className: "layer" });
 const tVaulA = makeTitle(vaulLayer, [[plain("Moving off vaul?")]], {
   x: L.titleX,
-  y: TALL ? 118 : 176,
-  size: TALL ? 104 : 92,
+  y: TALL ? 118 : 150,
+  size: TALL ? 112 : 112,
   color: "#0c0b0a",
 });
 const tVaulB = makeTitle(vaulLayer, [[plain("Two lines.")]], {
   x: L.titleX,
-  y: TALL ? 236 : 280,
-  size: TALL ? 104 : 92,
+  y: TALL ? 244 : 276,
+  size: TALL ? 112 : 112,
   color: VIOLET,
 });
 const diffRoot = el("div", vaulLayer, { className: "layer" });
-const diffSize = TALL ? 40 : 34;
+const diffSize = TALL ? 36 : 38;
 const diffRowH = diffSize * 1.86;
 const diffX = L.titleX;
-const diffW = TALL ? W - L.titleX * 2 : 860;
-const diffY = TALL ? 370 : 442;
+const diffW = TALL ? W - L.titleX * 2 : 1010;
+const diffY = TALL ? 388 : 450;
 const DIFF = [
   { sign: "-", text: "import { Drawer } from 'vaul';", tone: "out" },
   { sign: "-", text: "import 'vaul/style.css';", tone: "out" },
@@ -526,15 +554,15 @@ const diffRows = DIFF.map((d) => {
 const rVaulNote = makeReadout(vaulLayer, {
   x: L.readX,
   y: diffY + diffRowH * 4 + 44,
-  size: TALL ? 42 : 36,
+  size: TALL ? 48 : 46,
   color: "#0c0b0a",
   weight: 500,
 });
 rVaulNote.node.style.fontFamily = "var(--sans)";
 
 async function paintVaul(t) {
-  const on = t >= T.vaul - 0.1 && t < T.size;
-  vaulLayer.style.visibility = on ? "visible" : "hidden";
+  const on = t >= T.vaul && t < T.size;
+  show(vaulLayer, on);
   if (!on) return;
   await paintDevice({
     shot: "vaul",
@@ -560,7 +588,7 @@ async function paintVaul(t) {
       row.style.opacity = String((1 - strike * 0.45) * clamp(1 - rise * 1.4));
     }
   });
-  rVaulNote.at(t, outAt + 0.7, Infinity, "Same <b>Drawer.*</b> markup, running on the right.");
+  rVaulNote.at(t, outAt + 0.7, Infinity, "Same <b>Drawer.*</b> markup.");
 }
 
 // ---- Scene: size. ----
@@ -597,8 +625,8 @@ const rSizeB = makeReadout(sizeLayer, {
 rSizeB.node.style.fontFamily = "var(--sans)";
 
 function paintSize(t) {
-  const on = t >= T.size - 0.1 && t < T.end;
-  sizeLayer.style.visibility = on ? "visible" : "hidden";
+  const on = t >= T.size && t < T.end;
+  show(sizeLayer, on);
   if (!on) return;
   device.style.visibility = "hidden";
   tSize.at(t, T.size + 0.08, T.end - 0.1);
@@ -659,8 +687,8 @@ const rEndLine = makeReadout(endLayer, {
 rEndLine.node.style.fontFamily = "var(--sans)";
 
 function paintEnd(t) {
-  const on = t >= T.end - 0.1;
-  endLayer.style.visibility = on ? "visible" : "hidden";
+  const on = t >= T.end;
+  show(endLayer, on);
   if (!on) return;
   device.style.visibility = "hidden";
   const dt = t - T.end;
@@ -703,14 +731,22 @@ async function paintLoop(t) {
 
 window.seek = async (t) => {
   if (CUT === "loop") {
-    for (const layer of [proofLayer, kbLayer, deskLayer, toastLayer, vaulLayer, sizeLayer, endLayer]) {
-      layer.style.visibility = "hidden";
+    for (const layer of [
+      proofLayer,
+      kbLayer,
+      deskLayer,
+      toastLayer,
+      vaulLayer,
+      sizeLayer,
+      endLayer,
+    ]) {
+      show(layer, false);
     }
-    ticksRoot.style.visibility = "hidden";
+    show(ticksRoot, false);
     await paintLoop(t);
     return;
   }
-  loopLayer.style.visibility = "hidden";
+  show(loopLayer, false);
   paintWipes(t);
   await paintProof(t);
   await paintKeyboard(t);
