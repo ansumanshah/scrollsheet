@@ -132,7 +132,7 @@ unsupported props may instead be rejected by TypeScript.
 | `dir` / RTL | not implemented: no prop exists |
 | `offset` as an object (`{ top, right, bottom, left }`) | not implemented: `offset` only accepts `number \| string` |
 | `mobileOffset` as a `Toaster` prop | not implemented as a prop — the underlying breakpoint is still stylable directly via the `--scrollsheet-toast-mobile-offset` CSS custom property |
-| Behind a modal sheet | A toast fired while a modal `Sheet.Root` is open renders behind it rather than above it: the toaster is outside the dialog's top layer |
+| Modal in a shadow root | The toaster moves into any open modal `<dialog>` to stay above it, but can't see one inside a shadow root, so it renders behind that one |
 
 If your app relies on any of these, stay on real `sonner` for now, or file the gap: don't assume
 silent parity.

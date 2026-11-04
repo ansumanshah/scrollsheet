@@ -15,8 +15,8 @@ export const BUNDLE_SIZES: Record<"index" | "drawer" | "dialog" | "toast" | "all
   index: { gzipKb: 16.34, brotliKb: 14.65 },
   drawer: { gzipKb: 17.43, brotliKb: 15.55 },
   dialog: { gzipKb: 16.13, brotliKb: 14.45 },
-  toast: { gzipKb: 6.79, brotliKb: 6.08 },
-  all: { gzipKb: 23.22, brotliKb: 20.71 },
+  toast: { gzipKb: 6.97, brotliKb: 6.3 },
+  all: { gzipKb: 23.4, brotliKb: 20.84 },
   auto: { gzipKb: 20.77, brotliKb: 18.09 },
 };
 
@@ -25,5 +25,5 @@ export const BUNDLE_SIZES: Record<"index" | "drawer" | "dialog" | "toast" | "all
 // these rather than quote a hand-typed figure.
 export const STYLESHEET_SIZES: Record<"core" | "toast", BundleSize> = {
   core: { gzipKb: 4.02, brotliKb: 3.59 },
-  toast: { gzipKb: 1.52, brotliKb: 1.28 },
+  toast: { gzipKb: 1.6, brotliKb: 1.34 },
 };

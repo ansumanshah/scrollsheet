@@ -1,8 +1,8 @@
 "use client";
 
 /**
- * One shared body portal groups persistent toast rows by position. Hidden
- * rows stay mounted so promotion and expansion preserve each row's state.
+ * One shared portal groups persistent toast rows by position. Hidden rows stay
+ * mounted so promotion and expansion preserve each row's state.
  * Keep this independent of Sheet so toast-only imports exclude its engine.
  */
 import * as React from "react";
@@ -33,6 +33,7 @@ import {
 import { getDefaultSwipeDirections } from "./swipe-math";
 import { ToastRow } from "./toast-row";
 import { useToastHeights } from "./use-toast-heights";
+import { useToasterHost } from "./use-toaster-host";
 
 const DEFAULT_HOTKEY: readonly string[] = ["altKey", "KeyT"];
 
@@ -298,13 +299,9 @@ export function ToasterShell({
     injectToastStyles(nonce);
   }, [nonce]);
 
-  // SSR-safety gate: `createPortal` needs a real `document`, and a `<section>`
-  // rendered during renderToString would double up once the client takes
-  // over anyway (this component has no hydration story — it's a pure
-  // client-portalled overlay, same reasoning as the Sheet-backed Toaster's
-  // own Content, which is behind an equivalent client-only mount gate).
-  const [mounted, setMounted] = React.useState(false);
-  React.useEffect(() => setMounted(true), []);
+  // Null until mounted: `createPortal` needs a real `document`, and this
+  // overlay has no server-rendered output to hydrate.
+  const host = useToasterHost();
 
   // No focus-driven expand: real Sonner's own onFocus/onBlur only track
   // lastFocusedElementRef/isFocusWithinRef bookkeeping for restoring focus
@@ -462,7 +459,7 @@ export function ToasterShell({
     },
   });
 
-  if (!mounted || typeof document === "undefined") return null;
+  if (!host) return null;
 
   const offsetValue =
     offset !== undefined ? (typeof offset === "number" ? `${offset}px` : offset) : undefined;
@@ -505,6 +502,6 @@ export function ToasterShell({
         />
       ))}
     </section>,
-    document.body,
+    host,
   );
 }

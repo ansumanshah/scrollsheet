@@ -128,10 +128,9 @@ test.describe("sonner compat: swipe-to-dismiss", () => {
     expect(swipeX.trim()).toBe("60px");
 
     await page.mouse.up();
-    // Past SWIPE_DISMISS_THRESHOLD_PX (45): release plays the
-    // scrollsheet-toast-swipe-out CSS animation, then fires onSwipeDismiss on
-    // animationend — the toast (and, being the only one, the whole
-    // toaster) disappears.
+    // Past SWIPE_DISMISS_THRESHOLD_PX (45): release fires onSwipeDismiss and
+    // plays the scrollsheet-toast-swipe-out CSS animation on the exit hold,
+    // then the toast (and, being the only one, the whole toaster) disappears.
     await expect(page.locator("[data-scrollsheet-toaster]")).toHaveCount(0, {
       timeout: SPRING_TIMEOUT,
     });
