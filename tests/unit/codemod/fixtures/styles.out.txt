@@ -1,0 +1,3 @@
+@import "scrollsheet/styles.css";
+@import url('scrollsheet/styles.css');
+.page { color: red; }

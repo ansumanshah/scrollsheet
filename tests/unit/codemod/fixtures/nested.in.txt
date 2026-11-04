@@ -1,0 +1,17 @@
+import { Drawer } from "vaul";
+
+export function Stack() {
+  return (
+    <Drawer.Root direction="left" snapPoints={["360px"]}>
+      <Drawer.Content>
+        <Drawer.NestedRoot nested autoFocus>
+          <Drawer.Content onOpenAutoFocus={() => {}} forceMount>
+            <Drawer.NestedRoot direction="bottom">
+              <Drawer.Content>deep</Drawer.Content>
+            </Drawer.NestedRoot>
+          </Drawer.Content>
+        </Drawer.NestedRoot>
+      </Drawer.Content>
+    </Drawer.Root>
+  );
+}

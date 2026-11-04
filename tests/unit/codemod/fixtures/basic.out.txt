@@ -1,0 +1,33 @@
+import * as React from "react";
+import { Drawer } from "scrollsheet";
+import "scrollsheet/styles.css";
+
+export function Sheet({ children }: { children: React.ReactNode }) {
+  const [open, setOpen] = React.useState(false);
+  return (
+    <Drawer.Root
+      open={open}
+      onOpenChange={setOpen}
+      snapPoints={[0.4, 1]}
+      closeThreshold={0.3}
+      direction="right"
+      onDrag={(event, pct) => console.log(pct)}
+      noBodyStyles
+      shouldScaleBackground
+      onRelease={(event, willOpen) => willOpen}
+    >
+      <Drawer.Trigger>Open</Drawer.Trigger>
+      <Drawer.Portal container={document.body}>
+        <Drawer.Overlay className="overlay" />
+        <Drawer.Content
+          onEscapeKeyDown={(e) => e.preventDefault()}
+          onPointerDownOutside={(e) => e.preventDefault()}
+        >
+          <Drawer.Handle />
+          <Drawer.Title>Hello</Drawer.Title>
+          {children}
+        </Drawer.Content>
+      </Drawer.Portal>
+    </Drawer.Root>
+  );
+}

@@ -13,6 +13,11 @@ import DocExample from '../../../../components/DocExample.astro';
 + import 'scrollsheet/styles.css';
 ```
 
+To do the import swap for you and list what needs a human, run
+`npx scrollsheet-codemod vaul src` (or `bunx`). It rewrites `vaul` and `vaul/style.css` imports,
+including aliased ones like shadcn's `DrawerPrimitive`, and prints a `file:line` report of every
+prop that is ignored or behaves differently. Add `--dry-run` to preview.
+
 The `Drawer.*` namespace translates supported Vaul props onto `Sheet.*`. Nesting is automatic;
 `NestedRoot` remains available as an alias of `Root`. Check the differences below before removing Vaul.
 

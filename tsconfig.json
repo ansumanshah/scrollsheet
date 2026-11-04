@@ -17,5 +17,5 @@
       "scrollsheet/motion": ["./packages/scrollsheet/src/motion/index.ts"]
     }
   },
-  "include": ["packages/scrollsheet/src", "registry/src", "tests", "scripts", "*.config.ts"]
+  "include": ["packages/scrollsheet/src", "packages/codemod/src", "registry/src", "tests", "scripts", "*.config.ts"]
 }
