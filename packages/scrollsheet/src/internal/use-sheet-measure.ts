@@ -13,7 +13,7 @@ import {
   resolveDetents,
   type ResolvedDetent,
 } from "./detents";
-import { warnLargestUndimmedDetentOutOfRange } from "./env";
+import { warnFooterNested, warnLargestUndimmedDetentOutOfRange } from "./env";
 
 export type SheetMeasure = [
   measure: (rebuildSnapStops?: boolean) => void,
@@ -85,6 +85,13 @@ export function useSheetMeasure(
     const hasHandle = body.querySelector("[data-scrollsheet-handle]") !== null;
     setBoolAttr(dialog, "data-scrollsheet-has-handle", hasHandle);
 
+    const footer = body.querySelector<HTMLElement>("[data-scrollsheet-footer]");
+    setBoolAttr(dialog, "data-scrollsheet-has-footer", footer !== null);
+    if (footer) {
+      dialog.style.setProperty("--scrollsheet-footer-height", `${footer.offsetHeight}px`);
+      if (process.env.NODE_ENV !== "production") warnFooterNested(footer, body);
+    }
+
     // Center presentation: the panel is content-sized by the center CSS
     // block and there is no travel range — detent resolution, snap stops,
     // dim ranges, and the detached/full-height machinery are all inert.
@@ -130,7 +137,8 @@ export function useSheetMeasure(
       contentHeight: measureContentHeight(
         body,
         geometry.offsetSizeProp,
-        fillRef.current,
+        // A footer stretches the body to the panel the same way fill does.
+        fillRef.current || footer !== null,
         panelStyle,
         geometry.axis,
       ),

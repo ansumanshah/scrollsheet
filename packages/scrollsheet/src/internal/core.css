@@ -774,7 +774,10 @@
 .scrollsheet-kb-fade {
   display: none;
 }
-.scrollsheet-dialog[data-scrollsheet-kb][data-scrollsheet-side="bottom"] .scrollsheet-kb-fade {
+.scrollsheet-dialog[data-scrollsheet-kb][data-scrollsheet-side="bottom"]:not(
+    [data-scrollsheet-has-footer]
+  )
+  .scrollsheet-kb-fade {
   display: block;
   position: absolute;
   left: var(--scrollsheet-inset-x, 0px);
@@ -986,6 +989,61 @@
   cursor: grabbing;
 }
 
+/* Sheet.Footer. Sticky against the track, not a per-frame JS write: the browser
+   holds it at the track's far edge during a scroll, which a main-thread write
+   would trail by a frame. Bounded by the body, so it follows the panel's top
+   edge down once the reveal is shorter than the footer, and its bottom edge on
+   a floating card. The panel has to clip rather than hide below the tallest
+   detent, or it would be the sticky scrollport itself; at max and under a
+   keyboard it is the scrollport, and the same bottom:0 lands on the same edge.
+   The inset is a transparent border, since the background paints under it and
+   a consumer's own padding cannot wipe it out. */
+.scrollsheet-footer {
+  position: sticky;
+  bottom: 0;
+  z-index: 1;
+  flex: none;
+  margin-top: auto;
+  border-bottom: max(var(--scrollsheet-safe-area, env(safe-area-inset-bottom, 0px)), 0px) solid
+    transparent;
+}
+:where(.scrollsheet-footer) {
+  background: var(--scrollsheet-panel-bg, transparent);
+}
+.scrollsheet-dialog:is(
+    [data-scrollsheet-side="top"],
+    [data-scrollsheet-side="center"],
+    [data-scrollsheet-detached],
+    [data-scrollsheet-kb]
+  )
+  .scrollsheet-footer {
+  border-bottom-width: 0;
+}
+.scrollsheet-dialog[data-scrollsheet-has-footer] .scrollsheet-panel {
+  display: flex;
+  padding-bottom: 0;
+  scroll-padding-bottom: var(--scrollsheet-footer-height, 0px);
+}
+.scrollsheet-dialog[data-scrollsheet-has-footer]:not([data-scrollsheet-side="left"])
+  .scrollsheet-panel {
+  flex-direction: column;
+}
+.scrollsheet-dialog[data-scrollsheet-side="bottom"][data-scrollsheet-has-footer]:not(
+    [data-scrollsheet-at-max],
+    [data-scrollsheet-kb]
+  )
+  .scrollsheet-panel {
+  overflow: clip;
+}
+.scrollsheet-dialog[data-scrollsheet-has-footer] [data-scrollsheet-body] {
+  display: flex;
+  flex-direction: column;
+}
+.scrollsheet-dialog[data-scrollsheet-has-footer]:not([data-scrollsheet-side="left"])
+  [data-scrollsheet-body]:not([data-scrollsheet-fill]) {
+  flex: 1 0 auto;
+}
+
 /* Software keyboard on edge-anchored sides: the panel never moves (it's
    pinned to its edge, unlike a bottom sheet's lift), but a focused field in
    its lower half still ends up under the keyboard. --scrollsheet-keyboard
@@ -1001,7 +1059,17 @@
     [data-scrollsheet-side="right"]
   )
   .scrollsheet-panel {
-  scroll-padding-bottom: var(--scrollsheet-keyboard, 0px);
+  scroll-padding-bottom: calc(
+    var(--scrollsheet-keyboard, 0px) + var(--scrollsheet-footer-height, 0px)
+  );
+}
+.scrollsheet-dialog:is(
+    [data-scrollsheet-side="top"],
+    [data-scrollsheet-side="left"],
+    [data-scrollsheet-side="right"]
+  )
+  .scrollsheet-footer {
+  bottom: var(--scrollsheet-keyboard, 0px);
 }
 .scrollsheet-dialog:is(
     [data-scrollsheet-side="top"],

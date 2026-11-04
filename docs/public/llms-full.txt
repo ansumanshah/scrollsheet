@@ -2,7 +2,7 @@
 
 > React bottom sheets, drawers, dialogs, side panels, and toasts. Sheets use native
 > <dialog> and CSS scroll snap. No runtime dependencies,
-> ~<!--size:index.gzip:0-->16<!--/size--> kB gzipped, React 18+, MIT licensed.
+> ~<!--size:index.gzip:0-->17<!--/size--> kB gzipped, React 18+, MIT licensed.
 
 This file provides a plain-text reference for tools that cannot crawl
 https://scrollsheet.dev/docs. The site contains the guides and interactive examples.
@@ -413,6 +413,7 @@ Full reference with every default: https://scrollsheet.dev/docs/reference/api
 | data-scrollsheet-detached | <dialog> | present once --scrollsheet-inset-bottom is set (the inset-card recipe) |
 | data-scrollsheet-sda | <dialog> | present once CSS scroll-driven animations own the backdrop dim |
 | data-scrollsheet-has-handle | <dialog> | present while a Sheet.Handle is rendered |
+| data-scrollsheet-has-footer | <dialog> | present while a Sheet.Footer is rendered |
 | data-scrollsheet-rtl | <dialog> | present when the panel's computed direction is rtl |
 | data-scrollsheet-fill | panel and body | present when fill |
 | data-scrollsheet-no-drag | anywhere | opts an element out of desktop drag |
@@ -444,6 +445,7 @@ Full reference with every default: https://scrollsheet.dev/docs/reference/api
 |---|---|
 | Sheet | namespace object: Root, Trigger, Content, Handle, Title, Description, Close |
 | Sheet.Trigger | <button>, opens on click. asChild renders your own element instead |
+| Sheet.Footer | <div>, stays on the sheet's visible bottom edge at every detent and above the keyboard, absorbs the bottom safe-area inset. Direct child of Sheet.Content, or inside a display:contents wrapper. asChild supported |
 | Sheet.Handle | <button>, drag grip; arrows/Home/End move detents, announces as a slider with 2+ detents. List detents shortest first. asChild supported |
 | Sheet.Title / Sheet.Description | <h2> / <p>, auto-wires aria-labelledby / aria-describedby. asChild supported |
 | Sheet.Close | <button>, closes on click. asChild supported. With no children it renders a styled X button |

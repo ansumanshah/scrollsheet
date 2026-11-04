@@ -23,8 +23,13 @@ import { Root as SheetRoot, type SheetRootProps } from "../root";
 import { Trigger } from "../trigger";
 import { Content as SheetContent, type SheetContentProps } from "../content";
 import { Handle as SheetHandle } from "../handle";
-import { Close, Description, Title } from "../misc";
-import type { SheetCloseProps, SheetDescriptionProps, SheetTitleProps } from "../misc";
+import { Close, Description, Footer, Title } from "../misc";
+import type {
+  SheetCloseProps,
+  SheetDescriptionProps,
+  SheetFooterProps,
+  SheetTitleProps,
+} from "../misc";
 import type { SheetHandleProps } from "../handle";
 import type { SheetTriggerProps } from "../trigger";
 import type { DetentSpec } from "../internal/detents";
@@ -645,11 +650,12 @@ const DrawerClose = /* @__PURE__ */ React.forwardRef<HTMLButtonElement, SheetClo
   },
 );
 
-export { Title, Description, DrawerClose as Close };
+export { Title, Description, DrawerClose as Close, Footer };
 export type {
   SheetTitleProps as DrawerTitleProps,
   SheetDescriptionProps as DrawerDescriptionProps,
   SheetCloseProps as DrawerCloseProps,
+  SheetFooterProps as DrawerFooterProps,
 };
 
 /* ── Namespace ────────────────────────────────────────────────────────── */
@@ -666,4 +672,5 @@ export const Drawer = {
   Title,
   Description,
   Handle,
+  Footer,
 };

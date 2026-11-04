@@ -9,7 +9,7 @@ React bottom sheets, drawers, dialogs, side panels, and toasts.
 
 **[Live demos](https://scrollsheet.dev/#examples)** · **[Docs](https://scrollsheet.dev/docs/)** · **[Migrate from vaul](https://scrollsheet.dev/docs/migrating/from-vaul)** · **[Migrate from Sonner](https://scrollsheet.dev/docs/migrating/from-sonner)** · **[Migrate from Radix Dialog](https://scrollsheet.dev/docs/migrating/from-radix-dialog)**
 
-Sheets use a native `<dialog>` and CSS scroll snap, with spring motion expressed as CSS `linear()`. <!--size:index.gzip:1-->16.4<!--/size--> kB gzipped, <!--size:index.brotli:1-->14.7<!--/size--> kB brotli, plus a 3.9 kB stylesheet. React 18+; no runtime dependencies.
+Sheets use a native `<dialog>` and CSS scroll snap, with spring motion expressed as CSS `linear()`. <!--size:index.gzip:1-->16.5<!--/size--> kB gzipped, <!--size:index.brotli:1-->14.8<!--/size--> kB brotli, plus a 3.9 kB stylesheet. React 18+; no runtime dependencies.
 
 <p align="center">
   <a href="https://scrollsheet.dev/">
@@ -97,7 +97,7 @@ Also exported: `DetentSpec`, `Side`, `SheetActions`, `TravelInfo`, `spring(confi
 - **Smaller things.** Desktop mouse drag, the `fill` prop, Shadow DOM injection, `themeColorDimming`, hidden scrollbars with an overlay thumb.
 - **Agent skills.** [`skills/`](https://github.com/ansumanshah/scrollsheet/tree/main/skills) contains `migrate-from-vaul`, `migrate-from-sonner`, `migrate-from-radix-dialog`, and `build-with-scrollsheet` for coding agents.
 - **Motion core (experimental).** `scrollsheet/motion` exports the React-free spring solver, Web Animations wrapper, and scroll tween.
-- **Zero-config entry.** `scrollsheet/auto` embeds the stylesheet and injects it on first open: no CSS import needed, <!--size:auto.gzip:1-->20.8<!--/size--> kB gzip for `Sheet` against the default entry's <!--size:index.gzip:1-->16.4<!--/size-->.
+- **Zero-config entry.** `scrollsheet/auto` embeds the stylesheet and injects it on first open: no CSS import needed, <!--size:auto.gzip:1-->21.1<!--/size--> kB gzip for `Sheet` against the default entry's <!--size:index.gzip:1-->16.5<!--/size-->.
 
 Focus containment comes from the platform's `showModal()`, not a JS focus trap. On open, focus lands on the panel so mobile keyboards don't pop unasked; use native `autofocus` to override.
 

@@ -58,6 +58,7 @@ import {
   DrawerContentAsChildFragmentSheet,
 } from "./drawer";
 import { DialogAcceptanceModal } from "./dialog";
+import { FooterSheets } from "./footer";
 import { SonnerFixture, SonnerQueueFixture, SonnerShrinkFixture } from "./toast";
 
 export function App() {
@@ -96,6 +97,7 @@ export function App() {
         <KeyboardExpandSheet />
         <SideKeyboardSheet />
         <AutofocusSheets />
+        <FooterSheets />
         <NoHandleSheet side="bottom" trigger="No handle bottom" />
         <NoHandleSheet side="top" trigger="No handle top" />
         <NoHandleSheet side="left" trigger="No handle left" />

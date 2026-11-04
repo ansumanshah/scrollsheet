@@ -12,18 +12,18 @@ export interface BundleSize {
 }
 
 export const BUNDLE_SIZES: Record<"index" | "drawer" | "dialog" | "toast" | "all" | "auto", BundleSize> = {
-  index: { gzipKb: 16.42, brotliKb: 14.72 },
-  drawer: { gzipKb: 17.5, brotliKb: 15.61 },
-  dialog: { gzipKb: 16.21, brotliKb: 14.51 },
-  toast: { gzipKb: 6.79, brotliKb: 6.08 },
-  all: { gzipKb: 23.31, brotliKb: 20.77 },
-  auto: { gzipKb: 20.84, brotliKb: 18.16 },
+  index: { gzipKb: 16.51, brotliKb: 14.77 },
+  drawer: { gzipKb: 17.58, brotliKb: 15.71 },
+  dialog: { gzipKb: 16.25, brotliKb: 14.56 },
+  toast: { gzipKb: 6.79, brotliKb: 6.09 },
+  all: { gzipKb: 23.39, brotliKb: 20.85 },
+  auto: { gzipKb: 21.09, brotliKb: 18.43 },
 };
 
 // The shipped stylesheets, gzipped the same way. Consumers link these
 // separately from the JS, so any "JS + CSS" total in public copy should add
 // these rather than quote a hand-typed figure.
 export const STYLESHEET_SIZES: Record<"core" | "toast", BundleSize> = {
-  core: { gzipKb: 4.02, brotliKb: 3.59 },
+  core: { gzipKb: 4.19, brotliKb: 3.73 },
   toast: { gzipKb: 1.52, brotliKb: 1.28 },
 };

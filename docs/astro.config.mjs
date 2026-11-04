@@ -144,6 +144,7 @@ export default defineConfig({
           items: [
             { slug: "docs/scrolling-and-keyboard/scrollable-content" },
             { slug: "docs/scrolling-and-keyboard/keyboard" },
+            { slug: "docs/scrolling-and-keyboard/pinned-footer" },
           ],
         },
         {
