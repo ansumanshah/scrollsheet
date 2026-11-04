@@ -9,7 +9,20 @@ React bottom sheets, drawers, dialogs, side panels, and toasts.
 
 **[Live demos](https://scrollsheet.dev/#examples)** · **[Docs](https://scrollsheet.dev/docs/)** · **[Migrate from vaul](https://scrollsheet.dev/docs/migrating/from-vaul)** · **[Migrate from Sonner](https://scrollsheet.dev/docs/migrating/from-sonner)** · **[Migrate from Radix Dialog](https://scrollsheet.dev/docs/migrating/from-radix-dialog)**
 
+Compared with [vaul](https://scrollsheet.dev/compare/vaul), [react-modal-sheet](https://scrollsheet.dev/compare/react-modal-sheet) and [Radix Dialog](https://scrollsheet.dev/compare/radix-dialog), including what scrollsheet does worse.
+
 Sheets use a native `<dialog>` and CSS scroll snap, with spring motion expressed as CSS `linear()`. <!--size:index.gzip:1-->16.3<!--/size--> kB gzipped, <!--size:index.brotli:1-->14.7<!--/size--> kB brotli, plus a 3.9 kB stylesheet. React 18+; no runtime dependencies.
+
+Coming from vaul? Its [README](https://github.com/emilkowalski/vaul#readme) says the repo is unmaintained. The `Drawer` adapter takes common vaul props, so two lines change:
+
+```diff
+- import { Drawer } from 'vaul';
+- import 'vaul/style.css';
++ import { Drawer } from 'scrollsheet';
++ import 'scrollsheet/styles.css';
+```
+
+Read the [differences](https://scrollsheet.dev/docs/migrating/from-vaul) before you remove vaul.
 
 <p align="center">
   <a href="https://scrollsheet.dev/">
