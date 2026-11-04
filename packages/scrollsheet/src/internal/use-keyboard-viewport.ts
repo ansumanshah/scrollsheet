@@ -211,7 +211,7 @@ export function useKeyboardViewport({
      * toolbar collapses.
      */
     // Must run while unarmed — the keyboard can't be part of the gap then.
-    // Called eagerly (setup, focusin before arming), not only from vv
+    // Called on focusin before arming, not only from vv
     // events: with the toolbar expanded since load, no vv event ever fires
     // before the first focus, and a lazily-sampled baseline would still be
     // its initial 0. A gap over the plausible-toolbar cap is REJECTED, not
@@ -252,7 +252,6 @@ export function useKeyboardViewport({
       }
       return 0;
     };
-    sampleBaseline();
 
     /**
      * keyboardExpands: promote to the tallest detent on the keyboard's

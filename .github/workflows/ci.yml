@@ -97,7 +97,7 @@ jobs:
   # ~5 minutes this way, not the ~30s a multi-worker local run suggests.
   # Splitting across matrix jobs can't remove that per-project floor (workers
   # is still 1 inside each job — that setting lives in playwright.config.ts,
-  # outside this file), but it does parallelize the four projects against
+  # outside this file), but it does parallelize the projects against
   # each other across separate GitHub-hosted runners instead of summing them
   # in one job, and each job now installs only the one browser engine it
   # needs. tests/e2e/fixtures/ bundles straight from ../../src (see serve.ts),
@@ -117,6 +117,8 @@ jobs:
             browser: webkit
           - project: firefox-desktop
             browser: firefox
+          - project: perf
+            browser: chromium
     steps:
       - uses: actions/checkout@v7
       - uses: oven-sh/setup-bun@v2

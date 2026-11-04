@@ -4,6 +4,7 @@ All notable changes to this project are documented here.
 
 ## 1.2.1 - 2026-11-04
 
+- **Lazy keyboard loading preserves the pre-focus toolbar baseline.** A keyboard animation that starts before the optional engine loads no longer reduces the reported keyboard inset.
 - **Canceled toast swipes keep the toast visible and resume auto-dismiss timers.** `pointercancel` and lost pointer capture reset the gesture instead of treating it as a completed swipe, including fast swipes, gestures past the dismissal threshold, and reduced motion.
 - **Toast type classes follow Sonner's corrected behavior.** `toastOptions.classNames.default` applies only to default toasts; success, error, and loading toasts receive their own type classes while shared toast classes remain intact.
 - **Vaul's `data-vaul-no-drag` marker works after migration.** Descendants of marked custom controls stay interactive without capturing the pointer or moving the drawer, alongside the existing `data-scrollsheet-no-drag` marker.

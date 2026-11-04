@@ -206,13 +206,6 @@ export default defineConfig({
         },
       },
     ],
-    build: {
-      // lightningcss's minifier throws a spurious parse error on the
-      // combined Starlight + site stylesheet past a certain size (a
-      // lightningcss 1.33.0 bug, not invalid CSS: every file here is
-      // individually valid and passes through esbuild's minifier fine).
-      cssMinify: "esbuild",
-    },
     resolve: {
       // The library is not a node_modules dependency of the site: it is
       // aliased straight to live src so demos never serve a stale dist
