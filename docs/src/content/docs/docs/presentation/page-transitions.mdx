@@ -1,6 +1,6 @@
 ---
 title: Page transitions
-description: Mark your page wrapper data-scrollsheet-background and backgroundEffect scales, insets, and rounds it in sync with the sheet's travel, iOS-style.
+description: Scale or shift the page behind an open sheet with backgroundEffect.
 ---
 
 import { Aside, LinkCard } from '@astrojs/starlight/components';
@@ -13,17 +13,17 @@ import { Aside, LinkCard } from '@astrojs/starlight/components';
 
 ## Scale and parallax
 
-Mark your page wrapper `data-scrollsheet-background`, then `backgroundEffect="scale"` scales,
-insets, and rounds it in sync with the sheet's own travel, an iOS-style card transition. Paired
-with a `'full'` detent, a sheet becomes a full-screen page that pushes the page behind it back
-like a stack. `'parallax'` shifts the wrapper instead of scaling it. Read
-`--scrollsheet-stack-progress` on a parent sheet's own panel for the equivalent effect between
-nested sheets.
+Add `data-scrollsheet-background` to your page wrapper. `backgroundEffect="scale"` scales,
+insets, and rounds it as the sheet moves. With a `'full'` detent, this creates a stacked-page
+effect. `'parallax'` shifts the wrapper without scaling it.
+
+For nested sheets, read `--scrollsheet-stack-progress` on the parent panel to drive a similar
+effect.
 
 ## The automatic default
 
-Mark the wrapper and a full-height bottom sheet gets `'scale'` on its own, with no prop: when the wrapper can be associated with that sheet's opener. The default only fires when the sheet was
-opened from inside that wrapper, rather than applying the implicit effect to an unrelated wrapper. Desktop drawers dock beside the page and leave it alone, and `'none'` opts out.
+A full-height mobile bottom sheet defaults to `'scale'` when opened from inside the marked
+wrapper. Desktop drawers leave the page unchanged. Set `'none'` to disable the effect.
 
 <Aside type="caution" title="One caveat">
   The wrapper's transform makes it the containing block for any `position: fixed` descendant, so
@@ -33,9 +33,8 @@ opened from inside that wrapper, rather than applying the implicit effect to an 
 
 ## Targeting a ref instead
 
-`backgroundRef` targets the wrapper directly instead of the `data-scrollsheet-background` query,
-for a wrapper you'd rather not stamp an attribute onto, or two sheets on the same page whose
-document-wide query could otherwise collide:
+Use `backgroundRef` to target a wrapper directly. This avoids adding an attribute or matching
+the wrong wrapper when a page has several:
 
 ```tsx
 const pageRef = useRef<HTMLDivElement>(null);
@@ -50,6 +49,6 @@ outside that wrapper; the automatic default still checks opener ownership.
 
 <LinkCard
   title="Nested and morph"
-  description="A Sheet.Root rendered inside another sheet's content registers as a child automatically, and the sheet morphs height when its content changes."
+  description="Nest sheets and resize them when content changes."
   href="/docs/detents-and-control/nested-and-morph"
 />

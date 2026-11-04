@@ -44,13 +44,12 @@ transition ends).
 | `Portal container={...}` | drop it; the `<dialog>` top layer replaces portaling |
 | `Overlay` with overlay CSS | keep the element (it renders nothing); restyle the real backdrop via `.scrollsheet-backdrop` or `--scrollsheet-backdrop` |
 
-Each dropped prop warns once in development with its recipe. Production builds carry no
-warning text at all.
+Each unsupported prop warns once in development with a suggested replacement. Production
+builds omit the warning text.
 
 <Aside type="note">
-Dismissal fires on backdrop click, not pointerdown. Deliberate: iOS Safari can deliver a
-backdrop tap as a bare click with no preceding pointerdown, which the pointerdown model
-drops. Scrollsheet ignores a backdrop click when the press started inside the panel.
+Dismissal uses backdrop clicks because iOS Safari can send a click without a preceding
+pointerdown. Scrollsheet ignores a backdrop click if the press started inside the panel.
 </Aside>
 
 ## Width
@@ -62,9 +61,8 @@ degrades to a centered static modal with the same width variables.
 
 ## Going native
 
-`Dialog.*` is a thin layer over `<Sheet.Root side="center">`. Converting removes the
-indirection and opens the rest of the surface, including `desktopSide` for the
-responsive case in reverse: a dialog on desktop that presents as a bottom sheet on phones.
+`Dialog.*` wraps `<Sheet.Root side="center">`. Use `Sheet.*` directly for additional options,
+including `desktopSide` to show a dialog on desktop and a bottom sheet on phones.
 
 <LinkCard
   title="Centered dialog"

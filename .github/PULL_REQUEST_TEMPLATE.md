@@ -6,6 +6,7 @@
 
 - [ ] `bun run typecheck`
 - [ ] `bun run check:compat`
+- [ ] `bun run check:deps`
 - [ ] `bun run build`
 - [ ] `bun test tests/unit`
 - [ ] `bun run test:e2e:fast`

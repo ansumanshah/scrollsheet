@@ -1,24 +1,22 @@
 ---
 title: Overview
-description: Where to start in scrollsheet's docs, one card per page, grouped the same way as the sidebar.
+description: Install scrollsheet, learn the components, or find a topic.
 ---
 
 import { Card, CardGrid } from '@astrojs/starlight/components';
 import DocExample from '../../../components/DocExample.astro';
 
 React primitives for bottom sheets, drawers, dialogs, side panels, and toasts. Start with
-install, or jump straight to a topic below.
+installation or choose a topic below.
 
 ## Getting started
 
 <CardGrid>
   <Card title="Install">
-    Add scrollsheet with bun, npm, pnpm, or yarn, or pull individual patterns in with the shadcn
-    CLI. [Read more](/docs/getting-started/install)
+    Install with your package manager or the shadcn CLI. [Read more](/docs/getting-started/install)
   </Card>
   <Card title="Anatomy">
-    The seven parts of a scrollsheet (Root, Trigger, Content, Handle, Title, Description, and
-    Close) and what each one owns. [Read more](/docs/getting-started/anatomy)
+    The seven sheet components and what they do. [Read more](/docs/getting-started/anatomy)
   </Card>
 </CardGrid>
 
@@ -43,12 +41,10 @@ install, or jump straight to a topic below.
     against each one. [Read more](/docs/detents-and-control/detents)
   </Card>
   <Card title="Imperative control">
-    actionsRef exposes open, close, and snapTo for deep links, push notifications, and any caller
-    without a prop to drill through. [Read more](/docs/detents-and-control/imperative-control)
+    Open, close, or snap a sheet with actionsRef. [Read more](/docs/detents-and-control/imperative-control)
   </Card>
   <Card title="Nested and morph">
-    A Sheet.Root rendered inside another sheet's content registers as a child automatically, and
-    the sheet morphs height when its content changes.
+    Nest sheets and resize them when content changes.
     [Read more](/docs/detents-and-control/nested-and-morph)
   </Card>
 </CardGrid>
@@ -57,13 +53,11 @@ install, or jump straight to a topic below.
 
 <CardGrid>
   <Card title="Scrollable content inside a sheet">
-    Mark an inner scroller with data-scrollsheet-nested-scroll so a swipe scrolls the list first
-    and hands off to sheet travel at the edge.
+    Scroll a list, then move the sheet when the list reaches its edge.
     [Read more](/docs/scrolling-and-keyboard/scrollable-content)
   </Card>
   <Card title="Keyboard">
-    scrollsheet reads visualViewport and writes the on-screen keyboard inset to
-    --scrollsheet-keyboard automatically, no prop required.
+    Make room for the on-screen keyboard with --scrollsheet-keyboard.
     [Read more](/docs/scrolling-and-keyboard/keyboard)
   </Card>
 </CardGrid>
@@ -72,12 +66,10 @@ install, or jump straight to a topic below.
 
 <CardGrid>
   <Card title="Side panels">
-    side anchors a sheet to bottom, top, left, or right; left and right sheets scroll on the x
-    axis and their detents are widths. [Read more](/docs/presentation/side-panels)
+    Open a sheet from any edge. Left and right detents set its width. [Read more](/docs/presentation/side-panels)
   </Card>
   <Card title="Non-modal">
-    `modal={false}` keeps the page fully interactive behind the sheet, with no backdrop, no
-    focus trap, and no inert-ing the rest of the page. [Read more](/docs/presentation/non-modal)
+    Keep the page interactive behind the sheet with `modal={false}`. [Read more](/docs/presentation/non-modal)
   </Card>
   <Card title="Desktop drag">
     Mouse drag excludes interactive controls and opt-out regions. Modal touch gestures normally
@@ -89,8 +81,7 @@ install, or jump straight to a topic below.
     [Read more](/docs/presentation/desktop-presentation)
   </Card>
   <Card title="Page transitions">
-    Mark your page wrapper data-scrollsheet-background and backgroundEffect scales, insets, and
-    rounds it in sync with the sheet's travel, iOS-style.
+    Scale or shift the page behind an open sheet with backgroundEffect.
     [Read more](/docs/presentation/page-transitions)
   </Card>
 </CardGrid>
@@ -99,12 +90,10 @@ install, or jump straight to a topic below.
 
 <CardGrid>
   <Card title="Toasts">
-    toast() and Toaster ship in the package: per-toast DOM, six positions, swipe to dismiss,
-    Sonner-compatible API. [Read more](/docs/toasts)
+    Show toasts with six positions, swipe dismissal, and a Sonner-compatible API. [Read more](/docs/toasts)
   </Card>
   <Card title="Using scrollsheet with Motion">
-    onTravel and --scrollsheet-progress are the integration boundary for Motion or any animation
-    library that takes a plain number. [Read more](/docs/motion)
+    Use sheet progress to drive Motion, another animation library, or CSS. [Read more](/docs/motion)
   </Card>
 </CardGrid>
 
@@ -112,12 +101,10 @@ install, or jump straight to a topic below.
 
 <CardGrid>
   <Card title="Migrate from vaul">
-    Map Vaul's Drawer namespace onto scrollsheet, retaining supported CSS hooks and reviewing
-    behavior differences. [Read more](/docs/migrating/from-vaul)
+    Move from Vaul to scrollsheet and check the behavior differences. [Read more](/docs/migrating/from-vaul)
   </Card>
   <Card title="Migrate from Sonner">
-    Migrate toast, useToasts, and Toaster with six positions, per-toast overrides, and
-    swipe-to-dismiss. Check the documented compatibility gaps. [Read more](/docs/migrating/from-sonner)
+    Move from Sonner to scrollsheet and check the compatibility gaps. [Read more](/docs/migrating/from-sonner)
   </Card>
 </CardGrid>
 
@@ -125,12 +112,10 @@ install, or jump straight to a topic below.
 
 <CardGrid>
   <Card title="Shadow DOM">
-    injectStylesInto adopts the core stylesheet into a shadow root, since document.head styles
-    don't cross the boundary on their own. [Read more](/docs/advanced/shadow-dom)
+    Add scrollsheet styles to a shadow root with injectStylesInto. [Read more](/docs/advanced/shadow-dom)
   </Card>
   <Card title="Framework support">
-    SSR-safe by design across Next.js App Router and Pages Router, Remix, React Router v7, Astro,
-    and plain Vite. [Read more](/docs/advanced/framework-support)
+    Client-component and hydration setup for Next.js, Remix, React Router v7, Astro, and Vite. [Read more](/docs/advanced/framework-support)
   </Card>
 </CardGrid>
 
@@ -138,12 +123,10 @@ install, or jump straight to a topic below.
 
 <CardGrid>
   <Card title="API">
-    Full prop reference for Sheet.Root, the styling hooks on Sheet.Content, and every other named
-    export. [Read more](/docs/reference/api)
+    Props, styling hooks, and exports. [Read more](/docs/reference/api)
   </Card>
   <Card title="Accessibility">
-    Focus containment comes from the platform's own showModal(), and Sheet.Handle exposes
-    role=slider with full keyboard control once there are two or more detents.
+    Native modal focus containment and keyboard controls for detents.
     [Read more](/docs/accessibility)
   </Card>
   <Card title="Browser support">
@@ -159,5 +142,5 @@ install, or jump straight to a topic below.
 
 <DocExample
   name="cart"
-  caption="A checkout that locks itself while it processes, then hands dismissal back when it settles."
+  caption="Dismissal is disabled while checkout processes, then enabled when it finishes."
 />

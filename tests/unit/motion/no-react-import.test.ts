@@ -1,3 +1,4 @@
+import { fileURLToPath } from "node:url";
 import { Glob } from "bun";
 import { describe, expect, test } from "bun:test";
 
@@ -11,7 +12,7 @@ const MOTION_DIR = new URL("../../../packages/scrollsheet/src/motion/", import.m
 const PURE_FILES = ["spring.ts", "geometry.ts"];
 
 function motionFiles(): string[] {
-  return [...new Glob("**/*.{ts,tsx}").scanSync(MOTION_DIR.pathname)];
+  return [...new Glob("**/*.{ts,tsx}").scanSync(fileURLToPath(MOTION_DIR))];
 }
 
 describe("src/motion module boundary", () => {

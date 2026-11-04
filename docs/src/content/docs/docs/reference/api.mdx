@@ -1,13 +1,13 @@
 ---
 title: API
-description: Full prop reference for Sheet.Root, the styling hooks on Sheet.Content, and every other named export.
+description: Props, styling hooks, and exports.
 ---
 
 import DocExample from '../../../../components/DocExample.astro';
 
 <DocExample
   name="ride-tracker"
-  caption="Tap a stop button or drag the handle. This one example touches most of the props below."
+  caption="Tap a stop button or drag the handle to try the props below."
 />
 
 ## Sheet.Root
@@ -79,10 +79,9 @@ way; see [Migrate from vaul](/docs/migrating/from-vaul).
 `detents`, `disableDrag`, and `keyboardExpands` are all inert: there's no travel range or drag
 gesture to configure. See [Centered dialog](/docs/presentation/centered-dialog).
 
-`desktopSide` overrides the resolved presentation once the viewport reaches
-`desktopBreakpoint`, resolved through a `matchMedia` subscription that lands after mount (server
-render and first paint both resolve to `side`). `desktopBreakpoint` only has an effect paired
-with `desktopSide`; set alone it warns once in dev. See
+`desktopSide` changes the presentation when the viewport reaches `desktopBreakpoint`. A
+`matchMedia` subscription applies it after mount; the server render and first paint use `side`.
+`desktopBreakpoint` requires `desktopSide`; used alone, it warns once in development. See
 [Responsive profiles](/docs/presentation/responsive-profiles).
 
 ### Interaction and other
@@ -103,8 +102,8 @@ with `desktopSide`; set alone it warns once in dev. See
 
 `keyboardExpands` applies to bottom sheets only. See [Keyboard](/docs/scrolling-and-keyboard/keyboard).
 
-`phantomScrollGuard` winds back a scroll nobody performed. A single scroll event that moves the
-track more than 120px with no input on the dialog in the last 1.5s (find-in-page, a focus scroll,
+`phantomScrollGuard` restores the resting detent after unexpected scrolling. A single scroll
+event that moves the track more than 120px with no input on the dialog in the last 1.5s (find-in-page, a focus scroll,
 a browser extension, test tooling's `scrollIntoViewIfNeeded`) is returned to the resting detent
 instead of dismissing the sheet or changing its detent. Turn it off only if your code
 jump-scrolls the track outside the sheet's own APIs. Sheets whose resting detent is 120px or

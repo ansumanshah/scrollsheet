@@ -133,7 +133,7 @@ export default function HeroShowcase({
           <div className="demo-panel-body">
             <Sheet.Title>Drag between detents</Sheet.Title>
             <Sheet.Description>
-              Drag the handle or panel between the two stops. Touch dragging uses native scrolling
+              Drag the handle or panel between two heights. Touch dragging uses native scrolling
               and CSS scroll-snap.
             </Sheet.Description>
             <ul className="demo-panel-list">
@@ -178,7 +178,7 @@ export default function HeroShowcase({
                 <li key={item}>{item}</li>
               ))}
             </ul>
-            <p className="hs-note">Drag it back off the edge to dismiss.</p>
+            <p className="hs-note">Drag right to close.</p>
           </div>
         </Sheet.Content>
       </Sheet.Root>
@@ -195,8 +195,7 @@ export default function HeroShowcase({
           <div className="demo-panel-body">
             <Sheet.Title>Delete this place?</Sheet.Title>
             <Sheet.Description>
-              This demo disables dragging, backdrop dismissal, and Escape. Choose either button to
-              close it.
+              Dragging, backdrop clicks, and Escape are disabled. Use either button to close.
             </Sheet.Description>
             <div className="hs-actions">
               <Sheet.Close className="hs-btn">Cancel</Sheet.Close>
@@ -225,7 +224,7 @@ export default function HeroShowcase({
           <div className="demo-panel-body">
             <Sheet.Title>Share</Sheet.Title>
             <Sheet.Description>
-              Open a second sheet from this one. The parent scales down and dims behind it.
+              Open another sheet. This one scales down and dims behind it.
             </Sheet.Description>
             <div className="hs-share-targets">
               {SHARE_TARGETS.map(({ id, label, Icon }) => (

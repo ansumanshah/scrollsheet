@@ -59,22 +59,21 @@ export default function FullScreenExample() {
             </div>
           </div>
           <p>
-            The first time I read a topo map correctly, I was already three switchbacks past where I
-            meant to turn. Contour lines that had looked like scribbles for two years suddenly
-            resolved into a shape: a saddle between two peaks, tight and unmistakable.
+            I missed a turn on my first hike with a topo map. I had followed the trail but lost
+            track of the contour lines. Looking back, the junction sat in a saddle between two
+            peaks.
           </p>
           <p>
-            Elevation gain numbers lie by omission. A trail listed at 2,000 feet over six miles can
-            hide a single mile that does half the work, then flatten out and coast for the rest. The
-            map shows this if you know where to look. Most trip reports don't.
+            A six-mile trail with 2,000 feet of climbing may gain half that height in one mile.
+            Closely spaced contour lines show the steep sections; wider gaps show gentler ground.
+            I check those sections before choosing a route.
           </p>
           <blockquote className="ex-pull-quote">
-            A ridge doesn't care how fast you wanted to go.
+            Check the steep sections before you set out.
           </blockquote>
           <p>
-            Now I plan differently. I trace the contour lines before I check the mileage, because
-            the lines tell me where the trail will actually ask something of me. The mileage just
-            tells me how long I'll be out there.
+            Now I trace the route on the map before checking the distance. I look for steep
+            climbs, exposed ridges, and places to turn back. Then I estimate how much time to allow.
           </p>
         </div>
       </Sheet.Content>

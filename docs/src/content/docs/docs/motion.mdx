@@ -1,15 +1,13 @@
 ---
 title: Using scrollsheet with Motion
-description: onTravel and --scrollsheet-progress are the integration boundary for Motion or any animation library that takes a plain number.
+description: Use sheet progress to drive Motion, another animation library, or CSS.
 ---
 
 import DocExample from '../../../components/DocExample.astro';
 
-scrollsheet's own motion lives in `scrollsheet/motion` (spring, WAAPI, the scroll tween; listed in
-the [API reference](/docs/reference/api#scrollsheetmotion)) and never reaches for a separate
-animation library. `onTravel` and `--scrollsheet-progress` are the
-integration boundary if you already animate with something else: data comes out of the sheet,
-no engine goes in.
+scrollsheet uses its own spring, Web Animations API wrapper, and scroll tween, exported from
+`scrollsheet/motion`. See the [API reference](/docs/reference/api#scrollsheetmotion).
+Use `onTravel` or `--scrollsheet-progress` to drive an animation library you already use.
 
 ```tsx
 import { useMotionValue, useTransform, motion } from 'motion/react';
@@ -24,8 +22,8 @@ const scale = useTransform(progress, [0, 1], [0.9, 1]);
 </Sheet.Root>
 ```
 
-The same shape works with any library that takes a plain number: read `progress` off `onTravel`'s
-second argument, or drive off `--scrollsheet-progress` directly for something CSS-only.
+For any library that accepts a number, read progress from `onTravel`'s second argument. For CSS
+animations, use `--scrollsheet-progress` directly.
 
 <DocExample
   name="ride-tracker"
