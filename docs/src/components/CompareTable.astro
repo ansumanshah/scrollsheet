@@ -1,0 +1,47 @@
+---
+interface Row {
+  label: string;
+  us: string;
+  them: string;
+  /** Source or method, rendered as a numbered footnote. */
+  note?: string;
+}
+interface Props {
+  usName?: string;
+  themName: string;
+  rows: Row[];
+}
+const { usName = "scrollsheet", themName, rows } = Astro.props;
+const libs = [usName, themName];
+const footnotes = rows.filter((r) => r.note).map((r) => r.note!);
+const noteNumber = (note?: string) => (note ? footnotes.indexOf(note) + 1 : 0);
+---
+
+<div class="compare-scroll">
+  <table class="compare-table">
+    <thead>
+      <tr>
+        <th scope="col"><span class="visually-hidden">Dimension</span></th>
+        <th scope="col" class="compare-col-us">{usName}</th>
+        <th scope="col">{themName}</th>
+      </tr>
+    </thead>
+    <tbody>
+      {rows.map((row) => (
+        <tr>
+          <th scope="row">
+            {row.label}
+            {row.note && <sup class="compare-ref">{noteNumber(row.note)}</sup>}
+          </th>
+          <td class="compare-col-us" data-lib={libs[0]}><span class="cmp-val" set:html={row.us} /></td>
+          <td data-lib={libs[1]}><span class="cmp-val" set:html={row.them} /></td>
+        </tr>
+      ))}
+    </tbody>
+  </table>
+</div>
+{footnotes.length > 0 && (
+  <ol class="compare-footnotes">
+    {footnotes.map((note) => <li set:html={note} />)}
+  </ol>
+)}

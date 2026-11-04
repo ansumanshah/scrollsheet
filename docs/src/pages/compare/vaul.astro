@@ -1,0 +1,156 @@
+---
+import SeoPage from "../../layouts/SeoPage.astro";
+import CompareTable from "../../components/CompareTable.astro";
+import DocExample from "../../components/DocExample.astro";
+import MigrationDiff from "../../components/MigrationDiff.astro";
+import { BUNDLE_SIZES } from "../../lib/bundle-sizes.generated";
+import type { Faq } from "../../lib/jsonld";
+
+const drawerKb = BUNDLE_SIZES.drawer.gzipKb.toFixed(2);
+
+const rows = [
+  {
+    label: "Maintenance",
+    us: "Releases continue; 1.2.3 shipped on 4 Nov 2026",
+    them:
+      'Version 1.1.2, published Dec 2024. The README says the repo is unmaintained and the author may not return to it soon',
+    note: 'vaul README and npm registry, checked 4 Nov 2026. The note was added in the commit "Explain maintenance" (3 Oct 2025).',
+  },
+  {
+    label: "Touch dragging",
+    us: "The browser scrolls a CSS scroll-snap container",
+    them: "Pointer handlers write a <code>translate3d</code> transform to the drawer on every move",
+    note: "vaul <code>src/index.tsx</code>, <code>onDrag</code>. scrollsheet: README, &ldquo;How sheets work&rdquo;. Desktop mouse drag in scrollsheet does use pointer handlers.",
+  },
+  {
+    label: "Runtime dependencies",
+    us: "0",
+    them: "1 direct (<code>@radix-ui/react-dialog</code>), which brings its own dependency tree",
+  },
+  {
+    label: "JavaScript, gzip",
+    us: `${drawerKb} kB (<code>Drawer</code> import)`,
+    them: "22.03 kB (<code>Drawer</code> import, Radix Dialog bundled)",
+    note: "Both bundled with Bun, minified, React external, lazy chunks excluded, using the options in <code>scripts/lib/bundle-measure.ts</code>. vaul 1.1.2 measured 4 Nov 2026. CSS not included for either.",
+  },
+  {
+    label: "Snap points",
+    us: "<code>detents</code>; the <code>Drawer</code> adapter maps <code>snapPoints</code>",
+    them: "<code>snapPoints</code>, <code>fadeFromIndex</code>, <code>snapToSequentialPoint</code>",
+  },
+  {
+    label: "Edges",
+    us: "Four, plus a centered dialog",
+    them: "Four (<code>direction</code>)",
+  },
+  {
+    label: "Modal behavior",
+    us: "Native <code>&lt;dialog&gt;</code> <code>showModal()</code> in the top layer",
+    them: "Radix Dialog: portal, focus scope, and scroll lock in JavaScript",
+  },
+  {
+    label: "React versions",
+    us: "18+",
+    them: "16.8 and up",
+  },
+  {
+    label: "Unsupported vaul options",
+    us: "Portal container, scroll lock, keyboard strategy, and <code>fixed</code> are accepted and ignored, with a development warning",
+    them: "Supported",
+    note: "From the <a href=\"/docs/migrating/from-vaul\">migration guide</a>.",
+  },
+  {
+    label: "npm downloads, last week",
+    us: "241",
+    them: "31,128,850",
+    note: "npm downloads API, 28 Oct to 3 Nov 2026.",
+  },
+];
+
+const faqs: Faq[] = [
+  {
+    id: "vaul-deprecated",
+    question: "Is vaul deprecated?",
+    answerHtml: `npm does not mark it deprecated. Its README says the repo is unmaintained and that the author might come back to it, but not in the near future. The latest release is 1.1.2 from December 2024. It still has about 31 million weekly downloads, so plenty of production apps run on it today.`,
+    answerText: `npm does not mark it deprecated. Its README says the repo is unmaintained and that the author might come back to it, but not in the near future. The latest release is 1.1.2 from December 2024. It still has about 31 million weekly downloads, so plenty of production apps run on it today.`,
+  },
+  {
+    id: "vaul-two-lines",
+    question: "Is switching really two lines?",
+    answerHtml: `For the common case, yes: the import and the stylesheet. The <code>Drawer</code> adapter maps <code>snapPoints</code>, <code>direction</code>, <code>modal</code>, <code>shouldScaleBackground</code>, <code>handleOnly</code> and more. Then read the <a href="/docs/migrating/from-vaul">differences</a>: ignored options, side-drawer width, and styling hooks. Test your own drawers before you remove vaul.`,
+    answerText: `For the common case, yes: the import and the stylesheet. The Drawer adapter maps snapPoints, direction, modal, shouldScaleBackground, handleOnly and more. Then read the differences: ignored options, side-drawer width, and styling hooks. Test your own drawers before you remove vaul.`,
+  },
+  {
+    id: "vaul-shadcn",
+    question: "I use the shadcn/ui Drawer. Can I switch?",
+    answerHtml: `shadcn/ui's Radix-based <code>drawer.tsx</code> imports <code>Drawer</code> from vaul (checked in the shadcn/ui repository on 19 Oct 2026). Because the file lives in your repo, the import is yours to change, and the same adapter notes apply. Its newer Base UI variants use Base UI's own drawer instead, so check which one you installed.`,
+    answerText: `shadcn/ui's Radix-based drawer.tsx imports Drawer from vaul (checked in the shadcn/ui repository on 19 Oct 2026). Because the file lives in your repo, the import is yours to change, and the same adapter notes apply. Its newer Base UI variants use Base UI's own drawer instead, so check which one you installed.`,
+  },
+  {
+    id: "vaul-browsers",
+    question: "Which browsers does scrollsheet need that vaul does not?",
+    answerHtml: `Touch dragging needs CSS scroll-snap (Chrome 69, Safari 11, Firefox 68) and modal sheets use <code>&lt;dialog&gt;</code> (Safari 15.4, Firefox 98). Browsers without <code>&lt;dialog&gt;</code> get a fixed-position fallback with no dragging. If you support those browsers, test that fallback or stay on vaul. See <a href="/docs/browser-support">browser support</a>.`,
+    answerText: `Touch dragging needs CSS scroll-snap (Chrome 69, Safari 11, Firefox 68) and modal sheets use dialog (Safari 15.4, Firefox 98). Browsers without dialog get a fixed-position fallback with no dragging. If you support those browsers, test that fallback or stay on vaul.`,
+  },
+];
+---
+
+<SeoPage
+  title="scrollsheet vs vaul"
+  description="vaul and scrollsheet compared for React drawers: maintenance, drag engine, dependencies, bundle size measured the same way, and what the vaul-compatible Drawer does not support."
+  h1="scrollsheet vs vaul"
+  lede="vaul is the most installed React drawer. Its README says the repo is unmaintained. scrollsheet's Drawer takes common vaul props, so many apps switch by changing two imports. Here is what stays the same, what differs, and what you lose."
+  crumbs={[{ name: "Compare", path: "/compare" }, { name: "vaul", path: "/compare/vaul" }]}
+  faqs={faqs}
+>
+  <h2>Side by side</h2>
+  <CompareTable themName="vaul" rows={rows} />
+
+  <h2>The switch</h2>
+  <p>
+    Change the import and the stylesheet. Your <code>Drawer.Root</code>, <code>Trigger</code>,
+    <code>Content</code>, <code>Title</code> and <code>Close</code> JSX stays as it is.
+  </p>
+  <MigrationDiff />
+  <DocExample
+    name="sidebar"
+    caption="A side drawer built on Sheet. Open it and click through the sections."
+  />
+
+  <h2>What differs</h2>
+  <ul>
+    <li><code>Drawer.Overlay</code> renders nothing. The backdrop is automatic, so overlay CSS needs a new target.</li>
+    <li>Portal container, scroll-lock, keyboard-strategy and <code>fixed</code> options are ignored, with a warning in development.</li>
+    <li>Side drawers take their width from the snap point. A <code>width</code> in your own CSS loses.</li>
+    <li>Markup and class names differ. The <code>data-vaul-*</code> attributes still land on Content and Handle.</li>
+    <li>The second argument of <code>onRelease</code> reports the real open or closed outcome.</li>
+  </ul>
+  <p>
+    The <a href="/docs/migrating/from-vaul">migration guide</a> has the full prop table.
+  </p>
+
+  <h2>Choose vaul if</h2>
+  <ul>
+    <li>You support React older than 18.</li>
+    <li>You rely on its portal container, <code>fixed</code> or scroll-lock options.</li>
+    <li>You must support browsers without <code>&lt;dialog&gt;</code> or scroll-snap and need dragging there.</li>
+    <li>Your drawers work and you do not want to touch them. A library with no new releases can still be fine in production.</li>
+  </ul>
+
+  <h2>Choose scrollsheet if</h2>
+  <ul>
+    <li>You want a dependency that still ships releases.</li>
+    <li>You want touch dragging done by the browser, and no Radix Dialog underneath.</li>
+    <li>You also need side panels, a centered dialog or toasts from the same package.</li>
+  </ul>
+  <p>
+    scrollsheet is new: its first npm release was in August 2026. vaul has years of production
+    use behind it and scrollsheet does not.
+  </p>
+
+  <h2>See it drag</h2>
+  <DocExample
+    name="snap-heights"
+    caption="Three detents. Drag the sheet or use the arrow keys on the handle."
+  />
+</SeoPage>

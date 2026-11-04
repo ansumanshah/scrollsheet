@@ -1,0 +1,147 @@
+---
+import SeoPage from "../layouts/SeoPage.astro";
+import InstallBox from "../components/InstallBox.astro";
+import DocExample from "../components/DocExample.astro";
+import { Code } from "astro:components";
+import { BUNDLE_SIZES } from "../lib/bundle-sizes.generated";
+import type { Faq } from "../lib/jsonld";
+
+const sheetKb = BUNDLE_SIZES.index.gzipKb.toFixed(1);
+
+const basic = `import { Sheet } from "scrollsheet";
+import "scrollsheet/styles.css";
+
+export function Filters() {
+  return (
+    <Sheet.Root detents={[0.35, 0.7, "full"]}>
+      <Sheet.Trigger>Filters</Sheet.Trigger>
+      <Sheet.Content>
+        <Sheet.Handle />
+        <Sheet.Title>Filters</Sheet.Title>
+        <Sheet.Description>Narrow the list by price and rating.</Sheet.Description>
+        <Sheet.Close>Done</Sheet.Close>
+      </Sheet.Content>
+    </Sheet.Root>
+  );
+}`;
+
+const nestedScroll = `<Sheet.Content>
+  <div data-scrollsheet-nested-scroll style={{ overflowY: "auto", maxHeight: 300 }}>
+    {/* a long list */}
+  </div>
+</Sheet.Content>`;
+
+const faqs: Faq[] = [
+  {
+    id: "best-react-bottom-sheet",
+    question: "Which React bottom sheet library should I use?",
+    answerHtml: `It depends on what you already have. <a href="/compare/react-modal-sheet">react-modal-sheet</a> is a good fit if Motion is already in your app. <a href="/compare/vaul">vaul</a> is the most installed, and its README says the repo is unmaintained. scrollsheet is the option with no dependencies and native modal behavior, and it is the youngest of the three. Each comparison page lists what scrollsheet does worse.`,
+    answerText: `It depends on what you already have. react-modal-sheet is a good fit if Motion is already in your app. vaul is the most installed, and its README says the repo is unmaintained. scrollsheet is the option with no dependencies and native modal behavior, and it is the youngest of the three. Each comparison page lists what scrollsheet does worse.`,
+  },
+  {
+    id: "snap-points",
+    question: "How do I add snap points to a React bottom sheet?",
+    answerHtml: `Pass <code>detents</code> to <code>Sheet.Root</code>: fractions of the viewport, pixel strings like <code>"320px"</code>, or <code>"content"</code>, <code>"medium"</code> and <code>"full"</code>. The sheet rests at each stop and the handle moves between them with the arrow keys. See <a href="/docs/detents-and-control/detents">Detents</a>.`,
+    answerText: `Pass detents to Sheet.Root: fractions of the viewport, pixel strings like 320px, or content, medium and full. The sheet rests at each stop and the handle moves between them with the arrow keys.`,
+  },
+  {
+    id: "scroll-inside",
+    question: "How do I scroll a list inside a bottom sheet?",
+    answerHtml: `Add <code>data-scrollsheet-nested-scroll</code> to the scrolling element. A swipe scrolls the list first, and once the list is at its top the same swipe moves the sheet. See <a href="/docs/scrolling-and-keyboard/scrollable-content">Scrollable content</a>.`,
+    answerText: `Add data-scrollsheet-nested-scroll to the scrolling element. A swipe scrolls the list first, and once the list is at its top the same swipe moves the sheet.`,
+  },
+  {
+    id: "ios-keyboard",
+    question: "How do I stop the iOS keyboard from covering inputs in a sheet?",
+    answerHtml: `scrollsheet reads <code>visualViewport</code> and writes the keyboard inset to <code>--scrollsheet-keyboard</code>, so a bottom sheet moves above the keyboard with no prop. <code>keyboardExpands</code> promotes the sheet to its tallest detent while the keyboard is open. See <a href="/docs/scrolling-and-keyboard/keyboard">Keyboard</a>.`,
+    answerText: `scrollsheet reads visualViewport and writes the keyboard inset to --scrollsheet-keyboard, so a bottom sheet moves above the keyboard with no prop. keyboardExpands promotes the sheet to its tallest detent while the keyboard is open.`,
+  },
+  {
+    id: "nextjs",
+    question: "Does it work with Next.js?",
+    answerHtml: `Yes. Put <code>'use client'</code> at the top of the file that renders <code>Sheet.Root</code>, as with any interactive component. See <a href="/docs/advanced/framework-support">Framework support</a>.`,
+    answerText: `Yes. Put 'use client' at the top of the file that renders Sheet.Root, as with any interactive component.`,
+  },
+];
+---
+
+<SeoPage
+  title="React bottom sheet: detents, nested sheets, keyboard"
+  description="How to build a React bottom sheet that drags, snaps to heights, scrolls inside, and clears the iOS keyboard. Working demos, code, and how scrollsheet, vaul and react-modal-sheet differ."
+  h1="React bottom sheet"
+  lede={`A bottom sheet slides up from the bottom edge, rests at chosen heights, and drags away to dismiss. scrollsheet is one in ${sheetKb} kB gzipped with no dependencies. This page is the shortest route from install to a sheet that works on a phone.`}
+  crumbs={[{ name: "React bottom sheet", path: "/react-bottom-sheet" }]}
+  faqs={faqs}
+  closingInstall={false}
+>
+  <InstallBox />
+
+  <h2>A sheet with three stops</h2>
+  <p>
+    This is the whole component. The sheet opens at 35% of the viewport and drags to 70% or full
+    height. The handle is a slider, so the arrow keys work too.
+  </p>
+  <Code code={basic} lang="tsx" theme="vitesse-dark" />
+  <DocExample
+    name="snap-heights"
+    caption="The same three stops. Drag the sheet, or focus the handle and use the arrow keys."
+  />
+
+  <h2>What a phone-ready sheet has to get right</h2>
+  <h3>Dragging that the browser agrees with</h3>
+  <p>
+    scrollsheet puts the panel in a CSS scroll-snap container, so touch dragging is the browser's
+    own scrolling with its own momentum. Mouse dragging on desktop uses pointer handlers.
+  </p>
+  <h3>Scrolling inside the sheet</h3>
+  <p>
+    A list inside a sheet competes with the sheet's own drag. Mark the list and the swipe goes to
+    the list first, then to the sheet.
+  </p>
+  <Code code={nestedScroll} lang="tsx" theme="vitesse-dark" />
+  <h3>The software keyboard</h3>
+  <p>
+    On iOS the keyboard covers the bottom of the page without resizing it. scrollsheet measures
+    <code>visualViewport</code> and lifts bottom sheets above the keyboard on its own.
+  </p>
+  <h3>Focus and dismissal</h3>
+  <p>
+    Modal sheets are a native <code>&lt;dialog&gt;</code> opened with <code>showModal()</code>, so
+    the browser contains focus, makes the page behind inert, and closes on Escape. Focus returns to
+    the trigger when the sheet closes.
+  </p>
+
+  <h2>Sheets inside sheets</h2>
+  <p>
+    Render a <code>Sheet.Root</code> inside another sheet's content and the parent recedes behind it.
+  </p>
+  <DocExample
+    name="nested"
+    caption="Open the second sheet. The first scales back and dims."
+  />
+
+  <h2>Other edges, and no modal at all</h2>
+  <p>
+    <code>side</code> takes any edge or <code>"center"</code>. <code>modal=&#123;false&#125;</code>
+    leaves the page behind interactive, which suits a map with a results sheet.
+  </p>
+  <DocExample
+    name="maps"
+    caption="Open the sheet, then pan the map behind it."
+  />
+
+  <h2>Which library</h2>
+  <p>
+    Three libraries cover most React bottom sheet needs, and the right one depends on what your
+    app already ships.
+  </p>
+  <ul>
+    <li><a href="/compare/vaul">vaul</a>: the most installed. Its README says the repo is unmaintained. scrollsheet's <code>Drawer</code> takes common vaul props.</li>
+    <li><a href="/compare/react-modal-sheet">react-modal-sheet</a>: built on Motion, active, and lighter if Motion is already in your bundle.</li>
+    <li>scrollsheet: no dependencies, native modal behavior, and the newest of the three. Dragging needs CSS scroll-snap, and browsers without <code>&lt;dialog&gt;</code> get a static modal without dragging.</li>
+  </ul>
+  <p>
+    Radix Dialog is a dialog, not a sheet. <a href="/compare/radix-dialog">That comparison</a>
+    covers when to keep it.
+  </p>
+</SeoPage>

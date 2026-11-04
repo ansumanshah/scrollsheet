@@ -1,0 +1,138 @@
+---
+import SeoPage from "../../layouts/SeoPage.astro";
+import CompareTable from "../../components/CompareTable.astro";
+import DocExample from "../../components/DocExample.astro";
+import { BUNDLE_SIZES } from "../../lib/bundle-sizes.generated";
+import type { Faq } from "../../lib/jsonld";
+
+const dialogKb = BUNDLE_SIZES.dialog.gzipKb.toFixed(2);
+
+const rows = [
+  {
+    label: "What it is",
+    us: "A styled centered dialog that is one presentation of a sheet",
+    them: "An unstyled dialog primitive, one of a family of Radix primitives",
+  },
+  {
+    label: "Modal mechanism",
+    us: "Native <code>&lt;dialog&gt;</code> <code>showModal()</code> in the top layer",
+    them: "Portal, <code>FocusScope</code>, <code>react-remove-scroll</code> and <code>hideOthers</code> in JavaScript",
+    note: "@radix-ui/react-dialog 1.3.1, <code>src/dialog.tsx</code>.",
+  },
+  {
+    label: "Direct dependencies",
+    us: "0",
+    them: "15 (Radix utility packages and <code>react-remove-scroll</code>)",
+  },
+  {
+    label: "JavaScript, gzip",
+    us: `${dialogKb} kB (<code>Dialog</code> import)`,
+    them: "13.85 kB (all Dialog parts)",
+    note: "Bundled with Bun, minified, React external, using the options in <code>scripts/lib/bundle-measure.ts</code>. @radix-ui/react-dialog 1.3.1, measured 4 Nov 2026. Radix is smaller here. scrollsheet's figure includes the sheet engine and a default spring animation.",
+  },
+  {
+    label: "Default styling",
+    us: "Backdrop, card, and a zoom and fade on a spring",
+    them: "None. You write the CSS and the animation",
+  },
+  {
+    label: "Dragging and snap points",
+    us: "Yes, when the same component is a sheet",
+    them: "No. The Dialog source has no drag or snap handling",
+  },
+  {
+    label: "Phone sheet, desktop dialog",
+    us: "<code>desktopSide=\"center\"</code>",
+    them: "You build it",
+  },
+  {
+    label: "Control over mounting and focus",
+    us: "<code>forceMount</code>, portal <code>container</code>, <code>onOpenAutoFocus</code> and <code>onCloseAutoFocus</code> are dropped",
+    them: "All supported",
+    note: "From the <a href=\"/docs/migrating/from-radix-dialog\">migration guide</a>.",
+  },
+  {
+    label: "React versions",
+    us: "18+",
+    them: "16.8 and up",
+  },
+  {
+    label: "npm downloads, last week",
+    us: "241",
+    them: "90,285,759",
+    note: "npm downloads API, 28 Oct to 3 Nov 2026.",
+  },
+];
+
+const faqs: Faq[] = [
+  {
+    id: "radix-replace",
+    question: "Should I replace Radix Dialog with scrollsheet?",
+    answerHtml: `Only if you want the same dialog to become a bottom sheet on phones, or you want a native top-layer dialog with a spring animation built in. If Radix Dialog works and you do not need sheets, keep it. It is smaller, and it shares conventions with the other Radix primitives you probably already use.`,
+    answerText: `Only if you want the same dialog to become a bottom sheet on phones, or you want a native top-layer dialog with a spring animation built in. If Radix Dialog works and you do not need sheets, keep it. It is smaller, and it shares conventions with the other Radix primitives you probably already use.`,
+  },
+  {
+    id: "radix-data-state",
+    question: "Will my data-state animation CSS keep working?",
+    answerHtml: `The <code>data-state="open"</code> and <code>"closed"</code> attributes are stamped on Content's element, so keyframes that target them keep matching. The <code>Overlay</code> element renders nothing, so overlay CSS needs to move to <code>.scrollsheet-backdrop</code> or <code>--scrollsheet-backdrop</code>. See the <a href="/docs/migrating/from-radix-dialog">migration guide</a>.`,
+    answerText: `The data-state open and closed attributes are stamped on Content's element, so keyframes that target them keep matching. The Overlay element renders nothing, so overlay CSS needs to move to .scrollsheet-backdrop or the --scrollsheet-backdrop property. See the migration guide.`,
+  },
+  {
+    id: "radix-other-primitives",
+    question: "Can I use scrollsheet next to other Radix primitives?",
+    answerHtml: `Yes. The <code>Dialog</code> export replaces only Radix's dialog. Popover, Dropdown Menu and the rest are unaffected.`,
+    answerText: `Yes. The Dialog export replaces only Radix's dialog. Popover, Dropdown Menu and the rest are unaffected.`,
+  },
+];
+---
+
+<SeoPage
+  title="scrollsheet vs Radix Dialog"
+  description="Radix Dialog and scrollsheet compared for React: native dialog versus a JavaScript focus scope, bundle size measured the same way, dropped props, and when keeping Radix is the better call."
+  h1="scrollsheet vs Radix Dialog"
+  lede="Radix Dialog is an unstyled primitive with a huge install base. scrollsheet's Dialog is a styled native dialog that shares an engine with bottom sheets. They overlap on one job, and Radix wins on several things."
+  crumbs={[{ name: "Compare", path: "/compare" }, { name: "Radix Dialog", path: "/compare/radix-dialog" }]}
+  faqs={faqs}
+>
+  <h2>Side by side</h2>
+  <CompareTable themName="Radix Dialog" rows={rows} />
+
+  <h2>The swap</h2>
+  <pre class="language-diff"><code><span class="diff-del">- import * as Dialog from "@radix-ui/react-dialog";
+</span><span class="diff-add">+ import &#123; Dialog &#125; from "scrollsheet";
++ import "scrollsheet/styles.css";
+</span></code></pre>
+  <p>
+    <code>Root</code>, <code>Trigger</code>, <code>Portal</code>, <code>Overlay</code>,
+    <code>Content</code>, <code>Title</code>, <code>Description</code> and <code>Close</code> all
+    exist. The <a href="/docs/migrating/from-radix-dialog">migration guide</a> lists what each
+    dropped prop becomes.
+  </p>
+  <DocExample
+    name="center"
+    caption="The centered presentation the Dialog export renders. Press Escape or click the backdrop."
+  />
+
+  <h2>Choose Radix Dialog if</h2>
+  <ul>
+    <li>You already use other Radix primitives and want one set of conventions.</li>
+    <li>You want an unstyled dialog, or you animate with your own tooling through <code>forceMount</code>.</li>
+    <li>You need the portal <code>container</code> or the focus callbacks.</li>
+    <li>You support React older than 18, or browsers without <code>&lt;dialog&gt;</code>.</li>
+    <li>You want the smaller bundle for a plain dialog.</li>
+  </ul>
+
+  <h2>Choose scrollsheet if</h2>
+  <ul>
+    <li>You want a dialog on desktop and a bottom sheet on phones from one component.</li>
+    <li>You want the browser's top layer instead of a z-index and a portal.</li>
+    <li>You want a spring open and close without writing the keyframes.</li>
+    <li>You are adding bottom sheets anyway and prefer one package.</li>
+  </ul>
+
+  <h2>A dialog that cannot be dismissed by accident</h2>
+  <DocExample
+    name="confirm"
+    caption="dismissible=false and disableDrag. Only the buttons close it."
+  />
+</SeoPage>

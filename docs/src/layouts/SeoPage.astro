@@ -1,0 +1,76 @@
+---
+import Base from "./Base.astro";
+import InstallBox from "../components/InstallBox.astro";
+import JsonLd from "../components/JsonLd.astro";
+import { type Crumb, type Faq, breadcrumbs, faqPage, softwareSourceCode } from "../lib/jsonld";
+
+interface Props {
+  title: string;
+  description: string;
+  h1: string;
+  lede: string;
+  crumbs: Crumb[];
+  faqs?: Faq[];
+  /** The landing page renders its own install box higher up. */
+  closingInstall?: boolean;
+}
+
+const { title, description, h1, lede, crumbs, faqs = [], closingInstall = true } = Astro.props;
+const trail: Crumb[] = [{ name: "scrollsheet", path: "/" }, ...crumbs];
+---
+
+<Base title={title} description={description}>
+  <Fragment slot="head">
+    <JsonLd data={softwareSourceCode()} />
+    <JsonLd data={breadcrumbs(trail)} />
+    {faqs.length > 0 && <JsonLd data={faqPage(faqs)} />}
+  </Fragment>
+
+  <article class="container seo">
+    <nav class="seo__crumbs" aria-label="Breadcrumb">
+      {trail.map((c, i) => (
+        <>
+          {i > 0 && <span aria-hidden="true">/</span>}
+          {i === trail.length - 1 ? (
+            <span aria-current="page">{c.name}</span>
+          ) : (
+            <a href={c.path}>{c.name}</a>
+          )}
+        </>
+      ))}
+    </nav>
+
+    <header class="seo__head">
+      <h1>{h1}</h1>
+      <p>{lede}</p>
+    </header>
+
+    <div class="seo__body prose">
+      <slot />
+    </div>
+
+    {faqs.length > 0 && (
+      <section class="seo__faq" aria-labelledby="faq-heading">
+        <h2 id="faq-heading">Questions</h2>
+        {faqs.map((f) => (
+          <details id={f.id}>
+            <summary>{f.question}</summary>
+            <p set:html={f.answerHtml} />
+          </details>
+        ))}
+      </section>
+    )}
+
+    {closingInstall && (
+      <section class="seo__install" aria-labelledby="install-heading">
+        <h2 id="install-heading">Try it in your app</h2>
+        <InstallBox />
+        <p>
+          <a href="/docs/getting-started/install">Install guide</a>
+          <a href="/#examples">Live examples</a>
+          <a href="https://github.com/ansumanshah/scrollsheet" target="_blank" rel="noreferrer">GitHub</a>
+        </p>
+      </section>
+    )}
+  </article>
+</Base>
