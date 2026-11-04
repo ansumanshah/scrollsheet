@@ -21,6 +21,7 @@
 import { mkdir, mkdtemp, rm, symlink } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join, resolve } from "node:path";
+import { fileURLToPath } from "node:url";
 import { brotliCompressSync } from "node:zlib";
 
 export interface ImportShape {
@@ -123,7 +124,7 @@ export async function bundleAndCompress(entryAbsPath: string): Promise<BundleSiz
 
 // scripts/lib/ sits one level deeper than scripts/, so this needs an extra
 // `../` to land back at the repo root.
-const PACKAGE_DIR = new URL("../../packages/scrollsheet", import.meta.url).pathname;
+const PACKAGE_DIR = fileURLToPath(new URL("../../packages/scrollsheet", import.meta.url));
 
 /**
  * Bundles a one-line module that re-exports only `shape.named` from the

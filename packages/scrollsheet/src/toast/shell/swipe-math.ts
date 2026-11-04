@@ -20,22 +20,13 @@ import { splitPosition } from "./shell-selectors";
 /** Real Sonner's own SWIPE_THRESHOLD (index.tsx:40) — px past which a release counts as a dismiss regardless of velocity. */
 export const SWIPE_DISMISS_THRESHOLD_PX = 45;
 
-/** Real Sonner's own inline velocity constant (index.tsx:348, `velocity > 0.11`) — px/ms past which a release dismisses even under the distance threshold, so a fast flick doesn't need the full distance. Inherited, not re-derived — see the port design's Open Risks #3 for the real-device-verification gap. */
+/** Real Sonner's own inline velocity constant (index.tsx:348, `velocity > 0.11`) — px/ms past which a release dismisses even under the distance threshold, so a fast flick doesn't need the full distance. Inherited, not re-derived. */
 export const SWIPE_VELOCITY_THRESHOLD = 0.11;
 
 /** Real Sonner's own axis-lock trigger (index.tsx:381, `Math.abs(xDelta) > 1 || Math.abs(yDelta) > 1`). */
 export const SWIPE_LOCK_THRESHOLD_PX = 1;
 
-/**
- * Real Sonner's own `getDefaultSwipeDirections` (index.tsx:49-62), with one
- * fix: real Sonner's own implementation blindly pushes the position string's
- * x-half even when it's `'center'` — not a valid `SwipeDirection` at all —
- * so `getDefaultSwipeDirections('top-center')` returns `['top', 'center']`
- * in the real source. The port design's own per-position table
- * (`.claude/sonner-port-design.md`, Swipe section) already normalizes this
- * away: `top-center` -> `['top']`, not `['top', 'center']`. Ported to match
- * that documented table, not the literal (mistyped) real-Sonner line.
- */
+/** Center is horizontal alignment, not a swipe direction. */
 export function getDefaultSwipeDirections(position: ToastPosition): SwipeDirection[] {
   const { y, x } = splitPosition(position);
   const directions: SwipeDirection[] = [y];

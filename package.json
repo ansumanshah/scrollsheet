@@ -15,13 +15,14 @@
     "dev": "bun run --cwd docs dev",
     "test:e2e:fast": "bun run --bun playwright test --project=chromium-mobile",
     "test:site": "bun run --bun playwright test -c playwright.site.config.ts",
-    "verify": "bun run typecheck && bun run check:compat && bun run build && bun test tests/unit && bun run test:e2e:fast && bun run size && bun run pack:check && bun run check:registry",
+    "verify": "bun run typecheck && bun run check:compat && bun run check:deps && bun run build && bun test tests/unit && bun run test:e2e:fast && bun run size && bun run pack:check && bun run check:registry",
     "gen:css": "bun run scripts/gen-css.ts",
     "size": "bun run scripts/check-size.ts",
     "pack:check": "bun run scripts/check-pack.ts",
     "check:registry": "bun run scripts/check-registry.ts",
     "check:dialog-share": "bun run scripts/check-dialog-share.ts",
-    "check:compat": "bun run scripts/check-compat.ts"
+    "check:compat": "bun run scripts/check-compat.ts",
+    "check:deps": "bun audit --audit-level=high"
   },
   "devDependencies": {
     "@happy-dom/global-registrator": "^21.0.4",
@@ -37,5 +38,8 @@
     "react": "^19.3.1",
     "react-dom": "^19.3.1",
     "typescript": "^6.0.3"
+  },
+  "overrides": {
+    "minimatch": "^11.0.4"
   }
 }
