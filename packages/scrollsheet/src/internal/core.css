@@ -308,6 +308,9 @@
   pointer-events: none;
   scroll-snap-align: start;
 }
+.scrollsheet-dialog[data-scrollsheet-flick="step"] .scrollsheet-snap {
+  scroll-snap-stop: always;
+}
 .scrollsheet-dialog:is([data-scrollsheet-side="left"], [data-scrollsheet-side="right"])
   .scrollsheet-snap {
   left: auto;

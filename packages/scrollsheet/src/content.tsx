@@ -588,7 +588,7 @@ export const Content = /* @__PURE__ */ React.forwardRef<HTMLDivElement, SheetCon
       // onto a non-adjacent stop — clamp relative to the *last settled*
       // activeDetent, not this gesture's start (settle() has no drag session
       // to read a start detent from).
-      if (nearest && current.sequentialDetents) {
+      if (nearest && (current.sequentialDetents || current.flick === "step")) {
         nearest = clampSequentialDetent(
           nearest,
           resolveSpec(current.activeDetent)?.index ?? -1,
@@ -1430,6 +1430,7 @@ export const Content = /* @__PURE__ */ React.forwardRef<HTMLDivElement, SheetCon
           data-scrollsheet-side={ctx.center ? "center" : ctx.side}
           data-scrollsheet-sda={sda ? "" : undefined}
           data-scrollsheet-scrollbar={ctx.scrollbar}
+          data-scrollsheet-flick={ctx.flick}
           data-scrollsheet-handle-only={ctx.handleOnly ? "" : undefined}
           data-scrollsheet-disable-drag={ctx.disableDrag ? "" : undefined}
           data-scrollsheet-behind={childCount > 0 ? "" : undefined}

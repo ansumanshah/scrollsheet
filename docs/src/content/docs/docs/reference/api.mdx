@@ -36,8 +36,13 @@ import DocExample from '../../../../components/DocExample.astro';
 | `activeDetent` | `DetentSpec` | first entry in `detents`, or `'content'` if empty |
 | `onActiveDetentChange` | `(detent: DetentSpec) => void` | |
 | `sequentialDetents` | `boolean` | `false` |
+| `flick` | `'step' \| 'project'` | `'project'` |
 
 </div>
+
+`flick` decides where a fast release lands. `'project'` carries the velocity forward, so one flick
+can cross several detents. `'step'` moves exactly one, the way Apple's sheets do, and only a flick
+from the first detent can dismiss.
 
 ### Dismissal
 
@@ -285,7 +290,7 @@ vaul's and Radix's components collide by name with the ones above.
 
 | Export | Members and notes |
 | --- | --- |
-| `Drawer` | vaul-compatible: `Root`, `NestedRoot` (alias of `Root`), `Trigger`, `Portal`, `Overlay`, `Content`, `Handle`, `Footer`, `Title`, `Description`, `Close`. `Root` takes vaul's props (`snapPoints`, `direction`, `onClose`, `fadeFromIndex`, and the rest) plus `actionsRef`, `animationSpeed`, `backdropDismissible`, `escapeDismissible`, `keyboardExpands`, `onTravel`, and `scrollbar`. `Handle` adds `preventCycle`. `Overlay` renders nothing. See [Migrate from vaul](/docs/migrating/from-vaul) |
+| `Drawer` | vaul-compatible: `Root`, `NestedRoot` (alias of `Root`), `Trigger`, `Portal`, `Overlay`, `Content`, `Handle`, `Footer`, `Title`, `Description`, `Close`. `Root` takes vaul's props (`snapPoints`, `direction`, `onClose`, `fadeFromIndex`, and the rest) plus `actionsRef`, `animationSpeed`, `backdropDismissible`, `escapeDismissible`, `flick`, `keyboardExpands`, `onTravel`, and `scrollbar`. `Handle` adds `preventCycle`. `Overlay` renders nothing. See [Migrate from vaul](/docs/migrating/from-vaul) |
 | `Dialog` | Radix-compatible, always the centered presentation: `Root`, `Trigger`, `Portal`, `Overlay`, `Content`, `Title`, `Description`, `Close`. `Root` takes `open`, `defaultOpen`, `onOpenChange`, `modal`, plus `actionsRef`, `animationSpeed`, `backdropDismissible`, `escapeDismissible`, and `onOpenChangeComplete`. `Content` stamps `data-state`. See [Migrate from Radix Dialog](/docs/migrating/from-radix-dialog) |
 
 </div>

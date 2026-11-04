@@ -145,3 +145,34 @@ export function FooterSheets() {
     </>
   );
 }
+
+/** Four stops so a projected flick has room to cross more than one. */
+export function FlickSheets() {
+  return (
+    <>
+      <FlickSheet flick="step" trigger="Flick step" />
+      <FlickSheet trigger="Flick project" />
+    </>
+  );
+}
+
+function FlickSheet({ flick, trigger }: { flick?: "step"; trigger: string }) {
+  const [active, setActive] = React.useState<DetentSpec>(0.25);
+  return (
+    <Sheet.Root
+      detents={[0.25, 0.45, 0.65, 0.85]}
+      flick={flick}
+      activeDetent={active}
+      onActiveDetentChange={setActive}
+    >
+      <Sheet.Trigger className="btn">{trigger}</Sheet.Trigger>
+      <Sheet.Content className="sheet" aria-label={trigger}>
+        <Sheet.Handle />
+        <code data-testid="flick-active">{String(active)}</code>
+        <button type="button" onClick={() => setActive(0.65)}>
+          Go to third stop
+        </button>
+      </Sheet.Content>
+    </Sheet.Root>
+  );
+}

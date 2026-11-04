@@ -196,6 +196,12 @@ export interface SheetRootProps {
    */
   sequentialDetents?: boolean;
   /**
+   * How a fast release picks its detent. `'project'` carries the velocity
+   * forward, which can cross several detents. `'step'` moves exactly one.
+   * @default 'project'
+   */
+  flick?: "step" | "project";
+  /**
    * Fraction (0-1) of the first detent below which a release dismisses the
    * sheet, replacing the built-in half-of-first-detent rule.
    * @default 0.5
@@ -309,6 +315,7 @@ export function Root({
   handleOnly = false,
   disableDrag = false,
   sequentialDetents = false,
+  flick,
   closeThreshold = 0.5,
   phantomScrollGuard = true,
   keyboardExpands = false,
@@ -397,6 +404,7 @@ export function Root({
       // gate is the single mechanism both opt-outs share.
       disableDrag: disableDrag || center,
       sequentialDetents,
+      flick,
       closeThreshold,
       phantomScrollGuard,
       keyboardExpands,
@@ -435,6 +443,7 @@ export function Root({
       handleOnly,
       disableDrag,
       sequentialDetents,
+      flick,
       closeThreshold,
       phantomScrollGuard,
       keyboardExpands,
