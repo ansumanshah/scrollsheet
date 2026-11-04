@@ -19,6 +19,10 @@ import FullScreenExample from "./full-screen";
 import NestedExample from "./nested";
 import NestedDrillExample from "./nested-drill";
 import ResponsiveExample from "./responsive";
+import MobileSelectExample from "./mobile-select";
+import CommandPaletteExample from "./command-palette";
+import PickerWheelExample from "./picker-wheel";
+import ActionSheetExample from "./action-sheet";
 
 export type ExampleGroupId =
   | "media"
@@ -129,6 +133,38 @@ export const examples: ExampleEntry[] = [
     description: '`side="center"`: a dialog that fits its content and opens with zoom and fade.',
     group: "actions",
     component: CenterExample,
+  },
+  {
+    name: "mobile-select",
+    title: "Mobile select",
+    description:
+      "A searchable select in a bottom sheet: combobox over a listbox, accent-insensitive filter, keyboard-aware.",
+    group: "actions",
+    component: MobileSelectExample,
+  },
+  {
+    name: "command-palette",
+    title: "Command palette",
+    description:
+      "A centered card from 768px up, a bottom sheet below it, one component. Cmd/Ctrl+K toggles it.",
+    group: "actions",
+    component: CommandPaletteExample,
+  },
+  {
+    name: "picker-wheel",
+    title: "Picker wheel",
+    description:
+      "An iOS-style option and date picker: every column is a native scroll-snap track inside the sheet.",
+    group: "actions",
+    component: PickerWheelExample,
+  },
+  {
+    name: "action-sheet",
+    title: "Action sheet",
+    description:
+      "Two floating cards, the actions then a separate Cancel, with destructive styling and arrow-key focus.",
+    group: "actions",
+    component: ActionSheetExample,
   },
   {
     name: "confirm",

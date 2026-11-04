@@ -8,6 +8,8 @@
 import { mkdir, readdir } from "node:fs/promises";
 import { join } from "node:path";
 
+import { buildRegistryIndex } from "../../scripts/lib/registry-build";
+
 const root = join(import.meta.dir, "..", "..");
 const pub = join(import.meta.dir, "..", "public");
 
@@ -16,5 +18,7 @@ for (const name of await readdir(join(root, "registry"))) {
   if (!name.endsWith(".json")) continue;
   await Bun.write(join(pub, "r", name), Bun.file(join(root, "registry", name)));
 }
+// shadcn's registry directory requires registry.json at the registry root.
+await Bun.write(join(pub, "r", "registry.json"), await buildRegistryIndex());
 await Bun.write(join(pub, "llms.txt"), Bun.file(join(root, "llms.txt")));
 console.log("synced registry/ and llms.txt into docs/public");

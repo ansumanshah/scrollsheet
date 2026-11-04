@@ -1,0 +1,39 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    <title>scrollsheet registry fixtures</title>
+    <style>
+      html,
+      body {
+        margin: 0;
+        font-family: system-ui, sans-serif;
+        background: #f3f3f3;
+      }
+      .page {
+        padding: 24px;
+        max-width: 480px;
+        margin: 0 auto;
+      }
+      .stack {
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+        margin-block: 16px;
+      }
+      [data-slot="mobile-select-trigger"],
+      .btn {
+        padding: 10px 16px;
+        border-radius: 10px;
+        border: 1px solid #ccc;
+        background: white;
+        font-size: 15px;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/registry.js"></script>
+  </body>
+</html>

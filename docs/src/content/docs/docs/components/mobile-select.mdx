@@ -1,0 +1,87 @@
+---
+title: Mobile select
+description: A searchable select that opens as a bottom sheet, installed as one file with the shadcn CLI.
+---
+
+import { Aside } from '@astrojs/starlight/components';
+import DocExample from '../../../../components/DocExample.astro';
+
+A native `<select>` on a phone is a wheel with no search and no room for a long list. This
+replaces it with a bottom sheet: a search field over a listbox, filtered as you type. It rides
+the same keyboard handling as any other sheet, so the list shrinks to fit above the keyboard
+instead of sliding under it.
+
+```sh
+bunx shadcn@latest add https://scrollsheet.dev/r/mobile-select.json
+```
+
+<DocExample
+  name="mobile-select"
+  caption="Open it and type espana, holland, or usa. On a phone, focus the search field and watch the list resize above the keyboard."
+/>
+
+## Usage
+
+```tsx
+import { MobileSelect } from "@/components/ui/mobile-select"
+
+<MobileSelect
+  title="Country"
+  placeholder="Choose a country"
+  options={[
+    { value: "de", label: "Germany", group: "Europe", keywords: ["deutschland"] },
+    { value: "es", label: "España", group: "Europe", description: "Spain" },
+    { value: "jp", label: "Japan", group: "Asia" },
+  ]}
+  value={country}
+  onValueChange={setCountry}
+  name="country"
+/>
+```
+
+It is one file that imports `Sheet` from `scrollsheet`. Everything else is yours to edit.
+
+## Props
+
+<div className="table-scroll prop-table">
+
+| Prop | Type | Default |
+| --- | --- | --- |
+| `options` | `MobileSelectOption[]` | required |
+| `title` | `string` | required. Sheet heading and the list's accessible name |
+| `value` / `defaultValue` | `string` | uncontrolled when `value` is unset |
+| `onValueChange` | `(value: string) => void` | |
+| `placeholder` | `string` | `"Select…"` |
+| `searchable` | `boolean` | `true`. Without it the list itself takes the keys and matches typed prefixes |
+| `searchPlaceholder` | `string` | `"Search"`, also the field's accessible name |
+| `emptyMessage` | `string` | `"No results"` |
+| `autoFocusSearch` | `boolean` | `true` for a fine pointer, `false` for touch, so a phone opens on the list instead of the keyboard |
+| `filter` | `(option, query) => boolean` | accent- and case-insensitive match on label, description, and keywords |
+| `name` | `string` | renders a hidden input so the value posts with a native form |
+
+</div>
+
+An option is `{ value, label, description?, keywords?, group?, disabled? }`. Consecutive
+options with the same `group` render under one heading.
+
+## Accessibility
+
+The trigger is a button with `aria-haspopup="dialog"`. Inside the dialog, the search field is
+the combobox and the list is its listbox, using the active-descendant pattern: DOM focus stays
+in the field while `aria-activedescendant` points at the highlighted option.
+
+- **Up and Down** move the highlight and skip disabled options. They wrap at the ends. Page Up
+  and Page Down jump by eight.
+- **Enter** selects the highlighted option and closes. **Escape** closes without changing the
+  value.
+- **Home and End** move the text cursor while the search field has focus. Without a search
+  field they move the highlight.
+- Typing announces the result count through a polite live region. An empty result renders a
+  visible status message.
+- Options are at least 44px tall. The highlighted option scrolls inside the list only, never
+  the sheet's own track.
+
+<Aside type="note">
+  On a wide screen this is still a bottom sheet, docked as a column like any other. If you want a
+  popover on desktop, render Radix Select there and this one under your breakpoint.
+</Aside>

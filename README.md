@@ -147,10 +147,10 @@ return (
 Every primitive ships as a registry item:
 
 ```sh
-bunx shadcn@latest add https://raw.githubusercontent.com/ansumanshah/scrollsheet/main/registry/drawer.json
+bunx shadcn@latest add https://scrollsheet.dev/r/drawer.json
 ```
 
-Items: `drawer`, `sheet`, `dialog`, `confirm`, `share-sheet`, `sidebar`, `toast`. Each writes one file into `components/ui/` with shadcn's default styling applied, wrapping the primitives above. Swap `drawer.json` in the URL for any of them.
+Items: `drawer`, `sheet`, `dialog`, `confirm`, `share-sheet`, `sidebar`, `toast`, plus `mobile-select`, `command-palette`, `picker-wheel`, and `action-sheet`. Each writes one file into `components/ui/` with shadcn's default styling applied, wrapping the primitives above. Swap `drawer.json` in the URL for any of them.
 
 ## Development
 

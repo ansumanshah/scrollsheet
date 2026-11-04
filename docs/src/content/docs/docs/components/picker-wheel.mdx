@@ -1,0 +1,82 @@
+---
+title: Picker wheel
+description: An iOS-style option and date picker where every column is a native scroll-snap track inside a sheet.
+---
+
+import { Aside } from '@astrojs/starlight/components';
+import DocExample from '../../../../components/DocExample.astro';
+
+A picker column is a scroll-snap track with a row in the middle, which is the same mechanism
+the sheet uses to move. The browser handles the finger physics, momentum, and snapping. The
+component reads where the track settles and moves it for keys, taps, and external value
+changes.
+
+```sh
+bunx shadcn@latest add https://scrollsheet.dev/r/picker-wheel.json
+```
+
+<DocExample
+  name="picker-wheel"
+  caption="Fling a column, tap a row, or tab to a column and use the arrow keys. Change the month in the date picker and watch the day column adjust."
+/>
+
+## Usage
+
+```tsx
+import { DatePickerSheet, PickerSheet } from "@/components/ui/picker-wheel"
+
+<DatePickerSheet value={date} onValueChange={setDate} title="Birthday" />
+
+<PickerSheet
+  title="Size"
+  value={size}
+  onValueChange={setSize}
+  columns={[{ id: "size", label: "Size", options: [{ value: "s", label: "Small" }, { value: "m", label: "Medium" }] }]}
+  trigger={<button type="button">Size</button>}
+/>
+```
+
+Three exports from one file:
+
+<div className="table-scroll prop-table">
+
+| Export | What it is |
+| --- | --- |
+| `PickerWheel` | The columns and the selection band. `columns`, `value: string[]`, `onValueChange`. No sheet, so you can place it anywhere |
+| `PickerSheet` | A sheet with Cancel and Done around a `PickerWheel`. Edits are a draft: Done applies them, Cancel and Esc drop them. `columns` can be a function of the draft for dependent columns, and `normalize` adjusts the draft after each change |
+| `DatePickerSheet` | Month, day, and year columns in the order `Intl.DateTimeFormat` gives for the locale. The day column follows the month and year, and clamps a day that no longer exists (Jan 31 to Feb becomes 28 or 29). `minYear`, `maxYear`, `locale` |
+
+</div>
+
+## How it works
+
+- Each column is `scroll-snap-type: y mandatory` with `scroll-snap-align: center` rows. Padding of
+  two rows above and below lets the first and last row reach the middle.
+- A scroll that settles (`scrollend`, or a 120ms timer where it is missing) commits the centered
+  row. While you drag, the row nearest the middle is highlighted.
+- Keys, taps, and external value changes move the track with `animateScrollTo` from
+  `scrollsheet/motion`, timed by a `spring()` curve. Any touch, wheel, or pointer input cancels
+  the move, so a finger always wins.
+- `overscroll-behavior: contain` and `data-scrollsheet-no-drag` keep the wheel's momentum and
+  mouse input from moving the sheet underneath.
+
+<Aside type="caution">
+  `scrollsheet/motion` is marked experimental. The import in this file is the only place the item
+  depends on it, in one `animateScrollTo` call.
+</Aside>
+
+## Accessibility
+
+Each column is a `role="listbox"` with a label and `aria-activedescendant`, and its rows are
+`role="option"` with `aria-selected`. There is no ARIA wheel role, so this is the closest
+standard pattern, and a screen reader reads the value as it changes.
+
+- **Tab** reaches each column. **Up and Down** move one row, **Page Up and Page Down** four,
+  **Home and End** go to the ends. Typing matches a row's label by prefix, so `fi` lands on
+  Fig and `20` on the first year starting with 20.
+- With `prefers-reduced-motion: reduce` the track jumps to the row with no tween, and the row
+  fade has no transition.
+- Rows are 40px tall, and a tap on any visible row selects it.
+
+A mouse cannot drag-scroll a native scroll container, so on a desktop use the wheel, the
+keys, or a click.

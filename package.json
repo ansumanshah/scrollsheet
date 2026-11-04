@@ -19,6 +19,7 @@
     "gen:css": "bun run scripts/gen-css.ts",
     "size": "bun run scripts/check-size.ts",
     "pack:check": "bun run scripts/check-pack.ts",
+    "gen:registry": "bun run scripts/gen-registry.ts",
     "check:registry": "bun run scripts/check-registry.ts",
     "check:dialog-share": "bun run scripts/check-dialog-share.ts",
     "check:compat": "bun run scripts/check-compat.ts",
