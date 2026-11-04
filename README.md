@@ -2,6 +2,13 @@
 
 React bottom sheets, drawers, dialogs, side panels, and toasts.
 
+[![npm](https://img.shields.io/npm/v/scrollsheet?color=111)](https://www.npmjs.com/package/scrollsheet)
+[![CI](https://img.shields.io/github/actions/workflow/status/ansumanshah/scrollsheet/ci.yml?branch=main&label=CI)](https://github.com/ansumanshah/scrollsheet/actions/workflows/ci.yml)
+[![runtime dependencies: 0](https://img.shields.io/badge/runtime%20dependencies-0-brightgreen)](https://www.npmjs.com/package/scrollsheet?activeTab=dependencies)
+[![license: MIT](https://img.shields.io/npm/l/scrollsheet?color=111)](https://github.com/ansumanshah/scrollsheet/blob/main/LICENSE)
+
+**[Live demos](https://scrollsheet.dev/#examples)** · **[Docs](https://scrollsheet.dev/docs/)** · **[Migrate from vaul](https://scrollsheet.dev/docs/migrating/from-vaul)** · **[Migrate from Sonner](https://scrollsheet.dev/docs/migrating/from-sonner)** · **[Migrate from Radix Dialog](https://scrollsheet.dev/docs/migrating/from-radix-dialog)**
+
 Sheets use a native `<dialog>` and CSS scroll snap, with spring motion expressed as CSS `linear()`. <!--size:index.gzip:1-->16.3<!--/size--> kB gzipped, <!--size:index.brotli:1-->14.6<!--/size--> kB brotli, plus a 3.9 kB stylesheet. React 18+; no runtime dependencies.
 
 <p align="center">
