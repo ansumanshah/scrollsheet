@@ -11,7 +11,11 @@
     "skipLibCheck": true,
     "declaration": true,
     "noEmit": true,
-    "types": ["bun"]
+    "types": ["bun"],
+    "paths": {
+      "scrollsheet": ["./packages/scrollsheet/src/index.ts"],
+      "scrollsheet/motion": ["./packages/scrollsheet/src/motion/index.ts"]
+    }
   },
-  "include": ["packages/scrollsheet/src", "tests", "scripts", "*.config.ts"]
+  "include": ["packages/scrollsheet/src", "registry/src", "tests", "scripts", "*.config.ts"]
 }
