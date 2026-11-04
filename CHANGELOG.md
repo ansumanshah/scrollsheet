@@ -14,7 +14,7 @@ All notable changes to this project are documented here.
 - **`scrollsheet-codemod` moves a project off vaul.** `npx scrollsheet-codemod vaul src` rewrites the imports and reports each prop to check, with file and line.
 - **The site has a new homepage and comparison pages.** Pages for vaul, Base UI, react-modal-sheet, and Radix Dialog include what scrollsheet does worse, alongside a React bottom sheet guide.
 - **Docs accessibility is fixed.** Faint text meets contrast in both themes, and the example tabs no longer carry an invalid role.
-- **The Sheet entry grew from 16.3 to 16.6 kB gzip, with the core stylesheet at 4.2 kB.** The footer and the fixes above account for it. Drawer and Dialog budgets rose by 0.2 kB, the `auto` entry by 0.1 kB, and the combined import by 0.4 kB.
+- **The Sheet entry grew from 16.3 to 16.7 kB gzip, with the core stylesheet at 4.2 kB.** The footer and the fixes above account for it. Drawer and Dialog budgets rose by 0.2 kB, the `auto` entry by 0.1 kB, and the combined import by 0.4 kB.
 - **`content.tsx` is split to stay under the repository's file size limit.** Detent measurement moved to its own hook, with no public API change.
 
 ## 1.2.3 - 2026-11-04
