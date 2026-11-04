@@ -237,7 +237,7 @@ keys the same way.
 | `SheetRootProps`, `SheetContentProps`, `SheetHandleProps`, `SheetTriggerProps`, `SheetTitleProps`, `SheetDescriptionProps`, `SheetCloseProps` | The prop types of the components above |
 | `spring(config?)` | `(config?: SpringConfig) => SpringCurve`. Compiles a damped spring to a CSS `linear()` easing; see [`scrollsheet/motion`](#scrollsheetmotion) |
 | `SpringConfig`, `SpringCurve` | `{ stiffness?, damping?, mass?, velocity?, restDelta? }` and `{ easing: string; durationMs: number }` |
-| `isSupported()` | `() => boolean`, false on the ~4% of browsers with no `<dialog>`, where the sheet falls back to a plain modal (see [Without `<dialog>`](/docs/browser-support#without-dialog)) |
+| `isSupported()` | `() => boolean`, false on the ~3% of browsers with no `<dialog>`, where the sheet falls back to a plain modal (see [Without `<dialog>`](/docs/browser-support#without-dialog)) |
 | `injectStylesInto(root, nonce?)` | `(root: ShadowRoot, nonce?: string) => void`, adopts the core stylesheet into a shadow root. Only does anything on the `scrollsheet/auto` entry. See [Shadow DOM](/docs/advanced/shadow-dom) |
 | `injectToastStylesInto(root, nonce?)` | Same signature, for the toast stylesheet. A sibling export, not folded into `injectStylesInto` |
 

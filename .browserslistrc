@@ -7,8 +7,8 @@
 # back to a plain ease-out, and below Safari 16.4 there is no <dialog> at
 # all (fallback-sheet.tsx's fixed-position modal takes over instead, no
 # drag/detents). That fallback path is intentionally NOT the target here:
-# the compat gate checks the code that runs for the ~96% who get the real
-# experience, not the ~4% who get the no-JS-features fallback.
+# the compat gate checks the native-dialog path, rather than the static
+# fallback used by browsers without dialog support.
 #
 # Do not raise this floor for the compositor-driven backdrop dim /
 # --scrollsheet-progress column in the same table (Chrome/Edge 115+,

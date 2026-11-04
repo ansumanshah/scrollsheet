@@ -1,6 +1,6 @@
 /**
- * Lazy entry to fallback-sheet.tsx, the static centered modal for the ~4% of
- * browsers with no <dialog>. The dynamic import keeps it out of the ~96%'s
+ * Lazy entry to fallback-sheet.tsx, the static centered modal for the ~3% of
+ * browsers with no <dialog>. The dynamic import keeps it out of the ~97%'s
  * bundles; Content preloads it on mount the moment the platform probe says
  * <dialog> is missing, so the module is resident before the first open. A
  * failed load resolves null and open renders nothing on that platform, which

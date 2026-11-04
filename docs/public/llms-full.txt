@@ -463,7 +463,7 @@ Full reference with every default: https://scrollsheet.dev/docs/reference/api
 | SheetActions | { open(): void; close(): void; snapTo(detent: DetentSpec): void } |
 | TravelInfo | { range: readonly [number, number]; progressAtDetents: ReadonlyMap<number, number> } |
 | spring(config?) | { stiffness, damping, mass, velocity, restDelta } -> { easing, durationMs } (defaults 260, 30, 1, 0, 0.001) |
-| isSupported() | () => boolean, false on the ~4% of browsers with no <dialog> |
+| isSupported() | () => boolean, false on the ~3% of browsers with no <dialog> |
 | injectStylesInto(root, nonce?) / injectToastStylesInto(root, nonce?) | adopt the core / toast stylesheet into a shadow root; scrollsheet/auto only |
 | Drawer | vaul-compatible namespace: Root, NestedRoot, Trigger, Portal, Overlay, Content, Handle, Title, Description, Close |
 | Dialog | Radix-compatible namespace (centered presentation): Root, Trigger, Portal, Overlay, Content, Title, Description, Close |

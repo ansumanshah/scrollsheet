@@ -4,7 +4,7 @@ Bottom sheets for React that feel native. Because they are.
 
 <img src="docs/public/hero.gif" width="290" align="right" alt="A bottom sheet dragged between detents 1:1 and flick-dismissed, rendered in a native dialog">
 
-One primitive for bottom sheets, drawers, modal dialogs, side panels, and toasts. A real `<dialog>` in the top layer. The browser's own scroll engine for gestures. Spring physics compiled to CSS `linear()`. <!--size:index.gzip:1-->16.3<!--/size--> kB gzipped, <!--size:index.brotli:1-->14.7<!--/size--> kB brotli, plus a 3.9 kB stylesheet. React 18+.
+One primitive for bottom sheets, drawers, modal dialogs, side panels, and toasts. A real `<dialog>` in the top layer. The browser's own scroll engine for gestures. Spring physics compiled to CSS `linear()`. <!--size:index.gzip:1-->16.3<!--/size--> kB gzipped, <!--size:index.brotli:1-->14.6<!--/size--> kB brotli, plus a 3.9 kB stylesheet. React 18+.
 
 ## Why another drawer
 
@@ -101,17 +101,17 @@ Focus containment comes from the platform's `showModal()`, not a JS focus trap. 
 | Gesture engine                | native scroll            | pointer events                | native scroll                 | Motion drag       |
 | Toasts                        | **yes, sonner drop-in**  | no                            | yes                           | no                |
 | Lightbox                      | **yes**                  | no                            | yes                           | no                |
-| No-`<dialog>` browsers (~4%)  | plain modal, no gestures | **full support**              | **full support**              | **full support**  |
+| No-`<dialog>` browsers (~3%)  | plain modal, no gestures | **full support**              | **full support**              | **full support**  |
 | License                       | **MIT**                  | MIT                           | commercial for advanced use   | MIT               |
 | Price                         | **free**                 | free                          | paid license for the full set | free              |
 
-Building on `<dialog>` is a real trade. The others portal a plain `<div>`, so their full experience reaches the ~4% of browsers with no `<dialog>` (Opera Mini, some old in-app WebViews, iOS ≤15.3), where scrollsheet degrades to a static modal: backdrop, tap-to-close, Escape, content reachable, gestures gone. If pixel-identical drag on iOS 15.3 is a requirement, this is the wrong library.
+Building on `<dialog>` is a real trade. The others portal a plain `<div>`, so their full experience reaches the ~3% of browsers with no `<dialog>` (Opera Mini, some old in-app WebViews, iOS ≤15.3), where scrollsheet degrades to a static modal: backdrop, tap-to-close, Escape, content reachable, gestures gone. If pixel-identical drag on iOS 15.3 is a requirement, this is the wrong library.
 
 ## Browser support
 
-`<dialog>`: about 96% global. The spring easing needs CSS `linear()` (Chrome 113+, Safari 17.2+, Firefox 112+); below that, a plain ease-out at the same duration. Chrome/Edge 115+ and Safari 26+ run the backdrop dim and `--scrollsheet-progress` as compositor-side scroll-driven animations; everywhere else the same values update from JS. Below Safari 15.4, the static-modal fallback above, no code required. Full matrix: [browser support docs](https://scrollsheet.dev/docs/browser-support).
+`<dialog>`: about 97% global. The spring easing needs CSS `linear()` (Chrome 113+, Safari 17.2+, Firefox 112+); below that, a plain ease-out at the same duration. Chrome/Edge 115+ and Safari 26+ run the backdrop dim and `--scrollsheet-progress` as compositor-side scroll-driven animations; everywhere else the same values update from JS. Below Safari 15.4, the static-modal fallback above, no code required. Full matrix: [browser support docs](https://scrollsheet.dev/docs/browser-support).
 
-Want a different experience for that ~4% instead of the built-in fallback? Check client-side, after mount:
+Want a different experience for that ~3% instead of the built-in fallback? Check client-side, after mount:
 
 ```tsx
 import { Sheet, isSupported } from "scrollsheet";

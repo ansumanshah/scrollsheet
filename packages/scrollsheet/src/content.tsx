@@ -163,7 +163,7 @@ export const Content = /* @__PURE__ */ React.forwardRef<HTMLDivElement, SheetCon
     const [mounted, setMounted] = React.useState(false);
     React.useEffect(() => setMounted(true), []);
 
-    // Browsers without a real <dialog> (~4% global — Opera Mini, some old
+    // Browsers without a real <dialog> (~3% global — Opera Mini, some old
     // in-app WebViews, iOS ≤15.3) degrade to a plain fixed-position modal
     // (internal/fallback-sheet.tsx) instead of rendering nothing: no top
     // layer, no detents, no drag, but the content is reachable and dismissible
@@ -329,7 +329,7 @@ export const Content = /* @__PURE__ */ React.forwardRef<HTMLDivElement, SheetCon
       injectStyles(ctx.nonce);
     }, [degraded, ctx.nonce]);
 
-    // The degraded modal is code-split: the ~96% with <dialog> never ship
+    // The degraded modal is code-split: the ~97% with <dialog> never ship
     // it. Keyed on the platform probe at MOUNT (not on open) so the module
     // is resident before the first open on the platforms that need it; a
     // defaultOpen first render there shows the modal one microtask late.

@@ -4,7 +4,7 @@ import { createPortal } from "react-dom";
 import type { Side } from "../motion/geometry";
 
 /**
- * The no-`<dialog>` degradation path (~4% global: Opera Mini, some old in-app
+ * The no-`<dialog>` degradation path (~3% global: Opera Mini, some old in-app
  * WebViews, iOS ≤15.3).
  *
  * Everything the main path builds on is unavailable here — no top layer, so

@@ -173,7 +173,6 @@ export function ToastRow({
     record.className,
     toasterClassNames?.toast,
     record.classNames?.toast,
-    toasterClassNames?.default,
     toasterClassNames?.[record.type],
     record.classNames?.[record.type],
   );

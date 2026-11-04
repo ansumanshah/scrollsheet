@@ -200,6 +200,8 @@ function PositionGroup({
         onInteractingChange(true);
       }}
       onPointerUp={() => onInteractingChange(false)}
+      onPointerCancel={() => onInteractingChange(false)}
+      onLostPointerCapture={() => onInteractingChange(false)}
     >
       {exitRows.map(({ record, exiting }) => {
         const offset = offsetById.get(record.id) ?? lastOffsetRef.current.get(record.id);

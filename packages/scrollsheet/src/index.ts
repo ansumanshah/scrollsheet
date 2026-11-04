@@ -75,13 +75,13 @@ import { hasDialogSupport } from "./internal/env";
 
 /**
  * Whether this browser runs the full gesture experience — wraps the same
- * `<dialog>` feature check Content uses internally (~96% global; missing on
+ * `<dialog>` feature check Content uses internally (~97% global; missing on
  * Opera Mini, some old in-app WebViews, iOS ≤15.3).
  *
  * `false` does NOT mean the sheet is unusable: it degrades to a plain
  * fixed-position modal (backdrop, tap-to-close, Escape, focus round-trip)
  * with no detents, drag, or animation. Check this only if you want to swap
- * in a different UI for that ~4% — you no longer have to.
+ * in a different UI for that ~3% — you no longer have to.
  */
 export function isSupported(): boolean {
   return hasDialogSupport();

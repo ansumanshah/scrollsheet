@@ -50,6 +50,58 @@ async function dragTo(
 }
 
 test.describe("sonner compat: swipe-to-dismiss", () => {
+  for (const event of ["pointercancel", "lostpointercapture"] as const) {
+    test(`${event} unwinds a captured swipe without dismissing the toast`, async ({ page }) => {
+      await page.goto("/");
+      const overlay = await openToasterByTrigger(page, "Sonner: show toast");
+      const row = overlay.locator(".scrollsheet-toast").first();
+      await row.evaluate((el) => {
+        el.addEventListener(
+          "pointerdown",
+          (event) => {
+            (el as HTMLElement).dataset.swipePointerId = String((event as PointerEvent).pointerId);
+          },
+          { once: true },
+        );
+      });
+      const box = await row.boundingBox();
+      if (!box) throw new Error("no bounding box for the toast row");
+      const x = box.x + box.width / 2;
+      const y = box.y + box.height / 2;
+      await dragTo(page, x, y, x + 60);
+      await expect(row).toHaveAttribute("data-swiping", "true");
+      expect(
+        await row.evaluate((el) =>
+          el.hasPointerCapture(Number((el as HTMLElement).dataset.swipePointerId)),
+        ),
+      ).toBe(true);
+      await row.evaluate((el, kind) => {
+        const pointerId = Number((el as HTMLElement).dataset.swipePointerId);
+        if (kind === "pointercancel") {
+          el.dispatchEvent(new PointerEvent("pointercancel", { bubbles: true, pointerId }));
+        } else {
+          el.releasePointerCapture(pointerId);
+        }
+      }, event);
+      await page.mouse.move(x + 61, y);
+      await expect(row).toHaveAttribute("data-swiping", "false");
+      await expect(row).not.toHaveAttribute("data-swipe-out", "true");
+      expect(
+        await row.evaluate((el) =>
+          el.hasPointerCapture(Number((el as HTMLElement).dataset.swipePointerId)),
+        ),
+      ).toBe(false);
+      expect(
+        await row.evaluate((el) =>
+          (el as HTMLElement).style.getPropertyValue("--scrollsheet-toast-swipe-x"),
+        ),
+      ).toBe("0px");
+      await page.mouse.up();
+      await expect(row).not.toHaveAttribute("data-removed");
+      await expect(row).toBeVisible();
+    });
+  }
+
   test("swiping past the 45px threshold dismisses the row", async ({ page }) => {
     await page.goto("/");
     const overlay = await openToasterByTrigger(page, "Sonner: show toast");

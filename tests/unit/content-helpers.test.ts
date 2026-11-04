@@ -99,6 +99,7 @@ describe("documented constants", () => {
       "label",
       "[contenteditable]",
       "[data-scrollsheet-no-drag]",
+      "[data-vaul-no-drag]",
     ]) {
       expect(NO_DRAG_SELECTOR).toContain(part);
     }
