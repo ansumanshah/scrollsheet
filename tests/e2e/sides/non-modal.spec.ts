@@ -190,47 +190,31 @@ test.describe("non-modal: bug-class defenses (vaul #582/#580 and friends)", () =
 
   test("no focus trap: Tab can move focus from inside the sheet to the page behind it", async ({
     page,
-    browserName,
   }) => {
-    // WebKit-only, deferred: after the panel's initial tabIndex={-1}
-    // programmatic open-sequence focus, a single Tab press in this
-    // Playwright WebKit build drops document.activeElement to <body> and
-    // never recovers on any subsequent Tab press (logged the full
-    // activeElement sequence — it's stuck at <body> from Tab #1 onward, not
-    // slowly progressing through more tab stops than budgeted). Reads as a
-    // WebKit popover+tabindex-focus-order quirk, not a scrollsheet bug —
-    // Chromium (both mobile and desktop) and Firefox handle the exact same
-    // sequence correctly.
-    test.skip(
-      browserName === "webkit",
-      "WebKit: Tab drops to <body> after tabIndex=-1 focus, never recovers — see comment above.",
-    );
     await page.goto("/");
-    await openOverlayByTrigger(page, "Non-modal sheet");
+    await page.locator("#page-behind-button").evaluate((button) => {
+      const input = document.createElement("input");
+      input.id = "page-focus-probe";
+      input.setAttribute("aria-label", "Page focus probe");
+      button.after(input);
+    });
+    const overlay = await openOverlayByTrigger(page, "Non-modal sheet");
+    expect(await overlay.evaluate((el) => el.contains(document.activeElement))).toBe(true);
 
-    // Focus starts inside the sheet (open-sequence behavior). A real modal
-    // dialog's native focus trap would keep Tab cycling within it forever;
-    // this asserts Tab can walk all the way out to a page element instead.
-    // A fixed-count loop, not expect.poll: poll's exponential backoff
-    // (100ms, 250ms, 500ms, ...) only gets a handful of iterations within
-    // SPRING_TIMEOUT — nowhere near enough Tab presses to reach the page
-    // button past every other trigger/handle/input on this fixture page.
-    // Budget padded well past the current tab-stop count (not tuned to the
-    // exact number) — this shared fixtures page (e2e/fixtures/app.tsx) picks
-    // up new triggers/inputs from other specs over time, and this test only
-    // cares whether Tab *can* reach the page eventually, not in exactly how
-    // many presses.
-    const pageButton = page.locator("#page-behind-button");
-    let reachedPageButton = false;
+    // WebKit's default keyboard mode skips buttons; a text field is tabbable
+    // in every engine. A modal focus trap would never reach this outside field.
+    const pageInput = page.locator("#page-focus-probe");
+    let reachedPageInput = false;
     for (let i = 0; i < 80; i++) {
       const active = await page.evaluate(() => document.activeElement?.id ?? null);
-      if (active === "page-behind-button") {
-        reachedPageButton = true;
+      if (active === "page-focus-probe") {
+        reachedPageInput = true;
         break;
       }
       await page.keyboard.press("Tab");
     }
-    expect(reachedPageButton).toBe(true);
-    await expect(pageButton).toBeFocused();
+    expect(reachedPageInput).toBe(true);
+    await expect(pageInput).toBeFocused();
+    await expect(overlay).toHaveAttribute("data-scrollsheet-state", "open");
   });
 });
