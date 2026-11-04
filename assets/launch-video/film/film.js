@@ -320,7 +320,7 @@ const rScrollValue = makeReadout(proofLayer, {
 });
 const rScrollNote = makeReadout(proofLayer, {
   x: TALL ? L.readX + 350 : L.readX,
-  y: TALL ? L.readY + L.codeSize * 1.5 + 48 : L.readY + L.codeSize * 1.5 + 258,
+  y: TALL ? L.readY + L.codeSize * 1.5 + 30 : L.readY + L.codeSize * 1.5 + 258,
   size: TALL ? 44 : L.codeSize * 0.8,
   color: MUTED,
 });

@@ -13,29 +13,23 @@ export interface ShotSpec {
 const PHONE = { width: 390, height: 844, touch: true, scale: 2 };
 const DESK = { width: 1280, height: 800, touch: false, scale: 2 };
 
-/** The hand drags to `release`, then a spring coasts onto the snap stop, velocity continuous. */
-function dragPath(from: number, release: number, stop: number, handFrames: number) {
-  return (f: number) => {
-    const t = (f + 1) / FPS;
-    const hand = (release - from) * spring(t, 110, 21);
-    const coast = (stop - release) * spring(t - handFrames / FPS, 170, 26);
-    return from + hand + coast;
-  };
-}
+const DRAG_SPRING = [130, 23] as const;
 
 interface DragOptions {
-  hand?: number;
   total?: number;
   lead?: number;
 }
 
+/** One continuous spring from rest to the snap stop; the finger lifts once it has thrown the sheet. */
 async function drag(take: Take, stop: number, opts: DragOptions = {}): Promise<void> {
-  const hand = opts.hand ?? 30;
-  const total = opts.total ?? 62;
+  const total = opts.total ?? 58;
+  const lead = opts.lead ?? 0.8;
   const from = (await take.now()).scrollTop;
-  const release = from + (stop - from) * (opts.lead ?? 0.82);
+  const path = (f: number) => from + (stop - from) * spring((f + 1) / FPS, ...DRAG_SPRING);
+  let visible = 0;
+  while (visible < total && spring((visible + 1) / FPS, ...DRAG_SPRING) < lead) visible++;
   const start = await take.center("dialog [data-scrollsheet-handle]");
-  await take.scrollGesture(start, total, hand, dragPath(from, release, stop, hand));
+  await take.scrollGesture(start, total, visible, path);
 }
 
 async function stops(take: Take, count: number): Promise<number[]> {
@@ -71,7 +65,7 @@ export const SHOTS: Record<string, ShotSpec> = {
       await drag(take, full!);
       take.mark("landFull");
       await take.hold(0.35);
-      await drag(take, peek!, { total: 70, hand: 34 });
+      await drag(take, peek!);
       take.mark("landPeek");
       await take.hold(0.5);
     },
@@ -97,7 +91,7 @@ export const SHOTS: Record<string, ShotSpec> = {
         await take.page.keyboard.type(ch);
         await take.frame(8);
       }
-      await take.hold(0.9);
+      await take.hold(1.5);
     },
   },
 
@@ -144,11 +138,7 @@ export const SHOTS: Record<string, ShotSpec> = {
       await take.tap(await take.center('[data-save="Third Wave Coffee"]'));
       await take.hold(0.5);
       await take.tap(await take.center('[data-save="The Roasting Room"]'));
-      await take.hold(0.85);
-      take.mark("swipe");
-      const toastAt = await take.center(".scrollsheet-toast >> nth=-1");
-      await take.swipe(toastAt, { x: toastAt.x, y: toastAt.y - 150 }, 20);
-      await take.hold(1.1);
+      await take.hold(1.5);
     },
   },
 
@@ -182,7 +172,7 @@ export const SHOTS: Record<string, ShotSpec> = {
       await take.hold(0.25);
       await drag(take, medium!);
       await take.hold(0.25);
-      await drag(take, closed!, { total: 56, hand: 30, lead: 0.7 });
+      await drag(take, closed!, { lead: 0.7 });
       await take.hold(0.75);
     },
   },

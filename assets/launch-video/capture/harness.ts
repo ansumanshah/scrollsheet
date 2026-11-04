@@ -2,8 +2,6 @@ import type { Browser, BrowserContext, CDPSession, Page } from "@playwright/test
 import { mkdirSync, rmSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 
-import { spring } from "../film/motion.js";
-
 export const FPS = 60;
 
 export interface Point {
@@ -262,26 +260,6 @@ export class Take {
     this.fingerVisible = false;
     await this.frame(4);
     await this.touch("touchEnd", null);
-  }
-
-  /** A pointer-level swipe through real touch input, for surfaces with their own swipe handling. */
-  async swipe(from: Point, to: Point, frames: number): Promise<void> {
-    this.fingerAt = from;
-    this.fingerVisible = true;
-    await this.frame(6);
-    await this.touch("touchStart", from);
-    await this.frame(1);
-    const full = spring(frames / FPS, 150, 24);
-    for (let f = 1; f <= frames; f++) {
-      const k = spring(f / FPS, 150, 24) / full;
-      const at = { x: from.x + (to.x - from.x) * k, y: from.y + (to.y - from.y) * k };
-      await this.touch("touchMove", at);
-      this.fingerAt = at;
-      await this.frame(1);
-    }
-    await this.touch("touchEnd", null);
-    this.fingerVisible = false;
-    await this.frame(1);
   }
 
   async setKeyboard(px: number): Promise<void> {
