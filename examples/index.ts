@@ -22,6 +22,7 @@ import ResponsiveExample from "./responsive";
 import MobileSelectExample from "./mobile-select";
 import CommandPaletteExample from "./command-palette";
 import PickerWheelExample from "./picker-wheel";
+import ActionSheetExample from "./action-sheet";
 
 export type ExampleGroupId =
   | "media"
@@ -156,6 +157,14 @@ export const examples: ExampleEntry[] = [
       "An iOS-style option and date picker: every column is a native scroll-snap track inside the sheet.",
     group: "actions",
     component: PickerWheelExample,
+  },
+  {
+    name: "action-sheet",
+    title: "Action sheet",
+    description:
+      "Two floating cards, the actions then a separate Cancel, with destructive styling and arrow-key focus.",
+    group: "actions",
+    component: ActionSheetExample,
   },
   {
     name: "confirm",

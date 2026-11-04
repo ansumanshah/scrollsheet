@@ -1,6 +1,7 @@
 import * as React from "react";
 import { createRoot } from "react-dom/client";
 
+import { ActionSheet } from "../../../registry/src/action-sheet/action-sheet";
 import { CommandPalette } from "../../../registry/src/command-palette/command-palette";
 import { DatePickerSheet, PickerSheet } from "../../../registry/src/picker-wheel/picker-wheel";
 import { MobileSelect } from "../../../registry/src/mobile-select/mobile-select";
@@ -25,6 +26,7 @@ const COUNTRIES = [
 function Fixtures() {
   const [value, setValue] = React.useState<string | undefined>();
   const [ran, setRan] = React.useState("none");
+  const [picked, setPicked] = React.useState("none");
   const [fruit, setFruit] = React.useState(["banana", "m"]);
   const [date, setDate] = React.useState<Date | null>(new Date(2024, 0, 31));
   const commands = React.useMemo(
@@ -100,6 +102,21 @@ function Fixtures() {
             </button>
           }
         />
+        <ActionSheet
+          title="Photo"
+          description="Choose what to do with this photo"
+          trigger={
+            <button type="button" className="btn">
+              Photo actions
+            </button>
+          }
+          actions={[
+            { label: "Share", onSelect: () => setPicked("share") },
+            { label: "Copy link", disabled: true, onSelect: () => setPicked("copy") },
+            { label: "Delete", destructive: true, onSelect: () => setPicked("delete") },
+          ]}
+        />
+        <output data-testid="action-picked">{picked}</output>
         <output data-testid="fruit-value">{fruit.join("/")}</output>
         <DatePickerSheet
           value={date}

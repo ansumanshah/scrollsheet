@@ -1,0 +1,69 @@
+---
+title: Action sheet
+description: A phone-style action sheet, a card of actions plus a separate Cancel, built from Sheet and Sheet.Close.
+---
+
+import { Aside } from '@astrojs/starlight/components';
+import DocExample from '../../../../components/DocExample.astro';
+
+An action sheet is a short list of choices, one of which may be destructive, with Cancel set
+apart. There is no new mechanism here: it is `Sheet` with an inset transparent panel, and every
+button wrapped in `Sheet.Close asChild`.
+
+```sh
+bunx shadcn@latest add https://scrollsheet.dev/r/action-sheet.json
+```
+
+<DocExample
+  name="action-sheet"
+  caption="Open it, then use the arrow keys to move between buttons. Choosing one runs its handler and closes the sheet."
+/>
+
+## Usage
+
+```tsx
+import { ActionSheet } from "@/components/ui/action-sheet"
+
+<ActionSheet
+  title="IMG_2041.jpg"
+  trigger={<button type="button">Photo actions</button>}
+  actions={[
+    { label: "Share", onSelect: share },
+    { label: "Delete photo", destructive: true, onSelect: remove },
+  ]}
+/>
+```
+
+<div className="table-scroll prop-table">
+
+| Prop | Type | Default |
+| --- | --- | --- |
+| `actions` | `ActionSheetAction[]` | required. `{ label, onSelect, destructive?, disabled? }` |
+| `trigger` | `ReactElement` | none. Pass `open` and `onOpenChange` to control it yourself |
+| `open` / `defaultOpen` / `onOpenChange` | state | uncontrolled |
+| `title` / `description` | `string` | none. Rendered as `Sheet.Title` and `Sheet.Description` in the actions card |
+| `cancelLabel` | `string` | `"Cancel"` |
+| `aria-label` | `string` | `"Actions"`. The dialog's name when there is no `title` |
+
+</div>
+
+## How it floats
+
+The panel sets `--scrollsheet-bg: transparent`, `--scrollsheet-shadow: none`, and an 8px
+`--scrollsheet-inset-x` and `--scrollsheet-inset-bottom`, the same detached-card recipe the
+[CSS reference](/docs/styling/css) describes. The two cards inside carry their own background.
+Swipe down, a tap on the backdrop, and Esc all dismiss it.
+
+## Accessibility
+
+- With a `title`, the dialog is named by it and `description` becomes its description. Without
+  one, `aria-label` names both the dialog and the action group.
+- **Up and Down** move focus between enabled buttons, including Cancel, and wrap. Disabled
+  actions are skipped. Tab works as usual.
+- Buttons are at least 56px tall. A destructive action is marked with `data-destructive` as well as its color, and
+  its label should say what it does: "Delete photo", not "OK".
+
+<Aside type="note">
+  Confirming a destructive action a second time is a different component. See the confirm item
+  in [Recipes](/docs/recipes), which blocks swipe and Esc.
+</Aside>

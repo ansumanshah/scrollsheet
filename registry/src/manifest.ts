@@ -45,4 +45,12 @@ export const sourceItems: RegistrySourceItem[] = [
     dependencies: ["scrollsheet"],
     files: [{ src: "picker-wheel.tsx", target: "components/ui/picker-wheel.tsx" }],
   },
+  {
+    name: "action-sheet",
+    title: "Action Sheet",
+    description:
+      "An iOS-style action sheet: a card of actions, a separate Cancel card, destructive styling, and arrow-key focus movement. Each button is a Sheet.Close.",
+    dependencies: ["scrollsheet"],
+    files: [{ src: "action-sheet.tsx", target: "components/ui/action-sheet.tsx" }],
+  },
 ];

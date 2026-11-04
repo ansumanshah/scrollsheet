@@ -184,6 +184,7 @@ export default defineConfig({
             { slug: "docs/components/mobile-select" },
             { slug: "docs/components/command-palette" },
             { slug: "docs/components/picker-wheel" },
+            { slug: "docs/components/action-sheet" },
           ],
         },
         { slug: "docs/reference/api" },
