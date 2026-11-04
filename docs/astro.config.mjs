@@ -183,6 +183,7 @@ export default defineConfig({
           items: [
             { slug: "docs/components/mobile-select" },
             { slug: "docs/components/command-palette" },
+            { slug: "docs/components/picker-wheel" },
           ],
         },
         { slug: "docs/reference/api" },

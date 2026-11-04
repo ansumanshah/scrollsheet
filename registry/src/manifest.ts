@@ -37,4 +37,12 @@ export const sourceItems: RegistrySourceItem[] = [
     dependencies: ["scrollsheet"],
     files: [{ src: "command-palette.tsx", target: "components/ui/command-palette.tsx" }],
   },
+  {
+    name: "picker-wheel",
+    title: "Picker Wheel",
+    description:
+      "An iOS-style picker: each column is a native scroll-snap track nested inside a sheet. Ships PickerWheel, a Cancel and Done PickerSheet, and a locale-aware DatePickerSheet.",
+    dependencies: ["scrollsheet"],
+    files: [{ src: "picker-wheel.tsx", target: "components/ui/picker-wheel.tsx" }],
+  },
 ];

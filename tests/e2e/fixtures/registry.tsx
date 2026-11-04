@@ -2,6 +2,7 @@ import * as React from "react";
 import { createRoot } from "react-dom/client";
 
 import { CommandPalette } from "../../../registry/src/command-palette/command-palette";
+import { DatePickerSheet, PickerSheet } from "../../../registry/src/picker-wheel/picker-wheel";
 import { MobileSelect } from "../../../registry/src/mobile-select/mobile-select";
 
 const COUNTRIES = [
@@ -24,6 +25,8 @@ const COUNTRIES = [
 function Fixtures() {
   const [value, setValue] = React.useState<string | undefined>();
   const [ran, setRan] = React.useState("none");
+  const [fruit, setFruit] = React.useState(["banana", "m"]);
+  const [date, setDate] = React.useState<Date | null>(new Date(2024, 0, 31));
   const commands = React.useMemo(
     () => [
       { id: "new", label: "New file", group: "File", shortcut: "⌘N", onSelect: () => setRan("new") },
@@ -69,6 +72,44 @@ function Fixtures() {
           }
         />
         <output data-testid="palette-ran">{ran}</output>
+        <PickerSheet
+          title="Fruit"
+          value={fruit}
+          onValueChange={setFruit}
+          columns={[
+            {
+              id: "fruit",
+              label: "Fruit",
+              options: ["apple", "banana", "cherry", "date", "elderberry", "fig", "grape"].map(
+                (v) => ({ value: v, label: v[0]!.toUpperCase() + v.slice(1) }),
+              ),
+            },
+            {
+              id: "size",
+              label: "Size",
+              options: [
+                { value: "s", label: "Small" },
+                { value: "m", label: "Medium" },
+                { value: "l", label: "Large" },
+              ],
+            },
+          ]}
+          trigger={
+            <button type="button" className="btn">
+              Pick fruit
+            </button>
+          }
+        />
+        <output data-testid="fruit-value">{fruit.join("/")}</output>
+        <DatePickerSheet
+          value={date}
+          onValueChange={setDate}
+          minYear={2020}
+          maxYear={2030}
+          locale="en-US"
+          title="Birthday"
+        />
+        <output data-testid="date-value">{date ? `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}` : "none"}</output>
       </div>
     </main>
   );

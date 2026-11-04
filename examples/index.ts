@@ -21,6 +21,7 @@ import NestedDrillExample from "./nested-drill";
 import ResponsiveExample from "./responsive";
 import MobileSelectExample from "./mobile-select";
 import CommandPaletteExample from "./command-palette";
+import PickerWheelExample from "./picker-wheel";
 
 export type ExampleGroupId =
   | "media"
@@ -147,6 +148,14 @@ export const examples: ExampleEntry[] = [
       "A centered card from 768px up, a bottom sheet below it, one component. Cmd/Ctrl+K toggles it.",
     group: "actions",
     component: CommandPaletteExample,
+  },
+  {
+    name: "picker-wheel",
+    title: "Picker wheel",
+    description:
+      "An iOS-style option and date picker: every column is a native scroll-snap track inside the sheet.",
+    group: "actions",
+    component: PickerWheelExample,
   },
   {
     name: "confirm",
