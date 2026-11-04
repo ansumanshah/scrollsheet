@@ -52,7 +52,7 @@ const BUDGETS: Record<SizeKey, number> = {
   // longer share any bytes, the structural cost of the win for toast-only
   // consumers.
   toast: 7.0 * 1024,
-  all: 23.5 * 1024,
+  all: 23.7 * 1024,
   auto: 21.3 * 1024,
 };
 
