@@ -20,6 +20,7 @@ import NestedExample from "./nested";
 import NestedDrillExample from "./nested-drill";
 import ResponsiveExample from "./responsive";
 import MobileSelectExample from "./mobile-select";
+import CommandPaletteExample from "./command-palette";
 
 export type ExampleGroupId =
   | "media"
@@ -138,6 +139,14 @@ export const examples: ExampleEntry[] = [
       "A searchable select in a bottom sheet: combobox over a listbox, accent-insensitive filter, keyboard-aware.",
     group: "actions",
     component: MobileSelectExample,
+  },
+  {
+    name: "command-palette",
+    title: "Command palette",
+    description:
+      "A centered card from 768px up, a bottom sheet below it, one component. Cmd/Ctrl+K toggles it.",
+    group: "actions",
+    component: CommandPaletteExample,
   },
   {
     name: "confirm",

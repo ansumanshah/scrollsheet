@@ -1,0 +1,84 @@
+---
+title: Command palette
+description: A Cmd/Ctrl+K command menu that is a centered card on desktop and a bottom sheet on a phone, installed as one file.
+---
+
+import { Aside } from '@astrojs/starlight/components';
+import DocExample from '../../../../components/DocExample.astro';
+
+Most command palettes assume a keyboard and a wide screen. This one is built on
+`desktopSide="center"`, so the same component is a centered card from 768px up and a bottom
+sheet below it, with the search field riding the keyboard on a phone.
+
+```sh
+bunx shadcn@latest add https://scrollsheet.dev/r/command-palette.json
+```
+
+<DocExample
+  name="command-palette"
+  caption="Press Cmd or Ctrl plus K on a desktop, or tap the button. Try typing open, or resize below 768px to see the sheet."
+/>
+
+## Usage
+
+```tsx
+import { CommandPalette } from "@/components/ui/command-palette"
+
+<CommandPalette
+  items={[
+    { id: "new", label: "New note", group: "Create", shortcut: "N", onSelect: createNote },
+    { id: "export", label: "Export as PDF", group: "Share", keywords: ["download"], onSelect: exportPdf },
+  ]}
+  trigger={<button type="button">Command menu</button>}
+/>
+```
+
+## Props
+
+<div className="table-scroll prop-table">
+
+| Prop | Type | Default |
+| --- | --- | --- |
+| `items` | `CommandItem[]` | required |
+| `open` / `defaultOpen` / `onOpenChange` | controlled or uncontrolled state | closed |
+| `trigger` | `ReactElement` | none. Rendered through `Sheet.Trigger asChild` |
+| `hotkey` | `string \| false` | `"k"`. Toggles with Cmd or Ctrl plus the key |
+| `title` | `string` | `"Command menu"`. The combobox's accessible name |
+| `placeholder` | `string` | `"Type a command or search…"` |
+| `emptyMessage` | `string` | `"No results"` |
+
+</div>
+
+A `CommandItem` is `{ id, label, onSelect, group?, shortcut?, keywords?, disabled? }`.
+`shortcut` is display only: binding the key is your job.
+
+Matching ignores accents and case, and checks `keywords`. A label that starts with a word
+outranks one that merely contains it, and groups keep the order you gave them.
+
+## Why not cmdk
+
+cmdk is the usual answer, and it is a good one. Its `Command.Dialog` is built on Radix Dialog,
+and the package depends on four `@radix-ui` packages, so it brings a second modal
+implementation next to the native `<dialog>` the sheet already uses. The part this item needs
+is small: filter, rank, group, and move a highlight. That is about 200 lines here, with no
+dependency beyond `scrollsheet`. If you already ship cmdk, keep it and use `Sheet` only as the
+container.
+
+## Accessibility
+
+The search field is a `role="combobox"` with `aria-controls` and `aria-activedescendant` over a
+`role="listbox"` of `role="option"` rows. DOM focus never leaves the field.
+
+- **Up and Down** move the highlight, skip disabled commands, and wrap. Page Up and Page Down
+  jump by eight.
+- **Enter** closes the palette, then runs the highlighted command. **Escape** closes without
+  running anything.
+- **Cmd or Ctrl plus K** toggles from anywhere. The handler ignores IME composition.
+- Typing announces the result count through a polite live region.
+- On a fine pointer the field is focused on open. On touch it is not, so the sheet opens
+  without raising the keyboard.
+
+<Aside type="note">
+  The hotkey is registered on `window` while the component is mounted. If two palettes are
+  mounted, pass `hotkey={false}` to one of them.
+</Aside>

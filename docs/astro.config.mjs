@@ -180,7 +180,10 @@ export default defineConfig({
         },
         {
           label: "Components",
-          items: [{ slug: "docs/components/mobile-select" }],
+          items: [
+            { slug: "docs/components/mobile-select" },
+            { slug: "docs/components/command-palette" },
+          ],
         },
         { slug: "docs/reference/api" },
         { slug: "docs/accessibility" },

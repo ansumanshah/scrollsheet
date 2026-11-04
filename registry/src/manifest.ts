@@ -29,4 +29,12 @@ export const sourceItems: RegistrySourceItem[] = [
     dependencies: ["scrollsheet"],
     files: [{ src: "mobile-select.tsx", target: "components/ui/mobile-select.tsx" }],
   },
+  {
+    name: "command-palette",
+    title: "Command Palette",
+    description:
+      "A command palette that is a centered card on desktop and a bottom sheet on a phone, from one component: Cmd/Ctrl+K, grouped commands, ranked search, and a combobox over a listbox.",
+    dependencies: ["scrollsheet"],
+    files: [{ src: "command-palette.tsx", target: "components/ui/command-palette.tsx" }],
+  },
 ];

@@ -1,6 +1,7 @@
 import * as React from "react";
 import { createRoot } from "react-dom/client";
 
+import { CommandPalette } from "../../../registry/src/command-palette/command-palette";
 import { MobileSelect } from "../../../registry/src/mobile-select/mobile-select";
 
 const COUNTRIES = [
@@ -22,6 +23,24 @@ const COUNTRIES = [
 
 function Fixtures() {
   const [value, setValue] = React.useState<string | undefined>();
+  const [ran, setRan] = React.useState("none");
+  const commands = React.useMemo(
+    () => [
+      { id: "new", label: "New file", group: "File", shortcut: "⌘N", onSelect: () => setRan("new") },
+      { id: "open", label: "Open recent", group: "File", keywords: ["history"], onSelect: () => setRan("open") },
+      { id: "save", label: "Save all", group: "File", disabled: true, onSelect: () => setRan("save") },
+      { id: "theme", label: "Toggle theme", group: "View", onSelect: () => setRan("theme") },
+      { id: "zoom", label: "Zoom in", group: "View", onSelect: () => setRan("zoom") },
+      { id: "newtab", label: "Open new tab", group: "View", onSelect: () => setRan("newtab") },
+      ...Array.from({ length: 20 }, (_, i) => ({
+        id: `f${i}`,
+        label: `Extra command ${i}`,
+        group: "Extra",
+        onSelect: () => setRan(`f${i}`),
+      })),
+    ],
+    [],
+  );
   return (
     <main className="page">
       <h1>registry fixtures</h1>
@@ -41,6 +60,15 @@ function Fixtures() {
           searchable={false}
           options={COUNTRIES.slice(0, 9)}
         />
+        <CommandPalette
+          items={commands}
+          trigger={
+            <button type="button" className="btn">
+              Open palette
+            </button>
+          }
+        />
+        <output data-testid="palette-ran">{ran}</output>
       </div>
     </main>
   );
