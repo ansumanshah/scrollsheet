@@ -1,6 +1,6 @@
 ---
 title: Install
-description: Add scrollsheet with bun, npm, pnpm, or yarn, or pull individual patterns in with the shadcn CLI.
+description: Install with your package manager or the shadcn CLI.
 ---
 
 import { Tabs, TabItem, FileTree, LinkCard, CardGrid } from '@astrojs/starlight/components';
@@ -40,13 +40,12 @@ import { Sheet } from 'scrollsheet';
 import 'scrollsheet/styles.css';
 ```
 
-Prefer zero config? `import { Sheet } from 'scrollsheet/auto'` embeds the stylesheet, no CSS
-import needed. `Sheet.*` is client-only: in Next.js App Router, add `"use client"` to the file that
-renders it.
+To embed the stylesheet without a CSS import, use `import { Sheet } from 'scrollsheet/auto'`.
+`Sheet.*` is client-only: in Next.js App Router, add `"use client"` to the file that renders it.
 
 <DocExample
   name="confirm"
-  caption="The smallest complete sheet: a title, a body, two buttons. Drag it down; it will not go."
+  caption="A confirmation sheet with a title, body, and two buttons. Dragging does not dismiss it."
 />
 
 No peer dependencies beyond React and React DOM, 18 or newer.
@@ -65,13 +64,13 @@ bunx shadcn@latest add https://scrollsheet.dev/r/sidebar.json
 bunx shadcn@latest add https://scrollsheet.dev/r/toast.json
 ```
 
-Or pull the same files straight off GitHub: swap `https://scrollsheet.dev/r/` for
+Or fetch the same files from GitHub: replace `https://scrollsheet.dev/r/` with
 `https://raw.githubusercontent.com/ansumanshah/scrollsheet/main/registry/`.
 
 Each writes one file into `components/ui/`: `drawer.tsx`, `sheet.tsx`, `dialog.tsx`,
 `confirm.tsx`, `share-sheet.tsx`, `sidebar.tsx`, `toast.tsx`. `confirm` and `share-sheet`
 build on `drawer`; `sidebar` builds on `sheet`; the CLI pulls those in automatically.
-What each one gives you: [Recipes](/docs/recipes).
+See [Recipes](/docs/recipes) for each pattern.
 
 <FileTree>
 - components/
@@ -90,12 +89,12 @@ Already on vaul or Sonner?
 <CardGrid>
   <LinkCard
     title="Migrate from vaul"
-    description="Vaul's Drawer namespace mapped onto scrollsheet, with supported props, CSS hooks, and migration differences."
+    description="Move from Vaul to scrollsheet and check the behavior differences."
     href="/docs/migrating/from-vaul"
   />
   <LinkCard
     title="Migrate from Sonner"
-    description="Migrate toast, useToasts, and Toaster with six positions, per-toast overrides, and swipe-to-dismiss; check the compatibility gaps."
+    description="Move from Sonner to scrollsheet and check the compatibility gaps."
     href="/docs/migrating/from-sonner"
   />
 </CardGrid>

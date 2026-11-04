@@ -100,7 +100,7 @@ const INSTALL = [
 const PLATFORM = [
   {
     name: "<dialog>, top layer",
-    use: "Stacking, without a z-index to manage",
+    use: "Stacks above page content",
     since: "Every engine, Mar 2022",
     versions: "Chrome 37, Safari 15.4, Firefox 98",
     without: "Fixed-position fallback, without dragging.",
@@ -114,7 +114,7 @@ const PLATFORM = [
   },
   {
     name: "linear() easing",
-    use: "The spring curve",
+    use: "Spring easing",
     since: "Every engine, Dec 2023",
     versions: "Chrome 113, Safari 17.2, Firefox 112",
     without: "Ease-out, same duration.",
@@ -124,11 +124,11 @@ const PLATFORM = [
     use: "Backdrop opacity follows scroll",
     since: "Chrome Jul 2023, Safari Sep 2025",
     versions: "Chrome 115+, Safari 26+; feature-detected",
-    without: "Same values, written from JS each frame.",
+    without: "JavaScript updates opacity each frame.",
   },
   {
     name: "dialog.closedBy",
-    use: "Close requests handled by the platform",
+    use: "Browser handles close requests",
     since: "Chrome Mar 2025, Firefox Jul 2025",
     versions: "Chrome 134+, Firefox 141+; feature-detected",
     without: "JavaScript handles Escape and backdrop dismissal.",
@@ -164,7 +164,7 @@ const COMPARE_ROWS: {
       `${BUNDLE_SIZES.dialog.gzipKb.toFixed(2)} kB`,
       `${BUNDLE_SIZES.toast.gzipKb.toFixed(2)} kB`,
     ],
-    note: "Measured from the current build with Bun, minification, and React external. Includes static imports; excludes stylesheets and feature chunks loaded on demand.",
+    note: "Measured with Bun after minification, with React excluded. Includes static imports; excludes CSS and feature chunks loaded on demand.",
   },
   {
     label: "Position",
@@ -195,7 +195,7 @@ const COMPARE_ROWS: {
   {
     label: "API compatibility",
     values: ["Native scrollsheet API", "Common vaul APIs", "Common Radix Dialog APIs", "Common Sonner APIs"],
-    note: "Adapters support common APIs, with differences in styling and unsupported props. Review the migration guides before replacing an existing library.",
+    note: "Adapters support common APIs. Styling differs and some props are unsupported. Check the migration guides before switching.",
   },
   {
     label: "React",
@@ -229,7 +229,7 @@ const description = `React bottom sheets, drawers, dialogs, side panels, and toa
 <Base title={title} description={description}>
   <section class="container hero">
     <div>
-      <h1>Native dialog. Native scrolling.</h1>
+      <h1>Bottom sheets for React</h1>
       <p class="hero-lede">
         React components for bottom sheets, drawers, dialogs, side panels, and toasts.
         The Sheet import is {Math.round(BUNDLE_SIZES.index.gzipKb)}&nbsp;kB gzipped,
@@ -423,8 +423,8 @@ const description = `React bottom sheets, drawers, dialogs, side panels, and toa
 
   <section class="container section" aria-labelledby="platform-heading">
     <div class="section-head">
-      <h2 id="platform-heading">What it runs on</h2>
-      <p>Platform features handle stacking, scrolling, and dismissal. Support varies by browser.</p>
+      <h2 id="platform-heading">Browser features</h2>
+      <p>Sheets use native dialog and scroll-snap. JavaScript handles the gaps in browser support.</p>
     </div>
     <ul class="platform-grid">
       {
@@ -448,7 +448,7 @@ const description = `React bottom sheets, drawers, dialogs, side panels, and toa
     <div class="section-head">
       <h2 id="examples-heading">Examples</h2>
       <p>
-        Try the examples, then open Code to copy their source and styles.
+        Try an example, then open Code to copy the source and styles.
         More examples are linked from the guides.
       </p>
     </div>

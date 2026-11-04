@@ -1,6 +1,6 @@
 ---
 title: Imperative control
-description: actionsRef exposes open, close, and snapTo for deep links, push notifications, and any caller without a prop to drill through.
+description: Open, close, or snap a sheet with actionsRef.
 ---
 
 import DocExample from '../../../../components/DocExample.astro';
@@ -15,11 +15,10 @@ const actionsRef = useRef<SheetActions>(null);
 <button onClick={() => actionsRef.current?.snapTo('full')}>Expand</button>
 ```
 
-For the cases a controlled `open`/`activeDetent` prop is awkward for (deep links, push
-notifications, a descendant reaching up without prop-drilling): `actionsRef.current.open()`,
-`.close()`, and `.snapTo(detent)` animate exactly like a controlled prop change would. `snapTo`
-warns once in dev if `detent` isn't in the sheet's configured `detents`, and still resolves to the
-nearest one rather than no-op'ing.
+Use `actionsRef.current.open()`, `.close()`, or `.snapTo(detent)` when controlling props is
+awkward, such as in a deep-link handler or push notification. These methods animate like
+controlled prop changes. If the requested detent is not configured, `snapTo` uses the nearest
+one and warns once in development.
 
 <DocExample
   name="ride-tracker"

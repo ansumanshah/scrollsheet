@@ -1,6 +1,6 @@
 ---
 title: Morph a trigger into a sheet
-description: view-transition-name on the trigger and the panel, wrapped in document.startViewTransition, turns open and close into one continuous shape change instead of two animations racing each other.
+description: Animate a trigger into a sheet with the View Transitions API.
 ---
 
 import { Aside, LinkCard } from '@astrojs/starlight/components';
@@ -19,25 +19,19 @@ view-transition-name: morph;
 --scrollsheet-travel: none;
 ```
 
-The trigger and the panel share one `view-transition-name`. `document.startViewTransition`
-screenshots whichever element currently owns that name, runs your state change, then screenshots
-whichever element owns it next, and cross-fades the box between the two positions and sizes. The
-sheet's own travel would play a slide or a zoom+fade underneath that at the same time, so
-`--scrollsheet-travel: none` on the panel switches it off; the morph is the one entrance, and the
-same class handles the exit in reverse.
+Give the trigger and panel the same `view-transition-name`. `document.startViewTransition`
+captures the element before and after your state change, then animates between their positions
+and sizes. Set `--scrollsheet-travel: none` on the panel to disable the sheet's own slide or
+zoom-and-fade animation during both opening and closing.
 
-Only one element can hold a given `view-transition-name` at a time or the transition throws. The
-panel's name can sit in CSS permanently: a closed `<dialog>` is `display: none` by the UA
-stylesheet, and `display: none` elements don't participate, so there's never a moment the panel
-and the trigger both carry it. The trigger's copy is different: it stays on screen whether the
-sheet is open or not, so its name has to be set right before the transition and cleared right
-after, or the still-visible trigger and the now-visible panel would collide the instant the sheet
-opens.
+Only one rendered element can use a given `view-transition-name` at a time. The panel can keep
+its name in CSS because a closed `<dialog>` is `display: none` and does not participate. The
+trigger stays visible, so assign its name just before the transition and clear it in the state
+update callback. Otherwise, the visible trigger and panel would share a name.
 
 ## A button that grows into a modal
 
-The classic case: a button becomes a `side="center"` dialog in its place, not a modal that fades
-in from nowhere.
+This example animates a button into a `side="center"` dialog.
 
 ```tsx
 import * as React from 'react';
@@ -126,16 +120,14 @@ export function NewProjectButton() {
 }
 ```
 
-Every dismissal path has to route through `closeMorph`, including the ones that never touch the
-Create button: backdrop click and Escape both call `onOpenChange(false)` on a controlled sheet
-without touching `open` themselves, which is exactly the hook the morph needs to run before the
-state actually flips.
+Route every dismissal through `closeMorph`. On a controlled sheet, backdrop clicks and Escape
+call `onOpenChange(false)` without changing `open`. This lets the morph start before the state
+changes.
 
 ## A bottom sheet, same hook
 
-Nothing above is center-specific. `--scrollsheet-travel: none` degrades the slide-in the same
-way it degrades the zoom+fade. A list row morphing into a bottom sheet reuses `useTriggerMorph`
-as-is:
+The same `useTriggerMorph` hook works for bottom sheets. `--scrollsheet-travel: none` disables
+the slide animation, just as it disables a centered dialog's zoom and fade:
 
 ```tsx
 interface Order {
@@ -169,33 +161,26 @@ function OrderRow({ order }: { order: Order }) {
 ```
 
 <Aside type="note">
-  Rows that never opened keep the trigger's `view-transition-name` empty, so idle rows never
-  collide with each other or with whichever one is currently morphing.
+  Idle rows have no trigger `view-transition-name`, so they do not conflict with the active row.
 </Aside>
 
 ## What this costs you
 
 <Aside type="caution" title="Feature detection and reduced motion">
   Check `document.startViewTransition` at runtime rather than relying on a browser name.
-  `useTriggerMorph`'s `doc.startViewTransition` check is the whole fallback: unsupported browsers
-  and `prefers-reduced-motion: reduce` both fall straight through to the plain `setOpen` call, and
-  the examples above set `--scrollsheet-travel: none`, so this fallback opens or closes without
-  the library's entrance animation.
+  `useTriggerMorph` calls `setOpen` directly when the API is unavailable or reduced motion is
+  enabled. Because these examples set `--scrollsheet-travel: none`, the fallback opens and
+  closes without an entrance or exit animation.
 </Aside>
 
 <Aside type="caution" title="It snapshots the whole viewport">
-  A View Transition captures the entire document, not just the trigger and the panel. On a page
-  with a lot of paint work outstanding, that capture can visibly stutter: the same cost every
-  cross-fading page transition pays, not something specific to sheets. Try it on the actual page
-  it'll ship on, not a blank test route.
+  A View Transition captures the entire document. Pending paint work can make the capture
+  stutter. Test it on the page where you plan to use it.
 </Aside>
 
 <Aside type="caution" title="The trigger has to still be there">
-  The reverse morph needs a real element to land on. `useTriggerMorph`'s `onscreen` check covers
-  the two ways that breaks: the trigger scrolled out of view (a row opened, then the list scrolled
-  underneath it) or unmounted outright (the sheet outlived the page that opened it). Either way
-  `closeMorph` falls back to the plain `setOpen(false)` exit: no error, no dangling name, just no
-  morph for that one close.
+  The reverse morph needs a visible trigger. If it has scrolled out of view or unmounted,
+  `closeMorph` calls `setOpen(false)` without a morph. The `onscreen` check handles both cases.
 </Aside>
 
 ## Integration boundary
@@ -204,13 +189,12 @@ This recipe uses the browser's View Transitions API around controlled `open` cha
 not require a scrollsheet prop or another animation dependency. Snapshot cost and animation
 quality depend on the page and device; check both opening and closing in your app.
 
-The [Lightbox](/#lightbox) example is this same pattern doing more work: paging, pinch-zoom, and a
-chrome overlay riding its own timing on top of the morph. Read [its source
-comments](https://github.com/ansumanshah/scrollsheet/blob/main/examples/lightbox.tsx) once this
-pattern feels familiar.
+The [Lightbox](/#lightbox) example adds paging, pinch-zoom, and a separately animated controls
+overlay. See [its source
+comments](https://github.com/ansumanshah/scrollsheet/blob/main/examples/lightbox.tsx).
 
 <LinkCard
   title="Centered dialog"
-  description="side='center' renders a content-sized modal in the middle of the viewport, the presentation this recipe pairs with most."
+  description="Center a content-sized dialog with side='center'."
   href="/docs/presentation/centered-dialog"
 />

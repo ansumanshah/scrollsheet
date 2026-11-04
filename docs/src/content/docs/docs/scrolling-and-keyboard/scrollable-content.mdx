@@ -1,6 +1,6 @@
 ---
 title: Scrollable content inside a sheet
-description: Mark an inner scroller with data-scrollsheet-nested-scroll so a swipe scrolls the list first and hands off to sheet travel at the edge.
+description: Scroll a list, then move the sheet when the list reaches its edge.
 ---
 
 import { Aside, LinkCard } from '@astrojs/starlight/components';
@@ -16,9 +16,8 @@ import DocExample from '../../../../components/DocExample.astro';
 
 ## Marking a nested scroller
 
-Mark an inner scroller with `data-scrollsheet-nested-scroll` and the classic conflict resolves
-itself: swiping scrolls the list, and once the list hits its top, the same swipe continues as
-sheet travel.
+Add `data-scrollsheet-nested-scroll` to an inner scroller. A swipe scrolls the list first.
+Once the list reaches its top, the same swipe moves the sheet.
 
 Works under `handleOnly` and `disableDrag` too; the handoff only widens the drag surface while a
 touch that started inside the marked element is live. Any number of elements can carry the
@@ -26,8 +25,7 @@ attribute, including ones added or removed while the sheet is open.
 
 ## Scrollbar styling
 
-The marked element gets the panel's own overlay scrollbar treatment too, controlled by the same
-`scrollbar` prop on `Sheet.Root`: `'overlay'` (the default) hides the native scrollbar and shows a
+The `scrollbar` prop on `Sheet.Root` also applies to marked scrollers: `'overlay'` (the default) hides the native scrollbar and shows a
 thin auto-hiding thumb, `'hidden'` hides it with no thumb, `'native'` leaves it alone.
 
 Under `'overlay'`, scrollsheet sets `position: relative` on the marked element to anchor the
@@ -45,6 +43,6 @@ alone.
 
 <LinkCard
   title="Shadow DOM"
-  description="injectStylesInto adopts the core stylesheet into a shadow root, since document.head styles don't cross the boundary on their own."
+  description="Add scrollsheet styles to a shadow root with injectStylesInto."
   href="/docs/advanced/shadow-dom"
 />
