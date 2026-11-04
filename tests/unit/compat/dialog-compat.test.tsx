@@ -5,6 +5,7 @@ import { renderToString } from "react-dom/server";
 import type * as ReactDOMClient from "react-dom/client";
 import { Dialog, phaseToDataState } from "../../../packages/scrollsheet/src/dialog/index";
 import { _resetWarnOnceForTests } from "../../../packages/scrollsheet/src/internal/dev-warn";
+import type { SheetActions } from "../../../packages/scrollsheet/src/root";
 
 /**
  * The Radix Dialog compat layer (src/dialog) is a thin translation over the
@@ -123,7 +124,7 @@ function TriggerControlledDialog({ open }: { open: boolean }) {
   );
 }
 
-const nativeActionsRef: { current: { open(): void; close(): void } | null } = { current: null };
+const nativeActionsRef: { current: SheetActions | null } = { current: null };
 function NativeForwardDialog() {
   return (
     <Dialog.Root

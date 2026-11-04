@@ -24,6 +24,8 @@ jobs:
     steps:
       - uses: actions/checkout@v7
       - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: 1.4.4
       # setup-bun caches only the bun BINARY, never the packages — without
       # this every job refetches the whole tree from npm on every run.
       - id: bun-cache-dir
@@ -38,6 +40,8 @@ jobs:
       # --filter keeps this job on the library's own dependency set.
       - run: bun install --frozen-lockfile --filter=scrollsheet
       - run: bun run typecheck
+      - run: bun run check:compat
+      - run: bun run check:registry
       # Build before test: tests/unit/use-client.test.ts guards the "use
       # client" banner by reading dist/*.mjs, which only exists post-build.
       - run: bun run build
@@ -59,6 +63,8 @@ jobs:
     steps:
       - uses: actions/checkout@v7
       - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: 1.4.4
       - id: bun-cache-dir
         run: echo "path=$(bun pm cache)" >> "$GITHUB_OUTPUT"
       - name: Cache bun packages
@@ -91,7 +97,7 @@ jobs:
   # ~5 minutes this way, not the ~30s a multi-worker local run suggests.
   # Splitting across matrix jobs can't remove that per-project floor (workers
   # is still 1 inside each job — that setting lives in playwright.config.ts,
-  # outside this file), but it does parallelize the four projects against
+  # outside this file), but it does parallelize the projects against
   # each other across separate GitHub-hosted runners instead of summing them
   # in one job, and each job now installs only the one browser engine it
   # needs. tests/e2e/fixtures/ bundles straight from ../../src (see serve.ts),
@@ -111,9 +117,13 @@ jobs:
             browser: webkit
           - project: firefox-desktop
             browser: firefox
+          - project: perf
+            browser: chromium
     steps:
       - uses: actions/checkout@v7
       - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: 1.4.4
       - id: bun-cache-dir
         run: echo "path=$(bun pm cache)" >> "$GITHUB_OUTPUT"
       - name: Cache bun packages
@@ -145,6 +155,8 @@ jobs:
     steps:
       - uses: actions/checkout@v7
       - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: 1.4.4
       - id: bun-cache-dir
         run: echo "path=$(bun pm cache)" >> "$GITHUB_OUTPUT"
       - name: Cache bun packages

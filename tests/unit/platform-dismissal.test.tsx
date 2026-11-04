@@ -47,7 +47,7 @@ afterEach(() => {
   // biome-ignore lint: test-only global cleanup
   delete (globalThis as Record<string, unknown>).HTMLDialogElement;
   // biome-ignore lint: test-only global cleanup
-  delete (globalThis.window as Record<string, unknown>).CloseWatcher;
+  delete (globalThis.window as unknown as Record<string, unknown>).CloseWatcher;
   FakeCloseWatcher.instances = [];
   if (realMatchMedia) {
     globalThis.window.matchMedia = realMatchMedia;
@@ -232,7 +232,7 @@ describe("non-modal sheet — static markup contract (backdrop absence, aria)", 
 describe("useCloseWatcher reached end-to-end through a non-modal Sheet.Root/Content", () => {
   test("a dismissible non-modal sheet creates a watcher on a touch-primary device, and its close event closes the sheet", async () => {
     (globalThis as Record<string, unknown>).HTMLDialogElement = FakeDialogElement;
-    (globalThis.window as Record<string, unknown>).CloseWatcher = FakeCloseWatcher;
+    (globalThis.window as unknown as Record<string, unknown>).CloseWatcher = FakeCloseWatcher;
     stubTouchPrimary(true);
     const { Sheet } = await import("../../packages/scrollsheet/src/index");
     const onOpenChange = (open: boolean) => {
@@ -256,7 +256,7 @@ describe("useCloseWatcher reached end-to-end through a non-modal Sheet.Root/Cont
 
   test("a fine-pointer (desktop) device creates no watcher — Esc must stay focus-scoped there", async () => {
     (globalThis as Record<string, unknown>).HTMLDialogElement = FakeDialogElement;
-    (globalThis.window as Record<string, unknown>).CloseWatcher = FakeCloseWatcher;
+    (globalThis.window as unknown as Record<string, unknown>).CloseWatcher = FakeCloseWatcher;
     stubTouchPrimary(false);
     const { Sheet } = await import("../../packages/scrollsheet/src/index");
     await mount(
@@ -271,7 +271,7 @@ describe("useCloseWatcher reached end-to-end through a non-modal Sheet.Root/Cont
 
   test("a non-escape-dismissible non-modal sheet creates no watcher — must not consume Android back", async () => {
     (globalThis as Record<string, unknown>).HTMLDialogElement = FakeDialogElement;
-    (globalThis.window as Record<string, unknown>).CloseWatcher = FakeCloseWatcher;
+    (globalThis.window as unknown as Record<string, unknown>).CloseWatcher = FakeCloseWatcher;
     stubTouchPrimary(true);
     const { Sheet } = await import("../../packages/scrollsheet/src/index");
     await mount(
@@ -286,7 +286,7 @@ describe("useCloseWatcher reached end-to-end through a non-modal Sheet.Root/Cont
 
   test("a modal sheet never creates a watcher — closedby already owns that path", async () => {
     (globalThis as Record<string, unknown>).HTMLDialogElement = FakeDialogElement;
-    (globalThis.window as Record<string, unknown>).CloseWatcher = FakeCloseWatcher;
+    (globalThis.window as unknown as Record<string, unknown>).CloseWatcher = FakeCloseWatcher;
     stubTouchPrimary(true);
     const { Sheet } = await import("../../packages/scrollsheet/src/index");
     await mount(

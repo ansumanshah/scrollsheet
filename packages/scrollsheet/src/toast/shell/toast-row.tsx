@@ -22,7 +22,7 @@
 import * as React from "react";
 import { cn } from "../../internal/cn";
 import type { SwipeDirection, ToastClassnames, ToastIcons, ToastRecord, ToastType } from "../state";
-import { useMountedFlag } from "../toaster";
+import { useMountedFlag } from "../toaster-shared";
 import { useToastSwipe } from "./use-toast-swipe";
 
 function ToastIcon({
@@ -75,6 +75,8 @@ export interface ToastRowProps {
   onDismiss: (record: ToastRecord) => void;
   observe: (id: number | string, el: HTMLElement | null) => void;
   toasterClassNames?: ToastClassnames;
+  /** The Toaster's own `toastOptions.className`, under the record's own `className`. */
+  toasterClassName?: string;
   icons?: ToastIcons;
   toasterCloseButtonAriaLabel?: string;
   /** The Toaster's own `toastOptions.style` — every row's base inline styles, under the record's own `style`. */
@@ -101,6 +103,7 @@ export function ToastRow({
   onDismiss,
   observe,
   toasterClassNames,
+  toasterClassName,
   icons,
   toasterCloseButtonAriaLabel,
   toasterStyle,
@@ -154,13 +157,22 @@ export function ToastRow({
   // existing `.sonner-toast {}` rule keeps matching unmodified. With
   // sonnerCompat off, the mirrors drop and only neutral names render.
   const legacy = (name: string) => (sonnerCompat ? name : undefined);
+  // One card slot's class list: its neutral and sonner names, then the
+  // Toaster-level and per-toast classNames entries for that slot.
+  const slot = (suffix: string, key: keyof ToastClassnames) =>
+    cn(
+      `scrollsheet-toast-${suffix}`,
+      legacy(`sonner-toast-${suffix}`),
+      toasterClassNames?.[key],
+      record.classNames?.[key],
+    );
   const rootClassName = cn(
     "scrollsheet-toast",
     legacy("sonner-toast"),
+    toasterClassName,
     record.className,
     toasterClassNames?.toast,
     record.classNames?.toast,
-    toasterClassNames?.default,
     toasterClassNames?.[record.type],
     record.classNames?.[record.type],
   );
@@ -224,60 +236,19 @@ export function ToastRow({
       {...motionAttrs}
       {...swipeHandlers}
     >
-      <span
-        className={cn(
-          "scrollsheet-toast-icon",
-          legacy("sonner-toast-icon"),
-          toasterClassNames?.icon,
-          record.classNames?.icon,
-        )}
-        data-type={record.type}
-        aria-hidden="true"
-      >
+      <span className={slot("icon", "icon")} data-type={record.type} aria-hidden="true">
         {record.icon ?? (
           <ToastIcon
             type={record.type}
             icons={icons}
-            spinnerClassName={cn(
-              "scrollsheet-toast-spinner",
-              legacy("sonner-toast-spinner"),
-              toasterClassNames?.loader,
-              record.classNames?.loader,
-            )}
+            spinnerClassName={slot("spinner", "loader")}
           />
         )}
       </span>
-      <div
-        className={cn(
-          "scrollsheet-toast-body",
-          legacy("sonner-toast-body"),
-          toasterClassNames?.content,
-          record.classNames?.content,
-        )}
-      >
-        {record.title !== undefined && (
-          <div
-            className={cn(
-              "scrollsheet-toast-title",
-              legacy("sonner-toast-title"),
-              toasterClassNames?.title,
-              record.classNames?.title,
-            )}
-          >
-            {record.title}
-          </div>
-        )}
+      <div className={slot("body", "content")}>
+        {record.title !== undefined && <div className={slot("title", "title")}>{record.title}</div>}
         {record.description !== undefined && (
-          <div
-            className={cn(
-              "scrollsheet-toast-description",
-              legacy("sonner-toast-description"),
-              toasterClassNames?.description,
-              record.classNames?.description,
-            )}
-          >
-            {record.description}
-          </div>
+          <div className={slot("description", "description")}>{record.description}</div>
         )}
       </div>
       {hasActions && (
@@ -285,12 +256,7 @@ export function ToastRow({
           {record.cancel && (
             <button
               type="button"
-              className={cn(
-                "scrollsheet-toast-cancel",
-                legacy("sonner-toast-cancel"),
-                toasterClassNames?.cancelButton,
-                record.classNames?.cancelButton,
-              )}
+              className={slot("cancel", "cancelButton")}
               onClick={(event) => {
                 // Gated on dismissible BEFORE the consumer's own onClick even
                 // runs — matches real Sonner's own cancel handler exactly.
@@ -305,12 +271,7 @@ export function ToastRow({
           {record.action && (
             <button
               type="button"
-              className={cn(
-                "scrollsheet-toast-action",
-                legacy("sonner-toast-action"),
-                toasterClassNames?.actionButton,
-                record.classNames?.actionButton,
-              )}
+              className={slot("action", "actionButton")}
               onClick={(event) => {
                 // Unlike cancel, action always fires and only skips
                 // dismissing if the consumer called event.preventDefault().
@@ -325,12 +286,7 @@ export function ToastRow({
           {showCloseButton && (
             <button
               type="button"
-              className={cn(
-                "scrollsheet-toast-close",
-                legacy("sonner-toast-close"),
-                toasterClassNames?.closeButton,
-                record.classNames?.closeButton,
-              )}
+              className={slot("close", "closeButton")}
               aria-label={closeButtonAriaLabel}
               onClick={() => onDismiss(record)}
             >

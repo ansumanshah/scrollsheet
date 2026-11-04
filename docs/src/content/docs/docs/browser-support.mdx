@@ -1,6 +1,6 @@
 ---
 title: Browser support
-description: dialog and spring easing reach about 96% of browsers; the remaining ~4% get a plain fixed-position modal with no drag or detents.
+description: Feature-detected dialog, easing, scroll-driven animation, and close-request support, with a fixed-position fallback.
 ---
 
 import { Aside, LinkCard } from '@astrojs/starlight/components';
@@ -13,24 +13,23 @@ import { Aside, LinkCard } from '@astrojs/starlight/components';
 | --- | --- | --- |
 | Chrome / Edge | 113+ | 115+ |
 | Safari | 17.2+ | 26+ |
-| Firefox | 112+ | behind a flag, see below |
+| Firefox | 112+ | Feature-detected; JavaScript fallback |
 
 </div>
 
 ## Caveats
 
 <Aside type="caution" title="Below the version floor">
-  Safari 16.4–17.1 parses `<dialog>` but not CSS `linear()`, so the spring falls back to a plain
+  Safari 15.4–17.1 supports `<dialog>` but not CSS `linear()`, so the spring falls back to a plain
   ease-out at the same duration. `scrollend` falls back to a ~120ms debounced scroll-silence check
   where unsupported.
 </Aside>
 
 <Aside type="caution" title="Scroll-driven animation gaps">
   The backdrop dim and `--scrollsheet-progress` run as CSS scroll-driven animations
-  (`animation-timeline: scroll()`), off the main thread, on engines that support them,
-  feature-detected once and stamped `data-scrollsheet-sda` on the dialog. Firefox has it behind
-  a flag as of mid-2026; Safari 17.2–25 has the spring but not scroll-driven animations. Below
-  that compositor floor, the same values update every frame from `onTravel`'s own JS write
+  (`animation-timeline: scroll()`), on engines that support them,
+  feature-detected once and stamped `data-scrollsheet-sda` on the dialog. Where unavailable,
+  the same values update every frame from `onTravel`'s own JavaScript write
   instead. Two pieces stay JS-driven on every engine regardless: a stacked sheet's parent-panel
   recede (a sibling top-layer `<dialog>`, not a descendant the track's timeline can reach) and
   `backgroundEffect` (its target sits outside the dialog entirely).
@@ -42,8 +41,8 @@ import { Aside, LinkCard } from '@astrojs/starlight/components';
   back gesture route through the platform's own close-request machinery, not scrollsheet's
   manual handling. Never `closedby="any"`: `.scrollsheet-dialog` always covers the full
   viewport, so there's no "outside the dialog" region for a native light-dismiss to detect; it
-  would only double-fire against the existing backdrop-click handling. Engines without
-  `closedBy` (Safari, as of this writing) keep the manual Esc/backdrop dismissal unchanged.
+  would add no usable outside region to the existing backdrop-click handling. Engines without
+  `closedBy` keep the manual Esc/backdrop dismissal unchanged.
   Non-modal sheets (`modal={false}`) get no platform close watcher for free, so a dismissible
   one creates its own via `CloseWatcher` (Chrome 126+, Firefox 149+, touch-primary devices only) so Android
   back closes it instead of navigating the page. On those devices Esc is also a platform close
@@ -53,9 +52,13 @@ import { Aside, LinkCard } from '@astrojs/starlight/components';
 
 ## Without `<dialog>`
 
+The [Can I Use dialog data](https://caniuse.com/dialog) reported 97.12% support on
+2026-11-04. Counting unknown usage as unsupported gives a conservative 2.88% without
+native dialog support. Unknown traffic is included in that estimate, not evidence of a known browser limitation.
+
 <div className="table-scroll prop-table">
 
-| ~4% of browsers (Opera Mini, old in-app WebViews, iOS ≤15.3) | |
+| Browsers without native dialog support | |
 | --- | --- |
 | You get | A fixed-position modal: backdrop, tap-to-close, Escape, focus moved into the panel on open and restored to the trigger on close, body scroll locked. Panel sizes to content up to 85% of the viewport, then scrolls internally |
 | Gone | Detents, drag, the enter/exit animation, the top layer (panel portals to `<body>` with a max `z-index` instead of a guarantee), the native focus trap. `Sheet.Handle` renders nothing |
@@ -63,21 +66,21 @@ import { Aside, LinkCard } from '@astrojs/starlight/components';
 
 </div>
 
-The trade against libraries that portal a plain `<div>` (vaul, react-modal-sheet): their full
-gesture experience reaches these browsers and ours does not, on the bet that the top layer is
-worth more on the 96% than the gestures are on the 4%.
+The fallback keeps the content available without reproducing the native dialog or gesture engine.
 
-Want your own UI for that ~4% instead of the built-in fallback? Check `isSupported()`
+Want your own UI instead of the built-in fallback? Check `isSupported()`
 client-side, after mount, so server and client agree on the first render:
 
 ```tsx
+import { useEffect, useState } from 'react';
 import { Sheet, isSupported } from 'scrollsheet';
+import 'scrollsheet/styles.css';
 
 const [supported, setSupported] = useState(false);
 useEffect(() => setSupported(isSupported()), []);
 
 if (!supported) return <LegacyModal open={open} onClose={onClose} />;
-return <Sheet.Root open={open} onOpenChange={onClose}>...</Sheet.Root>;
+return <Sheet.Root open={open} onOpenChange={(next) => { if (!next) onClose(); }}>...</Sheet.Root>;
 ```
 
 <LinkCard

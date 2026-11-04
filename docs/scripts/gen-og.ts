@@ -1,9 +1,7 @@
 #!/usr/bin/env bun
 /**
- * Renders scripts/og.svg to public/og.png (1200x630, the Open Graph /
- * Twitter card image). Run after editing og.svg so the two never drift —
- * @resvg/resvg-js is a proven, maintained SVG rasterizer, not a hand-rolled
- * renderer.
+ * Renders scripts/og.svg to public/og.png (1200x630).
+ * Regenerate the Open Graph image after editing the SVG copy.
  */
 import { Resvg } from "@resvg/resvg-js";
 

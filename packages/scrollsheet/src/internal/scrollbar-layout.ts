@@ -51,7 +51,7 @@ export interface ThumbController {
  * One thumb's show/hide lifecycle — the flash-then-hide and
  * scroll-show-idle-hide timing shared by the panel's own thumb
  * (use-overlay-scrollbar.ts) and every nested scroller's
- * (use-nested-scrollbars.ts), so the affordance behaves identically on both.
+ * (use-nested-scroll.ts), so the affordance behaves identically on both.
  */
 export function createThumbController(container: Element, thumb: HTMLElement): ThumbController {
   let raf = 0;

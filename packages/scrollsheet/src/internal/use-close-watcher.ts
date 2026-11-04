@@ -59,6 +59,11 @@ export function useCloseWatcher({
   React.useInsertionEffect(() => {
     onCloseRef.current = onClose;
   });
+  // A close request destroys its watcher (one-shot per spec). When the
+  // owner stays present afterwards (a Toaster with more toasts left, a
+  // controlled sheet that refused the close), the next back gesture needs
+  // a fresh watcher or it navigates the page away.
+  const [generation, rearm] = React.useReducer((n: number) => n + 1, 0);
 
   React.useEffect(() => {
     if (!present || !nonModal || !escapeDismissible) return;
@@ -71,7 +76,10 @@ export function useCloseWatcher({
     }
     const Ctor = (window as unknown as { CloseWatcher: new () => CloseWatcherLike }).CloseWatcher;
     const watcher = new Ctor();
-    watcher.onclose = () => onCloseRef.current();
+    watcher.onclose = () => {
+      onCloseRef.current();
+      rearm();
+    };
     return () => watcher.destroy();
-  }, [present, nonModal, escapeDismissible]);
+  }, [present, nonModal, escapeDismissible, generation]);
 }

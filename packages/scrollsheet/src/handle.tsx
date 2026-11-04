@@ -29,7 +29,8 @@ function detentLabel(spec: DetentSpec | undefined): string {
   if (spec === "full") return "Full";
   if (spec === "medium") return "Half";
   if (spec === "content") return "Fit content";
-  if (typeof spec === "number") return `${Math.round(spec * 100)}%`;
+  // Numbers above 1 resolve as px (detents.ts), not as a fraction.
+  if (typeof spec === "number") return spec > 1 ? `${spec}px` : `${Math.round(spec * 100)}%`;
   return spec ?? "";
 }
 
@@ -68,8 +69,7 @@ export const Handle = /* @__PURE__ */ React.forwardRef<HTMLButtonElement, SheetH
 
     const move = (delta: number) => {
       if (!multi) return false;
-      const index = specs.findIndex((s) => Object.is(s, ctx.activeDetent));
-      const next = specs[index + delta];
+      const next = specs[activeIndex + delta];
       if (next === undefined) return false;
       ctx.setActiveDetent(next);
       return true;
@@ -108,8 +108,7 @@ export const Handle = /* @__PURE__ */ React.forwardRef<HTMLButtonElement, SheetH
           if (event.defaultPrevented) return;
           // Cycle: advance to the next detent, wrap to the first.
           if (!multi) return;
-          const index = specs.findIndex((s) => Object.is(s, ctx.activeDetent));
-          const next = specs[(index + 1) % specs.length];
+          const next = specs[(activeIndex + 1) % specs.length];
           if (next !== undefined) ctx.setActiveDetent(next);
         }}
         onKeyDown={(event: React.KeyboardEvent<HTMLButtonElement>) => {

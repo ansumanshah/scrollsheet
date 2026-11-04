@@ -35,6 +35,7 @@ export interface ToastSwipeHandlers {
   onPointerMove: (event: React.PointerEvent<HTMLElement>) => void;
   onPointerUp: (event: React.PointerEvent<HTMLElement>) => void;
   onPointerCancel: (event: React.PointerEvent<HTMLElement>) => void;
+  onLostPointerCapture: (event: React.PointerEvent<HTMLElement>) => void;
 }
 
 interface SwipeAmount {
@@ -177,15 +178,39 @@ export function useToastSwipe(
 
   const onPointerUp = React.useCallback(
     (event: React.PointerEvent<HTMLElement>) => {
+      release();
       if (elRef.current?.hasPointerCapture(event.pointerId)) {
         elRef.current.releasePointerCapture(event.pointerId);
       }
-      release();
     },
     [elRef, release],
   );
 
-  const onPointerCancel = React.useCallback(() => release(), [release]);
+  const onPointerCancel = React.useCallback(
+    (event: React.PointerEvent<HTMLElement>) => {
+      if (!draggingRef.current) return;
+      draggingRef.current = false;
+      axisRef.current = null;
+      startRef.current = ZERO_AMOUNT;
+      amountRef.current = ZERO_AMOUNT;
+      dragStartRef.current = 0;
+      const el = elRef.current;
+      if (!el) return;
+      if (el.hasPointerCapture(event.pointerId)) el.releasePointerCapture(event.pointerId);
+      // Cancellation unwinds the gesture even after crossing a dismissal threshold.
+      el.setAttribute("data-swiping", "false");
+      el.setAttribute("data-swiped", "false");
+      el.style.setProperty("--scrollsheet-toast-swipe-x", "0px");
+      el.style.setProperty("--scrollsheet-toast-swipe-y", "0px");
+    },
+    [elRef],
+  );
 
-  return { onPointerDown, onPointerMove, onPointerUp, onPointerCancel };
+  return {
+    onPointerDown,
+    onPointerMove,
+    onPointerUp,
+    onPointerCancel,
+    onLostPointerCapture: onPointerCancel,
+  };
 }

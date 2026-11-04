@@ -138,6 +138,7 @@ describe("review finding 3 (shell era) — an exit-holding row is inert and hidd
 
     const betaRow = toasterRows().find((el) => el.textContent?.includes("Beta"));
     expect(betaRow).toBeDefined();
+    if (!betaRow) throw new Error("Beta toast row is missing");
     expect(betaRow?.hasAttribute("inert")).toBe(false);
     const closeBtn = betaRow?.querySelector<HTMLButtonElement>(".scrollsheet-toast-close");
     await React.act(async () => {

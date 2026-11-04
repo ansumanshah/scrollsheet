@@ -12,92 +12,79 @@ interface FaqItem {
   answerText: string;
 }
 
-// Every answer here is checked against the repo (README, package.json,
-// src/, scripts/check-size.ts output) before it's written down. See
-// .claude/memory.md for the verification pass. Keep it that way: don't
-// add a claim here you haven't confirmed against source.
+// Keep HTML answers and structured-data text consistent when updating a question.
 const faqs: FaqItem[] = [
   {
     id: "why-not-vaul",
-    question: "Why use this instead of vaul?",
-    answerHtml: `vaul is the React drawer nearly everyone ships: 37 million downloads a week. scrollsheet drags via the browser's own scroll engine instead of simulating the gesture with pointer events, and renders a real native <code>&lt;dialog&gt;</code> instead of a portal, at ${indexGzip} kB gzipped against vaul's Radix Dialog dependency tree. Full breakdown in the <a href="/#compare-heading">comparison table</a>.`,
-    answerText: `vaul is the React drawer nearly everyone ships: 37 million downloads a week. scrollsheet drags via the browser's own scroll engine instead of simulating the gesture with pointer events, and renders a real native dialog instead of a portal, at ${indexGzip} kB gzipped against vaul's Radix Dialog dependency tree.`,
+    question: "How does it differ from vaul?",
+    answerHtml: `scrollsheet uses native scroll-snap for touch dragging and a <code>&lt;dialog&gt;</code> for modal sheets. It provides a <code>Drawer</code> adapter for common vaul APIs, with differences in styling and unsupported props. Review <a href="/docs/migrating/from-vaul">the migration guide</a> before changing imports.`,
+    answerText: `scrollsheet uses native scroll-snap for touch dragging and a dialog for modal sheets. It provides a Drawer adapter for common vaul APIs, with differences in styling and unsupported props. Review the migration guide before changing imports.`,
   },
   {
     id: "how-big",
-    question: "How big is it, really?",
-    answerHtml: `${indexGzip} kB gzipped, ${indexBrotli} kB brotli, the bundled and minified size with React external, from <code>bun run size</code> against the current build. Zero runtime dependencies: <code>react</code> and <code>react-dom</code> are peer dependencies only, both <code>&gt;=18</code>. See <a href="/docs/getting-started/install">Install</a>.`,
-    answerText: `${indexGzip} kB gzipped, ${indexBrotli} kB brotli, the bundled and minified size with React external. Zero runtime dependencies: react and react-dom are peer dependencies only, both 18 or newer.`,
+    question: "What is the bundle size?",
+    answerHtml: `The <code>Sheet</code> import is ${indexGzip} kB gzipped or ${indexBrotli} kB brotli after bundling and minification with Bun. These measurements exclude React, stylesheets, and feature chunks loaded on demand. There are no runtime dependencies; <code>react</code> and <code>react-dom</code> are peers, both <code>&gt;=18</code>. See <a href="/docs/getting-started/install">Install</a>.`,
+    answerText: `The Sheet import is ${indexGzip} kB gzipped or ${indexBrotli} kB brotli after bundling and minification with Bun. These measurements exclude React, stylesheets, and feature chunks loaded on demand. There are no runtime dependencies; react and react-dom are peers, both 18 or newer.`,
   },
   {
     id: "app-router-rsc",
     question: "Does it work with Next.js App Router and React Server Components?",
-    answerHtml: `Yes. Every module that touches state or the DOM opens with <code>"use client"</code>, including <code>Sheet.Root</code>, <code>Content</code>, <code>Handle</code>, <code>Trigger</code>, and both compat layers (vaul, sonner). Render <code>&lt;Sheet.Root&gt;</code> from a Server Component like any other client component; React draws the boundary for you.`,
-    answerText:
-      "Yes. Every module that touches state or the DOM opens with a use client directive, including Root, Content, Handle, Trigger, and both compat layers. Render Sheet.Root from a Server Component like any other client component.",
+    answerHtml: `Render the <code>Sheet.*</code> namespace API inside a Client Component. Add <code>'use client'</code> to the file that renders <code>&lt;Sheet.Root&gt;</code>; namespace member access should not happen in a Server Component. The published JavaScript chunks include client directives. See <a href="/docs/advanced/framework-support">Framework support</a>.`,
+    answerText: `Render the Sheet namespace API inside a Client Component. Add use client to the file that renders Sheet.Root; namespace member access should not happen in a Server Component. The published JavaScript chunks include client directives.`,
   },
   {
     id: "tailwind",
     question: "Does it work with Tailwind?",
-    answerHtml: `Yes, Tailwind v4 out of the box: no plugin, no config. Utilities on <code>className</code> apply directly because the mechanics stylesheet only wins where it must (position, transform) and sits in zero-specificity <code>:where()</code> rules everywhere else. See <a href="/docs/styling/tailwind">Tailwind</a>.`,
-    answerText:
-      "Yes, Tailwind v4 out of the box: no plugin, no config. Utilities on className apply directly because the mechanics stylesheet only wins where it must, position and transform, and sits in zero-specificity where rules everywhere else.",
+    answerHtml: `Pass Tailwind utilities through <code>className</code> and load the scrollsheet stylesheet. Visual defaults use low-specificity selectors, while layout and transform rules support the sheet mechanics. See <a href="/docs/styling/tailwind">Tailwind</a> for setup and styling examples.`,
+    answerText: `Pass Tailwind utilities through className and load the scrollsheet stylesheet. Visual defaults use low-specificity selectors, while layout and transform rules support the sheet mechanics. See the Tailwind guide for setup and styling examples.`,
   },
   {
     id: "accessibility",
     question: "How accessible is it?",
-    answerHtml: `Modal focus containment comes from the platform's own <code>showModal()</code>, not a JS focus trap. With two or more detents, <code>Sheet.Handle</code> exposes <code>role="slider"</code> with <code>aria-valuemin</code>/<code>-valuemax</code>/<code>-valuenow</code>/<code>-valuetext</code>; Up/Down (or Left/Right on side sheets) move between stops, Home and End jump to the ends. See <a href="/docs/reference/api">API</a>.`,
-    answerText:
-      "Modal focus containment comes from the platform's own showModal, not a JS focus trap. With two or more detents, Sheet.Handle exposes role slider with aria-valuemin, valuemax, valuenow and valuetext; arrow keys move between stops, Home and End jump to the ends.",
+    answerHtml: `Modal sheets use <code>showModal()</code> for browser focus containment. Supply a <code>Sheet.Title</code> or an accessible label. With multiple detents, <code>Sheet.Handle</code> exposes slider semantics: arrow keys move between stops, and Home/End select the first/last stop. The fallback without <code>&lt;dialog&gt;</code> does not provide the same native focus containment. See <a href="/docs/accessibility">Accessibility</a>.`,
+    answerText: `Modal sheets use showModal for browser focus containment. Supply a Sheet.Title or an accessible label. With multiple detents, Sheet.Handle exposes slider semantics: arrow keys move between stops, and Home and End select the first and last stop. The fallback without dialog does not provide the same native focus containment.`,
   },
   {
     id: "browser-support",
     question: "Which browsers does it support?",
-    answerHtml: `Spring easing works from Chrome 113, Safari 17.2, and Firefox 112. The compositor-driven backdrop fade needs Chrome/Edge 115+ or Safari 26+; Firefox has it implemented but still behind a flag. Below Safari 15.4 there's no <code>&lt;dialog&gt;</code> at all, so the sheet falls back to a plain fixed-position modal: backdrop, tap-to-close, Escape, no detents or drag. Full matrix in <a href="/docs/browser-support">Browser support</a>.`,
-    answerText:
-      "Spring easing works from Chrome 113, Safari 17.2, and Firefox 112. The compositor-driven backdrop fade needs Chrome or Edge 115 or newer, or Safari 26 or newer; Firefox has it implemented but still behind a flag. Below Safari 15.4 there's no dialog element at all, so the sheet falls back to a plain fixed-position modal with a backdrop, tap-to-close, and Escape, but no detents or drag.",
+    answerHtml: `The gesture experience uses <code>&lt;dialog&gt;</code> and CSS scroll-snap. Without CSS <code>linear()</code>, animations use an ease-out curve. Without scroll-driven animations, JavaScript updates the backdrop. Browsers without <code>&lt;dialog&gt;</code> get a fixed-position fallback with backdrop and Escape dismissal, but no detents or dragging. See the <a href="/docs/browser-support">browser support matrix</a> for version requirements.`,
+    answerText: `The gesture experience uses dialog and CSS scroll-snap. Without CSS linear easing, animations use an ease-out curve. Without scroll-driven animations, JavaScript updates the backdrop. Browsers without dialog get a fixed-position fallback with backdrop and Escape dismissal, but no detents or dragging.`,
   },
   {
     id: "migrate-from-vaul",
-    question: "Can I migrate from vaul without rewriting?",
-    answerHtml: `Mostly. <code>import { Drawer } from 'scrollsheet'</code> maps the same <code>Drawer.*</code> namespace onto <code>Sheet.*</code>: <code>snapPoints</code>, <code>direction</code>, <code>modal={false}</code>, <code>shouldScaleBackground</code>, and more all map to real features. Props that only existed to fight the page, like scroll-lock or portal containers, warn once in dev; Radix <code>Dialog.Content</code>-only props like <code>onPointerDownOutside</code> have no equivalent and are stripped. Full mapping in <a href="/docs/migrating/from-vaul">Migrate from vaul</a>.`,
-    answerText:
-      "Mostly. Importing Drawer from scrollsheet maps the same Drawer namespace onto Sheet, and props like snapPoints, direction, modal false, and shouldScaleBackground map to real features. Props that only existed to fight the page, like scroll-lock or portal containers, warn once in dev; Radix Dialog.Content only props such as onPointerDownOutside have no equivalent and are stripped.",
+    question: "Which vaul APIs are supported?",
+    answerHtml: `The <code>Drawer</code> export supports common vaul APIs, including <code>snapPoints</code>, <code>direction</code>, <code>modal</code>, and <code>shouldScaleBackground</code>. Portal containers and some focus and outside-interaction callbacks are unsupported and warn in development. Styling and dismissal behavior can differ. See <a href="/docs/migrating/from-vaul">Migrate from vaul</a> for the prop mapping.`,
+    answerText: `The Drawer export supports common vaul APIs, including snapPoints, direction, modal, and shouldScaleBackground. Portal containers and some focus and outside-interaction callbacks are unsupported and warn in development. Styling and dismissal behavior can differ. See the vaul migration guide for the prop mapping.`,
   },
   {
     id: "migrate-from-sonner",
-    question: "Can I migrate from Sonner without rewriting?",
-    answerHtml: `Mostly. <code>import { toast, Toaster } from 'scrollsheet'</code> is a drop-in for the same <code>toast</code> and <code>Toaster</code>, including <code>.success()</code>/<code>.error()</code>/<code>.custom()</code>/<code>.promise()</code> and <code>toasterId</code>-scoped toasters, running on the same per-toast DOM and positioning real Sonner uses. Your existing <code>useSonner()</code> calls and <code>.sonner-toast</code> CSS keep working unchanged; new code can call the same hook as <code>useToasts()</code> instead. v1 gaps: <code>theme</code> and <code>richColors</code> aren't implemented yet. Full mapping in <a href="/docs/migrating/from-sonner">Migrate from Sonner</a>.`,
-    answerText:
-      "Mostly. Importing toast and Toaster from scrollsheet is a drop-in for the same toast and Toaster, including success, error, custom, promise, and toasterId-scoped toasters, running on the same per-toast DOM and positioning real Sonner uses. Existing useSonner calls and .sonner-toast CSS keep working unchanged; new code can call the same hook as useToasts instead. v1 gaps: theme and richColors aren't implemented yet.",
+    question: "Which Sonner APIs are supported?",
+    answerHtml: `The <code>toast</code> and <code>Toaster</code> exports support common Sonner APIs, including <code>success</code>, <code>error</code>, <code>custom</code>, <code>promise</code>, and scoped toast queues. <code>useToasts</code> is an alias for <code>useSonner</code>. Compatibility class names preserve many existing selectors, but markup and styling can differ. Dark/system theming, <code>richColors</code>, and RTL configuration are not implemented. See <a href="/docs/migrating/from-sonner">Migrate from Sonner</a>.`,
+    answerText: `The toast and Toaster exports support common Sonner APIs, including success, error, custom, promise, and scoped toast queues. useToasts is an alias for useSonner. Compatibility class names preserve many existing selectors, but markup and styling can differ. Dark and system theming, richColors, and RTL configuration are not implemented.`,
   },
   {
     id: "snap-points",
     question: "Does it support snap points?",
-    answerHtml: `They're called detents, Apple's term. Accepted forms: <code>'full'</code>, <code>'medium'</code>, <code>'content'</code> (natural height), a fraction in <code>(0, 1]</code>, or a pixel string like <code>'320px'</code>. See <a href="/docs/detents-and-control/detents">Detents</a>.`,
-    answerText:
-      "They're called detents. Accepted forms are full, medium, content for natural height, a fraction between 0 and 1, or a pixel string like 320px.",
+    answerHtml: `Use the <code>detents</code> prop. Accepted forms are <code>'full'</code>, <code>'medium'</code>, <code>'content'</code> for natural height, a fraction in <code>(0, 1]</code>, or a pixel string such as <code>'320px'</code>. Numbers above 1 are also treated as pixels. See <a href="/docs/detents-and-control/detents">Detents</a>.`,
+    answerText: `Use the detents prop. Accepted forms are full, medium, content for natural height, a fraction above zero through one, or a pixel string such as 320px. Numbers above one are also treated as pixels.`,
   },
   {
     id: "ios-keyboard",
     question: "Does it handle the iOS keyboard?",
-    answerHtml: `Yes, automatically. iOS resizes <code>visualViewport</code>, not the layout viewport, when the keyboard opens; scrollsheet listens and writes the inset to <code>--scrollsheet-keyboard</code>, and the panel overdraws about 120vh past its bottom edge so a stale frame never shows a gap. See <a href="/docs/scrolling-and-keyboard/keyboard">Keyboard</a>.`,
-    answerText:
-      "Yes, automatically. iOS resizes visualViewport, not the layout viewport, when the keyboard opens; scrollsheet listens and writes the inset to a CSS variable, and the panel overdraws past its bottom edge so a stale frame never shows a gap.",
+    answerHtml: `scrollsheet tracks <code>visualViewport</code> changes and updates <code>--scrollsheet-keyboard</code> when a text field has focus. Bottom sheets use that inset to move above the keyboard; other presentations add content clearance. On iOS, modal sheets can temporarily freeze the body and restore its scroll position on close. See <a href="/docs/scrolling-and-keyboard/keyboard">Keyboard</a>.`,
+    answerText: `scrollsheet tracks visualViewport changes and updates its keyboard inset when a text field has focus. Bottom sheets use that inset to move above the keyboard; other presentations add content clearance. On iOS, modal sheets can temporarily freeze the body and restore its scroll position on close.`,
   },
   {
     id: "shadow-dom",
     question: "Does it work inside a Shadow DOM?",
-    answerHtml: `Rendering works, since the native dialog's top layer is document-level rather than shadow-scoped. The one thing you handle yourself: the auto-injected mechanics styles land in <code>document.head</code>, which a shadow root doesn't see, so call <code>injectStylesInto(shadowRoot)</code> before any <code>Sheet.Content</code> inside it opens. See <a href="/docs/advanced/shadow-dom">Shadow DOM</a>.`,
-    answerText:
-      "Rendering works, since the native dialog's top layer is document-level rather than shadow-scoped. The auto-injected mechanics styles land in document.head, which a shadow root doesn't see, so call injectStylesInto(shadowRoot) before any Sheet.Content inside it opens.",
+    answerHtml: `You can mount sheet controls inside a shadow root, but <code>Sheet.Content</code> portals to <code>document.body</code>. Load the panel's styles in the document. The <code>scrollsheet/auto</code> entry embeds those styles; <code>injectStylesInto(shadowRoot)</code> is available for scrollsheet elements that remain inside the shadow root. It does not change the portal destination. See <a href="/docs/advanced/shadow-dom">Shadow DOM</a>.`,
+    answerText: `You can mount sheet controls inside a shadow root, but Sheet.Content portals to document.body. Load the panel's styles in the document. The auto entry embeds those styles; injectStylesInto is available for scrollsheet elements that remain inside the shadow root. It does not change the portal destination.`,
   },
   {
     id: "maintained",
     question: "Is it maintained, and by whom?",
-    answerHtml: `Yes. scrollsheet is built by Ansuman Shah under the NoodleApps studio name, MIT-licensed, currently at v1.0.0-beta.1. Source and issues at <a href="https://github.com/ansumanshah/scrollsheet" target="_blank" rel="noreferrer">github.com/ansumanshah/scrollsheet</a>.`,
-    answerText:
-      "Yes. scrollsheet is built by Ansuman Shah under the NoodleApps studio name, MIT licensed, currently at version 1.0.0-beta.1.",
+    answerHtml: `Ansuman Shah maintains scrollsheet under the NoodleApps studio name. It is MIT-licensed and published on npm as <code>scrollsheet</code>. See the <a href="/changelog">changelog</a> for release notes and <a href="https://github.com/ansumanshah/scrollsheet" target="_blank" rel="noreferrer">GitHub</a> for source and issues.`,
+    answerText: `Ansuman Shah maintains scrollsheet under the NoodleApps studio name. It is MIT-licensed and published on npm as scrollsheet. The changelog has release notes; GitHub hosts source and issues.`,
   },
 ];
 
@@ -117,7 +104,7 @@ const jsonLd = {
 
 <Base
   title="FAQ"
-  description="Answers on scrollsheet's real bundle size, browser support, Tailwind, Next.js App Router, accessibility, and migrating from vaul."
+  description="Bundle sizes, browser support, styling, accessibility, and migration guides for scrollsheet."
 >
   <Fragment slot="head">
     <script type="application/ld+json" set:html={JSON.stringify(jsonLd)} />
@@ -132,7 +119,7 @@ const jsonLd = {
       <div class="docs-header">
         <p class="eyebrow">FAQ</p>
         <h1>Frequently asked questions</h1>
-        <p>Short answers, checked against the source. Longer detail lives in the docs links below.</p>
+        <p>Answers about setup and supported behavior, with links to the relevant guides.</p>
       </div>
 
       <div class="prose faq-list">

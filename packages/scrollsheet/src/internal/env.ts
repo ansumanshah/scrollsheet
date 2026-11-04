@@ -43,7 +43,7 @@ export function _resetEnvForTests(): void {
 }
 
 /**
- * Whether the platform supports a real `<dialog>` (~96% global — missing on
+ * Whether the platform supports a real `<dialog>` (~97% global — missing on
  * Opera Mini, some old in-app WebViews, and iOS ≤15.3). Deliberately
  * uncached (unlike `env()` above): the check itself is a cheap `typeof` +
  * prototype probe, and tests need to flip the global between calls.
@@ -191,6 +191,16 @@ export function warnCoreStylesMissing(): void {
   if (process.env.NODE_ENV !== "production")
     warnOnce("css", "scrollsheet: import 'scrollsheet/styles.css'");
 }
+
+/**
+ * Every iOS browser is WebKit, including "Chrome" — platform is the gate, not
+ * the UA brand. Modern iPads report as Mac; touch points tell them apart.
+ * Gates the body-freeze feature chunk (body-freeze-loader.ts).
+ */
+export const isIOS = () =>
+  typeof navigator !== "undefined" &&
+  (/iP(hone|ad|od)/.test(navigator.platform) ||
+    (navigator.userAgent.includes("Mac") && navigator.maxTouchPoints > 1));
 
 /** Live media check, not cached: the OS setting can change mid-session. */
 export function prefersReducedMotion(): boolean {

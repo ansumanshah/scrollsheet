@@ -56,7 +56,11 @@ export async function installPerfObservers(page: Page): Promise<void> {
           startTime: e.startTime,
         })),
       );
-    }).observe({ type: "event", durationThreshold: 16, buffered: true });
+    }).observe({
+      type: "event",
+      durationThreshold: 16,
+      buffered: true,
+    } as PerformanceObserverInit & { durationThreshold: number });
   });
 }
 

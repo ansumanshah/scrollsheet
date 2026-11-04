@@ -1,5 +1,6 @@
 // @ts-check
 import { defineConfig } from "astro/config";
+import { createRequire } from "node:module";
 import react from "@astrojs/react";
 import mdx from "@astrojs/mdx";
 import sitemap from "@astrojs/sitemap";
@@ -36,7 +37,8 @@ export default defineConfig({
   integrations: [
     starlight({
       title: "scrollsheet",
-      description: "Native-feeling bottom sheets for React: a real <dialog>, CSS scroll-snap, spring easing.",
+      description:
+        "Native-feeling bottom sheets for React: a real <dialog>, CSS scroll-snap, spring easing.",
       titleDelimiter: "·",
       favicon: "/favicon.svg",
       // Starlight emits og:title/og:description/og:type/og:url/og:site_name
@@ -46,7 +48,10 @@ export default defineConfig({
         { tag: "meta", attrs: { property: "og:image", content: "https://scrollsheet.dev/og.png" } },
         { tag: "meta", attrs: { property: "og:image:width", content: "1200" } },
         { tag: "meta", attrs: { property: "og:image:height", content: "630" } },
-        { tag: "meta", attrs: { name: "twitter:image", content: "https://scrollsheet.dev/og.png" } },
+        {
+          tag: "meta",
+          attrs: { name: "twitter:image", content: "https://scrollsheet.dev/og.png" },
+        },
         // Starlight ships no theme-color of its own, so without these the
         // docs half of the site left mobile browser chrome at the engine
         // default while the rest of the site tinted it. Values must stay in
@@ -58,7 +63,11 @@ export default defineConfig({
         },
         {
           tag: "meta",
-          attrs: { name: "theme-color", content: "#ffffff", media: "(prefers-color-scheme: light)" },
+          attrs: {
+            name: "theme-color",
+            content: "#ffffff",
+            media: "(prefers-color-scheme: light)",
+          },
         },
       ],
       // Starlight appends the page's project-relative path itself
@@ -112,7 +121,10 @@ export default defineConfig({
       sidebar: [
         {
           label: "Getting started",
-          items: [{ slug: "docs/getting-started/install" }, { slug: "docs/getting-started/anatomy" }],
+          items: [
+            { slug: "docs/getting-started/install" },
+            { slug: "docs/getting-started/anatomy" },
+          ],
         },
         { slug: "docs/recipes" },
         {
@@ -161,7 +173,10 @@ export default defineConfig({
         },
         {
           label: "Advanced",
-          items: [{ slug: "docs/advanced/shadow-dom" }, { slug: "docs/advanced/framework-support" }],
+          items: [
+            { slug: "docs/advanced/shadow-dom" },
+            { slug: "docs/advanced/framework-support" },
+          ],
         },
         { slug: "docs/reference/api" },
         { slug: "docs/accessibility" },
@@ -179,13 +194,18 @@ export default defineConfig({
     },
   },
   vite: {
-    build: {
-      // lightningcss's minifier throws a spurious parse error on the
-      // combined Starlight + site stylesheet past a certain size (a
-      // lightningcss 1.33.0 bug, not invalid CSS: every file here is
-      // individually valid and passes through esbuild's minifier fine).
-      cssMinify: "esbuild",
-    },
+    plugins: [
+      {
+        name: "external-native-markdown",
+        enforce: "pre",
+        applyToEnvironment: (environment) => environment.name === "prerender",
+        resolveId(source, importer) {
+          if (source !== "satteri" || !importer) return;
+          // Native bindings resolve relative to their original installed loader.
+          return { id: createRequire(importer).resolve(source), external: "absolute" };
+        },
+      },
+    ],
     resolve: {
       // The library is not a node_modules dependency of the site: it is
       // aliased straight to live src so demos never serve a stale dist
@@ -198,15 +218,20 @@ export default defineConfig({
        * into "<path to index.ts>/<subpath>" and fail to resolve.
        */
       alias: {
-        "scrollsheet/styles.css": new URL("../packages/scrollsheet/dist/styles.css", import.meta.url).pathname,
+        "scrollsheet/styles.css": new URL(
+          "../packages/scrollsheet/dist/styles.css",
+          import.meta.url,
+        ).pathname,
         // package.json exports "./motion", so an example may legitimately
         // import it. Without this entry the bare "scrollsheet" prefix match
         // below rewrites it to "<path to index.ts>/motion" and the whole
         // site 500s on an unresolvable dependency. Only `spring` is
         // re-exported from the root; animate, animateScrollTo, geometryFor,
         // mapScroll, recedeTransform and sampleSpringAt live here alone.
-        "scrollsheet/motion": new URL("../packages/scrollsheet/src/motion/index.ts", import.meta.url)
-          .pathname,
+        "scrollsheet/motion": new URL(
+          "../packages/scrollsheet/src/motion/index.ts",
+          import.meta.url,
+        ).pathname,
         scrollsheet: new URL("../packages/scrollsheet/src/index.ts", import.meta.url).pathname,
       },
     },

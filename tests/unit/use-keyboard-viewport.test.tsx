@@ -88,6 +88,8 @@ interface HarnessProps {
   activeDetent: DetentSpec;
   setActiveDetent: (detent: DetentSpec) => void;
   keyboardExpands?: boolean;
+  present?: boolean;
+  initialBaselineGapPx?: number;
   resolved?: ResolvedDetent[];
 }
 
@@ -95,6 +97,8 @@ function Harness({
   activeDetent,
   setActiveDetent,
   keyboardExpands = true,
+  present = true,
+  initialBaselineGapPx,
   resolved = RESOLVED,
 }: HarnessProps) {
   const dialogRef = React.useRef<HTMLDivElement | null>(null);
@@ -104,7 +108,8 @@ function Harness({
   const ctxRef = React.useRef(ctx);
   ctxRef.current = ctx;
   useKeyboardViewport({
-    present: true,
+    present,
+    initialBaselineGapPx,
     markProgrammaticScroll: () => {},
     jumpScroll,
     side: "bottom",
@@ -178,6 +183,30 @@ async function setKeyboard(px: number) {
 }
 
 describe("keyboardExpands state machine", () => {
+  for (const initialBaselineGapPx of [0, 50]) {
+    test(`late attach preserves a ${initialBaselineGapPx}px baseline during keyboard animation`, async () => {
+      const store = makeStore(0.3);
+      await mount(
+        <Harness
+          activeDetent={store.active}
+          setActiveDetent={store.set}
+          present={false}
+          initialBaselineGapPx={initialBaselineGapPx}
+        />,
+      );
+      await focusField();
+      await setKeyboard(initialBaselineGapPx + 30);
+      await render(store, { present: true, initialBaselineGapPx });
+      const dialog = container.firstElementChild as HTMLElement;
+      expect(dialog.style.getPropertyValue("--scrollsheet-keyboard")).toBe("0px");
+      expect(store.calls).toEqual([]);
+
+      await setKeyboard(initialBaselineGapPx + 300);
+      expect(dialog.style.getPropertyValue("--scrollsheet-keyboard")).toBe("300px");
+      expect(store.calls).toEqual([0.85]);
+    });
+  }
+
   test("rising edge promotes to the tallest detent; focus alone never does", async () => {
     const store = makeStore(0.3);
     await mount(<Harness activeDetent={store.active} setActiveDetent={store.set} />);

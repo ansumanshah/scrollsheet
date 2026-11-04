@@ -1,7 +1,7 @@
 import { describe, expect, test } from "bun:test";
 
 /**
- * The two lazily loaded modules must stay import-free (types aside): a
+ * The lazily loaded modules must stay import-free (types aside): a
  * single value import of a sheet-core module (slot.tsx, styles.ts, ...)
  * statically chains their chunk to the core chunk, and every entry that
  * shares a chunk with it stops tree-shaking — measured once as the toast
@@ -15,6 +15,8 @@ const ALLOWED: Record<string, readonly string[]> = {
   "packages/scrollsheet/src/internal/use-presentation-flip.ts": ["react"],
   "packages/scrollsheet/src/internal/use-content-morph.ts": ["react"],
   "packages/scrollsheet/src/internal/use-keyboard-viewport.ts": ["react"],
+  "packages/scrollsheet/src/internal/use-nested-scroll.ts": ["react"],
+  "packages/scrollsheet/src/internal/use-body-freeze.ts": ["react"],
 };
 
 function staticValueImports(source: string): string[] {

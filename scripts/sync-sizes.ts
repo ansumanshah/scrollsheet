@@ -10,7 +10,7 @@
  *   - docs/src/lib/bundle-sizes.generated.ts — a real TS module the Astro
  *     site imports (index.astro, faq.astro, HeroSheet.tsx), so its numbers
  *     can never drift from what actually shipped.
- *   - README.md, llms.txt, .claude/ROADMAP.md, docs/public/llms-full.txt —
+ *   - README.md, llms.txt, docs/public/llms-full.txt —
  *     markdown/plain text can't import, so these get the text inside a
  *     `<!--size:KEY.metric:decimals-->...<!--/size-->` marker pair rewritten
  *     in place. The markers are HTML comments: invisible wherever the file

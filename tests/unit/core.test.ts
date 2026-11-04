@@ -71,6 +71,7 @@ describe("resolveDetents — unresolvable spec warning", () => {
   test("warns once for a bad spec, naming the value and the valid forms", () => {
     const warnSpy = spyOn(console, "warn").mockImplementation(() => {});
     try {
+      // @ts-expect-error Exercise invalid input from JavaScript callers.
       resolveDetents(["full", "conent"], ctx);
       expect(warnSpy).toHaveBeenCalledTimes(1);
       const message = String(warnSpy.mock.calls[0]?.[0]);
@@ -86,6 +87,7 @@ describe("resolveDetents — unresolvable spec warning", () => {
   test("still resolves the bad spec instead of throwing (unchanged behavior)", () => {
     const warnSpy = spyOn(console, "warn").mockImplementation(() => {});
     try {
+      // @ts-expect-error Exercise invalid input from JavaScript callers.
       expect(() => resolveDetents(["conent"], ctx)).not.toThrow();
     } finally {
       warnSpy.mockRestore();
@@ -109,8 +111,10 @@ describe("resolveDetents — unresolvable spec warning", () => {
   test("warns once per distinct bad value, not once per array", () => {
     const warnSpy = spyOn(console, "warn").mockImplementation(() => {});
     try {
+      // @ts-expect-error Exercise invalid input from JavaScript callers.
       resolveDetents(["conent", "conent", "bogus"], ctx);
       expect(warnSpy).toHaveBeenCalledTimes(2);
+      // @ts-expect-error Exercise invalid input from JavaScript callers.
       resolveDetents(["conent"], ctx);
       expect(warnSpy).toHaveBeenCalledTimes(2); // already-warned value, no repeat
     } finally {

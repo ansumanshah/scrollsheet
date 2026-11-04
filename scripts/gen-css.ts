@@ -1,7 +1,7 @@
 /**
  * core.css / sonner/toast.css (authored, commented) → *-css.generated.ts
  * (minified template strings the library injects). Checked in so src
- * consumers (playground, e2e fixtures, tsdown) all just import a plain TS
+ * consumers (package builds and e2e fixtures) all just import a plain TS
  * module; `bun run build` regenerates, and tests/unit/css-minify.test.ts fails if
  * either is stale.
  */

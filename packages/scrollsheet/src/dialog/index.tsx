@@ -57,7 +57,11 @@ const collectIgnored = (entries: Array<[string, unknown]>): string[] =>
  */
 export interface DialogRootProps extends Pick<
   SheetRootProps,
-  "actionsRef" | "backdropDismissible" | "escapeDismissible" | "onOpenChangeComplete"
+  | "actionsRef"
+  | "animationSpeed"
+  | "backdropDismissible"
+  | "escapeDismissible"
+  | "onOpenChangeComplete"
 > {
   children?: React.ReactNode;
   open?: boolean;
@@ -82,6 +86,7 @@ export function Root({
   backdropDismissible,
   escapeDismissible,
   onOpenChangeComplete,
+  animationSpeed,
 }: DialogRootProps) {
   return (
     <SheetRoot
@@ -94,6 +99,7 @@ export function Root({
       actionsRef={actionsRef}
       backdropDismissible={backdropDismissible}
       escapeDismissible={escapeDismissible}
+      animationSpeed={animationSpeed}
     >
       {children}
     </SheetRoot>
@@ -189,7 +195,7 @@ export interface DialogContentProps extends SheetContentProps {
  * (an ancestor of the rendered panel) already carries, watched with a
  * `MutationObserver` for flips.
  *
- * The no-`<dialog>` fallback path (internal/fallback-sheet.tsx, ~4%
+ * The no-`<dialog>` fallback path (internal/fallback-sheet.tsx, ~3%
  * global) DOES forward the ref to its panel, but that DOM tree carries no
  * `data-scrollsheet-state` ancestor to observe — the `ctx.open` branch
  * below is the live mechanism there, stamping open/closed straight from

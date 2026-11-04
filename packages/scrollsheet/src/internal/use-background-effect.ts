@@ -1,6 +1,8 @@
 import * as React from "react";
 
 import type { SheetContextValue } from "../context";
+import { SHEET_SPRING } from "../motion/spring";
+import { springTransition } from "./content-helpers";
 
 interface Snapshot {
   users: number;
@@ -24,6 +26,8 @@ export interface UseBackgroundEffectInput {
   backgroundTargetRef: React.RefObject<HTMLElement | null>;
   /** Which effect updateTravel last wrote, or null if it never did. */
   backgroundAppliedRef: React.RefObject<"scale" | "parallax" | null>;
+  /** Read at restore time for `animationSpeed`. */
+  ctxRef: React.RefObject<SheetContextValue>;
 }
 
 /**
@@ -39,6 +43,7 @@ export function useBackgroundEffect({
   backgroundRef,
   backgroundTargetRef,
   backgroundAppliedRef,
+  ctxRef,
 }: UseBackgroundEffectInput): void {
   React.useEffect(() => {
     // Not gated on `backgroundEffect` being set: it can also resolve to
@@ -91,8 +96,11 @@ export function useBackgroundEffect({
       // all — writing `original.transition` back synchronously here would
       // overwrite it before a single frame is painted, snapping the page
       // instead of easing it out alongside the sheet's own close.
-      target.style.transition =
-        "transform var(--scrollsheet-dur) var(--scrollsheet-ease), border-radius var(--scrollsheet-dur) var(--scrollsheet-ease)";
+      target.style.transition = springTransition(
+        ctxRef.current.animationSpeed,
+        "transform",
+        "border-radius",
+      );
       target.style.transform = original.transform;
       target.style.borderRadius = original.borderRadius;
       target.style.transformOrigin = original.transformOrigin;
@@ -102,7 +110,13 @@ export function useBackgroundEffect({
         // Only if nothing re-claimed the target in the meantime.
         if (!SNAPSHOTS.has(target)) target.style.transition = original.transition;
       };
-      const timer = setTimeout(done, RESTORE_FALLBACK_MS);
+      const timer = setTimeout(
+        done,
+        Math.max(
+          RESTORE_FALLBACK_MS,
+          SHEET_SPRING.durationMs / ctxRef.current.animationSpeed + 150,
+        ),
+      );
       target.addEventListener("transitionend", done);
     };
   }, [present, backgroundEffect, backgroundRef]);

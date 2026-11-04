@@ -1,12 +1,12 @@
 /**
  * Shared bundle-and-compress logic, used by both scripts/check-size.ts (CI
  * budget guard) and scripts/sync-sizes.ts (the generated bundle-size source
- * of truth) — one esbuild invocation per shape, never duplicated between the
+ * of truth) — one Bun build per shape, never duplicated between the
  * two.
  *
  * Everything ships from one entry (dist/index.mjs), so "how big is
  * scrollsheet" has no single answer: it depends on what you import. Each
- * shape below is a real import statement, bundled with esbuild --minify
+ * shape below is a real import statement, bundled and minified with Bun
  * (react external) and compressed, which measures exactly what a consuming
  * app ships for that import and nothing else.
  *
@@ -15,13 +15,12 @@
  * them together, the `Sheet` shape would jump to the size of all three and
  * the budget below would catch it.
  *
- * tsdown's own dist output is deliberately unminified and code-split — this
- * simulates the consumer's bundler, not ours. esbuild runs via `bunx` rather
- * than as a project devDependency (repo convention).
+ * The published output is code-split; this measures a consumer's production
+ * import, including its static chunks and excluding features loaded on demand.
  */
 import { mkdir, mkdtemp, rm, symlink } from "node:fs/promises";
 import { tmpdir } from "node:os";
-import { join } from "node:path";
+import { join, resolve } from "node:path";
 import { brotliCompressSync } from "node:zlib";
 
 export interface ImportShape {
@@ -72,56 +71,33 @@ export interface BundleSizes {
   brotli: number;
 }
 
-interface MetafileOutput {
-  entryPoint?: string;
-  imports: Array<{ path: string; kind: string }>;
-}
-
 export async function bundleAndCompress(entryAbsPath: string): Promise<BundleSizes> {
   const dir = await mkdtemp(join(tmpdir(), "scrollsheet-size-"));
   const outdir = join(dir, "out");
-  const metafile = join(dir, "meta.json");
   try {
-    const proc = Bun.spawn(
-      [
-        "bunx",
-        "esbuild",
-        entryAbsPath,
-        "--bundle",
-        "--minify",
-        "--format=esm",
-        "--platform=browser",
-        "--external:react",
-        "--external:react-dom",
-        "--external:react/jsx-runtime",
-        // Measure what a consumer's production build ships: bundlers define
-        // NODE_ENV, which dead-code-eliminates the dev-only warning strings.
-        '--define:process.env.NODE_ENV="production"',
-        // Splitting, so a chunk reachable only through a dynamic import()
-        // (theme-color behind the opt-in themeColorDimming prop) is measured
-        // the way a consumer ships it: emitted, but not in the main bundle.
-        // For a graph with no dynamic imports esbuild still emits exactly one
-        // file here, byte-identical to the old single-outfile mode.
-        "--splitting",
-        `--outdir=${outdir}`,
-        `--metafile=${metafile}`,
-      ],
-      { stdout: "pipe", stderr: "pipe" },
-    );
-    const exitCode = await proc.exited;
-    if (exitCode !== 0) {
-      const stderr = await new Response(proc.stderr).text();
-      throw new Error(`esbuild failed bundling ${entryAbsPath}:\n${stderr}`);
+    const result = await Bun.build({
+      entrypoints: [entryAbsPath],
+      outdir,
+      minify: true,
+      splitting: true,
+      // Measure library code without Bun's application preload runtime.
+      modulePreload: false,
+      format: "esm",
+      target: "browser",
+      external: ["react", "react-dom", "react/jsx-runtime"],
+      define: { "process.env.NODE_ENV": '"production"' },
+      metafile: true,
+    });
+    if (!result.success || !result.metafile) {
+      throw new Error(`Bun failed bundling ${entryAbsPath}:\n${result.logs.join("\n")}`);
     }
-    const meta = (await Bun.file(metafile).json()) as {
-      outputs: Record<string, MetafileOutput>;
-    };
     // Sum the entry output plus everything it reaches through STATIC imports
     // only — a dynamic-import edge is a chunk the consumer's user downloads
     // on demand, not part of what this import statement ships.
-    const outputs = meta.outputs;
-    const entryKey = Object.keys(outputs).find((k) => outputs[k]!.entryPoint);
-    if (!entryKey) throw new Error(`no entry output in esbuild metafile for ${entryAbsPath}`);
+    const outputs = result.metafile.outputs;
+    const entry = result.outputs.find((output) => output.kind === "entry-point");
+    const entryKey = Object.keys(outputs).find((key) => resolve(outdir, key) === entry?.path);
+    if (!entryKey) throw new Error(`no entry output in Bun metafile for ${entryAbsPath}`);
     const shipped = new Set<string>();
     const walk = (key: string) => {
       if (shipped.has(key) || !outputs[key]) return;
@@ -134,9 +110,7 @@ export async function bundleAndCompress(entryAbsPath: string): Promise<BundleSiz
     let gzip = 0;
     let brotli = 0;
     for (const key of shipped) {
-      // Metafile output keys are cwd-relative; resolve against the outdir's
-      // own absolute prefix inside the key.
-      const abs = key.startsWith("/") ? key : join(process.cwd(), key);
+      const abs = resolve(outdir, key);
       const bundled = new Uint8Array(await Bun.file(abs).arrayBuffer());
       gzip += Bun.gzipSync(bundled).byteLength;
       brotli += brotliCompressSync(bundled).byteLength;
@@ -153,15 +127,12 @@ const PACKAGE_DIR = new URL("../../packages/scrollsheet", import.meta.url).pathn
 
 /**
  * Bundles a one-line module that re-exports only `shape.named` from the
- * package. esbuild then drops everything that import doesn't reach, which is
+ * package. Bun drops everything that import doesn't reach, which is
  * the whole point of measuring this way.
  *
  * The probe resolves `scrollsheet` through a real node_modules symlink
- * rather than importing dist/index.mjs by path: esbuild only honours a
- * package's `sideEffects: false` for files it resolved out of node_modules,
- * and without that it has to assume every unreached chunk might do something
- * on import and keeps it. Importing by path measured ~1.6 kB of compat layer
- * that a consuming app never actually ships.
+ * rather than importing dist/index.mjs by path, so package exports and
+ * sideEffects metadata apply just as they do for an installed consumer.
  */
 export async function measureShape(shape: ImportShape): Promise<BundleSizes> {
   const dir = await mkdtemp(join(tmpdir(), "scrollsheet-shape-"));

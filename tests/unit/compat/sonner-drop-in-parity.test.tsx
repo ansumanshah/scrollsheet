@@ -4,7 +4,7 @@ import * as React from "react";
 import type * as ReactDOMClient from "react-dom/client";
 import { ToasterShell as Toaster } from "../../../packages/scrollsheet/src/toast/shell/toaster-shell";
 import { _resetSonnerStoreForTests, toast } from "../../../packages/scrollsheet/src/toast/state";
-import { _resetWarnOnceForTests } from "../../../packages/scrollsheet/src/toast/toaster";
+import { _resetWarnOnceForTests } from "../../../packages/scrollsheet/src/toast/toaster-shared";
 
 /**
  * Real-DOM proof for the sonner drop-in parity round: Toaster's `id` prop
@@ -139,17 +139,30 @@ describe("classNames", () => {
     expect(row().classList.contains("success-class")).toBe(true);
   });
 
-  test("classNames.default lands on every toast regardless of type", async () => {
-    await mount(
-      <Toaster visibleToasts={3} toastOptions={{ classNames: { default: "default-class" } }} />,
-    );
-    await React.act(async () => {
-      toast.error("Oops", { duration: 60_000 });
-    });
-    // Proven against a non-default type — "default" is unconditional.
-    expect(row().dataset.type).toBe("error");
-    expect(row().classList.contains("default-class")).toBe(true);
-  });
+  test.each(["default", "success", "error", "loading"] as const)(
+    "a %s toast gets its type class and shared classes without another type's class",
+    async (type) => {
+      const classNames = {
+        toast: "shared-class",
+        default: "default-class",
+        success: "success-class",
+        error: "error-class",
+        loading: "loading-class",
+      };
+      await mount(<Toaster toastOptions={{ classNames }} />);
+      await React.act(async () => {
+        const options = { duration: 60_000, classNames: { toast: "per-toast-class" } };
+        if (type === "default") toast("Plain", options);
+        else toast[type]("Typed", options);
+      });
+      expect(row().dataset.type).toBe(type);
+      expect(row().classList.contains("shared-class")).toBe(true);
+      expect(row().classList.contains("per-toast-class")).toBe(true);
+      for (const candidate of ["default", "success", "error", "loading"] as const) {
+        expect(row().classList.contains(classNames[candidate])).toBe(candidate === type);
+      }
+    },
+  );
 
   test("classNames.title/description/icon/closeButton each land on their respective elements", async () => {
     await mount(
@@ -647,5 +660,53 @@ describe("testId and closeButtonAriaLabel (fix 10)", () => {
     expect(document.querySelector(".scrollsheet-toast-close")?.getAttribute("aria-label")).toBe(
       "Nope",
     );
+  });
+});
+
+describe("Escape and toastOptions.className", () => {
+  test("Escape in the region never dismisses a dismissible: false toast", async () => {
+    await mount(<Toaster />);
+    await React.act(async () => {
+      toast("Locked", { dismissible: false, duration: 60_000 });
+    });
+    const ol = document.querySelector<HTMLElement>("[data-scrollsheet-toaster]");
+    ol?.focus();
+    await React.act(async () => {
+      ol?.dispatchEvent(
+        new KeyboardEvent("keydown", { key: "Escape", code: "Escape", bubbles: true }),
+      );
+    });
+    await React.act(() => sleep(500));
+    expect(document.querySelectorAll(".scrollsheet-toast")).toHaveLength(1);
+  });
+
+  test("Escape skips a locked front toast and dismisses the newest dismissible one", async () => {
+    await mount(<Toaster />);
+    await React.act(async () => {
+      toast("Open", { duration: 60_000 });
+      toast("Locked", { dismissible: false, duration: 60_000 });
+    });
+    const ol = document.querySelector<HTMLElement>("[data-scrollsheet-toaster]");
+    ol?.focus();
+    await React.act(async () => {
+      ol?.dispatchEvent(
+        new KeyboardEvent("keydown", { key: "Escape", code: "Escape", bubbles: true }),
+      );
+    });
+    await React.act(() => sleep(500));
+    const titles = [...document.querySelectorAll(".scrollsheet-toast-title")].map(
+      (el) => el.textContent,
+    );
+    expect(titles).toEqual(["Locked"]);
+  });
+
+  test("toastOptions.className lands on every row, under the toast's own className", async () => {
+    await mount(<Toaster toastOptions={{ className: "base-toast" }} />);
+    await React.act(async () => {
+      toast("Hi", { className: "own-toast", duration: 60_000 });
+    });
+    const el = row();
+    expect(el.classList.contains("base-toast")).toBe(true);
+    expect(el.className.indexOf("base-toast")).toBeLessThan(el.className.indexOf("own-toast"));
   });
 });

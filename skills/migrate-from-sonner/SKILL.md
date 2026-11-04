@@ -1,20 +1,20 @@
 ---
 name: migrate-from-sonner
-description: Migrate a React app off Sonner onto scrollsheet's toast adapter. Swap the import for a drop-in replacement, mechanically rename any raw sonner-* CSS/token selectors using the name-mapping table below (usually unnecessary — both names coexist on every element), and check the documented v1 gaps (theme, richColors, dir/RTL). Use when the user mentions sonner, toast(), Toaster, useSonner, or "migrate from sonner".
+description: Migrate a React app off Sonner onto scrollsheet's toast adapter. Change the import and stylesheet, check supported CSS aliases, and verify the documented gaps (theme, richColors, dir/RTL). Use when the user mentions sonner, toast(), Toaster, useSonner, or "migrate from sonner".
 ---
 
 # Migrate from Sonner
 
-One step for almost everyone: swap the import. `toast`/`Toaster` from `scrollsheet` is a drop-in
-adapter — a persistent card per toast, portaled through one shared `<section>` in
-`document.body`, positioned with CSS (real Sonner's own architecture), not a from-scratch toast
-implementation and not tied to `Sheet.Root`.
+Start with the import and stylesheet, then check the differences below. `Toaster` renders
+a persistent card per toast through one shared `<section>` in `document.body`. It uses CSS
+positioning and is independent of `Sheet.Root`.
 
 ## Step 1: swap the import
 
 ```diff
 - import { toast, Toaster } from 'sonner';
 + import { toast, Toaster } from 'scrollsheet';
++ import 'scrollsheet/toast.css';
 ```
 
 Same exports, same call shape:
@@ -29,7 +29,7 @@ toast.loading('Uploading…');
 toast.message('Custom title', { description: '...' });
 toast.custom((id) => <MyToast id={id} />);
 toast.dismiss(id);      // dismiss one
-toast.dismiss();        // clears every toast, every mounted Toaster: matches real Sonner exactly
+toast.dismiss();        // clears every toast, every mounted Toaster: uses the shared queue
 toast.promise(promise, { loading: 'Saving…', success: 'Saved', error: 'Failed' });
 
 const { toasts } = useSonner();
@@ -41,19 +41,14 @@ place instead of stacking a new one. Multiple toasters: `<Toaster id="cart" />` 
 
 `<Toaster toasterId="...">` still works but is deprecated (dev-only warn-once): use `id`.
 
-## Step 2: your CSS/JS almost never needs to change — but if it does, here's the mapping
+## Step 2: check CSS hooks
 
-**Most migrations stop at step 1.** scrollsheet stamps BOTH the neutral name and the matching
-Sonner name on every element, attribute, and CSS custom property the `Toaster` renders — so an
-existing `.sonner-toast {}` rule, `[data-sonner-toaster]` selector, or `var(--sonner-gap)`
-override keeps matching without any edits. `useSonner()` and `SonnerPosition` still work too;
+With `sonnerCompat` enabled (the default), scrollsheet provides the neutral names and
+Sonner aliases listed below. Existing selectors targeting those hooks continue matching;
+verify other selectors and animations against the rendered markup. `useSonner()` and `SonnerPosition` still work too;
 they're aliases of the neutral `useToasts()` / `ToastPosition` names.
 
-The mapping below only matters if you're writing NEW code against this library (in which case
-prefer the neutral column — it's what the rest of scrollsheet's docs teach) or if you're
-mechanically scrubbing every trace of "sonner" from a codebase's own CSS/JS for some other
-reason. Apply it as a straight find-and-replace; nothing here changes runtime behavior, since
-both names already resolve to the same element/value.
+Use the neutral column for new CSS or when removing Sonner-specific names from existing CSS.
 
 <div className="table-scroll prop-table">
 
@@ -87,21 +82,18 @@ both names already resolve to the same element/value.
 
 </div>
 
-Every entry above is **case-for-case identical behavior** — the compat name isn't deprecated or
-scheduled for removal, it's a permanent, dual-stamped alias. `data-mounted`, `data-removed`,
+These aliases are enabled by default; `sonnerCompat={false}` removes the class and attribute
+mirrors. `data-mounted`, `data-removed`,
 `data-visible`, `data-front`, `data-expanded`, `data-y-position`, `data-x-position`, `data-index`,
 `data-dismissible`, `data-swiping`, `data-swiped`, `data-swipe-out`, `data-swipe-direction`,
 `data-type`, and `data-testid` aren't in the table because they were never sonner-prefixed to
 begin with — same name either way.
 
-Two internal-only CSS custom properties (`--sonner-lift`, `--sonner-y`) are pure position-math
-plumbing consumed entirely within `toast.css` itself — nothing in this library or in real
-Sonner's own public API ever documented them as an override surface, so they're a straight
-rename to `--scrollsheet-toast-lift` / `--scrollsheet-toast-y` with no compat fallback. If your
-CSS somehow depends on reading those two directly, treat it as internal API you were never meant
-to rely on.
+Internal position variables `--sonner-lift` and `--sonner-y` have no compatibility fallback.
+If your CSS reads them directly, check whether it can use the documented tokens instead;
+scrollsheet's internal equivalents are `--scrollsheet-toast-lift` and `--scrollsheet-toast-y`.
 
-## API surface that's fully compatible
+## Supported API surface
 
 <div className="table-scroll prop-table">
 
@@ -117,9 +109,9 @@ to rely on.
 | Stack expand/collapse | works: hover or `Alt+T` (configurable via `hotkey`) expands the collapsed stack; `Escape` collapses it back if the hotkey opened it (a stack the pointer still hovers stays expanded until the pointer leaves), or dismisses the front toast otherwise |
 | Auto-dismiss | works: uses the toast's own `duration` or the `Toaster`'s, pauses on hover/pointer-down/keyboard-expand/hidden-tab, resumes with the time left; updating a live toast's `duration` re-arms the timer |
 | Swipe-to-dismiss | works: 2-axis, direction-locked per position (overridable via `swipeDirections`), dismisses past a 45px threshold or a fast-enough flick |
-| Action / cancel buttons | works: dismiss after their own `onClick` runs — cancel unconditionally, action unless the handler calls `event.preventDefault()` |
+| Action / cancel buttons | cancel runs its handler and dismisses only when the toast is dismissible; action always runs its handler and dismisses unless it calls `event.preventDefault()` |
 | `type: 'loading'` | works: can't be swiped or closed by button, regardless of `dismissible` |
-| `classNames` (per-toast + `toastOptions.classNames`) | works: merges onto every rendered slot |
+| `classNames` (per-toast + `toastOptions.classNames`) | merges onto supported slots; `classNames.default` styles neutral toasts alongside `classNames.toast` |
 | `style` (per-toast + `toastOptions.style`) | works: inline styles on the toast row, merged over the stack's own offset/scale variables (per-toast wins over `toastOptions.style`), so `top` or `zIndex` overrides stick |
 | `icons` (per-type overrides, including the loading spinner) | works: a per-toast `icon` always wins |
 | `toast.getToasts()` / `.getHistory()` | works: mirrors Sonner's own introspection API; history is capped at 100 entries |
@@ -130,8 +122,8 @@ to rely on.
 
 ## Documented gaps (v1)
 
-These are honest gaps, not silent behavior changes: most warn once in dev when set to a
-non-default value.
+Check these gaps before removing Sonner. `theme` and `richColors` warn in development;
+unsupported props may instead be rejected by TypeScript.
 
 | Sonner feature | scrollsheet's Sonner compat v1 |
 | --- | --- |
@@ -140,18 +132,20 @@ non-default value.
 | `dir` / RTL | not implemented: no prop exists |
 | `offset` as an object (`{ top, right, bottom, left }`) | not implemented: `offset` only accepts `number \| string` |
 | `mobileOffset` as a `Toaster` prop | not implemented as a prop — the underlying breakpoint is still stylable directly via the `--scrollsheet-toast-mobile-offset` CSS custom property |
-| Behind a modal sheet | A toast fired while a modal `Sheet.Root` is open renders behind it rather than above it, matching real Sonner's own limitation against a native `<dialog>` elsewhere on the page |
+| Behind a modal sheet | A toast fired while a modal `Sheet.Root` is open renders behind it rather than above it: the toaster is outside the dialog's top layer |
 
 If your app relies on any of these, stay on real `sonner` for now, or file the gap: don't assume
 silent parity.
 
 ## Shadow DOM
 
-The Sonner compat layer's auto-injected styles land in `document.head`, same as core scrollsheet.
-Inside a shadow root, call once before any `Toaster` opens:
+The default entry requires `scrollsheet/toast.css`. The `auto` entry injects toast styles
+into `document.head`; core styles are separate.
+Inside a shadow root, import from `scrollsheet/auto` (the default entry embeds no CSS, so its
+injectors do nothing) and call once before any `Toaster` opens:
 
 ```tsx
-import { injectToastStylesInto } from 'scrollsheet';
+import { Toaster, toast, injectToastStylesInto } from 'scrollsheet/auto';
 injectToastStylesInto(shadowRoot, nonce);
 ```
 
@@ -161,11 +155,12 @@ unless something actually imports it.
 
 ## Optional: native migration
 
-If you want a toast shape the adapter's rendering doesn't cover (a fully custom stack layout,
-say), scrollsheet's own toast pattern is a plain `Sheet.Root` with `modal={false}` plus a timer
-closing it — see the docs "Toasts" page and the `build-with-scrollsheet` skill. This is a
-separate, from-scratch pattern; it doesn't share code with the `Toaster`/`toast()` adapter above,
-which runs on its own per-toast-DOM shell, not on `Sheet.Root`.
+Nothing to convert: `Toaster`, `toast()`, and `useToasts()` are scrollsheet's native toast API,
+not a shim, and they run on their own per-toast DOM rather than on `Sheet.Root`. New code can use
+the neutral names (`useToasts`, `ToastPosition`, `.scrollsheet-toast*`, `--scrollsheet-toast-*`) and
+set `<Toaster sonnerCompat={false}>` to drop the `.sonner-*` and `data-sonner-*` mirrors. For a
+custom toast shape, use `toast.custom()`. The full `Toaster` and `toast()` API is in
+https://scrollsheet.dev/docs/reference/api#toasts.
 
 ## After migrating
 

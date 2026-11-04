@@ -17,8 +17,8 @@ import DocExample from '../../../../components/DocExample.astro';
 iOS resizes `visualViewport`, not the layout viewport, when the keyboard opens. scrollsheet
 listens to it and writes the inset to `--scrollsheet-keyboard`, no prop required.
 
-The panel overdraws about 120vh past its bottom edge, so a stale frame never shows a gap while
-the keyboard pushes the content up.
+The panel's bottom overdraw covers the area exposed as the keyboard moves. Keyboard behavior
+should still be checked on the devices and embedded browsers your app supports.
 
 ## Promoting to a taller detent
 

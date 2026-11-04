@@ -5,6 +5,11 @@ import {
   mapScroll,
   recedeTransform,
 } from "../motion/geometry";
+import { jumpScroll } from "../motion/scroll-animator";
+import { SHEET_SPRING } from "../motion/spring";
+import { env } from "./env";
+
+export { jumpScroll };
 
 export type Phase = "pre" | "opening" | "open" | "closing";
 
@@ -90,7 +95,7 @@ export function isPhantomScrollStep(
 }
 export const TRAVEL_MS = 380;
 export const NO_DRAG_SELECTOR =
-  "button, a, input, textarea, select, label, [contenteditable], [data-scrollsheet-no-drag]";
+  "button, a, input, textarea, select, label, [contenteditable], [data-scrollsheet-no-drag], [data-vaul-no-drag]";
 export const DRAG_VELOCITY_WINDOW_MS = 100;
 /** Center presentation enter/exit: scale spans [1 - range, 1] over the leg. */
 export const CENTER_ZOOM_RANGE = 0.05;
@@ -145,25 +150,6 @@ export function clamp01(x: number): number {
  */
 export function resolveClosedBy(escapeDismissible: boolean): "closerequest" | "none" {
   return escapeDismissible ? "closerequest" : "none";
-}
-
-/**
- * Jump the track to `raw` (in whichever scroll axis `axis` names) without
- * animating.
- *
- * WebKit 26.5 quirk: on a `scroll-snap-type: mandatory` container with an
- * established snap position, a raw `el.scrollTop = x` assignment applies for
- * one frame then silently reverts to the previous snap point within ~50ms —
- * even when `x` lands exactly on another valid stop. `el.scrollTo({ top,
- * behavior: 'instant' })` does not exhibit this; WebKit treats it as a real
- * scroll command. Chromium and Firefox accept both forms identically, so
- * this is safe unconditionally.
- */
-export function jumpScroll(el: HTMLElement, axis: "x" | "y", raw: number): void {
-  const opts: ScrollToOptions = { behavior: "instant" };
-  if (axis === "y") opts.top = raw;
-  else opts.left = raw;
-  el.scrollTo(opts);
 }
 
 /** Which direction each side's panel leaves the screen in, in translate sign terms. */
@@ -313,6 +299,19 @@ export function applyRecede(
 }
 
 /**
+ * The sheet spring as a literal `transition` value, `speed` times faster.
+ * The page wrapper backgroundEffect drives sits outside the dialog, where
+ * core.css's --scrollsheet-dur/--scrollsheet-ease never inherit, and a
+ * var() with no value invalidates the whole declaration: a 0s snap.
+ */
+export function springTransition(speed: number, ...props: string[]): string {
+  const timing = `${Math.round(SHEET_SPRING.durationMs / speed)}ms ${
+    env().linearEasing ? SHEET_SPRING.easing : "ease-out"
+  }`;
+  return props.map((prop) => `${prop} ${timing}`).join(", ");
+}
+
+/**
  * Direct style write applying the background-effect card look to the page
  * wrapper marked `data-scrollsheet-background`, for this sheet's own travel
  * progress (0–1). `translateY` for `'scale'` is expressed via `env()`
@@ -324,11 +323,10 @@ export function applyBackgroundEffect(
   effect: "scale" | "parallax",
   progress: number,
   live: boolean,
+  speed = 1,
 ): void {
   const clamped = clamp01(progress);
-  el.style.transition = live
-    ? "none"
-    : "transform var(--scrollsheet-dur) var(--scrollsheet-ease), border-radius var(--scrollsheet-dur) var(--scrollsheet-ease)";
+  el.style.transition = live ? "none" : springTransition(speed, "transform", "border-radius");
   if (effect === "scale") {
     const scale = 1 - clamped * BACKGROUND_SCALE_DELTA;
     el.style.transformOrigin = "50% 0%";
@@ -412,18 +410,10 @@ export function measureContentHeight(
  */
 export function applyFullHeightRadius(panel: HTMLElement, side: Side, radiusPx: number): void {
   const r = `${Math.max(0, radiusPx)}px`;
-  switch (side) {
-    case "bottom":
-      panel.style.borderRadius = `${r} ${r} 0 0`;
-      break;
-    case "top":
-      panel.style.borderRadius = `0 0 ${r} ${r}`;
-      break;
-    case "left":
-      panel.style.borderRadius = `0 ${r} ${r} 0`;
-      break;
-    case "right":
-      panel.style.borderRadius = `${r} 0 0 ${r}`;
-      break;
-  }
+  // Corner mask per side, in border-radius order (top-left, top-right,
+  // bottom-right, bottom-left): 1 = the lead edge's corner, 0 = flush.
+  const mask = { bottom: [1, 1, 0, 0], top: [0, 0, 1, 1], left: [0, 1, 1, 0], right: [1, 0, 0, 1] }[
+    side
+  ];
+  panel.style.borderRadius = mask.map((on) => (on ? r : "0")).join(" ");
 }

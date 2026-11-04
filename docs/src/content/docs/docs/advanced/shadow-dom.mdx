@@ -7,7 +7,7 @@ import { Aside, LinkCard } from '@astrojs/starlight/components';
 
 ## Injecting into a shadow root
 
-Shadow DOM needs the `scrollsheet/auto` entry: it carries the stylesheet the injectors adopt.
+The shadow-root injection helpers need the `scrollsheet/auto` entry, which embeds the stylesheet.
 The default entry ships no embedded CSS, so its `injectStylesInto` has nothing to inject and
 does nothing. Import everything from `scrollsheet/auto` and call `injectStylesInto` once per
 shadow root, before any `Sheet.Content` inside it opens:
@@ -27,8 +27,8 @@ reaching across the boundary for `document.head`'s tag.
 On an engine with no constructable stylesheets (Safari < 16.4) it falls back to a `<style>` tag
 appended inside the root itself, still scoped, just not adopted. The `<dialog>` itself still
 portals to `document.body` regardless: this only scopes the trigger/surrounding markup's
-stylesheet, not where the sheet renders, since a top-layer dialog is structurally a document-level
-thing.
+stylesheet, not where the sheet renders, because scrollsheet chooses `document.body` as its portal target. Put custom panel classes in
+a document-level stylesheet too: shadow-scoped component CSS cannot style the portaled panel.
 
 ## Toast styles
 

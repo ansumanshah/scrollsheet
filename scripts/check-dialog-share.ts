@@ -1,18 +1,17 @@
 /**
- * Verifies the docs' "browsers with no <dialog> (~4%)" claim against live
+ * Verifies the docs' "browsers with no <dialog> (~3%)" claim against live
  * caniuse data (StatCounter-weighted). Network-dependent by design — run on
  * demand before a release, never in CI:
  *
  *   bun run check:dialog-share
  *
  * Exits non-zero when the live worst case drifts a full point away from the
- * claimed number, i.e. when every "~4%" in README.md, docs.mdx, index.astro
- * and llms-full.txt needs a synchronized edit.
+ * claimed number, so current README, site, API, and llms-full text stay in sync.
  */
 
 export {};
 
-const CLAIMED_PERCENT = 4;
+const CLAIMED_PERCENT = 3;
 
 const FEATURE_URL = "https://raw.githubusercontent.com/Fyrd/caniuse/main/features-json/dialog.json";
 const FULL_URL = "https://raw.githubusercontent.com/Fyrd/caniuse/main/fulldata-json/data-2.0.json";
@@ -66,7 +65,7 @@ console.log(`  untracked traffic:  ${fmt(untracked)}  (counted against us in the
 if (Math.abs(worstCase - CLAIMED_PERCENT) >= 1) {
   console.error(
     `\nClaim drifted: live worst case ${fmt(worstCase)} vs claimed ~${CLAIMED_PERCENT}%. ` +
-      "Update every occurrence (rg '~4%') and CLAIMED_PERCENT here.",
+      "Update current documentation and CLAIMED_PERCENT here.",
   );
   process.exit(1);
 }

@@ -14,6 +14,25 @@ export interface ScrollAnimation {
 
 const EASE = (t: number) => 1 - Math.pow(1 - t, 3.2);
 
+/**
+ * Jump `el` to `raw` (in whichever scroll axis `axis` names) without
+ * animating.
+ *
+ * WebKit 26.5 quirk: on a `scroll-snap-type: mandatory` container with an
+ * established snap position, a raw `el.scrollTop = x` assignment applies for
+ * one frame then silently reverts to the previous snap point within ~50ms —
+ * even when `x` lands exactly on another valid stop. `el.scrollTo({ top,
+ * behavior: 'instant' })` does not exhibit this; WebKit treats it as a real
+ * scroll command. Chromium and Firefox accept both forms identically, so
+ * this is safe unconditionally.
+ */
+export function jumpScroll(el: HTMLElement, axis: "x" | "y", raw: number): void {
+  const opts: ScrollToOptions = { behavior: "instant" };
+  if (axis === "y") opts.top = raw;
+  else opts.left = raw;
+  el.scrollTo(opts);
+}
+
 export function animateScrollTo(
   el: HTMLElement,
   target: number,
@@ -63,15 +82,7 @@ export function animateScrollTo(
   };
   const onInput = () => stop(false);
 
-  // el.scrollTo({..., behavior:'instant'}) rather than a raw scrollTop/
-  // scrollLeft write: WebKit reverts a raw write on a scroll-snap container
-  // back toward the previous snap position within ~50ms; scrollTo doesn't.
-  const setRaw = (value: number) => {
-    const opts: ScrollToOptions = { behavior: "instant" };
-    if (axis === "y") opts.top = value;
-    else opts.left = value;
-    el.scrollTo(opts);
-  };
+  const setRaw = (value: number) => jumpScroll(el, axis, value);
 
   if (Math.abs(delta) < 1) {
     setRaw(target);

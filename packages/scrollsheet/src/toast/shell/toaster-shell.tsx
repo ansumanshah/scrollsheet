@@ -34,7 +34,7 @@ import {
   useSonner,
 } from "../state";
 import { injectToastStyles } from "../toast-styles";
-import { resolveVisibleToasts, type ToasterProps, useIsDocumentHidden } from "../toaster";
+import { resolveVisibleToasts, type ToasterProps, useIsDocumentHidden } from "../toaster-shared";
 import { useToastExit } from "../use-toast-exit";
 import {
   computePossiblePositions,
@@ -49,7 +49,7 @@ import { useToastHeights } from "./use-toast-heights";
 
 const DEFAULT_HOTKEY: readonly string[] = ["altKey", "KeyT"];
 
-/** One per-toast auto-dismiss timer's bookkeeping — identical shape/contract to the Sheet-backed Toaster's own TimerEntry (see toaster.tsx), just fed from a different source list (see the timer effect below). */
+/** Per-toast auto-dismiss state, retained while a row is hidden by the visibility limit. */
 interface TimerEntry {
   timer: ReturnType<typeof setTimeout> | null;
   startedAt: number;
@@ -200,6 +200,8 @@ function PositionGroup({
         onInteractingChange(true);
       }}
       onPointerUp={() => onInteractingChange(false)}
+      onPointerCancel={() => onInteractingChange(false)}
+      onLostPointerCapture={() => onInteractingChange(false)}
     >
       {exitRows.map(({ record, exiting }) => {
         const offset = offsetById.get(record.id) ?? lastOffsetRef.current.get(record.id);
@@ -224,6 +226,7 @@ function PositionGroup({
             onDismiss={dismissRow}
             observe={observe}
             toasterClassNames={toastOptions?.classNames}
+            toasterClassName={toastOptions?.className}
             sonnerCompat={sonnerCompat}
             icons={icons}
             toasterCloseButtonAriaLabel={toastOptions?.closeButtonAriaLabel}
@@ -382,7 +385,9 @@ export function ToasterShell({
       }
       const [focusedPosition] = focusedEntry;
       const positionToasts = selectPositionToasts(toasts, focusedPosition, defaultPosition);
-      const front = positionToasts[positionToasts.length - 1];
+      // Same gate as swipe, the close button, and the back gesture: a
+      // dismissible: false toast never leaves on Esc.
+      const front = findNewestDismissible(positionToasts);
       if (front) dismissRow(front);
     };
     document.addEventListener("keydown", handleKeyDown);
@@ -390,12 +395,8 @@ export function ToasterShell({
   }, [hotkey, hotkeyExpanded, toasts, defaultPosition, dismissRow]);
 
   // ── Per-toast auto-dismiss timers ─────────────────────────────────────
-  // Identical algorithm to the Sheet-backed Toaster's own timer effect (see
-  // toaster.tsx) — the shell consumes the mechanical tier, doesn't rewrite
-  // it. One real difference: iterates the WHOLE toaster-wide `toasts` list,
-  // not a capped `visibleToasts` window — hide-not-evict means a hidden
-  // toast still ticks. `interacting` (real, not approximated) joins the
-  // pause condition alongside `expanded`/`isDocumentHidden`.
+  // Hidden rows still tick; interaction, expansion, and document visibility
+  // pause every timer in the toaster-wide list.
   const timersRef = React.useRef(new Map<number | string, TimerEntry>());
   React.useEffect(() => {
     const timers = timersRef.current;
@@ -465,7 +466,7 @@ export function ToasterShell({
   // coupling. Dismisses this Toaster's own newest dismissible toast across
   // every position, mirroring the old Sheet-backed Toaster's single `front`.
   useCloseWatcher({
-    present: toasts.length > 0,
+    present: toasts.some((t) => t.dismissible !== false),
     nonModal: true,
     escapeDismissible: true,
     onClose: () => {

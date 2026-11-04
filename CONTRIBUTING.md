@@ -3,37 +3,60 @@
 ## Setup
 
 ```sh
-bun install
+bun install              # Bun 1.4.4 (matches packageManager and CI)
 ```
 
 ## Verify before opening a PR
 
 ```sh
-bun run verify            # typecheck -> unit -> e2e fast -> build -> size -> pack:check, one shot
+bun run verify            # typecheck -> CSS compat -> build -> unit -> e2e fast -> size -> pack -> registry
 ```
 
 Or run the steps yourself:
 
 ```sh
 bun run typecheck
+bun run check:compat    # authored CSS against .browserslistrc
+bun run build           # required before unit tests read dist/
 bun test tests/unit
-bun run test:e2e:fast    # ~28s, chromium-mobile only
-bunx playwright test     # full 4-project matrix, ~1.4 min
-bun run size              # 16.0 kB gzip budget on the core bundle
+bun run test:e2e:fast    # chromium-mobile only
+bun run test:e2e --workers=3 # full browser matrix and local visual/performance projects
+bun run size            # per-import gzip budgets and size-document freshness
 bun run pack:check
+bun run check:registry
 bun run test:site         # site smoke, builds the docs site first
 ```
 
+`bun run typecheck` uses `bun check` for library source, scripts, tests, fixtures, and
+build/test configs. The docs workspace has its own `bun run --cwd docs typecheck`.
+The TypeScript 6 dependency supplies declaration generation and Astro's checker;
+source typechecking uses Bun's built-in checker. The latest `@astrojs/check` rejects
+the TypeScript 7 npm package as of `@astrojs/check` 0.9.12.
+`check:compat` checks CSS only; JavaScript browser-API linting is not part of this gate.
+
+The package's JavaScript and bundle-size probes use Bun's bundler. `bun-plugin-dts`
+bundles declarations during the production builds. `tsconfig.declarations.json`
+keeps build-tool ambient types out of the published API; a strict NodeNext
+consumer test checks the generated declarations and public component props.
+Declarations ship in `dist/types/` inside the same npm package as the JavaScript.
+
+## Formatting
+
+Use `bun fmt <files>` to format changed files, or `bun fmt --check <files>` to check
+them without writing. Settings live in `bunfig.toml`; generated modules are excluded.
+
 ## CSS
 
-`src/internal/core.css` is the authored source. Never edit `src/internal/core-css.generated.ts`
-by hand: it's a generated, pre-minified module. After editing `core.css`, run:
+The authored stylesheets are `packages/scrollsheet/src/internal/core.css`,
+`packages/scrollsheet/src/internal/widgets.css`, and
+`packages/scrollsheet/src/toast/toast.css`. Never edit `*-css.generated.ts` by hand.
+After editing a stylesheet, run:
 
 ```sh
 bun run gen:css
 ```
 
-CI fails if the generated file is stale.
+The build regenerates these modules before unit tests check the CSS output.
 
 ## Pull requests
 
@@ -42,8 +65,14 @@ CI fails if the generated file is stale.
 
 ```md
 ## Test plan
+
 - [ ] bun run typecheck
+- [ ] bun run check:compat
+- [ ] bun run build
 - [ ] bun test tests/unit
 - [ ] bun run test:e2e:fast
-- [ ] bunx playwright test
+- [ ] bun run test:e2e --workers=3
+- [ ] bun run size
+- [ ] bun run pack:check
+- [ ] bun run check:registry
 ```
