@@ -5,6 +5,10 @@
 
 /* ── Hero: compact headline, install above the fold, vaul migration ───── */
 
+.hero {
+  padding-block-start: clamp(28px, 4vw, 52px);
+}
+
 .hero h1 {
   font-size: clamp(2.1rem, 5.4vw, 3.5rem);
   margin-bottom: 16px;
@@ -27,6 +31,12 @@
   .hero {
     padding-block: 28px 32px;
     gap: 20px;
+    /* minmax(0, ...) stops the unbreakable diff lines from widening the track. */
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .hero > *,
+  .hero-copy > * {
+    min-width: 0;
   }
   /* The copy column dissolves so the install box, the live demo and the
      migration block can be ordered independently of the DOM. */
@@ -319,6 +329,13 @@
   line-height: 1.55;
 }
 
+/* Cells here hold sentences with inline code, so they flow as text rather
+   than as the flex row the homepage table uses for short values. */
+.seo__body .cmp-val {
+  display: block;
+  text-align: left;
+}
+
 /* In prose, cells hold inline code; keep it quiet inside the table. */
 .seo__body .compare-table code {
   font-size: 0.82em;
@@ -441,4 +458,13 @@
 .seo__install a {
   color: var(--accent);
   text-underline-offset: 3px;
+}
+
+/* Prose styling for inline code must not reach the install command. */
+.seo__body .install-box code {
+  padding: 0;
+  border: 0;
+  background: none;
+  color: #e8e6f0;
+  font-size: inherit;
 }

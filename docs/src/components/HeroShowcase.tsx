@@ -101,7 +101,7 @@ export default function HeroShowcase({
         {/* The rows are the demos, so the header says what they are rather
             than dressing the screen up as some other app. */}
         <div className="hs-app-bar">
-          <h1>Try scrollsheet</h1>
+          <h2>Try scrollsheet</h2>
           <span>Tap to open</span>
         </div>
         {ROWS.map((row) => (

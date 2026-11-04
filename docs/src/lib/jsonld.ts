@@ -46,6 +46,6 @@ export const breadcrumbs = (crumbs: Crumb[]) => ({
     "@type": "ListItem",
     position: i + 1,
     name: c.name,
-    item: `${SITE}${c.path}`,
+    item: `${SITE}${c.path.endsWith("/") ? c.path : `${c.path}/`}`,
   })),
 });
