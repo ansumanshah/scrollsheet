@@ -9,6 +9,8 @@ Two-step migration. Do step 1 first, always. Step 2 is optional and separate.
 
 ## Step 1: change the import and stylesheet
 
+`npx scrollsheet-codemod vaul src` makes this change and reports each prop to check, with file and line. By hand:
+
 ```diff
 - import { Drawer } from 'vaul';
 - import 'vaul/style.css';

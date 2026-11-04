@@ -11,7 +11,7 @@ React bottom sheets, drawers, dialogs, side panels, and toasts.
 
 Compared with [vaul](https://scrollsheet.dev/compare/vaul), [Base UI](https://scrollsheet.dev/compare/base-ui), [react-modal-sheet](https://scrollsheet.dev/compare/react-modal-sheet) and [Radix Dialog](https://scrollsheet.dev/compare/radix-dialog), including what scrollsheet does worse.
 
-Sheets use a native `<dialog>` and CSS scroll snap, with spring motion expressed as CSS `linear()`. <!--size:index.gzip:1-->16.6<!--/size--> kB gzipped, <!--size:index.brotli:1-->14.9<!--/size--> kB brotli, plus a 3.9 kB stylesheet. React 18+; no runtime dependencies.
+Sheets use a native `<dialog>` and CSS scroll snap, with spring motion expressed as CSS `linear()`. <!--size:index.gzip:1-->16.6<!--/size--> kB gzipped, <!--size:index.brotli:1-->14.9<!--/size--> kB brotli, plus a 4.2 kB stylesheet. React 18+; no runtime dependencies.
 
 Coming from vaul? Its [README](https://github.com/emilkowalski/vaul#readme) says the repo is unmaintained. The `Drawer` adapter takes common vaul props, so two lines change:
 
@@ -22,11 +22,11 @@ Coming from vaul? Its [README](https://github.com/emilkowalski/vaul#readme) says
 + import 'scrollsheet/styles.css';
 ```
 
-Read the [differences](https://scrollsheet.dev/docs/migrating/from-vaul) before you remove vaul.
+`npx scrollsheet-codemod vaul src` makes that change and lists every prop to check. Read the [differences](https://scrollsheet.dev/docs/migrating/from-vaul) before you remove vaul.
 
 <p align="center">
   <a href="https://scrollsheet.dev/">
-    <img src="https://raw.githubusercontent.com/ansumanshah/scrollsheet/2e04c4b374039c4840e4189f36437bb8854638bb/docs/public/hero.gif" width="290" alt="A bottom sheet opening, snapping between detents, and closing">
+    <img src="https://scrollsheet.dev/launch/hero.gif" width="290" alt="A bottom sheet opening, snapping between detents, and closing">
   </a>
 </p>
 
