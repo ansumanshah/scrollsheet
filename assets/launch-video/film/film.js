@@ -1,4 +1,4 @@
-import { clamp, spring, track } from "./motion.js";
+import { clamp, spring } from "./motion.js";
 
 // window.seek(t) paints the exact frame for time t. No timers, no CSS transitions, no state
 // between frames, so a render is a pure function of the capture data and t.
@@ -43,7 +43,8 @@ const el = (tag, parent, props = {}) => {
 const T = {};
 T.proof = 0;
 T.keyboard = T.proof + secs("proof") + 0.28;
-T.desk = T.keyboard + secs("keyboard") + 0.28;
+const KB_SKIP = mark("keyboard", "focus") - 0.3;
+T.desk = T.keyboard + secs("keyboard") - KB_SKIP + 0.28;
 T.toasts = T.desk + secs("desk") + 0.28;
 T.vaul = T.toasts + secs("toasts") + 0.28;
 T.size = T.vaul + secs("vaul") + 0.5;
@@ -268,15 +269,13 @@ const tickEls = tickLabels.map((label) => {
   el("i", row);
   return row;
 });
-const needle = el("div", ticksRoot, { id: "needle" });
 
 function paintTicks(t, geo, tIn, tOut, activeStop) {
   const on = t >= tIn && t < tOut + 0.4;
   show(ticksRoot, on);
   if (!on) return;
-  const size = TALL ? 34 : 32;
+  const size = TALL ? 38 : 38;
   const stops = geo.m.stops.slice(1);
-  const panelY = geo.top + (geo.m.panelTop ?? geo.m.vh) * geo.scale;
   const right = W - geo.left + 22;
   tickEls.forEach((row, i) => {
     const y = geo.top + (geo.m.vh - stops[i]) * geo.scale;
@@ -286,13 +285,11 @@ function paintTicks(t, geo, tIn, tOut, activeStop) {
     row.style.right = `${right}px`;
     row.style.top = `${y - size * 0.62}px`;
     row.style.fontSize = `${size}px`;
-    row.style.color = near ? "#fff" : FAINT;
+    row.style.color = near ? "#fff" : MUTED;
     row.style.opacity = String(clamp(1 - leave * 1.4));
     row.style.transform = `translate3d(${rise * 60}px, 0, 0)`;
     row.lastChild.style.width = `${near ? 58 : 34}px`;
   });
-  needle.style.visibility = "hidden";
-  void panelY;
 }
 
 // ---- Scene: proof. ----
@@ -322,9 +319,9 @@ const rScrollValue = makeReadout(proofLayer, {
   weight: 600,
 });
 const rScrollNote = makeReadout(proofLayer, {
-  x: L.readX,
-  y: L.readY + L.codeSize * 1.5 + (TALL ? 200 : 258),
-  size: L.codeSize * 0.8,
+  x: TALL ? L.readX + 350 : L.readX,
+  y: TALL ? L.readY + L.codeSize * 1.5 + 48 : L.readY + L.codeSize * 1.5 + 258,
+  size: TALL ? 44 : L.codeSize * 0.8,
   color: MUTED,
 });
 rScrollNote.node.style.fontFamily = "var(--sans)";
@@ -371,7 +368,7 @@ async function paintProof(t) {
   );
   rScrollLabel.at(t, scrollAt + 0.16, detentsAt - 0.2, "track.scrollTop");
   rScrollValue.at(t, scrollAt + 0.2, detentsAt - 0.2, String(Math.round(geo.m.scrollTop)));
-  rScrollNote.at(t, scrollAt + 0.42, detentsAt - 0.2, "On touch, the browser moves the sheet.");
+  rScrollNote.at(t, scrollAt + 0.42, detentsAt - 0.2, TALL ? "On touch, the browser<br>moves the sheet." : "On touch, the browser moves the sheet.");
   rDetentCode.at(t, detentsAt + 0.16, T.keyboard + 1, 'detents={[0.35, 0.7, "full"]}');
   rSnapType.at(t, detentsAt + 0.3, T.keyboard + 1, `scroll-snap-type: ${geo.m.snapType}`);
   paintTicks(t, geo, detentsAt + 0.2, T.keyboard + 1, geo.m.scrollTop);
@@ -396,7 +393,7 @@ async function paintKeyboard(t) {
   const on = t >= T.keyboard && t < T.desk;
   show(kbLayer, on);
   if (!on) return;
-  const dt = t - T.keyboard;
+  const dt = t - T.keyboard + KB_SKIP;
   await paintDevice({
     shot: "keyboard",
     frame: dt * FPS,
@@ -411,32 +408,32 @@ async function paintKeyboard(t) {
 // ---- Scene: desk. A window, then the same dialog narrowing into a bottom sheet. ----
 const deskLayer = el("div", sceneLayer, { className: "layer" });
 const deskCapX = TALL ? L.titleX : 336;
-const deskCapY = TALL ? 118 : 874;
-const deskSize = TALL ? 128 : 96;
-const tSide = makeTitle(deskLayer, [[plain("Any edge.")]], {
+const deskCapY = TALL ? 372 : 874;
+const deskSize = TALL ? 112 : 96;
+const tSide = makeTitle(deskLayer, [[plain("Side panels.")]], {
   x: deskCapX,
   y: deskCapY,
   size: deskSize,
 });
-const tCenter = makeTitle(deskLayer, [[plain("Or centered.")]], {
+const tCenter = makeTitle(deskLayer, [[plain("Centered dialogs.")]], {
   x: deskCapX,
   y: deskCapY,
   size: deskSize,
 });
-const tNarrow = makeTitle(deskLayer, [[plain("Same component")], [plain("under 768 px.")]], {
+const tNarrow = makeTitle(deskLayer, [[plain("Under 768 px,")], [plain("a bottom sheet.")]], {
   x: L.titleX,
   y: L.titleY,
   size: L.titleSize,
 });
 const rSide = makeReadout(deskLayer, {
-  x: TALL ? L.readX : 960,
-  y: TALL ? 290 : deskCapY + 26,
+  x: TALL ? L.readX : 1180,
+  y: TALL ? 530 : deskCapY + 26,
   size: L.codeSize,
   color: LAVENDER,
 });
 const rCenter = makeReadout(deskLayer, {
-  x: TALL ? L.readX : 960,
-  y: TALL ? 290 : deskCapY + 26,
+  x: TALL ? L.readX : 1180,
+  y: TALL ? 530 : deskCapY + 26,
   size: L.codeSize,
   color: LAVENDER,
 });
@@ -455,7 +452,7 @@ async function paintDesk(t) {
   const narrowAt = mark("desk", "narrow");
   const deskScale = TALL ? 996 / 1280 : 1;
   const deskCx = TALL ? W / 2 : W / 2;
-  const deskCy = TALL ? 880 : 438;
+  const deskCy = TALL ? 1020 : 438;
   const n = spring(dt - narrowAt, ...HEAVY);
   const scale = deskScale + (phoneScale - deskScale) * n;
   const cx = deskCx + (L.phoneCx - deskCx) * n;
@@ -499,12 +496,20 @@ async function paintToasts(t) {
   const on = t >= T.toasts && t < T.vaul;
   show(toastLayer, on);
   if (!on) return;
+  const dt = t - T.toasts;
+  const push = spring(dt - mark("toasts", "first") - 0.5, ...HEAVY);
+  const zoom = TALL ? 2.42 : 2.18;
+  const scale = phoneScale + (zoom - phoneScale) * push;
+  const topWas = L.phoneCy - (844 * phoneScale) / 2;
+  const topNow = TALL ? 560 : 44;
+  const top = topWas + (topNow - topWas) * push;
+  const cxNow = TALL ? W / 2 : 1450;
   await paintDevice({
     shot: "toasts",
-    frame: (t - T.toasts) * FPS,
-    cx: L.phoneCx,
-    cy: L.phoneCy,
-    scale: phoneScale,
+    frame: dt * FPS,
+    cx: L.phoneCx + (cxNow - L.phoneCx) * push,
+    cy: top + (844 * scale) / 2,
+    scale,
   });
   tToast.at(t, T.toasts + 0.1, T.vaul - 0.12);
   rToastCode.at(t, T.toasts + 0.26, T.vaul - 0.12, 'toast("Saved Ember &amp; Oak")');
@@ -545,8 +550,8 @@ const diffRows = DIFF.map((d) => {
   row.style.fontSize = `${diffSize}px`;
   row.style.padding = `0 ${diffSize * 0.6}px`;
   row.style.borderRadius = "14px";
-  row.style.background = d.tone === "out" ? "#e9e3dc" : "#e4e0fb";
-  row.style.color = d.tone === "out" ? "#8b857b" : "#2c2570";
+  row.style.background = d.tone === "out" ? "#fbe9e6" : "#e4e0fb";
+  row.style.color = d.tone === "out" ? "#a12d24" : "#2c2570";
   el("b", row, { textContent: `${d.sign}  ` });
   el("span", row, { textContent: d.text });
   return row;
@@ -584,8 +589,8 @@ async function paintVaul(t) {
     row.style.transform = `translate3d(0, ${y + rise * 60}px, 0)`;
     row.style.opacity = String(clamp(1 - rise * 1.4));
     if (isOut) {
-      const strike = clamp((t - outAt) / 0.2);
-      row.style.opacity = String((1 - strike * 0.45) * clamp(1 - rise * 1.4));
+      const strike = spring(t - outAt, ...SNAPPY);
+      row.style.opacity = String((1 - strike * 0.25) * clamp(1 - rise * 1.4));
     }
   });
   rVaulNote.at(t, outAt + 0.7, Infinity, "Same <b>Drawer.*</b> markup.");
@@ -602,8 +607,8 @@ const tSize = makeTitle(sizeLayer, [[plain(SIZE_SHEET), plain(" kB")]], {
 });
 const rSizeImport = makeReadout(sizeLayer, {
   x: sizeX + 8,
-  y: TALL ? 520 : 182,
-  size: TALL ? 40 : 40,
+  y: TALL ? 516 : 172,
+  size: TALL ? 46 : 50,
   color: "#fff",
   weight: 500,
 });
@@ -637,7 +642,7 @@ function paintSize(t) {
 
 // ---- Scene: end card. The three sheets of the mark settle, then the name and the command. ----
 const endLayer = el("div", sceneLayer, { className: "layer" });
-const markSize = TALL ? 260 : 220;
+const markSize = TALL ? 280 : 250;
 const markEl = el("div", endLayer, { id: "mark" });
 markEl.style.width = `${markSize}px`;
 markEl.style.height = `${markSize}px`;
@@ -657,31 +662,31 @@ const markLayers = MARK_LAYERS.map((layer) => {
   node.style.opacity = layer.o;
   return node;
 });
-const endX = TALL ? W / 2 - markSize / 2 : 118;
-const endY = TALL ? 420 : 210;
+const endX = TALL ? 96 : 118;
+const endY = TALL ? 500 : 196;
 const tName = makeTitle(endLayer, [[plain("scrollsheet")]], {
   x: TALL ? 92 : endX + markSize + 56,
-  y: TALL ? endY + markSize + 60 : endY + 36,
-  size: TALL ? 172 : 168,
+  y: TALL ? endY + markSize + 56 : endY + 42,
+  size: TALL ? 172 : 196,
 });
 const rInstall = makeReadout(endLayer, {
   x: TALL ? 100 : endX + 4,
-  y: TALL ? endY + markSize + 330 : endY + markSize + 96,
-  size: TALL ? 62 : 72,
+  y: TALL ? endY + markSize + 306 : endY + markSize + 92,
+  size: TALL ? 74 : 84,
   color: "#fff",
   weight: 600,
 });
 const rUrl = makeReadout(endLayer, {
   x: TALL ? 100 : endX + 4,
-  y: TALL ? endY + markSize + 430 : endY + markSize + 200,
-  size: TALL ? 62 : 72,
+  y: TALL ? endY + markSize + 416 : endY + markSize + 210,
+  size: TALL ? 74 : 84,
   color: LAVENDER,
   weight: 600,
 });
 const rEndLine = makeReadout(endLayer, {
   x: TALL ? 100 : endX + 4,
-  y: TALL ? endY + markSize + 540 : endY + markSize + 306,
-  size: TALL ? 38 : 40,
+  y: TALL ? endY + markSize + 540 : endY + markSize + 326,
+  size: TALL ? 41 : 44,
   color: MUTED,
 });
 rEndLine.node.style.fontFamily = "var(--sans)";
@@ -704,7 +709,7 @@ function paintEnd(t) {
   tName.at(t, T.end + 0.3);
   rInstall.at(t, T.end + 0.72, Infinity, "bun add scrollsheet");
   rUrl.at(t, T.end + 0.92, Infinity, "scrollsheet.dev");
-  rEndLine.at(t, T.end + 1.2, Infinity, "Sheets, drawers, dialogs, side panels, toasts. MIT.");
+  rEndLine.at(t, T.end + 1.2, Infinity, TALL ? "Sheets, drawers, dialogs, side panels, toasts.<br>MIT." : "Sheets, drawers, dialogs, side panels, toasts. MIT.");
 }
 
 // ---- README loop: the phone alone on a paper ground, with the live scroll readout. ----
@@ -755,6 +760,5 @@ window.seek = async (t) => {
   await paintVaul(t);
   paintSize(t);
   paintEnd(t);
-  void track;
 };
 window.__ready = true;
