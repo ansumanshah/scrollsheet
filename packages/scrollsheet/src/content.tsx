@@ -3,7 +3,7 @@
 import * as React from "react";
 import { createPortal } from "react-dom";
 
-import { StackContext, type SheetContextValue, type TravelInfo, useSheetContext } from "./context";
+import { StackContext, type SheetContextValue, useSheetContext } from "./context";
 import {
   DEFAULT_RADIUS_PX,
   FULL_HEIGHT_RADIUS_FLATTEN_PX,
@@ -13,24 +13,24 @@ import {
   TRAVEL_MS,
   applyBackgroundEffect,
   applyFullHeightRadius,
+  clamp01,
   clearRecede,
+  fillProgressAtDetents,
   isMarkLive,
   isPhantomScrollStep,
   jumpScroll,
-  measureContentHeight,
-  resolveClosedBy,
   readRevealed,
+  round3,
+  sdaOwnsBackdrop,
+  resolveClosedBy,
   restoreFocusFallback,
   setBoolAttr,
 } from "./internal/content-helpers";
 import {
   clampSequentialDetent,
-  type DetentContext,
   type DetentSpec,
   isBelowCloseThreshold,
   nearestDetent,
-  resolveDetent,
-  resolveDetents,
   type ResolvedDetent,
 } from "./internal/detents";
 import {
@@ -41,7 +41,6 @@ import {
   isIOS,
   warnContentAsChildInvalidChild,
   warnCoreStylesMissing,
-  warnLargestUndimmedDetentOutOfRange,
   warnMissingDialogSupport,
 } from "./internal/env";
 import { preloadFallbackSheet } from "./internal/fallback-sheet-loader";
@@ -56,7 +55,6 @@ import type { UseContentMorphInput } from "./internal/use-content-morph";
 import { geometryFor, mapScroll } from "./motion/geometry";
 import { type ScrollAnimation, animateScrollTo } from "./motion/scroll-animator";
 import { isAtScrollBoundary } from "./motion/scroll-handoff";
-import { syncSnapStops as syncSnapStopsImpl } from "./motion/snap-stops";
 import { SHEET_SPRING } from "./motion/spring";
 import { useDragEngine } from "./internal/use-drag-engine";
 import { useEnterExitLeg } from "./internal/use-enter-exit-leg";
@@ -69,6 +67,7 @@ import { nestedScroll } from "./internal/nested-scroll-loader";
 import type { UseNestedScrollInput } from "./internal/use-nested-scroll";
 import { createThumbController, hasScrollableOverflow } from "./internal/scrollbar-layout";
 import { useOverlayScrollbar } from "./internal/use-overlay-scrollbar";
+import { useSheetMeasure } from "./internal/use-sheet-measure";
 import { useStackRecede } from "./internal/use-stack-recede";
 
 // Marks an Escape keydown as already claimed by the topmost non-modal sheet,
@@ -104,49 +103,6 @@ export interface SheetContentProps extends React.ComponentProps<"div"> {
    * @default false
    */
   asChild?: boolean;
-}
-
-/**
- * Pure per-frame math for onTravel's TravelInfo. Mutates `target` in
- * place (the reused-Map contract TravelInfo's TSDoc documents) rather than
- * returning a fresh Map. Keyed by resolved px height, not DetentSpec, since
- * `resolved` is already de-duped by height (resolveDetents' contract) — a
- * duplicate-resolving spec must not double-count here either.
- */
-export function fillProgressAtDetents(
-  target: Map<number, number>,
-  resolved: readonly ResolvedDetent[],
-  revealed: number,
-): void {
-  target.clear();
-  for (const detent of resolved) {
-    const progress = detent.height > 0 ? Math.min(1, Math.max(0, revealed / detent.height)) : 0;
-    target.set(detent.height, progress);
-  }
-}
-
-function round3(x: number): string {
-  return String(Math.round(x * 1000) / 1000);
-}
-
-/**
- * Whether the CSS scroll-driven-animation path (core.css's `@supports
- * (animation-timeline: scroll())` block, active once `data-scrollsheet-sda`
- * is stamped) owns the backdrop's dim opacity and `--scrollsheet-progress`
- * for this frame — updateTravel must skip writing either then, or the JS
- * write and the compositor animation fight over the same custom properties
- * for no reason (the animation always wins the cascade regardless, so the
- * skip is a pure main-thread-cost cut, not a correctness fix).
- *
- * Scoped to phase 'open' only, matching core.css's own selector: during
- * 'opening'/'closing' the track's scroll position is already at rest (jumped
- * to its target before the WAAPI enter/exit leg starts animating the
- * PANEL's transform — see the open sequence effect), so there is no live
- * scroll delta for a timeline to read yet. That entrance/exit fade stays the
- * existing transition-driven write on every engine, SDA or not.
- */
-export function sdaOwnsBackdrop(sdaSupported: boolean, phase: Phase): boolean {
-  return sdaSupported && phase === "open";
 }
 
 export const Content = /* @__PURE__ */ React.forwardRef<HTMLDivElement, SheetContentProps>(
@@ -192,11 +148,17 @@ export const Content = /* @__PURE__ */ React.forwardRef<HTMLDivElement, SheetCon
       [ctx.setCanvasEl],
     );
 
-    const lastInsetMirrorRef = React.useRef("");
     const resolvedRef = React.useRef<ResolvedDetent[]>([]);
-    const measureCtxRef = React.useRef<DetentContext | null>(null);
     const maxDetentRef = React.useRef(0);
     const firstDetentRef = React.useRef(0);
+    // largestUndimmedDetent's resolved dim range, px — see updateTravel's
+    // `dimProgress` (backdrop/themeColorDimming only; travelProgress, driving
+    // everything else, is unaffected by this prop). dimStart 0 / dimEnd
+    // firstDetent (the prop's default, unset) reduces to today's behavior
+    // exactly.
+    const dimStartRef = React.useRef(0);
+    const dimEndRef = React.useRef(0);
+    const atMaxRef = React.useRef(false);
     // onTravel's 3rd arg: one object + one Map, reused and mutated in place
     // every travel frame instead of allocated fresh — see TravelInfo's TSDoc.
     const travelInfoRef = React.useRef<{
@@ -206,14 +168,12 @@ export const Content = /* @__PURE__ */ React.forwardRef<HTMLDivElement, SheetCon
       range: [0, 0],
       progressAtDetents: new Map(),
     });
-    // largestUndimmedDetent's resolved dim range, px — see updateTravel's
-    // `dimProgress` (backdrop/themeColorDimming only; travelProgress, driving
-    // everything else, is unaffected by this prop). dimStart 0 / dimEnd
-    // firstDetent (the prop's default, unset) reduces to today's behavior
-    // exactly.
-    const dimStartRef = React.useRef(0);
-    const dimEndRef = React.useRef(0);
-    const atMaxRef = React.useRef(false);
+    // Last written --scrollsheet-kb-hang / --scrollsheet-reveal px, to skip
+    // same-value writes on the travel hot path (at rest neither changes
+    // frame to frame).
+    const lastKbHangRef = React.useRef(-1);
+    const lastRevealRef = React.useRef(-1);
+    const radiusOverrideAppliedRef = React.useRef(false);
     const animRef = React.useRef<ScrollAnimation | null>(null);
     // Set for the lifetime of any in-flight animateScrollTo tween (Handle/
     // keyboard detent travel, content-morph, drag-release-to-nearest-detent —
@@ -232,11 +192,6 @@ export const Content = /* @__PURE__ */ React.forwardRef<HTMLDivElement, SheetCon
     // (see the JSX comment where it renders). updateTravel mirrors the dim
     // var onto it because the var is scoped per-element, not on the dialog.
     const topChromeRef = React.useRef<HTMLDivElement | null>(null);
-    // Last written --scrollsheet-kb-hang / --scrollsheet-reveal px, to skip
-    // same-value writes on the travel hot path (at rest neither changes
-    // frame to frame).
-    const lastKbHangRef = React.useRef(-1);
-    const lastRevealRef = React.useRef(-1);
     // Bottom mirror of topChromeRef (see the JSX comment where it renders).
     const bottomChromeDimRef = React.useRef<HTMLDivElement | null>(null);
     const previousFocusRef = React.useRef<HTMLElement | null>(null);
@@ -246,7 +201,6 @@ export const Content = /* @__PURE__ */ React.forwardRef<HTMLDivElement, SheetCon
     const baseRadiusRef = React.useRef(DEFAULT_RADIUS_PX);
     const fullHeightRef = React.useRef(false);
     const detachedRef = React.useRef(false);
-    const radiusOverrideAppliedRef = React.useRef(false);
     /** Which effect updateTravel last wrote, so it can be wound back. */
     const backgroundAppliedRef = React.useRef<"scale" | "parallax" | null>(null);
 
@@ -270,7 +224,6 @@ export const Content = /* @__PURE__ */ React.forwardRef<HTMLDivElement, SheetCon
     const markProgrammaticScroll = React.useCallback(() => {
       programmaticScrollMarkRef.current = performance.now();
     }, []);
-    // fill is a Content prop, not context — measure() (a `[]`-deps useCallback)
     // reads it via ref like every other per-render value it needs.
     const fillRef = React.useRef(fill);
     React.useInsertionEffect(() => {
@@ -369,196 +322,29 @@ export const Content = /* @__PURE__ */ React.forwardRef<HTMLDivElement, SheetCon
       setChildCount,
     });
 
-    /**
-     * Resolve detents against the current viewport and rebuild snap stops.
-     * `rebuildSnapStops` defaults to true for every caller except the
-     * content-morph effect, which defers the snap-stop DOM rebuild until
-     * after its own tween lands — see `syncSnapStops`'s doc comment below for
-     * why.
-     */
-    const measure = React.useCallback((rebuildSnapStops = true) => {
-      const dialog = dialogRef.current;
-      const track = trackRef.current;
-      const canvas = canvasRef.current;
-      const body = bodyRef.current;
-      const panel = panelRef.current;
-      if (!dialog || !track || !canvas || !body || !panel) return;
-      const geometry = geometryFor(ctxRef.current.side);
+    const [measure, syncSnapStops, resolveSpec] = useSheetMeasure(
+      dialogRef,
+      trackRef,
+      canvasRef,
+      panelRef,
+      bodyRef,
+      ctxRef,
+      fillRef,
+      resolvedRef,
+      maxDetentRef,
+      firstDetentRef,
+      dimStartRef,
+      dimEndRef,
+      baseRadiusRef,
+      fullHeightRef,
+      detachedRef,
+    );
 
-      // Feeds .scrollsheet-canvas::after's overdraw fill — see styles.ts for
-      // why this can't just be `background: inherit` on the pseudo itself.
-      // One computed-style resolve per measure — three separate calls each
-      // forced style recalc on a hot path (every resize/keyboard/morph).
-      const panelStyle = getComputedStyle(panel);
-      canvas.style.setProperty("--scrollsheet-panel-bg", panelStyle.backgroundColor);
-
-      // Desktop drawers take the Handle out of flow, so the top spacing the
-      // pill would otherwise provide has to be added back explicitly — only
-      // on sheets that actually render one. Reflected as an attribute rather than matched with
-      // :has() so the rule holds on every browser the library supports (:has()
-      // is Firefox 121+, above this library's 112 floor), and re-evaluated with
-      // the rest of measure() so a multi-view sheet that swaps a handle in or
-      // out doesn't keep stale spacing.
-      // Written only on an actual change: this attribute drives a padding rule,
-      // so an unconditional write would invalidate style every measure() and
-      // force a recalc on the `contentHeight` read below — measure() runs on
-      // every resize, keyboard move, and content morph.
-      const hasHandle = body.querySelector("[data-scrollsheet-handle]") !== null;
-      setBoolAttr(dialog, "data-scrollsheet-has-handle", hasHandle);
-
-      // Center presentation: the panel is content-sized by the center CSS
-      // block and there is no travel range — detent resolution, snap stops,
-      // dim ranges, and the detached/full-height machinery are all inert.
-      // Only the two writes above (overdraw fill color, handle spacing) are
-      // meaningful, and every measure() caller (resize, keyboard, morph)
-      // stays safe through this single early return.
-      if (ctxRef.current.center) return;
-
-      const viewportSize = track[geometry.clientSizeProp];
-      // Detached (floating-card) sheets reserve their margin out of the
-      // detent space itself: 'full' resolves to viewport minus the top and
-      // bottom gaps, so a full detent still floats instead of touching the
-      // edges. Parsed here (not only in the detached block below) because the
-      // detent resolution needs it first.
-      const rawInsetBottom = panelStyle.getPropertyValue("--scrollsheet-inset-bottom");
-      const parsedInsetBottom = Number.parseFloat(rawInsetBottom);
-      const detached = Number.isFinite(parsedInsetBottom) && parsedInsetBottom > 0;
-      // Written HERE, before contentHeight is read below and before the
-      // detent resolution. core.css's own [data-scrollsheet-detached] rule
-      // replaces the panel's padding-bottom (the attached rule clears the
-      // home indicator; the detached one must not, or the card pads twice),
-      // and measureContentHeight reads that padding off panelStyle — the
-      // attribute must land before that first read, or a detached sheet's
-      // first measure sizes against the attached padding and opens taller
-      // than its content by the safe-area inset, with nothing to remeasure it.
-      // Conditional write for the same reason has-handle above is: an
-      // unconditional one invalidates style on every measure().
-      detachedRef.current = detached;
-      setBoolAttr(dialog, "data-scrollsheet-detached", detached);
-      // Mirrored onto the canvas for the outside-variant Handle's offset:
-      // --scrollsheet-inset-bottom is scoped to the PANEL (the desktop dock
-      // sets it there, consumers' detached-card classes target it there),
-      // and the canvas-portaled pill is a sibling — it never inherits the
-      // real value, so without this mirror it would silently read 0.
-      // Conditional write, same reason as the attributes above.
-      const insetMirror = `${detached ? parsedInsetBottom : 0}px`;
-      if (canvas && lastInsetMirrorRef.current !== insetMirror) {
-        lastInsetMirrorRef.current = insetMirror;
-        canvas.style.setProperty("--scrollsheet-ib", insetMirror);
+    const writeDim = (value: string) => {
+      for (const el of [backdropRef.current, topChromeRef.current, bottomChromeDimRef.current]) {
+        el?.style.setProperty("--scrollsheet-dim", value);
       }
-      const measureCtx: DetentContext = {
-        viewportHeight: viewportSize,
-        contentHeight: measureContentHeight(
-          body,
-          geometry.offsetSizeProp,
-          fillRef.current,
-          panelStyle,
-          geometry.axis,
-        ),
-        topInset: detached ? parsedInsetBottom * 2 : 0,
-      };
-      measureCtxRef.current = measureCtx;
-      const resolved = resolveDetents(ctxRef.current.detents, measureCtx);
-      resolvedRef.current = resolved;
-      const maxDetent = resolved[resolved.length - 1]?.height ?? 0;
-      const firstDetent = resolved[0]?.height ?? 0;
-      maxDetentRef.current = maxDetent;
-      firstDetentRef.current = firstDetent;
-
-      // largestUndimmedDetent: dimStart is its resolved height (0 if unset —
-      // the prop's default), dimEnd is the next *resolved* detent above it, or
-      // maxDetent if it's already the tallest. Clamped to maxDetent-1 so
-      // dimStart < dimEnd always holds, even when largestUndimmedDetent
-      // resolves at or above every configured detent (e.g. a short
-      // 'content'-only detents list with a taller largestUndimmedDetent) —
-      // without this an inverted dimStart > dimEnd range gets written to
-      // --scrollsheet-fade-start/-end, which is undefined behavior on the CSS
-      // scroll-driven-animation fast path (core.css's animation-range).
-      const undimmedSpec = ctxRef.current.largestUndimmedDetent;
-      const resolvedDimStart =
-        undimmedSpec !== undefined ? Math.round(resolveDetent(undimmedSpec, measureCtx)) : 0;
-      const dimStart = Math.max(0, Math.min(maxDetent - 1, resolvedDimStart));
-      // Warn only when it resolves *above* every configured detent (the actual
-      // misconfiguration — e.g. a short 'content'-only detents list with a
-      // taller largestUndimmedDetent) — not merely equal to the tallest one,
-      // which is a legitimate, common pattern (vaul's own default: "fade only
-      // at the topmost snap point") that the clamp above already handles
-      // correctly with no behavior change worth flagging.
-      if (
-        process.env.NODE_ENV !== "production" &&
-        undimmedSpec !== undefined &&
-        resolvedDimStart > maxDetent
-      ) {
-        warnLargestUndimmedDetentOutOfRange();
-      }
-      const dimEnd = resolved.find((d) => d.height > dimStart)?.height ?? maxDetent;
-      dimStartRef.current = dimStart;
-      dimEndRef.current = dimEnd;
-
-      dialog.style.setProperty("--scrollsheet-max-detent", `${maxDetent}px`);
-      // The SDA progress animation's own range (core.css): 0 at rest-closed
-      // through firstDetent, matching travelProgress's own definition below —
-      // written unconditionally like max-detent/fade-start/-end, cheap and
-      // harmless on engines that never read it.
-      dialog.style.setProperty("--scrollsheet-first-detent", `${firstDetent}px`);
-      dialog.style.setProperty("--scrollsheet-fade-start", `${dimStart}px`);
-      dialog.style.setProperty("--scrollsheet-fade-end", `${dimEnd}px`);
-
-      // Full-height detection (radius-flatten): the largest detent reaching
-      // the true viewport edge (resolveDetent caps every spec at
-      // viewportHeight - topInset, so "full" and any >=100% fraction land
-      // here within rounding).
-      fullHeightRef.current = maxDetent >= viewportSize - 1;
-      // --scrollsheet-radius is declared as a real custom property on the
-      // panel's default-look rule in styles.ts (not just embedded inside a
-      // var(...,fallback) call), specifically so it's reliably readable here
-      // regardless of whether a consumer overrode it.
-      const rawRadius = panelStyle.getPropertyValue("--scrollsheet-radius").trim();
-      const parsedRadius = Number.parseFloat(rawRadius);
-      baseRadiusRef.current = Number.isFinite(parsedRadius) ? parsedRadius : DEFAULT_RADIUS_PX;
-
-      // Direction mirror for the desktop drawer's travel rules: core.css keys
-      // its RTL resting transforms on this, and transformSide() reads the same
-      // computed direction — the signal margin-inline (the dock itself)
-      // resolves against, which a :dir() selector would miss for a CSS-only
-      // `direction: rtl`. Conditional write like has-handle above: it drives
-      // transform rules and measure() runs on every resize/keyboard/morph —
-      // which is also this mirror's refresh cadence, so a live direction flip
-      // with the sheet open waits for the next of those (the WAAPI legs read
-      // computed direction directly and stay correct regardless).
-      const rtl = panelStyle.direction === "rtl";
-      setBoolAttr(dialog, "data-scrollsheet-rtl", rtl);
-
-      if (rebuildSnapStops) syncSnapStops();
-    }, []);
-
-    // Deferred to after the content-morph tween's own scrollTo lands — see
-    // syncSnapStops's doc comment for why an inline rebuild mid-tween misfires.
-    const syncSnapStops = React.useCallback(() => {
-      syncSnapStopsImpl({
-        canvas: canvasRef.current,
-        side: ctxRef.current.side,
-        dismissible: ctxRef.current.dismissible,
-        resolved: resolvedRef.current,
-        maxDetent: maxDetentRef.current,
-      });
-    }, []);
-
-    const resolveSpec = React.useCallback((spec: DetentSpec): ResolvedDetent | undefined => {
-      const resolved = resolvedRef.current;
-      const bySpec = resolved.find((d) => Object.is(d.spec, spec));
-      if (bySpec) return bySpec;
-      // The spec collapsed into another during de-dup (two specs resolved to the
-      // same height). Resolve its true height and snap to the nearest survivor
-      // rather than guessing by list position — the sorted/deduped `resolved`
-      // array and the declaration-order detents array are different index spaces.
-      const measureCtx = measureCtxRef.current;
-      if (measureCtx) {
-        const height = Math.round(resolveDetent(spec, measureCtx));
-        return nearestDetent(height, resolved) ?? resolved[resolved.length - 1];
-      }
-      return resolved[resolved.length - 1];
-    }, []);
+    };
 
     const updateTravel = React.useCallback(() => {
       const dialog = dialogRef.current;
@@ -614,7 +400,7 @@ export const Content = /* @__PURE__ */ React.forwardRef<HTMLDivElement, SheetCon
       const dimRange = dimEndRef.current - dimStart;
       const dimProgress =
         dimRange > 0
-          ? Math.min(1, Math.max(0, (revealed - dimStart) / dimRange))
+          ? clamp01((revealed - dimStart) / dimRange)
           : revealed >= dimEndRef.current
             ? 1
             : 0;
@@ -627,10 +413,7 @@ export const Content = /* @__PURE__ */ React.forwardRef<HTMLDivElement, SheetCon
       // straight off the track's live scroll position, off the main thread.
       if (!sdaOwnsBackdrop(env().scrollTimeline, phaseRef.current)) {
         backdropRef.current?.style.setProperty("--scrollsheet-progress", round3(travelProgress));
-        const dimValue = round3(dimProgress);
-        for (const el of [backdropRef.current, topChromeRef.current, bottomChromeDimRef.current]) {
-          el?.style.setProperty("--scrollsheet-dim", dimValue);
-        }
+        writeDim(round3(dimProgress));
       }
       // Not CSS-drivable (it sets a <meta> tag, not a style) — computed and
       // applied every frame regardless of SDA.
@@ -638,8 +421,7 @@ export const Content = /* @__PURE__ */ React.forwardRef<HTMLDivElement, SheetCon
       const atMax = maxDetent > 0 && revealed >= maxDetent - 1;
       if (atMax !== atMaxRef.current) {
         atMaxRef.current = atMax;
-        if (atMax) dialog.setAttribute("data-scrollsheet-at-max", "");
-        else dialog.removeAttribute("data-scrollsheet-at-max");
+        setBoolAttr(dialog, "data-scrollsheet-at-max", atMax);
       }
       if (ctxRef.current.onTravel) {
         const info = travelInfoRef.current;
@@ -658,7 +440,7 @@ export const Content = /* @__PURE__ */ React.forwardRef<HTMLDivElement, SheetCon
       // prefers-reduced-motion doesn't apply.
       const panel = panelRef.current;
       if (panel && fullHeightRef.current && !detachedRef.current) {
-        const t = Math.min(Math.max((maxDetent - revealed) / FULL_HEIGHT_RADIUS_FLATTEN_PX, 0), 1);
+        const t = clamp01((maxDetent - revealed) / FULL_HEIGHT_RADIUS_FLATTEN_PX);
         applyFullHeightRadius(panel, ctxRef.current.side, baseRadiusRef.current * t);
         radiusOverrideAppliedRef.current = true;
       } else if (panel && radiusOverrideAppliedRef.current) {
@@ -843,9 +625,7 @@ export const Content = /* @__PURE__ */ React.forwardRef<HTMLDivElement, SheetCon
         // same var (they render for modal themeColorDimming regardless of
         // side).
         backdropRef.current?.style.setProperty("--scrollsheet-progress", "1");
-        for (const el of [backdropRef.current, topChromeRef.current, bottomChromeDimRef.current]) {
-          el?.style.setProperty("--scrollsheet-dim", "1");
-        }
+        writeDim("1");
         // The meta-tag blend is JS-only (updateTravel's apply() never runs
         // for center), so pin it to settled-open here too. The controller
         // arrives async; the creation effect re-applies for center on

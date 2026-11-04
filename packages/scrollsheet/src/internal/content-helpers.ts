@@ -7,6 +7,7 @@ import {
 } from "../motion/geometry";
 import { jumpScroll } from "../motion/scroll-animator";
 import { SHEET_SPRING } from "../motion/spring";
+import type { ResolvedDetent } from "./detents";
 import { env } from "./env";
 
 export { jumpScroll };
@@ -416,4 +417,47 @@ export function applyFullHeightRadius(panel: HTMLElement, side: Side, radiusPx: 
     side
   ];
   panel.style.borderRadius = mask.map((on) => (on ? r : "0")).join(" ");
+}
+
+/**
+ * Pure per-frame math for onTravel's TravelInfo. Mutates `target` in
+ * place (the reused-Map contract TravelInfo's TSDoc documents) rather than
+ * returning a fresh Map. Keyed by resolved px height, not DetentSpec, since
+ * `resolved` is already de-duped by height (resolveDetents' contract) — a
+ * duplicate-resolving spec must not double-count here either.
+ */
+export function fillProgressAtDetents(
+  target: Map<number, number>,
+  resolved: readonly ResolvedDetent[],
+  revealed: number,
+): void {
+  target.clear();
+  for (const detent of resolved) {
+    const progress = detent.height > 0 ? clamp01(revealed / detent.height) : 0;
+    target.set(detent.height, progress);
+  }
+}
+
+export function round3(x: number): string {
+  return String(Math.round(x * 1000) / 1000);
+}
+
+/**
+ * Whether the CSS scroll-driven-animation path (core.css's `@supports
+ * (animation-timeline: scroll())` block, active once `data-scrollsheet-sda`
+ * is stamped) owns the backdrop's dim opacity and `--scrollsheet-progress`
+ * for this frame — updateTravel must skip writing either then, or the JS
+ * write and the compositor animation fight over the same custom properties
+ * for no reason (the animation always wins the cascade regardless, so the
+ * skip is a pure main-thread-cost cut, not a correctness fix).
+ *
+ * Scoped to phase 'open' only, matching core.css's own selector: during
+ * 'opening'/'closing' the track's scroll position is already at rest (jumped
+ * to its target before the WAAPI enter/exit leg starts animating the
+ * PANEL's transform — see the open sequence effect), so there is no live
+ * scroll delta for a timeline to read yet. That entrance/exit fade stays the
+ * existing transition-driven write on every engine, SDA or not.
+ */
+export function sdaOwnsBackdrop(sdaSupported: boolean, phase: Phase): boolean {
+  return sdaSupported && phase === "open";
 }

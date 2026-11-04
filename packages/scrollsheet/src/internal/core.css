@@ -214,7 +214,7 @@
 }
 /*
  * Overdraw past the panel's far edge, filled with the panel's own computed
- * background (tracked into --scrollsheet-panel-bg by content.tsx's
+ * background (tracked into --scrollsheet-panel-bg by use-sheet-measure.ts's
  * measure()). Masks the keyboard-inset timing gap (bottom sheets) and iOS's
  * rubber-band overshoot past the max detent. Lives on .scrollsheet-canvas,
  * not .scrollsheet-panel: panel's own overflow:hidden/auto (content
@@ -628,7 +628,7 @@
     pointer-events: auto;
   }
   /* Scoped to sheets that actually render a Handle (attribute set in
-     content.tsx's measure()). A sheet with no Handle never had an in-flow
+     use-sheet-measure.ts's measure()). A sheet with no Handle never had an in-flow
      pill to lose, so this spacing would be 18px of dead space above its
      content — most visible on a full-bleed media panel. */
   .scrollsheet-dialog[data-scrollsheet-side="bottom"][data-scrollsheet-has-handle]
@@ -644,7 +644,7 @@
 
 /*
  * Detached (floating-card) sheets — a consumer set --scrollsheet-inset-bottom
- * > 0; detected in content.tsx's measure() and reflected as
+ * > 0; detected in use-sheet-measure.ts's measure() and reflected as
  * data-scrollsheet-detached: no doubled-up safe-area padding (the card's own
  * margin already clears the home indicator), the bottom offset guarantees at
  * least the safe-area amount, and radius applies to all four corners instead

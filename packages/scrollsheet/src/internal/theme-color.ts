@@ -238,7 +238,7 @@ export function createThemeColorController(source?: ThemeColorSource): ThemeColo
       // A bottom sheet's panel meets the true viewport edge from the very
       // first pixel of reveal, not proportionally to how much of the sheet
       // is showing (the panel is pinned to the canvas's far edge — see
-      // content.tsx's measure()/updateTravel geometry). So unlike the
+      // the measure()/updateTravel geometry). So unlike the
       // backdrop-tint blend below, "matched" is a step, not a lerp: any
       // nonzero reveal already means the strip behind bottom chrome is
       // 100% panel color, not some fraction of it. Easing this in would be
