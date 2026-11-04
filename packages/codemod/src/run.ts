@@ -16,6 +16,22 @@ export interface RunResult {
   scanned: number;
   changedFiles: string[];
   findings: Finding[];
+  /** Files that could not be parsed. The run continues past them. */
+  errors: { file: string; message: string }[];
+}
+
+/** A quoted `vaul` or `vaul/...` specifier, so "vault" never matches. */
+const MENTIONS_VAUL = /(["'`])vaul(?:\/[^"'`]*)?\1/;
+const TS_ONLY_EXTENSIONS = new Set([".ts", ".mts", ".cts"]);
+
+/** `tsx` first; a TypeScript-only file retries with `ts` for `<T>x` assertions. */
+function parseAndTransform(source: string, file: string, extension: string) {
+  try {
+    return transformVaul(source, { file });
+  } catch (error: unknown) {
+    if (!TS_ONLY_EXTENSIONS.has(extension)) throw error;
+    return transformVaul(source, { file, parser: "ts" });
+  }
 }
 
 function* walk(path: string): Generator<string> {
@@ -36,7 +52,7 @@ function* walk(path: string): Generator<string> {
 /** Runs the vaul migration over files and directories, writing in place unless `dryRun`. */
 export function runVaul(paths: string[], options: RunOptions = {}): RunResult {
   const cwd = options.cwd ?? process.cwd();
-  const result: RunResult = { scanned: 0, changedFiles: [], findings: [] };
+  const result: RunResult = { scanned: 0, changedFiles: [], findings: [], errors: [] };
 
   for (const input of paths) {
     for (const absolute of walk(resolve(cwd, input))) {
@@ -46,12 +62,18 @@ export function runVaul(paths: string[], options: RunOptions = {}): RunResult {
       if (absolute.endsWith(".d.ts")) continue;
 
       const source = readFileSync(absolute, "utf8");
-      if (!source.includes("vaul")) continue;
+      if (!MENTIONS_VAUL.test(source)) continue;
 
       result.scanned += 1;
       const rel = relative(cwd, absolute);
       const file = rel.startsWith("..") ? absolute : rel;
-      const outcome = isSource ? transformVaul(source, { file }) : transformVaulCss(source);
+      let outcome;
+      try {
+        outcome = isSource ? parseAndTransform(source, file, extension) : transformVaulCss(source);
+      } catch (error: unknown) {
+        result.errors.push({ file, message: error instanceof Error ? error.message : String(error) });
+        continue;
+      }
       result.findings.push(...outcome.findings);
       if (outcome.changed) {
         result.changedFiles.push(file);

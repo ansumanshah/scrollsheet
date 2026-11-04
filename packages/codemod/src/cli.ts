@@ -47,19 +47,24 @@ function main(argv: string[]): number {
 
   if (flags.has("--json")) {
     console.log(JSON.stringify({ dryRun, ...result }, null, 2));
-    return 0;
+    return result.errors.length > 0 ? 1 : 0;
   }
 
   if (result.findings.length > 0) {
     console.log(result.findings.map(format).join("\n"));
     console.log("");
   }
+  for (const error of result.errors) console.error(`error  ${error.file}: ${error.message}`);
   const verb = dryRun ? "would change" : "changed";
   console.log(
     `${verb} ${result.changedFiles.length} file${result.changedFiles.length === 1 ? "" : "s"}, ` +
       `${result.findings.length} item${result.findings.length === 1 ? "" : "s"} to review ` +
       `(${result.scanned} file${result.scanned === 1 ? "" : "s"} mentioning vaul).`,
   );
+  if (result.errors.length > 0) {
+    console.error(`${result.errors.length} file${result.errors.length === 1 ? "" : "s"} could not be processed.`);
+    return 1;
+  }
   return 0;
 }
 

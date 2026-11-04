@@ -70,11 +70,12 @@ describe("transformVaul fixtures", () => {
     const { result, lines } = summary("mixed");
     expect(result.output).toContain('import { Sheet, Drawer } from "scrollsheet"');
     expect(result.output).toContain('import { Content as DrawerContent, type DrawerProps } from "vaul"');
-    expect(result.output).toContain('import * as Vaul from "scrollsheet"');
+    expect(result.output).toContain('import * as Vaul from "vaul"');
     expect(result.output).toContain('import("scrollsheet")');
-    expect(result.output).toContain('require("scrollsheet")');
-    expect(lines).toContain("10:41 ignored Drawer.Root fixed");
-    expect(lines.filter((l) => l.includes("manual"))).toHaveLength(2);
+    expect(result.output).toContain('require("vaul")');
+    expect(lines).toContain("15:42 info Drawer.Root {...spread}");
+    expect(lines).not.toContain("10:41 ignored Drawer.Root fixed");
+    expect(lines.filter((l) => l.includes("manual"))).toHaveLength(4);
   });
 
   test("already-migrated: code that never imported vaul is untouched and unreported", () => {
@@ -101,6 +102,93 @@ describe("transformVaul fixtures", () => {
     const result = transformVaulCss(read("styles.in.txt"));
     expect(result.output).toBe(read("styles.out.txt"));
     expect(result.changed).toBe(true);
+  });
+});
+
+describe("unrewritten forms", () => {
+  const manual = (source: string) =>
+    transformVaul(source).findings.filter((f) => f.kind === "manual").map((f) => f.subject);
+
+  test("require('vaul') is reported with a line and never rewritten", () => {
+    const out = transformVaul('const a = 1;\nconst v = require("vaul");\n');
+    expect(out.changed).toBe(false);
+    expect(out.output).toContain('require("vaul")');
+    expect(out.findings[0]).toMatchObject({ line: 2, kind: "manual", subject: "require('vaul')" });
+    expect(out.findings[0]!.message).toContain("ESM only");
+  });
+
+  test("namespace imports are left on vaul and reported", () => {
+    const out = transformVaul('import * as V from "vaul";\nexport const x = <V.Root />;\n');
+    expect(out.changed).toBe(false);
+    expect(out.output).toContain('from "vaul"');
+    expect(out.findings.map((f) => f.subject)).toEqual(["import * as V from 'vaul'"]);
+  });
+
+  test("loose named members are left and the message says they are Sheet parts", () => {
+    const out = transformVaul('import { Root, Overlay } from "vaul";\n');
+    expect(out.changed).toBe(false);
+    expect(out.findings).toHaveLength(2);
+    expect(out.findings[0]!.message).toContain("Sheet parts");
+    expect(out.findings[0]!.message).not.toContain("never loose");
+  });
+
+  test("re-exports, import types and test mocks are reported, not rewritten", () => {
+    const source = [
+      'export { Drawer } from "vaul";',
+      'export * from "vaul";',
+      'type T = import("vaul").DrawerProps;',
+      'vi.mock("vaul");',
+      'jest.mock("vaul", () => ({}));',
+      "",
+    ].join("\n");
+    const out = transformVaul(source);
+    expect(out.changed).toBe(false);
+    expect(out.output).toBe(source);
+    expect(manual(source)).toEqual([
+      "export { ... } from 'vaul'",
+      "export * from 'vaul'",
+      "import('vaul') type",
+      "vi.mock('vaul')",
+      "jest.mock('vaul')",
+    ]);
+  });
+});
+
+describe("formatting and comments", () => {
+  test("CRLF files stay CRLF", () => {
+    const source = 'import { Drawer } from "vaul";\r\nimport "vaul/style.css";\r\nexport const a = 1;\r\n';
+    const out = transformVaul(source).output;
+    expect(out).toContain("\r\n");
+    expect(out.replaceAll("\r\n", "")).not.toContain("\n");
+  });
+
+  test("CRLF survives a rewrite that reprints lines", () => {
+    const source = 'import { Sheet } from "scrollsheet";\r\nimport { Drawer } from "vaul";\r\nexport const a = 1;\r\n';
+    const out = transformVaul(source).output;
+    expect(out).toContain("\r\n");
+    expect(out.replaceAll("\r\n", "")).not.toContain("\n");
+  });
+
+  test("comments on imports survive a merge", () => {
+    const source = [
+      'import { Sheet } from "scrollsheet";',
+      "// eslint-disable-next-line no-restricted-imports",
+      'import { Drawer } from "vaul";',
+      "",
+    ].join("\n");
+    const out = transformVaul(source).output;
+    expect(out).toContain("// eslint-disable-next-line no-restricted-imports");
+    expect(out).not.toContain("vaul");
+  });
+
+  test("@ts-expect-error above a merged import survives", () => {
+    const source = [
+      'import { Sheet } from "scrollsheet";',
+      "// @ts-expect-error legacy types",
+      'import { Drawer } from "vaul";',
+      "",
+    ].join("\n");
+    expect(transformVaul(source).output).toContain("// @ts-expect-error legacy types");
   });
 });
 
@@ -132,6 +220,48 @@ describe("runVaul", () => {
     expect(readFileSync(join(dir, "node_modules", "pkg", "index.js"), "utf8")).toContain("vaul");
     const second = runVaul(["."], { cwd: dir });
     expect(second.changedFiles).toEqual([]);
+  });
+
+  test("an unparseable file never aborts the run: it is reported by path", () => {
+    const dir = project();
+    for (let i = 0; i < 10; i++) {
+      writeFileSync(join(dir, "src", `ok${i}.tsx`), 'import { Drawer } from "vaul";\nexport const x = Drawer;\n');
+    }
+    writeFileSync(join(dir, "src", "b.ts"), "const v = <any>vault;\n");
+    writeFileSync(join(dir, "src", "broken.ts"), 'import { Drawer } from "vaul";\nconst = ;\n');
+    const result = runVaul(["src"], { cwd: dir });
+    expect(result.errors.map((e) => e.file)).toEqual(["src/broken.ts"]);
+    expect(result.changedFiles).toContain("src/ok9.tsx");
+    expect(result.changedFiles).not.toContain("src/b.ts");
+    expect(readFileSync(join(dir, "src", "b.ts"), "utf8")).toBe("const v = <any>vault;\n");
+  });
+
+  test("a .ts file with an angle-bracket assertion retries with the ts parser", () => {
+    const dir = project();
+    writeFileSync(join(dir, "src", "d.ts"), 'import { Drawer } from "vaul";\nconst v = <any>Drawer;\n');
+    const result = runVaul(["src"], { cwd: dir });
+    expect(result.errors).toEqual([]);
+    expect(readFileSync(join(dir, "src", "d.ts"), "utf8")).toContain('"scrollsheet"');
+  });
+
+  test("a file that only mentions vault is not scanned", () => {
+    const dir = project();
+    writeFileSync(join(dir, "src", "e.ts"), "export const vault = 1;\n");
+    const result = runVaul(["src"], { cwd: dir });
+    expect(result.scanned).toBe(2);
+    expect(result.changedFiles).not.toContain("src/e.ts");
+  });
+
+  test("the CLI exits non-zero when a file fails to parse", async () => {
+    const dir = project();
+    writeFileSync(join(dir, "src", "broken.ts"), 'import { Drawer } from "vaul";\nconst = ;\n');
+    const proc = Bun.spawn(
+      ["bun", join(import.meta.dir, "../../../packages/codemod/src/cli.ts"), "vaul", "src", "--dry-run"],
+      { cwd: dir, stdout: "pipe", stderr: "pipe" },
+    );
+    const stderr = await new Response(proc.stderr).text();
+    expect(await proc.exited).toBe(1);
+    expect(stderr).toContain("src/broken.ts");
   });
 
   test("the CLI prints file:line items and exits 0", async () => {

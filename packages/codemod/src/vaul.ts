@@ -25,7 +25,8 @@ export interface TransformResult {
   findings: Finding[];
 }
 
-const j = jscodeshift.withParser("tsx");
+const jTsx = jscodeshift.withParser("tsx");
+const jTs = jscodeshift.withParser("ts");
 
 /** ast-types types some `name` fields as string | Identifier; at runtime they are strings here. */
 function text(name: unknown): string {
@@ -90,18 +91,20 @@ const SUPPORTED_EXPORTS = new Set(["Drawer"]);
 export interface TransformOptions {
   /** Path shown in findings. Defaults to the empty string. */
   file?: string;
+  /** Parser dialect. `ts` accepts `<T>x` assertions that `tsx` reads as JSX. Defaults to `tsx`. */
+  parser?: "tsx" | "ts";
 }
 
 /** Rewrites the vaul imports in `source` and reports what needs a human. */
 export function transformVaul(source: string, options: TransformOptions = {}): TransformResult {
   const file = options.file ?? "";
+  const j = options.parser === "ts" ? jTs : jTsx;
   const findings: Finding[] = [];
   const root = j(source);
+  const lineTerminator = source.includes("\r\n") ? "\r\n" : "\n";
 
   /** Local names bound to vaul's `Drawer` namespace object. */
   const drawerNames = new Set<string>();
-  /** Local names bound to `import * as X from 'vaul'`, whose `.Drawer` is the namespace. */
-  const moduleNames = new Set<string>();
   let changed = false;
 
   function report(
@@ -123,14 +126,15 @@ export function transformVaul(source: string, options: TransformOptions = {}): T
 
   rewriteImports(root);
   rewriteRequireAndDynamicImport(root);
+  reportUnrewritten(root);
 
-  if (drawerNames.size > 0 || moduleNames.size > 0) {
+  if (drawerNames.size > 0) {
     reportJsx(root);
   }
 
   findings.sort((a, b) => a.line - b.line || a.column - b.column);
   return {
-    output: changed ? root.toSource({ quote: dominantQuote(source) }) : source,
+    output: changed ? root.toSource({ quote: dominantQuote(source), lineTerminator }) : source,
     changed,
     findings,
   };
@@ -152,8 +156,13 @@ export function transformVaul(source: string, options: TransformOptions = {}): T
 
       for (const specifier of specifiers) {
         if (specifier.type === "ImportNamespaceSpecifier") {
-          if (specifier.local?.name) moduleNames.add(text(specifier.local.name));
-          supported.push(specifier);
+          leftover.push(specifier);
+          report(
+            specifier,
+            "manual",
+            `import * as ${text(specifier.local?.name)} from 'vaul'`,
+            "Left on 'vaul'. scrollsheet's top-level members are Sheet parts, so V.Root would lose vaul's props and V.Overlay, V.Portal and V.NestedRoot would be undefined. Migrate by hand to `import { Drawer } from 'scrollsheet'` and use Drawer.*.",
+          );
         } else if (specifier.type === "ImportSpecifier") {
           const imported = text(specifier.imported.name);
           if (SUPPORTED_EXPORTS.has(imported)) {
@@ -170,7 +179,7 @@ export function transformVaul(source: string, options: TransformOptions = {}): T
               `import { ${imported} } from 'vaul'`,
               isType
                 ? `Left on 'vaul'. scrollsheet exports DrawerRootProps, DrawerContentProps and the other Drawer*Props types.`
-                : `Left on 'vaul'. scrollsheet exports only the Drawer namespace, never loose members: use Drawer.${imported} if it is a component.`,
+                : `Left on 'vaul'. scrollsheet's loose members (Root, Content and so on) are Sheet parts, not the Drawer adapter, so vaul props would stop working. Migrate by hand to Drawer.${imported} from the Drawer namespace.`,
             );
           }
         } else {
@@ -214,6 +223,7 @@ export function transformVaul(source: string, options: TransformOptions = {}): T
       );
     if (named.length < 2) return;
     const paths = named.paths();
+    if (paths.some((p) => (p.node.comments?.length ?? 0) > 0)) return;
     const first = paths[0]!;
     const seen = new Set((first.node.specifiers ?? []).map(specifierKey));
     for (const path of paths.slice(1)) {
@@ -230,35 +240,95 @@ export function transformVaul(source: string, options: TransformOptions = {}): T
   }
 
   function rewriteRequireAndDynamicImport(collection: Collection) {
-    collection
-      .find(j.CallExpression)
-      .filter((path) => {
-        const callee = path.node.callee;
-        const arg = path.node.arguments[0];
-        const isRequire = callee.type === "Identifier" && callee.name === "require";
-        const isDynamic = callee.type === "Import";
-        return (
-          (isRequire || isDynamic) &&
-          arg !== undefined &&
-          (arg.type === "StringLiteral" || arg.type === "Literal") &&
-          (arg.value === VAUL || arg.value === VAUL_CSS)
+    collection.find(j.CallExpression).forEach((path) => {
+      const callee = path.node.callee;
+      const arg = path.node.arguments[0];
+      const isRequire = callee.type === "Identifier" && callee.name === "require";
+      const isDynamic = callee.type === "Import";
+      if (!(isRequire || isDynamic) || arg === undefined) return;
+      if (arg.type !== "StringLiteral" && arg.type !== "Literal") return;
+      const value = (arg as { value: unknown }).value;
+      if (value !== VAUL && value !== VAUL_CSS) return;
+
+      if (isRequire && value === VAUL) {
+        report(
+          path.node,
+          "manual",
+          "require('vaul')",
+          "Left on 'vaul'. scrollsheet is ESM only and has no require condition: move this file to ESM and import { Drawer } from 'scrollsheet'.",
         );
-      })
-      .forEach((path) => {
-        const arg = path.node.arguments[0] as { value: string };
-        path.node.arguments[0] = j.stringLiteral(
-          arg.value === VAUL ? SCROLLSHEET : SCROLLSHEET_CSS,
+        return;
+      }
+      path.node.arguments[0] = j.stringLiteral(value === VAUL ? SCROLLSHEET : SCROLLSHEET_CSS);
+      changed = true;
+      if (value === VAUL) {
+        report(
+          path.node,
+          "info",
+          "import('vaul')",
+          "Rewritten to 'scrollsheet'. The Drawer namespace is the same shape; check the members you destructure.",
         );
-        changed = true;
-        if (arg.value === VAUL) {
-          report(
-            path.node,
-            "info",
-            path.node.callee.type === "Import" ? "import('vaul')" : "require('vaul')",
-            "Rewritten to 'scrollsheet'. The Drawer namespace is the same shape; check the members you destructure.",
-          );
-        }
-      });
+      }
+    });
+  }
+
+  /** Forms the codemod never rewrites but must not leave behind silently. */
+  function reportUnrewritten(collection: Collection) {
+    const isVaul = (value: unknown) => value === VAUL || value === VAUL_CSS;
+    collection.find(j.ExportNamedDeclaration).forEach((path) => {
+      if (isVaul(path.node.source?.value)) {
+        report(
+          path.node,
+          "manual",
+          "export { ... } from 'vaul'",
+          "Left on 'vaul'. Re-export Drawer from 'scrollsheet' by hand and check the members consumers use.",
+        );
+      }
+    });
+    collection.find(j.ExportAllDeclaration).forEach((path) => {
+      if (isVaul(path.node.source.value)) {
+        report(
+          path.node,
+          "manual",
+          "export * from 'vaul'",
+          "Left on 'vaul'. scrollsheet has no matching star export: re-export Drawer by hand.",
+        );
+      }
+    });
+    collection.find(j.TSImportType).forEach((path) => {
+      const argument = path.node.argument as { value?: unknown; literal?: { value?: unknown } };
+      if (isVaul(argument.value ?? argument.literal?.value)) {
+        report(
+          path.node,
+          "manual",
+          "import('vaul') type",
+          "Left on 'vaul'. Point the type at 'scrollsheet' (DrawerRootProps and the other Drawer*Props types) by hand.",
+        );
+      }
+    });
+    collection.find(j.CallExpression).forEach((path) => {
+      const callee = path.node.callee;
+      if (
+        callee.type !== "MemberExpression" ||
+        callee.object.type !== "Identifier" ||
+        !["vi", "jest"].includes(callee.object.name) ||
+        callee.property.type !== "Identifier" ||
+        !/^(mock|doMock|unmock|dontMock|requireActual|importActual|requireMock|importMock)$/.test(
+          callee.property.name,
+        )
+      ) {
+        return;
+      }
+      const arg = path.node.arguments[0] as { value?: unknown } | undefined;
+      if (isVaul(arg?.value)) {
+        report(
+          path.node,
+          "manual",
+          `${callee.object.name}.${callee.property.name}('vaul')`,
+          "Left on 'vaul'. Mock 'scrollsheet' instead once the code under test imports it.",
+        );
+      }
+    });
   }
 
   /** Resolves a JSX tag to the vaul namespace member it names, if any. */
@@ -270,15 +340,6 @@ export function transformVaul(source: string, options: TransformOptions = {}): T
     const object = name.object;
     if (object.type === "JSXIdentifier") {
       return drawerNames.has(text(object.name)) ? member : null;
-    }
-    // <V.Drawer.Root>: namespace import, then .Drawer.
-    if (
-      object.type === "JSXMemberExpression" &&
-      object.object.type === "JSXIdentifier" &&
-      moduleNames.has(text(object.object.name)) &&
-      object.property.name === "Drawer"
-    ) {
-      return member;
     }
     return null;
   }
