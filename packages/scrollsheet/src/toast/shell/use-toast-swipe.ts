@@ -44,6 +44,13 @@ interface SwipeAmount {
 
 const ZERO_AMOUNT: SwipeAmount = { x: 0, y: 0 };
 
+function unwindSwipe(el: HTMLElement): void {
+  el.setAttribute("data-swiping", "false");
+  el.setAttribute("data-swiped", "false");
+  el.style.setProperty("--scrollsheet-toast-swipe-x", "0px");
+  el.style.setProperty("--scrollsheet-toast-swipe-y", "0px");
+}
+
 /**
  * `elRef` is the row's own DOM node (direct style/attribute target).
  * `enabled` gates the whole gesture — the caller computes it the same way
@@ -160,10 +167,7 @@ export function useToastSwipe(
     // Snap back: clearing data-swiping first restores the eased `transition`
     // (toast.css), so resetting the vars to 0 right after animates smoothly
     // back to rest instead of popping.
-    el.setAttribute("data-swiping", "false");
-    el.setAttribute("data-swiped", "false");
-    el.style.setProperty("--scrollsheet-toast-swipe-x", "0px");
-    el.style.setProperty("--scrollsheet-toast-swipe-y", "0px");
+    unwindSwipe(el);
   }, [elRef, directions]);
 
   const onPointerUp = React.useCallback(
@@ -188,10 +192,7 @@ export function useToastSwipe(
       if (!el) return;
       if (el.hasPointerCapture(event.pointerId)) el.releasePointerCapture(event.pointerId);
       // Cancellation unwinds the gesture even after crossing a dismissal threshold.
-      el.setAttribute("data-swiping", "false");
-      el.setAttribute("data-swiped", "false");
-      el.style.setProperty("--scrollsheet-toast-swipe-x", "0px");
-      el.style.setProperty("--scrollsheet-toast-swipe-y", "0px");
+      unwindSwipe(el);
     },
     [elRef],
   );

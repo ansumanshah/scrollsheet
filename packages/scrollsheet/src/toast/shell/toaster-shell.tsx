@@ -16,7 +16,6 @@ import {
   expire,
   selectPositionToasts,
   selectToasterToasts,
-  selectToastWindow,
   toast,
   useSonner,
 } from "../state";
@@ -106,11 +105,6 @@ function PositionGroup({
   // reversal happens here at the render boundary, same as
   // selectToastWindow's own doc comment describes.
   const newestFirst = React.useMemo(() => [...positionToasts].reverse(), [positionToasts]);
-  const window_ = React.useMemo(
-    () => selectToastWindow(positionToasts, visibleToasts),
-    [positionToasts, visibleToasts],
-  );
-  const visibleIds = React.useMemo(() => new Set(window_.visible.map((t) => t.id)), [window_]);
 
   const { heights, observe, forget } = useToastHeights();
   const exitRows = useToastExit(newestFirst);
@@ -204,7 +198,7 @@ function PositionGroup({
             stackOffset={offset?.stackOffset ?? 0}
             height={heights.get(record.id)}
             frontHeight={frontHeight}
-            visible={visibleIds.has(record.id)}
+            visible={!exiting && index < visibleToasts}
             expanded={expanded}
             removed={exiting}
             yPosition={y}
@@ -475,7 +469,6 @@ export function ToasterShell({
       aria-live="polite"
       aria-relevant="additions text"
       aria-atomic="false"
-      suppressHydrationWarning
       data-react-aria-top-layer=""
     >
       {possiblePositions.map((groupPosition) => (
