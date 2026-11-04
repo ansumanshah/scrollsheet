@@ -30,5 +30,5 @@ export {
   type SonnerPosition,
 } from "./state";
 export { ToasterShell as Toaster } from "./shell/toaster-shell";
-export { resolveVisibleToasts, type ToasterProps } from "./toaster";
+export { resolveVisibleToasts, type ToasterProps } from "./toaster-shared";
 export { injectToastStylesInto } from "./toast-styles";

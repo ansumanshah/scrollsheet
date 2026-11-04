@@ -375,19 +375,36 @@ test.describe("B17 — invisible text caret on first tap inside a transform-anim
   test("B17 (functional half): typing works immediately after tapping an input mid-open-animation, even though the caret's own visibility is a WebKit rendering quirk outside library control", async ({
     page,
   }) => {
+    await page.addInitScript(() => {
+      const original = Element.prototype.animate;
+      Element.prototype.animate = function (...args) {
+        const animation = original.apply(this, args);
+        if (this.classList.contains("scrollsheet-panel")) {
+          const duration = animation.effect?.getComputedTiming().duration;
+          if (typeof duration === "number") {
+            animation.pause();
+            animation.currentTime = duration / 2;
+          }
+        }
+        return animation;
+      };
+    });
     await page.goto("/");
     await page.getByRole("button", { name: "Keyboard", exact: true }).click();
     const dialog = page.locator("dialog.scrollsheet-dialog").first();
-    // Deliberately don't wait for data-scrollsheet-state="open" (~508ms
-    // spring) — a short partial wait instead, so the panel has translated at
-    // least partway into the viewport (a literal 0ms-after-click tap would
-    // target an element still fully translateY(100%) off-screen, which even
-    // a forced click can't reach) while the transition is still very much in
-    // progress, the exact condition B17 requires. `force: true` skips
-    // Playwright's own "is this element stable (not still moving)"
-    // actionability wait, which would otherwise just block until the CSS
-    // transition finishes — defeating the point of tapping mid-animation.
-    await page.waitForTimeout(120);
+    // The native animation is paused halfway so a busy worker cannot miss the entrance.
+    await page.waitForFunction(
+      () => {
+        const input = document.querySelector(
+          'dialog.scrollsheet-dialog input[aria-label="Demo text input"]',
+        );
+        const rect = input?.getBoundingClientRect();
+        return !!rect && rect.top >= 0 && rect.bottom <= window.innerHeight;
+      },
+      undefined,
+      { polling: "raf", timeout: SPRING_TIMEOUT },
+    );
+    await expect(dialog).toHaveAttribute("data-scrollsheet-state", "opening");
     const input = dialog.getByLabel("Demo text input");
     await input.click({ force: true });
     await input.fill("hello", { force: true });

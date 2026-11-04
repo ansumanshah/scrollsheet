@@ -1,15 +1,11 @@
 #!/usr/bin/env bun
 /**
- * Dev server for the v0.2-feature e2e fixtures, bundling directly from
- * ../../src (the real library source) with Bun's own bundler — no Vite/npm
- * dependency needed, and this stays entirely inside e2e/**, so it doesn't
- * touch playground/ (owned elsewhere) to add demo triggers for props that
- * don't exist in that harness yet (side, modal, backgroundEffect).
+ * Dev server for the e2e fixtures, bundling the library source directly
+ * with Bun's bundler.
  *
- * Rebuilds on every /main.js request rather than watching — the fixture
- * bundle is tiny (single entry, a handful of components), and Playwright's
- * webServer only starts this process once per test run, so the rebuild cost
- * is paid once per navigation, not per file save.
+ * Rebuilds on every /main.js request rather than watching. Playwright's
+ * webServer starts this process once per test run, so each navigation gets
+ * the current source without a watcher.
  */
 
 const PORT = Number(process.env.PORT ?? 5799);

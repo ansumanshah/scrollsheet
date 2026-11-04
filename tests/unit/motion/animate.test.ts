@@ -2,7 +2,11 @@ import { GlobalRegistrator } from "@happy-dom/global-registrator";
 import { afterAll, afterEach, beforeAll, describe, expect, spyOn, test } from "bun:test";
 
 import { animate } from "../../../packages/scrollsheet/src/motion/animate";
-import { sampleSpringAt, type SpringConfig, type SpringCurve } from "../../../packages/scrollsheet/src/motion/spring";
+import {
+  sampleSpringAt,
+  type SpringConfig,
+  type SpringCurve,
+} from "../../../packages/scrollsheet/src/motion/spring";
 
 /**
  * Scoped happy-dom registration (see ref-forwarding.test.tsx) — animate()
@@ -40,7 +44,7 @@ interface FakeAnimation {
   commitStyles(): void;
 }
 
-/** Stubs el.animate with a controllable fake — happy-dom has no WAAPI implementation. */
+/** Controls WAAPI completion independently of the DOM emulator. */
 function installFakeWaapi(el: HTMLElement, opts: { commitStylesThrows?: boolean } = {}) {
   let resolveFinished: () => void = () => {};
   const finished = new Promise<void>((resolve) => {
@@ -60,8 +64,9 @@ function installFakeWaapi(el: HTMLElement, opts: { commitStylesThrows?: boolean 
 describe("animate", () => {
   test("degrades to instant-finished when el.animate is absent", async () => {
     const el = document.createElement("div");
+    Object.defineProperty(el, "animate", { value: undefined });
     const handle = animate(el, "transform", 0, 1, toCss, CURVE, CONFIG);
-    // No WAAPI (no fake installed) means the degrade branch sets `settled`
+    // No WAAPI means the degrade branch sets `settled`
     // synchronously — only the finished promise's resolution is deferred.
     expect(handle.settled).toBe(true);
     await handle.finished;

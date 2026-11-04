@@ -22,7 +22,7 @@
 import * as React from "react";
 import { cn } from "../../internal/cn";
 import type { SwipeDirection, ToastClassnames, ToastIcons, ToastRecord, ToastType } from "../state";
-import { useMountedFlag } from "../toaster";
+import { useMountedFlag } from "../toaster-shared";
 import { useToastSwipe } from "./use-toast-swipe";
 
 function ToastIcon({
@@ -237,11 +237,7 @@ export function ToastRow({
       {...motionAttrs}
       {...swipeHandlers}
     >
-      <span
-        className={slot("icon", "icon")}
-        data-type={record.type}
-        aria-hidden="true"
-      >
+      <span className={slot("icon", "icon")} data-type={record.type} aria-hidden="true">
         {record.icon ?? (
           <ToastIcon
             type={record.type}
@@ -250,22 +246,10 @@ export function ToastRow({
           />
         )}
       </span>
-      <div
-        className={slot("body", "content")}
-      >
-        {record.title !== undefined && (
-          <div
-            className={slot("title", "title")}
-          >
-            {record.title}
-          </div>
-        )}
+      <div className={slot("body", "content")}>
+        {record.title !== undefined && <div className={slot("title", "title")}>{record.title}</div>}
         {record.description !== undefined && (
-          <div
-            className={slot("description", "description")}
-          >
-            {record.description}
-          </div>
+          <div className={slot("description", "description")}>{record.description}</div>
         )}
       </div>
       {hasActions && (

@@ -24,6 +24,8 @@ jobs:
     steps:
       - uses: actions/checkout@v7
       - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: 1.4.4
       # setup-bun caches only the bun BINARY, never the packages — without
       # this every job refetches the whole tree from npm on every run.
       - id: bun-cache-dir
@@ -38,6 +40,8 @@ jobs:
       # --filter keeps this job on the library's own dependency set.
       - run: bun install --frozen-lockfile --filter=scrollsheet
       - run: bun run typecheck
+      - run: bun run check:compat
+      - run: bun run check:registry
       # Build before test: tests/unit/use-client.test.ts guards the "use
       # client" banner by reading dist/*.mjs, which only exists post-build.
       - run: bun run build
@@ -59,6 +63,8 @@ jobs:
     steps:
       - uses: actions/checkout@v7
       - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: 1.4.4
       - id: bun-cache-dir
         run: echo "path=$(bun pm cache)" >> "$GITHUB_OUTPUT"
       - name: Cache bun packages
@@ -114,6 +120,8 @@ jobs:
     steps:
       - uses: actions/checkout@v7
       - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: 1.4.4
       - id: bun-cache-dir
         run: echo "path=$(bun pm cache)" >> "$GITHUB_OUTPUT"
       - name: Cache bun packages
@@ -145,6 +153,8 @@ jobs:
     steps:
       - uses: actions/checkout@v7
       - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: 1.4.4
       - id: bun-cache-dir
         run: echo "path=$(bun pm cache)" >> "$GITHUB_OUTPUT"
       - name: Cache bun packages

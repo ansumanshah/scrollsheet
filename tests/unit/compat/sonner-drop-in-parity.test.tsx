@@ -4,7 +4,7 @@ import * as React from "react";
 import type * as ReactDOMClient from "react-dom/client";
 import { ToasterShell as Toaster } from "../../../packages/scrollsheet/src/toast/shell/toaster-shell";
 import { _resetSonnerStoreForTests, toast } from "../../../packages/scrollsheet/src/toast/state";
-import { _resetWarnOnceForTests } from "../../../packages/scrollsheet/src/toast/toaster";
+import { _resetWarnOnceForTests } from "../../../packages/scrollsheet/src/toast/toaster-shared";
 
 /**
  * Real-DOM proof for the sonner drop-in parity round: Toaster's `id` prop

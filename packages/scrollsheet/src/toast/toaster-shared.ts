@@ -1,20 +1,6 @@
 "use client";
 
-/**
- * Shared infra for the sonner-architecture shell (./shell/toaster-shell.tsx),
- * which is what `Toaster` actually resolves to from ../index.tsx — this file
- * no longer defines a Toaster component itself. What lives here is the stuff
- * both the shell and its own tests need and that has nowhere more specific to
- * live: the public `ToasterProps` contract, the mount-flag/document-hidden
- * hooks the shell's rows and timers reuse, and `resolveVisibleToasts`.
- *
- * (Formerly: a non-modal Sheet.Root/Sheet.Content Toaster with a collapsed
- * front-card-plus-ghosts stack. That whole component, its ghost cards, its
- * eviction/queueing window, and its Sheet dependency are gone — see the
- * sonner-port design notes for why: real Sonner's own per-toast-absolute-
- * position DOM has no shared panel-height concept to animate, so the Sheet
- * machinery that solved that had nothing left to do.)
- */
+/** Shared Toaster props, visibility limits, and lifecycle hooks for the shell and rows. */
 
 import * as React from "react";
 import { _resetWarnOnceForTests } from "../internal/dev-warn";

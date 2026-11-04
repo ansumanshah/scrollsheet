@@ -1,21 +1,27 @@
 #!/usr/bin/env bun
 /**
- * npm pack smoke test: asserts the tarball a real `npm publish` would ship
+ * Package smoke test: asserts the tarball from `bun pm pack` contains
  * actually contains what consumers load: dist/index.mjs (the one JS entry),
- * the three compat chunks it re-exports from (dist/drawer.mjs,
- * dist/dialog.mjs, dist/toast.mjs), the two stylesheets (dist/styles.css,
+ * the three compat entries (dist/drawer/index.mjs,
+ * dist/dialog/index.mjs, dist/toast/index.mjs), the two stylesheets (dist/styles.css,
  * dist/toast.css), and the dist/dev sibling tree the "development" export
  * condition points at — package.json's `files`/`exports` fields are easy to
  * drift from what `bun run build` actually emits. Run after build (this
- * reads dist/ indirectly via `npm pack`, not directly).
+ * inspects the packed tarball).
  */
-export {}; // top-level await requires this file to be a module, not a script
+import { mkdtemp, rm } from "node:fs/promises";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
 
 const REQUIRED_FILES = [
   "dist/index.mjs",
-  "dist/drawer.mjs",
-  "dist/dialog.mjs",
-  "dist/toast.mjs",
+  "dist/types/index.d.ts",
+  "dist/types/auto/index.d.ts",
+  "dist/types/motion/index.d.ts",
+  "dist/motion/index.mjs",
+  "dist/drawer/index.mjs",
+  "dist/dialog/index.mjs",
+  "dist/toast/index.mjs",
   "dist/auto/index.mjs",
   "dist/styles.css",
   "dist/toast.css",
@@ -23,10 +29,10 @@ const REQUIRED_FILES = [
   // condition) — proves the tarball actually ships the second chunk graph,
   // not just the production one.
   "dist/dev/index.mjs",
-  "dist/dev/drawer.mjs",
-  "dist/dev/dialog.mjs",
-  "dist/dev/toast.mjs",
-  "dist/dev/motion.mjs",
+  "dist/dev/drawer/index.mjs",
+  "dist/dev/dialog/index.mjs",
+  "dist/dev/toast/index.mjs",
+  "dist/dev/motion/index.mjs",
   "dist/dev/auto/index.mjs",
 ];
 
@@ -58,39 +64,30 @@ if (!autoHasCss) {
   process.exit(1);
 }
 
-// The publishable package is packages/scrollsheet, not the repo root (which is
-// private and only exists to hold the workspace). REQUIRED_FILES are relative
-// to the package, which is exactly what npm pack reports.
-const proc = Bun.spawn(["npm", "pack", "--dry-run", "--json"], {
-  cwd: new URL("../packages/scrollsheet/", import.meta.url).pathname,
-  stdout: "pipe",
-  stderr: "pipe",
-});
-const [stdout, stderr, exitCode] = await Promise.all([
-  new Response(proc.stdout).text(),
-  new Response(proc.stderr).text(),
-  proc.exited,
-]);
+// Pack the publishable workspace, not the private repository root.
+const dir = await mkdtemp(join(tmpdir(), "scrollsheet-pack-"));
+try {
+  const tarball = join(dir, "package.tgz");
+  const proc = Bun.spawn([process.execPath, "pm", "pack", "--filename", tarball, "--quiet"], {
+    cwd: new URL("../packages/scrollsheet/", import.meta.url).pathname,
+    stdout: "pipe",
+    stderr: "pipe",
+  });
+  const [stdout, stderr, exitCode] = await Promise.all([
+    new Response(proc.stdout).text(),
+    new Response(proc.stderr).text(),
+    proc.exited,
+  ]);
+  if (exitCode !== 0) throw new Error(`bun pm pack failed:\n${stderr || stdout}`);
 
-if (exitCode !== 0) {
-  console.error(`scrollsheet: npm pack --dry-run failed:\n${stderr}`);
-  process.exit(1);
+  const files = await new Bun.Archive(await Bun.file(tarball).arrayBuffer()).files();
+  const missing = REQUIRED_FILES.filter((file) => !files.has(`package/${file}`));
+  if (missing.length > 0) {
+    throw new Error(
+      `scrollsheet: package tarball is missing required files: ${missing.join(", ")}`,
+    );
+  }
+  console.log(`✔ bun pm pack contains: ${REQUIRED_FILES.join(", ")}`);
+} finally {
+  await rm(dir, { recursive: true, force: true });
 }
-
-// npm <=11 emits an array of pack results; npm 12 keys them by package name.
-const parsed = JSON.parse(stdout) as unknown;
-interface PackResult {
-  files: Array<{ path: string }>;
-}
-const result: PackResult | undefined = Array.isArray(parsed)
-  ? (parsed as PackResult[])[0]
-  : (Object.values(parsed as Record<string, PackResult>)[0] as PackResult | undefined);
-const files = new Set((result?.files ?? []).map((f) => f.path));
-const missing = REQUIRED_FILES.filter((f) => !files.has(f));
-
-if (missing.length > 0) {
-  console.error(`scrollsheet: npm pack tarball is missing required files: ${missing.join(", ")}`);
-  process.exit(1);
-}
-
-console.log(`✔ npm pack contains: ${REQUIRED_FILES.join(", ")}`);

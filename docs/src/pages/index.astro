@@ -177,7 +177,7 @@ const COMPARE_ROWS: {
       "62 kB with sonner",
     ],
     best: 0,
-    note: `JS bundles, measured identically (esbuild, minified, react external, gzip): our whole surface in one import against vaul 1.1.2 plus sonner 2.0.8. Stylesheets on top of each: ${OUR_CSS_KB.toFixed(1)} kB ours, 1.0 kB vaul's style.css, zero for sonner (embedded). Totals ${(BUNDLE_SIZES.all.gzipKb + OUR_CSS_KB).toFixed(1)} against 31.3.`,
+    note: `scrollsheet is measured with Bun 1.4.4 (minified, React external, gzip). Competitor sizes are historical esbuild estimates, including vaul 1.1.2 plus sonner 2.0.8; the tools differ, so these are approximate comparisons. Stylesheets add ${OUR_CSS_KB.toFixed(1)} kB for scrollsheet, 1.0 kB for vaul, and zero for sonner (embedded).`,
   },
   {
     label: "Runtime dependencies",

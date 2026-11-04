@@ -75,7 +75,13 @@ export default defineConfig({
       // tests/e2e/perf/ is its own dedicated 'perf' project below
       // (chromium-only, PerformanceObserver longtask/event-timing support)
       // — excluded here for the same double-run reason.
-      testIgnore: [/[\\/]desktop[\\/]/, /[\\/]site[\\/]/, /[\\/]visual[\\/]/, /[\\/]perf[\\/]/],
+      testIgnore: [
+        /[\\/]desktop[\\/]/,
+        /[\\/]site[\\/]/,
+        /[\\/]visual[\\/]/,
+        /[\\/]perf[\\/]/,
+        /[\\/]_bughunt[\\/]/,
+      ],
       use: {
         browserName: "chromium",
         viewport: { width: 390, height: 844 },
@@ -89,7 +95,13 @@ export default defineConfig({
       // 667px screen, center dialogs on narrow widths) show up here first.
       // Runs in the full matrix only, not the fast lane.
       name: "chromium-small",
-      testIgnore: [/[\\/]desktop[\\/]/, /[\\/]site[\\/]/, /[\\/]visual[\\/]/, /[\\/]perf[\\/]/],
+      testIgnore: [
+        /[\\/]desktop[\\/]/,
+        /[\\/]site[\\/]/,
+        /[\\/]visual[\\/]/,
+        /[\\/]perf[\\/]/,
+        /[\\/]_bughunt[\\/]/,
+      ],
       use: {
         browserName: "chromium",
         viewport: { width: 375, height: 667 },
@@ -105,7 +117,7 @@ export default defineConfig({
       // Without this, testMatch's /desktop/ pattern would also sweep in
       // tests/e2e/visual/desktop/ — that spec belongs solely to the
       // visual-desktop project below.
-      testIgnore: [/[\\/]visual[\\/]/],
+      testIgnore: [/[\\/]visual[\\/]/, /[\\/]_bughunt[\\/]/],
       use: {
         browserName: "chromium",
         viewport: { width: 1280, height: 800 },
@@ -127,7 +139,13 @@ export default defineConfig({
       // chromium-only lane. tests/e2e/perf/ is its own chromium-only lane
       // too (see the 'perf' project below) — WebKit doesn't implement
       // 'longtask' reliably enough to run these specs at all.
-      testIgnore: [/[\\/]desktop[\\/]/, /[\\/]site[\\/]/, /[\\/]visual[\\/]/, /[\\/]perf[\\/]/],
+      testIgnore: [
+        /[\\/]desktop[\\/]/,
+        /[\\/]site[\\/]/,
+        /[\\/]visual[\\/]/,
+        /[\\/]perf[\\/]/,
+        /[\\/]_bughunt[\\/]/,
+      ],
       // Project-level override, local runs only (retries is already 2 in
       // CI): this Playwright WebKit build (26.5 / v2311) intermittently
       // segfaults the browser process after ~15 sequential dialog-heavy
@@ -150,7 +168,7 @@ export default defineConfig({
       // See chromium-desktop's comment above: tests/e2e/visual/desktop/
       // belongs solely to the visual-desktop project below, and firefox
       // never runs it regardless (chromium-only lane).
-      testIgnore: [/[\\/]visual[\\/]/],
+      testIgnore: [/[\\/]visual[\\/]/, /[\\/]_bughunt[\\/]/],
       use: {
         browserName: "firefox",
         viewport: { width: 1280, height: 800 },

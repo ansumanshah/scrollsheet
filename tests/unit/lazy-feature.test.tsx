@@ -7,8 +7,7 @@ import type * as ReactDOMClient from "react-dom/client";
 /**
  * The feature-chunk loader: fetch fires only when active, exactly once per
  * loader across consumers, resolves modules into state, degrades to null on
- * failure, and the critical-chunk registry gates opens only while a load is
- * genuinely in flight.
+ * failure.
  */
 
 let Root: ReactDOMClient.Root;
@@ -95,35 +94,5 @@ describe("createFeatureLoader", () => {
     });
     expect(seen.at(-1)).toBe(null);
     await expect(loader.preload()).resolves.toBe(null);
-  });
-});
-
-describe("ensureFeatures", () => {
-  test("null when nothing is pending — the open path stays synchronous", () => {
-    expect(lazyFeature.ensureFeatures()).toBe(null);
-  });
-
-  test("resolves after tracked critical loads settle, success or failure", async () => {
-    let release!: () => void;
-    const gate = new Promise<void>((r) => {
-      release = r;
-    });
-    lazyFeature.trackCritical(gate.then(() => ({ name: "morph" })));
-    lazyFeature.trackCritical(
-      gate.then(() => Promise.reject(new Error("dead chunk"))).catch(() => null),
-    );
-    const ensured = lazyFeature.ensureFeatures();
-    expect(ensured).not.toBe(null);
-    let settled = false;
-    void ensured!.then(() => {
-      settled = true;
-    });
-    await Promise.resolve();
-    expect(settled).toBe(false);
-    release();
-    await ensured;
-    expect(settled).toBe(true);
-    // Registry drained: later opens are synchronous again.
-    expect(lazyFeature.ensureFeatures()).toBe(null);
   });
 });

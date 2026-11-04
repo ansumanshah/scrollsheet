@@ -4,7 +4,7 @@ import { ToasterShell as Toaster } from "../../../packages/scrollsheet/src/toast
 import {
   _resetWarnOnceForTests,
   resolveVisibleToasts,
-} from "../../../packages/scrollsheet/src/toast/toaster";
+} from "../../../packages/scrollsheet/src/toast/toaster-shared";
 import {
   _getSonnerSnapshotForTests,
   _resetSonnerStoreForTests,

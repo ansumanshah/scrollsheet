@@ -27,7 +27,7 @@ test.describe("fill", () => {
     const wrapper = dialog.getByTestId("fill-wrapper");
 
     const scrollTop = await waitForStableScrollTop(track);
-    const wrapperHeight = await wrapper.evaluate((el) => el.offsetHeight);
+    const wrapperHeight = await wrapper.evaluate((el: HTMLElement) => el.offsetHeight);
     const viewportHeight = page.viewportSize()!.height;
 
     // The regression this feature exists to prevent: a fill'd body stretched
@@ -73,7 +73,7 @@ test.describe("fill", () => {
 
     const wrapperHeight = await dialog
       .getByTestId("fill-wrapper")
-      .evaluate((el) => el.offsetHeight);
+      .evaluate((el: HTMLElement) => el.offsetHeight);
     expect(Math.abs(tallScrollTop - wrapperHeight)).toBeLessThanOrEqual(DETENT_TOLERANCE);
 
     // Toggle back — proves the morph isn't a one-shot, matching

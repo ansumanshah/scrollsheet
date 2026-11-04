@@ -9,12 +9,12 @@ import { SPRING_TIMEOUT } from "../helpers";
  * `attachShadow({mode:'open'})` host with its own React root inside it, not
  * a simulated shadow boundary — see that file's doc comment for the layout.
  *
- * Both the Sheet.Content dialog and the Toaster's own dialog ALWAYS portal
+ * Both the Sheet.Content dialog and the Toaster shell portal
  * to document.body (content.tsx's createPortal target is unconditional —
  * verified by reading content.tsx, never gated on the trigger's root), and
  * their visual styling comes from the library's own automatic
  * document.head injection (content.tsx's injectStyles(ctx.nonce) /
- * toaster.tsx's injectToastStyles(nonce), both called unconditionally on
+ * toaster-shell.tsx's injectToastStyles(nonce), both called unconditionally on
  * open) — that would render correctly even if the fixture never called
  * injectStylesInto/injectToastStylesInto at all. What's actually under test
  * here is the shadow-scoped API itself: that a stylesheet lands INSIDE the

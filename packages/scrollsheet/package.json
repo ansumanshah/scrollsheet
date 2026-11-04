@@ -48,25 +48,25 @@
   ],
   "exports": {
     ".": {
-      "types": "./dist/index.d.mts",
+      "types": "./dist/types/index.d.ts",
       "development": "./dist/dev/index.mjs",
       "import": "./dist/index.mjs"
     },
     "./auto": {
-      "types": "./dist/auto/index.d.mts",
+      "types": "./dist/types/auto/index.d.ts",
       "development": "./dist/dev/auto/index.mjs",
       "import": "./dist/auto/index.mjs"
     },
     "./motion": {
-      "types": "./dist/motion.d.mts",
-      "development": "./dist/dev/motion.mjs",
-      "import": "./dist/motion.mjs"
+      "types": "./dist/types/motion/index.d.ts",
+      "development": "./dist/dev/motion/index.mjs",
+      "import": "./dist/motion/index.mjs"
     },
     "./styles.css": "./dist/styles.css",
     "./toast.css": "./dist/toast.css"
   },
   "main": "./dist/index.mjs",
-  "types": "./dist/index.d.mts",
+  "types": "./dist/types/index.d.ts",
   "peerDependencies": {
     "react": ">=18",
     "react-dom": ">=18"

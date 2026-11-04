@@ -145,9 +145,9 @@ describe("useContentMorph — reduced motion", () => {
         return { cancel: () => {}, finished: Promise.resolve(true) };
       },
     });
-    (props.trackRef.current as HTMLDivElement).scrollTo = (opts: ScrollToOptions) => {
+    (props.trackRef.current as HTMLDivElement).scrollTo = ((opts: ScrollToOptions) => {
       scrollToCalls.push(opts);
-    };
+    }) as HTMLDivElement["scrollTo"];
 
     await mount(<Harness {...props} />);
     expect(roCallback).not.toBeNull();
@@ -178,9 +178,9 @@ describe("useContentMorph — reduced motion", () => {
         return { cancel: () => {}, finished: Promise.resolve(true) };
       },
     });
-    (props.trackRef.current as HTMLDivElement).scrollTo = (opts: ScrollToOptions) => {
+    (props.trackRef.current as HTMLDivElement).scrollTo = ((opts: ScrollToOptions) => {
       scrollToCalls.push(opts);
-    };
+    }) as HTMLDivElement["scrollTo"];
 
     await mount(<Harness {...props} />);
     await React.act(() => {

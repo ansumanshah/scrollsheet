@@ -35,7 +35,9 @@ export default defineConfig({
     },
   ],
   webServer: {
-    command: "cd docs && bun run build && bunx astro preview --port 4322",
+    // Playwright owns the foreground server; Astro's agent detection can detach it.
+    command:
+      "bun run --cwd docs build && bun run --bun --cwd docs astro preview --ignore-lock --port 4322",
     url: "http://localhost:4322",
     reuseExistingServer: !process.env.CI,
     timeout: 120_000,
