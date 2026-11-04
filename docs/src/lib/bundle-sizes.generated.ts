@@ -12,12 +12,12 @@ export interface BundleSize {
 }
 
 export const BUNDLE_SIZES: Record<"index" | "drawer" | "dialog" | "toast" | "all" | "auto", BundleSize> = {
-  index: { gzipKb: 16.34, brotliKb: 14.64 },
-  drawer: { gzipKb: 17.42, brotliKb: 15.55 },
-  dialog: { gzipKb: 16.13, brotliKb: 14.44 },
+  index: { gzipKb: 16.34, brotliKb: 14.65 },
+  drawer: { gzipKb: 17.43, brotliKb: 15.55 },
+  dialog: { gzipKb: 16.13, brotliKb: 14.45 },
   toast: { gzipKb: 6.79, brotliKb: 6.08 },
-  all: { gzipKb: 23.22, brotliKb: 20.63 },
-  auto: { gzipKb: 20.76, brotliKb: 18.1 },
+  all: { gzipKb: 23.22, brotliKb: 20.71 },
+  auto: { gzipKb: 20.77, brotliKb: 18.09 },
 };
 
 // The shipped stylesheets, gzipped the same way. Consumers link these

@@ -6,19 +6,7 @@ import {
   waitForStableScrollTop,
 } from "../helpers";
 
-/**
- * Reference-mining hardening pass (vaul/base-ui/zag/react-modal-sheet/corvu/
- * react-aria) — items 1-8 of the audit at .claude/reference-lessons.md.
- * Items 9-10 (nested-scrollable drag handoff, sequential/no-skip snap mode)
- * are deliberately deferred — larger-scope, no test here.
- *
- * Fixtures at e2e/fixtures/ (see sides.spec.ts's header for why). Item 2
- * (setPointerCapture NotFoundError) has no reliable Playwright repro — the
- * real trigger needs the pointer to have already left before capture is
- * requested, a race Playwright's synthetic events can't force — so it's
- * only covered by the general "no uncaught page error during a drag"
- * assertion baked into every drag test below via `page.on('pageerror')`.
- */
+/** Focus, keyboard, viewport, and dismissal regressions using the shared fixtures. */
 
 function trackErrors(page: import("@playwright/test").Page): string[] {
   const errors: string[] = [];

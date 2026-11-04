@@ -1,30 +1,7 @@
 import { type Locator, type Page, expect, test } from "@playwright/test";
 import { SPRING_TIMEOUT, clickAboveThePanel, openSheetByTrigger } from "../helpers";
 
-/**
- * vaul parity — the VERIFY list from the vaul-compat audit
- * (.claude/audits/vaul-compat.md) plus the general vaul-parity claims in
- * src/drawer/index.tsx's own doc comments. Unit coverage
- * (tests/unit/compat/vaul-compat.test.tsx) already exercises the pure
- * resolve-/compose-prefixed helpers and the prop-mapping/warning logic in isolation;
- * this file proves the same claims hold through a REAL mounted `<dialog>`
- * and real gesture/DOM interaction, which the unit suite (React Testing
- * Library, no real drag physics) can't reach.
- *
- * closeThreshold conventions: scrollsheet's `isBelowCloseThreshold`
- * (src/internal/detents.ts) is `revealed < firstDetentHeight *
- * closeThreshold` — dismiss fires once what REMAINS drops below the
- * threshold fraction, so a HIGHER value is EASIER to dismiss. vaul's own
- * CLOSE_THRESHOLD counts the drag AWAY — a LOWER value is easier, and its
- * 0.25 default means a quarter-of-the-way drag dismisses.
- * `resolveCloseThreshold` converts (`1 - value`); a raw passthrough shipped
- * once and made a migrated Drawer.Root's default HARDER to dismiss than
- * scrollsheet's own 0.5 (empirically: native 0.5 crossed ~120px, raw 0.25
- * only past 200px). The test below locks the converted behavior with the
- * undamped-drag technique from detent-options.spec.ts — see that file's doc
- * comment for why release velocity, not frozen position, is what
- * resolveDrag judges.
- */
+/** Mounted-dialog coverage for Vaul adapter props; pure mappings have unit tests. */
 test.describe("closeThreshold converts vaul's 0.25 default (easier dismiss than scrollsheet's 0.5)", () => {
   // Known load-flake, not a regression signal: under a full 7-worker run the
   // inter-move wall clock stretches and the release-velocity projection can

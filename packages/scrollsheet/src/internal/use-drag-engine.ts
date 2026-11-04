@@ -172,6 +172,10 @@ export function useDragEngine({
       enterGrab = false;
       dragging = false;
       pointerId = null;
+      // Native snap can move the track as soon as it is restored.
+      const geometry = geometryFor(ctxRef.current.side);
+      const maxDetent = maxDetentRef.current;
+      const revealed = readRevealed(track, geometry, maxDetent);
       if (snapSuspended) {
         track.style.scrollSnapType = "";
         snapSuspended = false;
@@ -186,10 +190,6 @@ export function useDragEngine({
           suppressClick = false;
         }, 400);
       }
-
-      const geometry = geometryFor(ctxRef.current.side);
-      const maxDetent = maxDetentRef.current;
-      const revealed = readRevealed(track, geometry, maxDetent);
 
       // Velocity sanity (zag's adjustReleaseVelocityAgainstDisplacement +
       // MAX_RELEASE_VELOCITY_AGE_MS): a release sample older than ~80ms (the

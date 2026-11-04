@@ -9,7 +9,7 @@ bun install              # Bun 1.4.4 (matches packageManager and CI)
 ## Verify before opening a PR
 
 ```sh
-bun run verify            # typecheck -> CSS compat -> build -> unit -> e2e fast -> size -> pack -> registry
+bun run verify            # typecheck -> CSS compat -> dependency audit -> build -> unit -> e2e fast -> size -> pack -> registry
 ```
 
 Or run the steps yourself:
@@ -17,6 +17,7 @@ Or run the steps yourself:
 ```sh
 bun run typecheck
 bun run check:compat    # authored CSS against .browserslistrc
+bun run check:deps      # high/critical dependency advisories
 bun run build           # required before unit tests read dist/
 bun test tests/unit
 bun run test:e2e:fast    # chromium-mobile only
@@ -39,6 +40,9 @@ bundles declarations during the production builds. `tsconfig.declarations.json`
 keeps build-tool ambient types out of the published API; a strict NodeNext
 consumer test checks the generated declarations and public component props.
 Declarations ship in `dist/types/` inside the same npm package as the JavaScript.
+
+The `minimatch` override keeps doiuse's transitive matcher on a patched release.
+`check:compat` validates that integration against the authored stylesheets.
 
 ## Formatting
 
@@ -68,6 +72,7 @@ The build regenerates these modules before unit tests check the CSS output.
 
 - [ ] bun run typecheck
 - [ ] bun run check:compat
+- [ ] bun run check:deps
 - [ ] bun run build
 - [ ] bun test tests/unit
 - [ ] bun run test:e2e:fast

@@ -1,6 +1,6 @@
 {
   "name": "scrollsheet",
-  "version": "1.2.2",
+  "version": "1.2.3",
   "description": "React bottom sheets, drawers, dialogs, side panels, and toasts. Native dialog and CSS scroll-snap sheets, with no runtime dependencies.",
   "license": "MIT",
   "author": "Ansuman Shah <ansumanshah@gmail.com>",
