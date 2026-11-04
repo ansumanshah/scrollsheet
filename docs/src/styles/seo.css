@@ -58,6 +58,11 @@
   .hero-stage {
     order: 4;
   }
+  /* The demo's markup streams in after the migration block does. Reserving its
+     height keeps the block from jumping when it arrives. */
+  .hero-inline-demo {
+    min-height: 25rem;
+  }
   .hero-migrate {
     order: 5;
     justify-self: center;

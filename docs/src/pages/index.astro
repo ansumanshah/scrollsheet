@@ -215,7 +215,7 @@ const noteNumber = (note?: string) => (note ? footnotes.indexOf(note) + 1 : 0);
  * nuanced values keep their text. */
 const cellParts = (value: string) => {
   if (value === "yes") return { glyph: "✓", rest: "", cls: "is-yes" };
-  if (value === "no") return { glyph: "—", rest: "", cls: "is-no" };
+  if (value === "no") return { glyph: "", rest: "No", cls: "is-no" };
   if (value.startsWith("yes, ")) return { glyph: "✓", rest: value.slice(5), cls: "is-yes" };
   return { glyph: "", rest: value, cls: "" };
 };
