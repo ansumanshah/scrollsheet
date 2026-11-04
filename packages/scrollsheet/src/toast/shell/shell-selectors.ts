@@ -37,8 +37,6 @@ export interface RowOffset {
   id: number | string;
   /** 0-based position in the newest-first list — real Sonner's own `index`. */
   index: number;
-  /** Real Sonner's own `--toasts-before` — identical to `index` here (every row, visible or hidden, gets one). */
-  toastsBefore: number;
   /** Real Sonner's own `--offset` — cumulative height of every strictly-newer row, plus one `gap` per row crossed. */
   stackOffset: number;
 }
@@ -62,7 +60,7 @@ export function computeRowOffsets(
   return newestFirst.map((record, index) => {
     const stackOffset = index * gap + cumulativeHeight;
     cumulativeHeight += heights.get(record.id) ?? 0;
-    return { id: record.id, index, toastsBefore: index, stackOffset };
+    return { id: record.id, index, stackOffset };
   });
 }
 

@@ -102,8 +102,7 @@ function PositionGroup({
     [toasts, position, defaultPosition],
   );
   // state.ts's own array stays append-only oldest-first — the newest-first
-  // reversal happens here at the render boundary, same as
-  // selectToastWindow's own doc comment describes.
+  // reversal happens here at the render boundary.
   const newestFirst = React.useMemo(() => [...positionToasts].reverse(), [positionToasts]);
 
   const { heights, observe, forget } = useToastHeights();
@@ -124,7 +123,6 @@ function PositionGroup({
     () => computeRowOffsets(newestFirst, heights, gap),
     [newestFirst, heights, gap],
   );
-  const offsetById = React.useMemo(() => new Map(offsets.map((o) => [o.id, o])), [offsets]);
 
   // An exit-only row (dropped out of the store, still playing its own exit
   // transition) has no CURRENT offset to compute — it keeps rendering with
@@ -169,8 +167,6 @@ function PositionGroup({
         {
           ...baseStyle,
           "--scrollsheet-toast-gap": `${gap}px`,
-          "--scrollsheet-toast-front-height":
-            frontHeight !== undefined ? `${frontHeight}px` : undefined,
         } as React.CSSProperties
       }
       onMouseEnter={onHoverEnter}
@@ -186,7 +182,7 @@ function PositionGroup({
       onLostPointerCapture={() => onInteractingChange(false)}
     >
       {exitRows.map(({ record, exiting }) => {
-        const offset = offsetById.get(record.id) ?? lastOffsetRef.current.get(record.id);
+        const offset = lastOffsetRef.current.get(record.id);
         const index = offset?.index ?? newestFirst.length;
         return (
           <ToastRow
@@ -194,7 +190,6 @@ function PositionGroup({
             record={record}
             index={index}
             total={newestFirst.length}
-            toastsBefore={offset?.toastsBefore ?? index}
             stackOffset={offset?.stackOffset ?? 0}
             height={heights.get(record.id)}
             frontHeight={frontHeight}
@@ -357,6 +352,8 @@ export function ToasterShell({
         ([, el]) => active === el || el.contains(active),
       );
       if (!focusedEntry) return;
+      // Otherwise the same press also closes a modal hosting the toaster.
+      event.preventDefault();
       if (hotkeyExpanded) {
         setHotkeyExpanded(false);
         return;

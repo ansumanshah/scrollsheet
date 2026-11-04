@@ -65,12 +65,11 @@ describe("computeRowOffsets", () => {
     expect(computeRowOffsets([], new Map(), 14)).toEqual([]);
   });
 
-  test("index/toastsBefore are 0-based positions in the newest-first list", () => {
+  test("index is the 0-based position in the newest-first list", () => {
     const newestFirst = [record({ id: "c" }), record({ id: "b" }), record({ id: "a" })];
     const offsets = computeRowOffsets(newestFirst, new Map(), 14);
     expect(offsets.map((o) => o.id)).toEqual(["c", "b", "a"]);
     expect(offsets.map((o) => o.index)).toEqual([0, 1, 2]);
-    expect(offsets.map((o) => o.toastsBefore)).toEqual([0, 1, 2]);
   });
 
   test("stackOffset is the cumulative height of every strictly-newer row, plus one gap per row crossed — real Sonner's own heightIndex * gap + toastsHeightBefore", () => {

@@ -216,30 +216,39 @@ export function SonnerModalFixture() {
       <button type="button" className="btn" onClick={() => fire("From the page")}>
         Sonner modal: fire from page
       </button>
-      <Sheet.Root>
-        <Sheet.Trigger className="btn">Sonner modal: open sheet</Sheet.Trigger>
-        <Sheet.Content className="sheet" aria-label="Toast host sheet">
-          <div className="sheet-inner">
-            <Sheet.Title>Toast host</Sheet.Title>
-            <button type="button" className="btn" onClick={() => fire("From the sheet")}>
-              Sonner modal: fire from sheet
-            </button>
-            <Sheet.Root>
-              <Sheet.Trigger className="btn">Sonner modal: open nested sheet</Sheet.Trigger>
-              <Sheet.Content className="sheet" aria-label="Nested toast host sheet">
-                <div className="sheet-inner">
-                  <Sheet.Title>Nested toast host</Sheet.Title>
-                  <button type="button" className="btn" onClick={() => fire("From the nested")}>
-                    Sonner modal: fire from nested sheet
-                  </button>
-                  <Sheet.Close className="btn">Sonner modal: close nested sheet</Sheet.Close>
-                </div>
-              </Sheet.Content>
-            </Sheet.Root>
-            <Sheet.Close className="btn">Sonner modal: close sheet</Sheet.Close>
-          </div>
-        </Sheet.Content>
-      </Sheet.Root>
+      {/* React bubbles the sheet's events here through its portal, so this counts
+          anything a toast sitting inside the dialog wrongly replays to it. */}
+      <div
+        onClick={() => {
+          const w = window as unknown as { __sheetParentClicks?: number };
+          w.__sheetParentClicks = (w.__sheetParentClicks ?? 0) + 1;
+        }}
+      >
+        <Sheet.Root>
+          <Sheet.Trigger className="btn">Sonner modal: open sheet</Sheet.Trigger>
+          <Sheet.Content className="sheet" aria-label="Toast host sheet">
+            <div className="sheet-inner">
+              <Sheet.Title>Toast host</Sheet.Title>
+              <button type="button" className="btn" onClick={() => fire("From the sheet")}>
+                Sonner modal: fire from sheet
+              </button>
+              <Sheet.Root>
+                <Sheet.Trigger className="btn">Sonner modal: open nested sheet</Sheet.Trigger>
+                <Sheet.Content className="sheet" aria-label="Nested toast host sheet">
+                  <div className="sheet-inner">
+                    <Sheet.Title>Nested toast host</Sheet.Title>
+                    <button type="button" className="btn" onClick={() => fire("From the nested")}>
+                      Sonner modal: fire from nested sheet
+                    </button>
+                    <Sheet.Close className="btn">Sonner modal: close nested sheet</Sheet.Close>
+                  </div>
+                </Sheet.Content>
+              </Sheet.Root>
+              <Sheet.Close className="btn">Sonner modal: close sheet</Sheet.Close>
+            </div>
+          </Sheet.Content>
+        </Sheet.Root>
+      </div>
       <Toaster toasterId="modal" visibleToasts={3} />
     </div>
   );

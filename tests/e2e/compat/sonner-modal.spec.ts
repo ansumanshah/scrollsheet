@@ -43,6 +43,63 @@ test.describe("sonner compat: page-level Toaster with a modal sheet", () => {
     await expect(dialog).toHaveAttribute("data-scrollsheet-state", "open");
   });
 
+  test("toast events don't replay to the React parents of the sheet hosting them", async ({
+    page,
+  }) => {
+    await page.goto("/");
+    await openSheetByTrigger(page, "Sonner modal: open sheet");
+    await page.getByRole("button", { name: "Sonner modal: fire from sheet", exact: true }).click();
+    await expect(page.locator(ROW, { hasText: "From the sheet" })).toHaveCSS("opacity", "1", {
+      timeout: SPRING_TIMEOUT,
+    });
+    const clicks = () =>
+      page.evaluate(
+        () => (window as unknown as { __sheetParentClicks?: number }).__sheetParentClicks ?? 0,
+      );
+    const before = await clicks();
+    await page.getByRole("button", { name: "Undo", exact: true }).click();
+    await expect(page.locator(ROW, { hasText: "From the sheet" })).toHaveCount(0, {
+      timeout: SPRING_TIMEOUT,
+    });
+    expect(await clicks()).toBe(before);
+  });
+
+  test("Esc with focus in a toast acts on the toast and leaves the sheet open", async ({
+    page,
+  }) => {
+    await page.goto("/");
+    const dialog = await openSheetByTrigger(page, "Sonner modal: open sheet");
+    await page.getByRole("button", { name: "Sonner modal: fire from sheet", exact: true }).click();
+    await expect(page.locator(ROW, { hasText: "From the sheet" })).toHaveCSS("opacity", "1", {
+      timeout: SPRING_TIMEOUT,
+    });
+    await page.getByRole("button", { name: "Undo", exact: true }).focus();
+    await page.keyboard.press("Escape");
+    await expect(page.locator(ROW, { hasText: "From the sheet" })).toHaveCount(0, {
+      timeout: SPRING_TIMEOUT,
+    });
+    await page.waitForTimeout(700);
+    await expect(dialog).toHaveAttribute("data-scrollsheet-state", "open");
+  });
+
+  test("a toast can be swiped away inside a modal sheet", async ({ page }) => {
+    await page.goto("/");
+    const dialog = await openSheetByTrigger(page, "Sonner modal: open sheet");
+    await page.getByRole("button", { name: "Sonner modal: fire from sheet", exact: true }).click();
+    const row = page.locator(ROW, { hasText: "From the sheet" });
+    await expect(row).toHaveCSS("opacity", "1", { timeout: SPRING_TIMEOUT });
+    const box = await row.boundingBox();
+    if (!box) throw new Error("no toast");
+    const y = box.y + box.height / 2;
+    await page.mouse.move(box.x + 40, y);
+    await page.mouse.down();
+    await page.mouse.move(box.x + 90, y, { steps: 3 });
+    await page.mouse.move(box.x + 160, y, { steps: 3 });
+    await page.mouse.up();
+    await expect(row).toHaveCount(0, { timeout: SPRING_TIMEOUT });
+    await expect(dialog).toHaveAttribute("data-scrollsheet-state", "open");
+  });
+
   test("a toast already showing stays usable when a sheet opens over it, and after it closes", async ({
     page,
   }) => {

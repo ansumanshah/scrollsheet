@@ -295,7 +295,7 @@ pointerdown. Overlay renders nothing; restyle the real backdrop with --scrollshe
 
 scrollsheet's Sonner adapter provides toast, useSonner, and Toaster
 exports, running on the same architecture real Sonner uses: a persistent card per toast, all
-portaled through one shared <section> in document.body, positioned with CSS instead of stacked
+portaled through one shared <section> in document.body (or in the topmost modal <dialog> while one is open), positioned with CSS instead of stacked
 inside a shared sheet panel. toast(), .success(), .error(), .info(), .warning(), .loading(),
 .message(), .custom(jsx), .promise(), and .dismiss(id?) all work before or after any <Toaster>
 mounts, backed by scrollsheet's module-level queue. A repeated id updates a toast
@@ -320,9 +320,9 @@ Limitations: theme defaults to light; dark and system warn once and still render
 card. richColors=true is unsupported and warns once. toast.dismiss() with no id
 clears every toast across every mounted <Toaster>, matching real Sonner's own dismiss() exactly.
 useSonner() returns every toast across every toaster, unfiltered; a <Toaster id> does its
-own filtering internally. A toast fired while a modal Sheet.Root is open renders behind it
-rather than above it, matching real Sonner's own limitation against a native <dialog> elsewhere
-on the page.
+own filtering internally. While a modal <dialog> is open, including a modal Sheet.Root, the toaster
+moves inside it so toasts stay above it and clickable. It can't see a modal inside a shadow root.
+A modal={false} sheet is in the top layer and paints over a toast it overlaps.
 
 Import scrollsheet/toast.css for toasts. Add scrollsheet/styles.css when also using sheets,
 drawers, or dialogs. For automatic style injection, import toast and Toaster from

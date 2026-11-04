@@ -280,8 +280,9 @@
   opacity: 0;
 }
 /* spring({ stiffness: 600, damping: 49 }), thinned to the points that shape it;
-   mostly landed by the end of the card's 250ms move. */
-.scrollsheet-toast > * {
+   mostly landed by the end of the card's 250ms move. :where() so a consumer's
+   own transition on a toast's content still wins. */
+:where(.scrollsheet-toast) > * {
   transition: opacity 417ms
     linear(0, 0.197 8%, 0.486 16%, 0.702 24%, 0.837 32%, 0.914 40%, 0.989 64%, 1);
 }

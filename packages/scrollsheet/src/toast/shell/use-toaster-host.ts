@@ -26,6 +26,13 @@ export function useToasterHost(): HTMLElement | null {
     const el = document.createElement("div");
     // No box of its own, so a consumer dialog's flex or grid layout never sees it.
     el.style.display = "contents";
+    // Past the host, React would replay these to the host dialog's own parents.
+    // Keydown stays out: the Toaster's document-level hotkey needs it.
+    for (const type of ["click", "pointerdown", "pointerup", "mousedown", "mouseup"]) {
+      el.addEventListener(type, (event) => {
+        if (el.parentNode !== document.body) event.stopPropagation();
+      });
+    }
     // Show order, not document order: only the last-shown modal isn't inert.
     const shown = new Set<Element>();
 
@@ -33,7 +40,7 @@ export function useToasterHost(): HTMLElement | null {
       const open = openModals();
       for (const d of shown) if (!open.includes(d)) shown.delete(d);
       for (const d of open) shown.add(d);
-      const target = [...shown].at(-1) ?? document.body;
+      const target = [...shown].pop() ?? document.body;
       if (el.parentNode !== target) target.append(el);
       // Removal only matters while inside a dialog that can take the host with
       // it, so the costlier childList watch never runs on a page with no modal.
