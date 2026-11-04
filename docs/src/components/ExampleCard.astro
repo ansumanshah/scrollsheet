@@ -88,14 +88,14 @@ const descriptionParts = description.split("`");
       </div>
       <p class="example-card__file-label">styles.css</p>
       <p class="example-card__styles-note">
-        Only the rules this example uses. Save it next to the component and it runs standalone.
+        Load these example styles along with scrollsheet's stylesheets. Copy icons.tsx when shown.
       </p>
       <div class="code-block">
         <button
           class="copy-btn copy-btn--floating"
           type="button"
           data-copy={stylesClipboard}
-          aria-label="Copy examples.css and icons.tsx"
+          aria-label={iconsCode ? "Copy styles.css and icons.tsx" : "Copy styles.css"}
         >
           <svg viewBox="0 0 20 20" fill="none" aria-hidden="true">
             <rect x="7" y="7" width="10" height="10" rx="2" stroke="currentColor" stroke-width="1.6"></rect>

@@ -43,6 +43,7 @@ in from nowhere.
 import * as React from 'react';
 import { flushSync } from 'react-dom';
 import { Sheet } from 'scrollsheet';
+import 'scrollsheet/styles.css';
 
 type VTDocument = Document & {
   startViewTransition?: (update: () => void) => { finished: Promise<unknown> };
@@ -174,12 +175,12 @@ function OrderRow({ order }: { order: Order }) {
 
 ## What this costs you
 
-<Aside type="caution" title="Chrome and Safari only">
-  `document.startViewTransition` is Chrome/Edge 111+ and Safari 18+; Firefox doesn't have it yet.
+<Aside type="caution" title="Feature detection and reduced motion">
+  Check `document.startViewTransition` at runtime rather than relying on a browser name.
   `useTriggerMorph`'s `doc.startViewTransition` check is the whole fallback: unsupported browsers
   and `prefers-reduced-motion: reduce` both fall straight through to the plain `setOpen` call, and
-  the sheet plays its normal spring entrance instead. There's no second code path to maintain,
-  just the one guard.
+  the examples above set `--scrollsheet-travel: none`, so this fallback opens or closes without
+  the library's entrance animation.
 </Aside>
 
 <Aside type="caution" title="It snapshots the whole viewport">
@@ -197,15 +198,11 @@ function OrderRow({ order }: { order: Order }) {
   morph for that one close.
 </Aside>
 
-## Why not animate it in JS
+## Integration boundary
 
-Nothing here is scrollsheet-specific plumbing. It's the platform's own API, wired to the two
-state changes a sheet already exposes. The browser owns the crossfade and runs it as a compositor
-animation, off the main thread, so it stays smooth under exactly the kind of load that would make
-a JS-driven FLIP animation stutter. Feature-detecting it costs one `if`, and unsupported browsers
-get the library's regular entrance, not a broken one. That's also why it isn't a `Sheet.Root` prop:
-the fallback is free, the morph is a browser feature the library doesn't need to reimplement, and
-wiring it costs nothing when it's unavailable.
+This recipe uses the browser's View Transitions API around controlled `open` changes. It does
+not require a scrollsheet prop or another animation dependency. Snapshot cost and animation
+quality depend on the page and device; check both opening and closing in your app.
 
 The [Lightbox](/#lightbox) example is this same pattern doing more work: paging, pinch-zoom, and a
 chrome overlay riding its own timing on top of the morph. Read [its source

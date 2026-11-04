@@ -1,6 +1,6 @@
 ---
 title: Migrate from Sonner
-description: Drop-in replacement for toast, useSonner, and Toaster, running on the same per-toast DOM as real Sonner, with every position, per-toast overrides, and swipe-to-dismiss.
+description: Migrate toast, useSonner, and Toaster with six positions, per-toast overrides, and swipe-to-dismiss; check the compatibility gaps.
 ---
 
 import { Aside, LinkCard } from '@astrojs/starlight/components';
@@ -9,29 +9,28 @@ import DocExample from '../../../../components/DocExample.astro';
 ```diff
 - import { toast, Toaster } from 'sonner';
 + import { toast, Toaster } from 'scrollsheet';
++ import 'scrollsheet/toast.css';
 ```
 
-Drop-in: same `toast`, `useSonner`, `Toaster` exports, running on the same architecture real
-Sonner uses: a persistent card per toast, all portaled through one shared `<section>` in
-`document.body`, positioned with CSS instead of stacked inside a shared sheet panel.
+The `toast`, `useSonner`, and `Toaster` exports use a persistent card per toast, portaled through
+one shared `<section>` in `document.body` and positioned with CSS.
 
-Every method (`toast()`, `.success()`, `.error()`, `.info()`, `.warning()`, `.loading()`,
-`.message()`, `.custom(jsx)`, `.promise()`, `.dismiss(id?)`) works before or after a
+The methods (`toast()`, `.success()`, `.error()`, `.info()`, `.warning()`, `.loading()`,
+`.message()`, `.custom(render)`, `.promise()`, `.dismiss(id?)`) work before or after a
 `<Toaster>` mounts, backed by one shared module-level queue.
 
 ## CSS compatibility
 
-<Aside type="tip" title="Both names land on every element">
+<Aside type="tip" title="Supported CSS aliases">
 `useSonner` is the same function as `useToasts` (the rest of these docs teach the latter); pick
-whichever reads better in your codebase. On the DOM side, every class and `data-*` attribute the
-`Toaster` renders is stamped twice: the neutral name (`.scrollsheet-toast`,
-`data-scrollsheet-toaster`, `--scrollsheet-toast-gap`, ...) *and* the matching Sonner one
-(`.sonner-toast`, `data-sonner-toaster`, `--sonner-gap` as a fallback), so none of your existing
-`.sonner-toast {}` / `[data-sonner-*]` CSS needs to change. That's the right default for a
-migration; leave `sonnerCompat` alone and keep your Sonner CSS as-is.
+whichever reads better in your codebase. With `sonnerCompat` enabled (the default), supported
+toast slots carry the neutral name (`.scrollsheet-toast`,
+`data-scrollsheet-toaster`, `--scrollsheet-toast-gap`, ...) and the corresponding Sonner alias
+(`.sonner-toast`, `data-sonner-toaster`, `--sonner-gap` as a fallback), so those selectors can continue matching. Check custom selectors and animations in your app;
+the adapter does not reproduce every Sonner DOM detail.
 </Aside>
 
-## What maps 1:1
+## Supported behavior
 
 <DocExample
   name="toast"
@@ -48,7 +47,8 @@ migration; leave `sonnerCompat` alone and keep your Sonner CSS as-is.
 | Stack | Every toast is a real, persistent card, not a ghost placeholder; collapsed ones sit behind the front one and expand to the full list on hover or `Alt+T` (configurable via `hotkey`). `Escape` dismisses the front toast, or collapses the stack back if the hotkey opened it, though a stack the pointer is still hovering stays expanded until the pointer leaves |
 | `visibleToasts` | Caps how many toasts show at once, default 3 like Sonner. Toasts past the cap stay mounted but hidden, timers still running, and fade in the moment a slot frees; nothing gets evicted. Minimum 1: `0` or negative still shows one |
 | Auto-dismiss | Uses the toast's own `duration`, or the `Toaster`'s. Pauses on hover, any pointer down on the stack (including mid-swipe), keyboard expand, and a hidden tab, resuming with the time left rather than a fresh countdown; updating a live toast's `duration` re-arms the timer from the new value |
-| Action / cancel buttons | Dismiss after their own `onClick` runs: cancel unconditionally, action unless the handler calls `event.preventDefault()` |
+| Action / cancel buttons | Cancel runs its handler and dismisses only when the toast is dismissible; action always runs its handler and dismisses unless it calls `event.preventDefault()` |
+| `classNames.default` | Applies to neutral toasts, alongside `classNames.toast`; per-type classes apply to their matching toast type |
 | `type: 'loading'` | Can't be swiped or closed by button, regardless of `dismissible` |
 | `toast.promise()` | Accepts an extended result object (`{ message, ...rest }`) from `success`/`error`; a static `description` set at call time survives to the settled toast |
 | `toast.getToasts()` / `.getHistory()` | Mirror Sonner's own introspection API; history is capped at 100 entries |
@@ -73,17 +73,17 @@ zeroes all of them, the same contract the core primitive keeps everywhere else.
 | --- | --- |
 | `theme` | Static light card; `dark` and `system` warn once instead of silently no-op |
 | `richColors` | Not implemented, warns once |
-| `toast.dismiss()` with no `id` | Clears every toast across every mounted `<Toaster>`, matching real Sonner exactly |
+| `toast.dismiss()` with no `id` | Clears the shared queue across all toaster instances |
 | `useSonner()` | Returns every toast across every toaster, unfiltered; `<Toaster id>` filters internally |
-| Behind a modal sheet | A toast fired while a modal `Sheet.Root` is open renders behind it rather than above it, matching real Sonner's own limitation against a native `<dialog>` elsewhere on the page |
+| Behind a modal sheet | A toast fired while a modal `Sheet.Root` is open renders behind it rather than above it: the toaster is outside the dialog's top layer |
 
 </div>
 </Aside>
 
 ## Styles setup
 
-Sonner injects its styles automatically; scrollsheet's default entry expects two imports next
-to the `Toaster` instead: `scrollsheet/styles.css` and `scrollsheet/toast.css`.
+Sonner injects its styles automatically; scrollsheet's default entry expects
+`scrollsheet/toast.css`. Add `scrollsheet/styles.css` too if the app uses sheets or dialogs.
 
 For sonner's zero-setup behavior, import `toast` and `Toaster` from `scrollsheet/auto`:
 embedded styles, injected on first render. The `auto` entry is also the right one for design
@@ -92,7 +92,7 @@ and similar); that compilation destroys the runtime variables the stylesheets' g
 
 <LinkCard
   title="Migrate from vaul"
-  description="Drop-in replacement for vaul's Drawer namespace, same props, same data-vaul-* attributes for existing CSS."
+  description="Vaul's Drawer namespace mapped onto scrollsheet, with supported props, CSS hooks, and migration differences."
   href="/docs/migrating/from-vaul"
 />
 <LinkCard

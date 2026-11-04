@@ -1,32 +1,32 @@
 ---
 name: migrate-from-vaul
-description: Migrate a React app off vaul onto scrollsheet, step by step. Swap the import for a zero-code-change adapter first, then optionally convert to native Sheet.* primitives with a full prop mapping table. Use when the user mentions vaul, Drawer.Root, or "migrate from vaul".
+description: Migrate a React app off vaul onto scrollsheet, step by step. Map the import to the compatibility adapter first, then optionally convert to native Sheet.* primitives with a full prop mapping table. Use when the user mentions vaul, Drawer.Root, or "migrate from vaul".
 ---
 
 # Migrate from vaul
 
 Two-step migration. Do step 1 first, always. Step 2 is optional and separate.
 
-## Step 1: swap the import (zero code change)
+## Step 1: change the import and stylesheet
 
 ```diff
 - import { Drawer } from 'vaul';
+- import 'vaul/style.css';
 + import { Drawer } from 'scrollsheet';
++ import 'scrollsheet/styles.css';
 ```
 
 Same `Drawer.*` namespace, same JSX. `Drawer` is a compat layer that maps vaul's props
-onto real scrollsheet primitives underneath. Ship this alone as a complete migration if you just
-want vaul's bugs gone: nesting is automatic (no separate `NestedRoot` needed, but it's exported
+onto real scrollsheet primitives underneath. Review the behavior differences below before completing the migration: nesting is automatic (no separate `NestedRoot` needed, but it's exported
 as an alias of `Root` for drop-in compatibility).
 
-Run the app, watch the console in dev. Any prop the adapter can't map fires one `console.warn`
-per prop, naming it. That's your punch list for step 2 or for deletion.
+Run the app, watch the console in dev. Unsupported prop groups produce development warnings naming the ignored props. That's your punch list for step 2 or for deletion.
 
 ## Step 2: migrate to native Sheet.* (optional)
 
 Only do this if you want the smaller import (`Sheet`, not the compat shim, both tree-shaken
-independently from the same entry) or need a feature the adapter doesn't expose (`backgroundRef`,
-`fill`, `onTravel`'s `TravelInfo`, `side` beyond vaul's four, etc.).
+independently from the same entry) or need a feature the adapter doesn't expose (`backgroundRef`, `side="center"`, or responsive `desktopSide`). `Drawer.Content` already
+accepts `fill`, and `Drawer.Root` forwards `onTravel` with its `TravelInfo` argument.
 
 ```diff
 - import { Drawer } from 'scrollsheet';
@@ -39,7 +39,7 @@ independently from the same entry) or need a feature the adapter doesn't expose 
 | `<Drawer.Trigger>` | `<Sheet.Trigger>` | same component, re-exported |
 | `<Drawer.Content>` | `<Sheet.Content>` | |
 | `<Drawer.Handle>` | `<Sheet.Handle>` | drop `preventCycle`, see below |
-| `<Drawer.Title>` / `<Drawer.Description>` / `<Drawer.Close>` | `<Sheet.Title>` / `<Sheet.Description>` / `<Sheet.Close>` | same components, re-exported |
+| `<Drawer.Title>` / `<Drawer.Description>` / `<Drawer.Close>` | `<Sheet.Title>` / `<Sheet.Description>` / `<Sheet.Close>` | Title/Description are re-exported; Close preserves Vaul's empty-button default |
 | `<Drawer.Overlay>` | delete it | scrollsheet draws its own backdrop; there's nothing to render |
 | `<Drawer.Portal>` | delete it | the `<dialog>` always renders to the top layer |
 | `<Drawer.NestedRoot>` | `<Sheet.Root>` | nesting is automatic: render one sheet inside another's `Content` |
@@ -116,19 +116,17 @@ logic already checks `event.defaultPrevented`.
 
 ## What does NOT carry over
 
-These vaul props exist to fight the page (scroll-lock, portal containers, manual keyboard
-handling); scrollsheet's native `<dialog>` doesn't need them. The adapter accepts them for
-drop-in compatibility and no-ops with a single dev `console.warn`; deleting them is correct in
-step 2:
+The adapter accepts these props but does not implement their Vaul behavior. Remove them only
+after checking the app's scrolling, focus, and keyboard behavior:
 
 | Prop | Why it's gone |
 | --- | --- |
 | `setBackgroundColorOnScale` | no equivalent |
-| `noBodyStyles` | scrollsheet never touches `<body>` styles |
-| `disablePreventScroll` | `<dialog>` handles scroll containment natively |
-| `preventScrollRestoration` | no scroll restoration bug to prevent |
+| `noBodyStyles` | ignored: scrollsheet freezes body styles for modal iOS sheets outside standalone mode and locks overflow in its modal no-dialog fallback; cleanup restores those styles |
+| `disablePreventScroll` | ignored; scroll containment and the iOS body freeze use scrollsheet's own lifecycle |
+| `preventScrollRestoration` | ignored; the iOS body freeze restores its saved scroll position on cleanup |
 | `repositionInputs` | the keyboard engine handles this automatically |
-| `scrollLockTimeout` | no scroll lock, no timeout |
+| `scrollLockTimeout` | no configurable post-scroll drag timeout |
 | `onDrag` | the adapter warns and ignores it; in native scrollsheet, `onTravel(revealedPx, progress, info)` is the per-frame callback, and it fires for every travel (drag, wheel, tween), not just pointer drags |
 | `container` (Root or Portal) | the `<dialog>` always renders to the top layer |
 | `fixed` | real vaul's `fixed` swaps to a resize-based keyboard strategy; scrollsheet's keyboard engine has one strategy |
@@ -147,16 +145,18 @@ dev-only): `onPointerDownOutside`, `onOpenAutoFocus`, `onEscapeKeyDown`, `onClos
 
 ## CSS selectors still work
 
-If you have CSS written against vaul's data attributes, the adapter still emits them, so
-no CSS changes are needed even mid-migration:
+The adapter retains the following hooks. Check other Vaul selectors against the rendered DOM:
 
 | Attribute | Where |
 | --- | --- |
 | `data-vaul-drawer` | `Drawer.Content` |
 | `data-vaul-drawer-direction` | `Drawer.Content` |
-| `data-vaul-snap-points` | `Drawer.Content` (`"true"` only with 2+ distinct snap points, matching vaul's own CSS-selector convention) |
+| `data-vaul-snap-points` | `Drawer.Content` (`"true"` when the configured detent array has 2+ entries) |
 | `data-vaul-handle` | `Drawer.Handle` |
 | `data-vaul-drawer-visible` | `Drawer.Handle`, tracks `open`, not the exit-animation phase |
+
+`data-vaul-no-drag` also opts custom controls and their ancestors out of pointer-driven dragging;
+`data-scrollsheet-no-drag` is the native spelling.
 
 `Title`, `Description`, and `Close` get no vaul-branded attribute in either the adapter or native
 scrollsheet. Style them by tag or your own class.

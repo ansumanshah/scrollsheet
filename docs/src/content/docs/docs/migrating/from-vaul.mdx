@@ -1,6 +1,6 @@
 ---
 title: Migrate from vaul
-description: Drop-in replacement for vaul's Drawer namespace, same props, same data-vaul-* attributes for existing CSS.
+description: Vaul's Drawer namespace mapped onto scrollsheet, with supported props, CSS hooks, and migration differences.
 ---
 
 import { Aside, LinkCard } from '@astrojs/starlight/components';
@@ -13,21 +13,21 @@ import DocExample from '../../../../components/DocExample.astro';
 + import 'scrollsheet/styles.css';
 ```
 
-Drop-in: same `Drawer.*` namespace, translated onto `Sheet.*`. Nesting is automatic: no
-separate `NestedRoot`.
+The `Drawer.*` namespace translates supported Vaul props onto `Sheet.*`. Nesting is automatic;
+`NestedRoot` remains available as an alias of `Root`. Check the differences below before removing Vaul.
 
 <DocExample
   name="sidebar"
   caption="Open the drawer and click through its sections. Same Drawer.* import, same markup."
 />
 
-## What maps 1:1
+## Supported mappings
 
 <div className="table-scroll prop-table">
 
 | vaul API | Maps to |
 | --- | --- |
-| `snapPoints`, `activeSnapPoint`, `direction` (all 4 edges), `modal={false}`, `onAnimationEnd`, `onClose`, `fadeFromIndex`, `handleOnly`, `snapToSequentialPoint`, `onRelease`, `preventCycle` (on `Drawer.Handle`), `asChild` | A real feature, 1:1 |
+| `snapPoints`, `activeSnapPoint`, `direction` (all 4 edges), `modal={false}`, `onAnimationEnd`, `onClose`, `fadeFromIndex`, `handleOnly`, `snapToSequentialPoint`, `onRelease`, `preventCycle` (on `Drawer.Handle`), `asChild` | Mapped to scrollsheet behavior; see callback and threshold differences below |
 | `shouldScaleBackground` | `backgroundEffect`; your `[data-vaul-drawer-wrapper]` is picked up automatically |
 | `closeThreshold` | A real feature; the adapter converts conventions (vaul counts the drag away, scrollsheet counts what remains), so vaul's `0.25` default keeps its feel. Only live when `snapPoints` is unset, matching vaul |
 | `onAnimationEnd(open)` | Fires once the open or close transition visually finishes, not on a timer. On native `Sheet.Root` the prop is `onOpenChangeComplete` |
@@ -51,19 +51,23 @@ untranslated, so one native feature never forces a full conversion to `Sheet.*`.
 
 ## What changes
 
-<Aside type="caution" title="One deliberate accuracy divergence">
+<Aside type="caution" title="Release callback difference">
   `onRelease`'s second argument is the real open/closed outcome here (`true` only when the sheet
   stays open). Real vaul always passes `true` when `snapPoints` is set, even on a release that
   dismisses the drawer.
 </Aside>
 
 `data-vaul-drawer`, `-direction`, and `-snap-points` still land on `Drawer.Content`;
-`data-vaul-handle` on `Drawer.Handle`, so CSS written against vaul's selectors keeps matching.
+`data-vaul-handle` on `Drawer.Handle`, for existing selectors targeting those hooks.
 `Title`, `Description`, and `Close` get no vaul-branded attribute.
+`data-vaul-no-drag` remains an opt-out for pointer-driven dragging, including on a custom control's ancestor;
+new code can use `data-scrollsheet-no-drag`.
 
 <Aside type="caution" title="Known gaps">
-  Props that existed to fight the page (scroll-lock, portal containers, manual keyboard handling,
-  `fixed`) are unnecessary here and warn once in dev. Radix `Dialog.Content`-only props
+  Vaul's scroll-lock, portal-container, keyboard-strategy, and `fixed` options are accepted
+  but ignored with development warnings. `noBodyStyles` does not prevent scrollsheet's own
+  modal iOS body freeze (outside standalone mode) or modal fallback scroll lock; both restore body
+  styles on cleanup. Radix `Dialog.Content`-only props
   (`onPointerDownOutside`, `onOpenAutoFocus`, `onEscapeKeyDown`, `onCloseAutoFocus`,
   `onInteractOutside`, `onFocusOutside`, `forceMount`) are stripped before they reach the DOM;
   the outside-interaction and Esc idioms map to `backdropDismissible={false}` and
@@ -73,6 +77,6 @@ untranslated, so one native feature never forces a full conversion to `Sheet.*`.
 
 <LinkCard
   title="Migrate from Sonner"
-  description="Drop-in replacement for toast, useToasts, and Toaster, running on the same per-toast DOM as real Sonner, with every position, per-toast overrides, and swipe-to-dismiss."
+  description="Migrate toast, useToasts, and Toaster with six positions, per-toast overrides, and swipe-to-dismiss; check the compatibility gaps."
   href="/docs/migrating/from-sonner"
 />

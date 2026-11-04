@@ -1,6 +1,6 @@
 ---
 title: Migrate from Radix Dialog
-description: 'Drop-in Dialog namespace rendering the centered presentation: same JSX, data-state animation CSS keeps matching, radix-only props warn once with the replacement recipe.'
+description: 'Map the Radix Dialog namespace onto scrollsheet, retain supported data-state hooks, and check focus, overlay, and portal differences.'
 ---
 
 import { Aside, LinkCard } from '@astrojs/starlight/components';
@@ -11,7 +11,7 @@ import { Aside, LinkCard } from '@astrojs/starlight/components';
 + import 'scrollsheet/styles.css';
 ```
 
-Keep the JSX. `Dialog.Root`, `Trigger`, `Portal`, `Overlay`, `Content`, `Title`,
+Start with the same JSX and review the behavior differences below. `Dialog.Root`, `Trigger`, `Portal`, `Overlay`, `Content`, `Title`,
 `Description`, and `Close` all exist and render scrollsheet's centered modal: a real
 `<dialog>` in the top layer, zoom+fade on a spring, native focus containment. Sheet-only
 consumers ship none of it; the adapter tree-shakes out unless imported.
@@ -29,8 +29,8 @@ import from `scrollsheet/auto` instead and drop the stylesheet import.
 | `[data-state="open"]` / `[data-state="closed"]` keyframes | stamped on Content's element, existing animation CSS keeps matching |
 
 Beyond radix, `Root` also takes scrollsheet's own `actionsRef`, `animationSpeed`,
-`backdropDismissible`, `escapeDismissible`, and `onOpenChangeComplete` (fires after the exit
-animation ends).
+`backdropDismissible`, `escapeDismissible`, and `onOpenChangeComplete` (fires after an open or close
+transition ends).
 
 ## What changes
 
@@ -50,15 +50,14 @@ warning text at all.
 <Aside type="note">
 Dismissal fires on backdrop click, not pointerdown. Deliberate: iOS Safari can deliver a
 backdrop tap as a bare click with no preceding pointerdown, which the pointerdown model
-drops. A press that starts inside the panel and slides out does not dismiss on any modern
-engine either way.
+drops. Scrollsheet ignores a backdrop click when the press started inside the panel.
 </Aside>
 
 ## Width
 
 Radix Content is unstyled; scrollsheet guards with `--scrollsheet-center-max-inline`
 (default `min(560px, 100%)`). Your className's width wins below the guard; raise the
-variable for wider dialogs. On the ~3% of browsers without `<dialog>`, the same dialog
+variable for wider dialogs. On browsers without `<dialog>` support, the dialog
 degrades to a centered static modal with the same width variables.
 
 ## Going native

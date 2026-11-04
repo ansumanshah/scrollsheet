@@ -67,14 +67,6 @@ const homepageExamples = HOMEPAGE_EXAMPLES.map((name) => {
 });
 
 /*
- * Comparison data lives here, one row per DIMENSION, so the four libraries
- * can never drift out of alignment the way four hand-written <ul>s did (the
- * old markup had size third in one card and fourth in another, which made
- * scanning a single dimension across the row impossible).
- * `win` marks where a competitor genuinely beats us; stating that outright
- * is worth more than a clean sweep nobody believes.
- */
-/*
  * The Styles tab used to ship all of examples.css (37 kB) and all of
  * icons.tsx on every card, so copying a 40-line component handed you a
  * thousand lines of CSS for two dozen unrelated examples. Scoped per example
@@ -111,14 +103,14 @@ const PLATFORM = [
     use: "Stacking, without a z-index to manage",
     since: "Every engine, Mar 2022",
     versions: "Chrome 37, Safari 15.4, Firefox 98",
-    without: "Plain modal. No gestures.",
+    without: "Fixed-position fallback, without dragging.",
   },
   {
     name: "CSS scroll-snap",
-    use: "The gesture engine, no JS in the loop",
+    use: "Touch dragging and snap stops",
     since: "Every engine, Jul 2019",
     versions: "Chrome 69, Safari 11, Firefox 68",
-    without: "Nothing. It ships wherever <dialog> does.",
+    without: "Dragging requires CSS scroll-snap.",
   },
   {
     name: "linear() easing",
@@ -129,33 +121,30 @@ const PLATFORM = [
   },
   {
     name: "Scroll-driven animations",
-    use: "Backdrop dim off the main thread",
+    use: "Backdrop opacity follows scroll",
     since: "Chrome Jul 2023, Safari Sep 2025",
-    versions: "Chrome 115, Safari 26, Firefox behind a flag",
+    versions: "Chrome 115+, Safari 26+; feature-detected",
     without: "Same values, written from JS each frame.",
   },
   {
     name: "dialog.closedBy",
     use: "Close requests handled by the platform",
     since: "Chrome Mar 2025, Firefox Jul 2025",
-    versions: "Chrome 134, Firefox 141, not in Safari",
-    without: "Esc and backdrop close the manual way.",
+    versions: "Chrome 134+, Firefox 141+; feature-detected",
+    without: "JavaScript handles Escape and backdrop dismissal.",
   },
   {
     name: "CloseWatcher",
     use: "Android back button on non-modal sheets",
     since: "Chrome Jun 2024, Firefox Mar 2026",
-    versions: "Chrome 126, Firefox 149, Safari preview only",
+    versions: "Chrome 126+, Firefox 149+; feature-detected",
     without: "Non-modal sheets ignore the back gesture.",
   },
 ];
 
 
-// Both stylesheets: consumers link them separately from the JS, so the
-// "JS + CSS" totals below add them instead of quoting a fixed number.
-const OUR_CSS_KB = STYLESHEET_SIZES.core.gzipKb + STYLESHEET_SIZES.toast.gzipKb;
-
-const COMPARE_LIBS = ["scrollsheet", "vaul", "Silk", "react-modal-sheet"];
+// Import shapes are measured separately because unused exports can be removed.
+const COMPARE_LIBS = ["Sheet", "Drawer", "Dialog", "Toaster + toast"];
 const COMPARE_ROWS: {
   label: string;
   values: string[];
@@ -164,60 +153,58 @@ const COMPARE_ROWS: {
   note?: string;
 }[] = [
   {
-    label: "Shipped size, gzip",
-    values: [`${Math.round(BUNDLE_SIZES.index.gzipKb)} kB`, "22 kB", "40 kB", "52 kB"],
-    best: 0,
+    label: "Use",
+    values: ["Sheets and side panels", "vaul migration", "Radix Dialog migration", "Notifications"],
   },
   {
-    label: "With toasts, gzip",
+    label: "Initial JavaScript, gzip",
     values: [
-      `${BUNDLE_SIZES.all.gzipKb.toFixed(1)} kB`,
-      "30.3 kB with sonner",
-      "40 kB",
-      "62 kB with sonner",
+      `${BUNDLE_SIZES.index.gzipKb.toFixed(2)} kB`,
+      `${BUNDLE_SIZES.drawer.gzipKb.toFixed(2)} kB`,
+      `${BUNDLE_SIZES.dialog.gzipKb.toFixed(2)} kB`,
+      `${BUNDLE_SIZES.toast.gzipKb.toFixed(2)} kB`,
     ],
-    best: 0,
-    note: `scrollsheet is measured with Bun 1.4.4 (minified, React external, gzip). Competitor sizes are historical esbuild estimates, including vaul 1.1.2 plus sonner 2.0.8; the tools differ, so these are approximate comparisons. Stylesheets add ${OUR_CSS_KB.toFixed(1)} kB for scrollsheet, 1.0 kB for vaul, and zero for sonner (embedded).`,
+    note: "Measured from the current build with Bun, minification, and React external. Includes static imports; excludes stylesheets and feature chunks loaded on demand.",
+  },
+  {
+    label: "Position",
+    values: ["Four edges or center", "Four edges", "Center", "Six stack positions"],
+  },
+  {
+    label: "Dragging",
+    values: ["yes", "yes", "no", "Swipe to dismiss"],
+  },
+  {
+    label: "Modal behavior",
+    values: ["Configurable", "Configurable", "Configurable", "no"],
+  },
+  {
+    label: "Stylesheet, gzip",
+    values: [
+      `${STYLESHEET_SIZES.core.gzipKb.toFixed(2)} kB`,
+      `${STYLESHEET_SIZES.core.gzipKb.toFixed(2)} kB`,
+      `${STYLESHEET_SIZES.core.gzipKb.toFixed(2)} kB`,
+      `${STYLESHEET_SIZES.toast.gzipKb.toFixed(2)} kB`,
+    ],
+    note: "Import scrollsheet/styles.css for sheets and scrollsheet/toast.css for toasts, or use scrollsheet/auto to embed the stylesheets.",
+  },
+  {
+    label: "State",
+    values: ["open / onOpenChange", "open / onOpenChange", "open / onOpenChange", "toast() / toast.dismiss()"],
+  },
+  {
+    label: "API compatibility",
+    values: ["Native scrollsheet API", "Common vaul APIs", "Common Radix Dialog APIs", "Common Sonner APIs"],
+    note: "Adapters support common APIs, with differences in styling and unsupported props. Review the migration guides before replacing an existing library.",
+  },
+  {
+    label: "React",
+    values: ["18+", "18+", "18+", "18+"],
   },
   {
     label: "Runtime dependencies",
-    values: ["0", "Radix Dialog", "0", "Motion (peer)"],
-    best: 0,
-  },
-  {
-    label: "Last release",
-    values: ["active", "Dec 2024", "active", "active"],
-  },
-  {
-    label: "Toasts",
-    values: ["yes, sonner drop-in", "no", "yes", "no"],
-    best: 0,
-    note: "One package for both. It matches sonner's API, so an existing Toaster keeps working.",
-  },
-  {
-    label: "Lightbox",
-    values: ["yes", "no", "yes", "no"],
-    best: 0,
-  },
-  {
-    label: "Native <dialog>, top layer",
-    values: ["yes", "no", "no", "no"],
-    best: 0,
-    note: "The top layer always paints above the page, whatever your z-index. The browser traps focus and blocks clicks behind it.",
-  },
-  {
-    label: "Gesture engine",
-    values: ["native scroll", "pointer events", "native scroll", "Motion drag"],
-  },
-  {
-    label: "Browsers without <dialog> (~3%)",
-    values: ["plain modal, no gestures", "full support", "full support", "full support"],
-    win: [1, 2, 3],
-    note: "The one place the others win. They render a plain <div>, so their gestures keep working where ours fall back to a static modal.",
-  },
-  {
-    label: "License",
-    values: ["MIT, free", "MIT, free", "paid for the full set", "MIT, free"],
+    values: ["0", "0", "0", "0"],
+    note: "React and React DOM are peer dependencies and are excluded from these size measurements.",
   },
 ];
 
@@ -236,7 +223,7 @@ const cellParts = (value: string) => {
 };
 
 const title = "scrollsheet: native bottom sheets and drawers for React";
-const description = `One React primitive for bottom sheets, drawers, modal dialogs, side panels, and toasts. Built on <dialog> and CSS scroll-snap. ${Math.round(BUNDLE_SIZES.index.gzipKb)} kB gzipped, zero dependencies.`;
+const description = `React bottom sheets, drawers, dialogs, side panels, and toast notifications. Native dialog and scroll-snap for sheets; ${Math.round(BUNDLE_SIZES.index.gzipKb)} kB gzipped for the Sheet import, excluding CSS and lazy chunks.`;
 ---
 
 <Base title={title} description={description}>
@@ -244,9 +231,9 @@ const description = `One React primitive for bottom sheets, drawers, modal dialo
     <div>
       <h1>Native dialog. Native scrolling.</h1>
       <p class="hero-lede">
-        One React component for bottom sheets, drawers, dialogs, side panels, and
-        toasts. {Math.round(BUNDLE_SIZES.index.gzipKb)}&nbsp;kB gzipped, zero runtime
-        dependencies, MIT licensed.
+        React components for bottom sheets, drawers, dialogs, side panels, and toasts.
+        The Sheet import is {Math.round(BUNDLE_SIZES.index.gzipKb)}&nbsp;kB gzipped,
+        excluding CSS and lazy chunks. No runtime dependencies. MIT licensed.
       </p>
       <div class="hero-actions">
         <div class="install" id="install">
@@ -373,8 +360,13 @@ const description = `One React primitive for bottom sheets, drawers, modal dialo
 
   <section class="container section" aria-labelledby="compare-heading">
     <div class="section-head">
-      <h2 id="compare-heading">How it stacks up</h2>
-      <p>Four libraries doing the same job, including where the others win.</p>
+      <h2 id="compare-heading">Choose an API</h2>
+      <p>
+        Use Sheet directly, or review the adapters for
+        <a href="/docs/migrating/from-vaul">vaul</a>,
+        <a href="/docs/migrating/from-radix-dialog">Radix Dialog</a>, and
+        <a href="/docs/migrating/from-sonner">Sonner</a>.
+      </p>
     </div>
     <div class="compare-scroll">
       <table class="compare-table">
@@ -432,7 +424,7 @@ const description = `One React primitive for bottom sheets, drawers, modal dialo
   <section class="container section" aria-labelledby="platform-heading">
     <div class="section-head">
       <h2 id="platform-heading">What it runs on</h2>
-      <p>Each feature degrades on its own. None of them take the sheet down with it.</p>
+      <p>Platform features handle stacking, scrolling, and dismissal. Support varies by browser.</p>
     </div>
     <ul class="platform-grid">
       {
@@ -456,8 +448,8 @@ const description = `One React primitive for bottom sheets, drawers, modal dialo
     <div class="section-head">
       <h2 id="examples-heading">Examples</h2>
       <p>
-        Every preview runs the real package. Open Code on any card for the source — more
-        patterns live throughout the docs.
+        Try the examples, then open Code to copy their source and styles.
+        More examples are linked from the guides.
       </p>
     </div>
 

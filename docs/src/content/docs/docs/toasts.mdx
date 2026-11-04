@@ -30,11 +30,13 @@ instead of dismissing it, and 2-axis swipe-to-dismiss. `toast.promise()`, `useTo
   caption="Fire a few. They stack, self-dismiss, and swipe away."
 />
 
-Coming from Sonner? The API matches it, so the migration is the import line:
+Coming from Sonner? Start by changing the import and adding the stylesheet, then check the
+[migration differences](/docs/migrating/from-sonner):
 
 ```diff
 - import { toast, Toaster } from 'sonner';
 + import { toast, Toaster } from 'scrollsheet';
++ import 'scrollsheet/toast.css';
 ```
 
 <LinkCard

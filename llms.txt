@@ -1,13 +1,13 @@
 # scrollsheet
 
-One primitive for bottom sheets, drawers, modal dialogs, side panels, and toasts.
+React bottom sheets, drawers, dialogs, side panels, and toasts.
 
-> Bottom sheets for React that feel native. One primitive for bottom sheets, drawers, modal dialogs, side panels, and toasts, built on `<dialog>` and CSS scroll-snap. Zero dependencies, ~<!--size:index.gzip:0-->16<!--/size--> kB gzipped, React 18+, MIT licensed.
+> Sheets use native `<dialog>` and CSS scroll snap. No runtime dependencies, ~<!--size:index.gzip:0-->16<!--/size--> kB gzipped, React 18+, MIT licensed.
 
 scrollsheet renders a real `<dialog>` in the browser's top layer and drives its drag gesture
-with a native `scroll-snap-type: y mandatory` container instead of a pointer-event physics
-simulation. Detents (resting heights) are scroll-snap stops; open/close/travel animation is a
-damped spring compiled to a CSS `linear()` timing function at build time; enter/exit runs as an
+with a native `scroll-snap-type: y mandatory` container for modal touch gestures. Desktop
+mouse dragging and some non-modal gestures use pointer handlers. Detents (resting heights)
+are scroll-snap stops; spring curves are sampled into CSS `linear()` easing; enter/exit runs as an
 interruptible Web Animations leg (grab a sheet mid-open, reopen mid-close, and it bends from
 where it is, carrying velocity). Seven parts: `Sheet.Root`, `Sheet.Trigger`,
 `Sheet.Content`, `Sheet.Handle`, `Sheet.Title`, `Sheet.Description`, `Sheet.Close`.
@@ -16,9 +16,9 @@ merged in. A multi-detent `Handle` exposes slider semantics (role, value, arrow/
 `side="center"` renders a centered modal dialog (content-sized, zoom+fade,
 no travel), and `desktopSide`/`desktopBreakpoint` turn a mobile bottom sheet
 into a desktop dialog, drawer, or panel at a breakpoint from two props.
-Ships a drop-in vaul compatibility layer (`Drawer`) for migrating off vaul,
-a drop-in Radix Dialog layer (`Dialog`) rendering the centered presentation,
-and a drop-in Sonner layer (`toast`, `useSonner`, `Toaster`; `useToasts` is the neutral
+Ships a Vaul compatibility layer (`Drawer`),
+a Radix Dialog layer (`Dialog`) rendering the centered presentation,
+and a Sonner layer (`toast`, `useSonner`, `Toaster`; `useToasts` is the neutral
 name) for migrating off Sonner, all exported from the same entry and tree-shaken out unless imported.
 Entry points: `scrollsheet` (import `scrollsheet/styles.css` and, for toasts, `scrollsheet/toast.css`
 yourself), `scrollsheet/auto` (same exports, stylesheets embedded, injected on first open), and
@@ -34,4 +34,4 @@ yourself), `scrollsheet/auto` (same exports, stylesheets embedded, injected on f
 - [GitHub repository](https://github.com/ansumanshah/scrollsheet): Source, issues, and the shadcn/ui registry entry.
 - [npm package](https://www.npmjs.com/package/scrollsheet): Install and version history.
 - [Changelog](https://scrollsheet.dev/changelog): Release notes, generated from the repo's CHANGELOG.md.
-- [Full docs text](https://scrollsheet.dev/llms-full.txt): The docs page above as plain text, for models that can't crawl.
+- [Full docs text](https://scrollsheet.dev/llms-full.txt): A plain-text reference for tools that cannot crawl the site.

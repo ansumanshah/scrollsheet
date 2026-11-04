@@ -7,7 +7,7 @@ import { LinkCard, CardGrid } from '@astrojs/starlight/components';
 
 Root props mapped to the example that shows them working. Some run on the
 [homepage](/#examples); the rest are inline further down in these docs, linked below. Props with
-no live example are in the last two rows.
+no live example are listed in the final row.
 
 | Prop | Example |
 | --- | --- |
@@ -15,14 +15,14 @@ no live example are in the last two rows.
 | `sequentialDetents`, `largestUndimmedDetent`, `onRelease`, `onOpenChangeComplete`, `themeColorDimming`, `closeThreshold` | [Ride tracker](/docs/reference/api) |
 | `actionsRef` (`open` / `close` / `snapTo`) | [Ride tracker](/docs/detents-and-control/imperative-control) |
 | `onTravel` | [Ride tracker](/docs/motion), the hero sheet |
-| `modal` | Maps, Toast, [Ride tracker](/docs/reference/api) |
+| `modal` | Maps, [Ride tracker](/docs/reference/api) |
 | `side` | Sides (all four), [Sidebar](/docs/presentation/side-panels) (left), [Centered dialog](/docs/presentation/centered-dialog) (center) |
 | `dismissible` | Cart and checkout, Non-dismissible confirm |
 | `disableDrag` | Non-dismissible confirm, [Responsive](/docs/presentation/desktop-presentation) (desktop) |
 | `handleOnly` | Profile form |
 | `backgroundEffect` | Wallet, see [Page transitions](/docs/presentation/page-transitions) |
 | `scrollbar` | [Comments](/docs/scrolling-and-keyboard/scrollable-content) |
-| `open`, `defaultOpen`, `onOpenChange` | Toast, every controlled example |
+| `open`, `defaultOpen`, `onOpenChange` | Controlled sheet examples such as Cart and checkout |
 | `nonce` | CSP note in [Styling](/docs/styling/css) |
 | `desktopSide`, `desktopBreakpoint` | [Responsive](/docs/presentation/responsive-profiles) |
 | `keyboardExpands`, `animationSpeed`, `phantomScrollGuard`, `escapeDismissible`, `backdropDismissible`, `backgroundRef` | No live example. Described in the [API reference](/docs/reference/api); see also [Keyboard](/docs/scrolling-and-keyboard/keyboard), [Page transitions](/docs/presentation/page-transitions), and [Centered dialog](/docs/presentation/centered-dialog) |
@@ -35,7 +35,7 @@ no live example are in the last two rows.
   />
   <LinkCard
     title="Styling"
-    description="scrollsheet ships mechanics only; style the panel with a plain className like any other card."
+    description="Style the default panel with className, CSS variables, or your own stylesheet."
     href="/docs/styling/css"
   />
 </CardGrid>

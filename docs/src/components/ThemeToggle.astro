@@ -28,11 +28,9 @@
 </button>
 
 <script>
-  // Two-state toggle. Nothing is stored until the visitor picks, so a first
-  // visit keeps following the OS. Once they pick, the choice sticks and the
-  // inline anti-FOUC script (Base.astro / the Starlight ThemeProvider
-  // override) replays it before paint on the next page, on either half of
-  // the site. Every `[data-theme-toggle]` on the page (there can be more
+  // Light is the site default. A choice made here is stored and replayed
+  // before paint by Base.astro or the Starlight ThemeProvider override.
+  // Every `[data-theme-toggle]` on the page (there can be more
   // than one: Starlight keeps a second copy in its mobile menu) is wired
   // up and kept in sync together.
   {
@@ -91,7 +89,6 @@
 
     for (const button of buttons) button.addEventListener("click", toggle);
 
-    // Only meaningful while no explicit choice is stored.
     systemDark.addEventListener("change", label);
     label();
   }

@@ -1,19 +1,19 @@
 ---
 title: Desktop drag
-description: Mouse pointers can grab the panel anywhere and fling it; touch and pen keep riding native scroll-snap instead.
+description: Mouse drag, interactive-control exclusions, and trackpad or wheel dismissal.
 ---
 
 import DocExample from '../../../../components/DocExample.astro';
 
 ```
-button, a, input, textarea, select, label, [contenteditable], [data-scrollsheet-no-drag]
+button, a, input, textarea, select, label, [contenteditable], [data-scrollsheet-no-drag], [data-vaul-no-drag]
 ```
 
 ## Mouse drag
 
-`pointerType: 'mouse'` can grab the panel anywhere and drag it; the last ~100ms of pointer
-samples project velocity on release, so a flick lands past the cursor. Touch and pen skip this
-path and keep riding native `scroll-snap`.
+`pointerType: 'mouse'` can grab non-interactive panel content and drag it; the last ~100ms of pointer
+samples project velocity on release, so a flick lands past the cursor. Modal touch and pen gestures normally use native `scroll-snap`. Non-modal sheets and
+`handleOnly` gestures on the handle use the pointer engine.
 
 The elements above opt out automatically; add `data-scrollsheet-no-drag` to anything else that
 needs the same treatment.
@@ -32,5 +32,5 @@ correctly on its own.
 
 <DocExample
   name="snap-heights"
-  caption="Grab the panel anywhere with a mouse and fling it. Release mid-flight and it lands on the nearest of three heights."
+  caption="Drag non-interactive panel content with a mouse; release to settle at a detent."
 />

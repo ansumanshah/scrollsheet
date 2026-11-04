@@ -33,7 +33,7 @@ import DocExample from '../../../../components/DocExample.astro';
 | Prop | Type | Default |
 | --- | --- | --- |
 | `detents` | `readonly DetentSpec[]` | `['content']` |
-| `activeDetent` | `DetentSpec` | controlled |
+| `activeDetent` | `DetentSpec` | first entry in `detents`, or `'content'` if empty |
 | `onActiveDetentChange` | `(detent: DetentSpec) => void` | |
 | `sequentialDetents` | `boolean` | `false` |
 
@@ -183,7 +183,7 @@ keys the same way.
 | `data-scrollsheet-background` | your page wrapper (set by you) | marks the element `backgroundEffect` targets, see [Page transitions](/docs/presentation/page-transitions) |
 | `data-scrollsheet-nested-scroll` | an inner scroller (set by you) | scroll the list first, then hand off to sheet travel, see [Scrollable content](/docs/scrolling-and-keyboard/scrollable-content) |
 | `data-scrollsheet-theme` | an ancestor, usually `<html>` (set by you) | `dark` \| `system`, anything else renders light, see [CSS](/docs/styling/css#dark-mode) |
-| `data-scrollsheet-no-drag` | anywhere | opts an element out of desktop drag |
+| `data-scrollsheet-no-drag` / `data-vaul-no-drag` | anywhere | opts an element and its descendants out of desktop drag |
 | `data-scrollsheet-backdrop` | backdrop element | present on the built-in backdrop, for restyling it |
 | `.scrollsheet-top-chrome` | status-bar strip | rendered with `themeColorDimming`: a slice of backdrop pinned to the top edge, already at its target dim when the dialog opens. iOS Safari colors the status-bar area by sampling the page once at open and never again, so this strip is what keeps that area in sync with the dim. Restyle or `display: none` it from your own CSS; it inherits `--scrollsheet-backdrop` |
 | `data-scrollsheet-scrollbar` | injected thumb | marks the library-created `.scrollsheet-scrollbar` div on a nested scroller |
@@ -206,7 +206,7 @@ keys the same way.
 | `--scrollsheet-safe-area-top` / `-left` / `-right` | panel (set by you) | the same for the other edges, each defaults to its `env(safe-area-inset-*)` |
 | `--scrollsheet-travel` | panel (set by you) | `none` turns off the enter and exit travel; callbacks still fire. See [Morph a trigger into a sheet](/docs/presentation/trigger-morph) |
 | `--scrollsheet-max-inline` / `-desktop-margin` | panel (set by you) | width cap (default `640px`) and edge margin (default `24px`) of the docked desktop column, see [Desktop presentation](/docs/presentation/desktop-presentation) |
-| `--scrollsheet-radius` | panel (set by you) | corner radius, default `16px` |
+| `--scrollsheet-radius` | panel (set by you) | corner radius, default `20px` |
 | `--scrollsheet-bg` | panel (set by you) | panel background color |
 | `--scrollsheet-fg` | panel (set by you) | panel text color |
 | `--scrollsheet-close-bg` / `-close-bg-hover` / `-close-color` / `-close-color-hover` | panel (set by you) | the self-closing `<Sheet.Close />` button |
@@ -281,7 +281,8 @@ Prop types: `DrawerRootProps`, `DrawerNestedRootProps`, `DrawerTriggerProps`, `D
 ## Toasts
 
 Toasts run on their own per-toast DOM, with no `Sheet.Root` involved. Import
-`scrollsheet/toast.css` next to `scrollsheet/styles.css`, or use `scrollsheet/auto`. Guides:
+`scrollsheet/toast.css`, or use `scrollsheet/auto`. Add `scrollsheet/styles.css` if you also use
+sheets or dialogs. Guides:
 [Toasts](/docs/toasts) and [Migrate from Sonner](/docs/migrating/from-sonner).
 
 ### toast()
@@ -333,20 +334,32 @@ Mount one anywhere. All props are optional.
 | `visibleToasts` | `number` | `3` (minimum 1). Extra toasts are hidden, never evicted |
 | `duration` | `number` (ms) | `4000` |
 | `closeButton` | `boolean` | `false` |
-| `expand` | `boolean` | `false`. Keeps the stack expanded without hover or focus |
+| `expand` | `boolean` | `false`. Keeps the stack expanded |
 | `gap` | `number` (px) | `14` |
-| `offset` | `number \| string` | `24` (`16` below 600px) |
+| `offset` | `number \| string` | `24` above 600px; mobile uses a separate gutter |
 | `swipeDirections` | `readonly ('top' \| 'right' \| 'bottom' \| 'left')[]` | per position: a corner allows its own two edges, a center position its own vertical edge |
 | `toastOptions` | `Omit<ToastData, 'id' \| 'toasterId'>` | defaults merged under each toast's own options |
 | `icons` | `ToastIcons` | `success`, `info`, `warning`, `error`, `loading`, `close` overrides |
 | `hotkey` | `readonly string[]` | `['altKey', 'KeyT']`. Expands the stack and focuses it. `[]` disables |
 | `containerAriaLabel` | `string` | `"Notifications"` |
-| `className`, `style` | | |
+| `className`, `style` | `string`, `CSSProperties` | |
 | `nonce` | `string` | |
 | `sonnerCompat` | `boolean` | `true`. `false` drops every `.sonner-*` class and `data-sonner-*` attribute |
-| `theme`, `richColors` | | Accepted for Sonner compatibility but not implemented: the card is always light, and setting either warns once in dev |
+| `theme` | `'light' \| 'dark' \| 'system'` | `'light'`. Dark and system themes are not implemented and warn once in dev |
+| `richColors` | `boolean` | `false`. Not implemented; `true` warns once in dev |
 
 </div>
+
+At widths of 600px or less, the gutter defaults to `16px` independently of `offset`. Set
+`--scrollsheet-toast-mobile-offset` through the Toaster's `style` to change it.
+
+`classNames.toast` applies to every toast. Type classes apply only to the matching type:
+`classNames.default` for plain toasts, `classNames.success` for success toasts, and so on.
+Toaster-level and per-toast classes both apply.
+
+`pointercancel` and lost pointer capture reset swipe offsets without dismissing the toast.
+Auto-dismiss resumes after pointer interaction ends unless hover, an expanded stack, or a
+hidden tab still pauses it.
 
 `ToastType` is `'default' | 'success' | 'error' | 'warning' | 'info' | 'loading'`.
 `ToastPosition` is `'top-left' | 'top-center' | 'top-right' | 'bottom-left' | 'bottom-center' |

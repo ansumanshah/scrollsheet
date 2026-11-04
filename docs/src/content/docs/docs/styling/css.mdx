@@ -1,6 +1,6 @@
 ---
 title: CSS
-description: scrollsheet ships mechanics only; style the panel with a plain className like any other card.
+description: Style the default panel with className, CSS variables, or your own stylesheet.
 ---
 
 import { Aside } from '@astrojs/starlight/components';
@@ -15,39 +15,36 @@ import { BUNDLE_SIZES } from '../../../../lib/bundle-sizes.generated';
 }
 ```
 
-scrollsheet ships mechanics only (position, transform, scroll-snap, backdrop, focus
-containment) in `scrollsheet/styles.css`; import it once next to your components, the same
-convention vaul uses. The `className` on `Sheet.Content` lands on the panel, so style it like
-any card.
+`scrollsheet/styles.css` includes layout, scroll-snap, backdrop styling, and default panel,
+handle, and close-button visuals. Import it once next to your components. `Sheet.Content`'s
+`className` lands on the panel.
 
 <DocExample
   name="wallet"
-  caption="Open it and step through menu, key, and remove. One className, no default sheet look."
+  caption="Open it and step through menu, key, and remove. Override the default panel styling with className."
 />
 
 ## Zero-config entry
 
-No bundler CSS handling, Shadow DOM, or a strict CSP? Import from `scrollsheet/auto` instead:
+To inject styles at runtime instead of importing CSS, use `scrollsheet/auto`:
 the same components with the stylesheet embedded, injected the first time a sheet opens. Sheets
-only render after JS runs (a native `dialog` is `display:none` until opened), so runtime
-injection cannot flash unstyled content.
+only render after JS runs, and the stylesheet is injected before the sheet is opened.
 
 ```tsx
 import { Sheet } from "scrollsheet/auto";
 ```
 
 The embed costs {BUNDLE_SIZES.auto.gzipKb.toFixed(1)} kB gzip for `Sheet` against the default
-entry's {BUNDLE_SIZES.index.gzipKb.toFixed(1)}. Toasts on the default entry need both files:
-`scrollsheet/styles.css` and `scrollsheet/toast.css`. Never mix the two entries in one app;
-you would bundle every component twice.
+entry's {BUNDLE_SIZES.index.gzipKb.toFixed(1)}. Toasts on the default entry need `scrollsheet/toast.css`; add `scrollsheet/styles.css`
+when the app also uses sheets or dialogs. Use one entry consistently to avoid duplicate
+component code and separate state instances.
 
 Every number above is measured on a production build. Dev-only warning strings sit behind a
 development/production export condition, the same one Vite, webpack 5+, and Next.js all set
-automatically, so they never reach a production bundle. A bundler that doesn't set that condition
-just serves the production build in dev too: no warnings, nothing broken.
+automatically. Supported bundlers select a build without those warnings for production.
+Bundlers that omit the development condition also use the production build during development.
 
-`themeColorDimming` goes further: its controller loads from a separate, lazily-fetched chunk, so
-an app that never sets the prop never ships it.
+The `themeColorDimming` controller is a separate chunk, fetched when the prop is enabled.
 
 <Aside type="tip">
   For CSP with the `auto` entry, pass `nonce` to `Sheet.Root`. Shadow DOM injection
@@ -102,8 +99,8 @@ you'd style any card:
 ## Sonner compatibility
 
 Arrived with an existing Sonner integration? Its `import { toast, Toaster } from 'scrollsheet'`
-compat layer also stamps the matching `sonner-*` class and `data-sonner-*` attribute on every
-element, so your existing `.sonner-toast {}` CSS keeps matching unmodified. See
+compat layer stamps corresponding `sonner-*` classes and `data-sonner-*` attributes on supported
+slots. Check existing selectors against the rendered markup. See
 [Migrate from Sonner](/docs/migrating/from-sonner). Starting fresh, with no Sonner CSS to keep
 matching? `<Toaster sonnerCompat={false}>` drops the mirrored names and renders the neutral
 `.scrollsheet-*` classes and attributes only.

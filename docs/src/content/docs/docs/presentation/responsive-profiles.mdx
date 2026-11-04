@@ -15,10 +15,7 @@ import DocExample from '../../../../components/DocExample.astro';
 <Sheet.Root side="bottom" desktopSide="center">
 ```
 
-That's the whole pattern: a bottom sheet on a phone, a centered dialog once the viewport is wide
-enough to call it one. No `matchMedia` hook, no conditional `detents`, no branching on which
-markup to render. `side` and `desktopSide` are both first-class presentations already; this just
-picks between them for you.
+The same content renders as a bottom sheet below the breakpoint and a centered dialog above it.
 
 ## The breakpoint
 
@@ -43,10 +40,8 @@ flips back the same way, in either direction, as many times as the viewport cros
 
 Server render and the first client paint both resolve to the base `side`. The `matchMedia`
 subscription that can promote it to `desktopSide` only lands after mount, never during render, so
-hydration never disagrees with the server about which side it is. In practice this is invisible:
-a `Sheet.Root` renders nothing until it's opened, and by the time a user can open one, mount has
-already happened and the subscription has already resolved. There's no flash of the wrong
-presentation to design around.
+hydration never disagrees with the server about which side it is. For `defaultOpen` or an early programmatic open, account for this post-mount change when
+designing the initial presentation.
 
 ## Any side, either way
 

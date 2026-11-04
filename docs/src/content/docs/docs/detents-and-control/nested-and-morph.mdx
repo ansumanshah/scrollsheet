@@ -26,8 +26,7 @@ the parent, which recedes and dims while the child is open.
 
 ## Morphing height
 
-Height morphs the same way: the sheet springs to fit new content whenever it changes inside an
-open sheet. For a cross-fade between views instead of a resize, wrap the state update in
+With a `'content'` detent, the sheet springs to fit height changes inside an open sheet. For a cross-fade between views instead of a resize, wrap the state update in
 `document.startViewTransition` (feature-detected, falls back to an instant swap).
 
 <DocExample

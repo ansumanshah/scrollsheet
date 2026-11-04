@@ -6,12 +6,13 @@ description: Build bottom sheets, drawers, side panels, and modals correctly wit
 # Build with scrollsheet
 
 `scrollsheet` is a bottom-sheet/drawer/modal primitive built on a native `<dialog>` and CSS
-`scroll-snap`, not a pointer-event drag simulation. Read this before writing new sheet code.
+`scroll-snap` for modal touch gestures, with a pointer engine for mouse and non-modal dragging. Read this before writing new sheet code.
 
 ## Anatomy
 
 ```tsx
 import { Sheet } from 'scrollsheet';
+import 'scrollsheet/styles.css';
 
 <Sheet.Root>
   <Sheet.Trigger>Open</Sheet.Trigger>
@@ -34,16 +35,15 @@ import { Sheet } from 'scrollsheet';
 | `Sheet.Description` | `<p>` | wires `aria-describedby` automatically when rendered |
 | `Sheet.Close` | `<button>` | closes on click. `asChild` supported. With no children it renders a styled ✕ button |
 
-Import the stylesheet once per app (it carries the mechanics: position, transform, scroll-snap,
-backdrop, focus containment):
+Import the stylesheet once per app for layout, scroll-snap, backdrop, and default panel visuals:
 
 ```tsx
-import 'scrollsheet/styles.css'; // plus 'scrollsheet/toast.css' if you use toasts
+import 'scrollsheet/styles.css'; // add 'scrollsheet/toast.css' for toasts
 ```
 
 Prefer zero config? `import { Sheet } from 'scrollsheet/auto'` embeds the stylesheet and injects
-it on first open — no CSS import. `auto` is also the entry for Shadow DOM and strict-CSP setups
-(pass `nonce` to `Sheet.Root`).
+it on first open — no CSS import. The shadow-root injection helpers need `auto`; pass `nonce` to `Sheet.Root` when a CSP
+requires a nonce on its injected style tag.
 
 Give the panel your own visuals through `className`:
 
@@ -192,7 +192,7 @@ edge (the one opposite the anchored side).
 
 Keeps the page behind fully interactive: no backdrop, no focus trap, nothing inert. Renders on
 `<div popover="manual">` where the Popover API is available, falls back to a non-modal `<dialog>`
-otherwise. Use for a mini player, map overlay, or toast: anything the page underneath must keep
+otherwise. Use for a mini player or map overlay: anything the page underneath must keep
 working while it's up.
 
 ## Shadow DOM
@@ -208,6 +208,7 @@ root, before any `Sheet.Content` inside it opens: adopts the stylesheet via
 `adoptedStyleSheets` (falls back to a scoped `<style>` tag on engines without constructable
 stylesheets, e.g. Safari < 16.4). The `<dialog>` itself still portals to `document.body`
 regardless: this only scopes the trigger/surrounding markup, not where the sheet renders.
+Custom panel classes must also be available in a document-level stylesheet.
 
 ## SSR / "use client"
 
@@ -231,7 +232,7 @@ markup (trigger only, no dialog). No `window`/`document` access at module scope.
 | Inner list won't scroll independently | `handleOnly`/`disableDrag` set but the list has no `data-scrollsheet-nested-scroll` | add the attribute to the scrollable element |
 | `fill` set but detent measures wrong height | `fill` changes what `'content'` detent measures (the natural size of all the body's children, not the stretched body box) | only use `fill` with a genuine fixed-header + flex-scroll layout, per the recipe above |
 | `onTravel`'s `info` looks stale/wrong values later | held a reference to `TravelInfo` across frames | read every field synchronously inside the callback; it's mutated in place, not reallocated |
-| `backgroundEffect="scale"` does nothing | no `[data-scrollsheet-background]` wrapper, or the sheet isn't a full-height mobile bottom sheet opened from inside it (default only fires that case) | mark the wrapper explicitly, or pass `backgroundRef` pointing at it |
+| `backgroundEffect="scale"` does nothing | the target wrapper was not found | mark the wrapper, or pass `backgroundRef`; the full-height/opener rule applies only when `backgroundEffect` is omitted |
 | Two sheets on one page fight over background scale | both rely on the implicit `[data-scrollsheet-background]` document query | give each its own `backgroundRef` |
 | Nested sheet doesn't recede its parent | the child `Sheet.Root` isn't actually rendered inside the parent's `Sheet.Content` in the React tree | nesting detection is structural: move it inside `Content`, not just visually overlapping |
 | Focus behaves oddly on open | expected: `showModal()` moves focus to the panel container by default | put a native `autofocus` on a field inside `Content` if you want the keyboard to come up immediately |

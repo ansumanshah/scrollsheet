@@ -22,8 +22,7 @@ import DocExample from '../../../../components/DocExample.astro';
 </Sheet.Root>
 ```
 
-`side="center"` is a first-class presentation, not a CSS trick bolted onto a bottom sheet. The
-panel is content-sized and placed in the middle of the viewport instead of anchored to an edge:
+With `side="center"`, the panel is content-sized and placed in the middle of the viewport instead of anchored to an edge:
 no travel range, no detents, no drag. It opens and closes with a zoom+fade (scale from 0.95 to
 1, with opacity) on the same spring every other sheet uses, instead of the slide a bottom or side
 sheet plays.
@@ -71,9 +70,9 @@ always sized by its content.
 
 ## No-`<dialog>` fallback
 
-The ~3% of browsers without `<dialog>` support already render every sheet as a plain centered
-modal (see [Browser support](/docs/browser-support#without-dialog)). A center dialog's fallback
-is nearly indistinguishable from its normal path, so there's nothing extra to account for.
+Browsers without `<dialog>` support use a fixed-position fallback (see
+[Browser support](/docs/browser-support#without-dialog)). It has no zoom animation, top-layer
+stacking, or native focus containment.
 
 ## Center vs. a bottom sheet
 

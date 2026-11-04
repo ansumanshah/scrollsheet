@@ -6,7 +6,7 @@ description: Where to start in scrollsheet's docs, one card per page, grouped th
 import { Card, CardGrid } from '@astrojs/starlight/components';
 import DocExample from '../../../components/DocExample.astro';
 
-One React component for bottom sheets, drawers, dialogs, side panels, and toasts. Start with
+React primitives for bottom sheets, drawers, dialogs, side panels, and toasts. Start with
 install, or jump straight to a topic below.
 
 ## Getting started
@@ -26,7 +26,7 @@ install, or jump straight to a topic below.
 
 <CardGrid>
   <Card title="CSS">
-    scrollsheet ships mechanics only; style the panel with a plain className like any other card.
+    Style the default panel with className, CSS variables, or your own stylesheet.
     [Read more](/docs/styling/css)
   </Card>
   <Card title="Tailwind">
@@ -80,8 +80,8 @@ install, or jump straight to a topic below.
     focus trap, and no inert-ing the rest of the page. [Read more](/docs/presentation/non-modal)
   </Card>
   <Card title="Desktop drag">
-    Mouse pointers can grab the panel anywhere and fling it; touch and pen keep riding native
-    scroll-snap instead. [Read more](/docs/presentation/desktop-drag)
+    Mouse drag excludes interactive controls and opt-out regions. Modal touch gestures normally
+    use native scroll-snap; non-modal gestures use the pointer engine. [Read more](/docs/presentation/desktop-drag)
   </Card>
   <Card title="Desktop presentation">
     Above 768px, bottom sheets dock right as a fixed-width drawer and side sheets square off
@@ -112,12 +112,12 @@ install, or jump straight to a topic below.
 
 <CardGrid>
   <Card title="Migrate from vaul">
-    Drop-in replacement for vaul's Drawer namespace, same props, same data-vaul-* attributes for
-    existing CSS. [Read more](/docs/migrating/from-vaul)
+    Map Vaul's Drawer namespace onto scrollsheet, retaining supported CSS hooks and reviewing
+    behavior differences. [Read more](/docs/migrating/from-vaul)
   </Card>
   <Card title="Migrate from Sonner">
-    Drop-in replacement for toast, useToasts, and Toaster, running on the same per-toast DOM as
-    real Sonner, with every position, per-toast overrides, and swipe-to-dismiss. [Read more](/docs/migrating/from-sonner)
+    Migrate toast, useToasts, and Toaster with six positions, per-toast overrides, and
+    swipe-to-dismiss. Check the documented compatibility gaps. [Read more](/docs/migrating/from-sonner)
   </Card>
 </CardGrid>
 
@@ -147,8 +147,8 @@ install, or jump straight to a topic below.
     [Read more](/docs/accessibility)
   </Card>
   <Card title="Browser support">
-    Native dialog reaches about 97% of browsers; the remaining ~3% get a plain
-    fixed-position modal with no drag or detents. Spring easing degrades independently.
+    Browsers without native dialog support get a fixed-position fallback with no drag or detents.
+    Spring easing degrades independently.
     [Read more](/docs/browser-support)
   </Card>
   <Card title="Which example shows which prop">

@@ -1,13 +1,13 @@
 ---
 name: migrate-from-radix-dialog
-description: Migrate a React app off @radix-ui/react-dialog onto scrollsheet's Dialog compat layer, step by step. Swap the import for a near-zero-code-change adapter, then optionally convert to native Sheet.* primitives. Use when the user mentions radix dialog, Dialog.Portal, Dialog.Overlay, or "migrate from radix".
+description: Migrate a React app off @radix-ui/react-dialog onto scrollsheet's Dialog compat layer, step by step. Change the import and stylesheet, verify the behavior differences, then optionally convert to native Sheet.* primitives. Use when the user mentions radix dialog, Dialog.Portal, Dialog.Overlay, or "migrate from radix".
 ---
 
 # Migrate from @radix-ui/react-dialog
 
 Two-step migration. Do step 1 first, always. Step 2 is optional and separate.
 
-## Step 1: swap the import (near-zero code change)
+## Step 1: change the import and stylesheet
 
 ```diff
 - import * as Dialog from '@radix-ui/react-dialog';
@@ -15,7 +15,7 @@ Two-step migration. Do step 1 first, always. Step 2 is optional and separate.
 + import 'scrollsheet/styles.css';
 ```
 
-Keep the JSX. `Dialog.Root`, `Trigger`, `Portal`, `Overlay`, `Content`, `Title`,
+Start with the same JSX, then verify the differences below. `Dialog.Root`, `Trigger`, `Portal`, `Overlay`, `Content`, `Title`,
 `Description`, and `Close` all exist and render scrollsheet's centered modal
 presentation: a real `<dialog>` in the top layer, zoom+fade enter/exit on a
 spring, native focus containment.
@@ -54,15 +54,13 @@ strip the warnings entirely.
 
 - Dismissal fires on backdrop CLICK, not pointerdown. This is deliberate: iOS
   Safari can deliver a backdrop tap as a bare click with no pointerdown, which
-  the radix model misses. A press that starts inside the panel and releases
-  outside does not dismiss on any modern engine.
+  the radix model misses. Scrollsheet ignores a backdrop click when the press started inside the panel.
 - Width: radix Content is unstyled; scrollsheet guards with
   `--scrollsheet-center-max-inline` (default `min(560px, 100%)`). Your
   className's width wins below the guard; raise the variable for wider dialogs.
 - Extras radix does not have, free to adopt after the swap: `actionsRef`
-  (imperative open/close), `onOpenChangeComplete` (fires after the exit
-  animation), `animationSpeed`, a no-`<dialog>` static fallback for ~3% of
-  browsers.
+  (imperative open/close), `onOpenChangeComplete` (fires after an open or close
+  transition), `animationSpeed`, a static fallback for browsers without `<dialog>` support.
 
 ## Step 2 (optional): convert to native primitives
 

@@ -22,10 +22,8 @@ nested sheets.
 
 ## The automatic default
 
-Mark the wrapper and a full-height bottom sheet gets `'scale'` on its own, with no prop: that is
-how the platform presents a sheet covering the screen. The default only fires when the sheet was
-opened from inside that wrapper, so a page hosting several independent sheets never moves the
-wrong one. Desktop drawers dock beside the page and leave it alone, and `'none'` opts out.
+Mark the wrapper and a full-height bottom sheet gets `'scale'` on its own, with no prop: when the wrapper can be associated with that sheet's opener. The default only fires when the sheet was
+opened from inside that wrapper, rather than applying the implicit effect to an unrelated wrapper. Desktop drawers dock beside the page and leave it alone, and `'none'` opts out.
 
 <Aside type="caution" title="One caveat">
   The wrapper's transform makes it the containing block for any `position: fixed` descendant, so
@@ -47,8 +45,8 @@ const pageRef = useRef<HTMLDivElement>(null);
 <Sheet.Root backgroundEffect="scale" backgroundRef={pageRef} detents={['full']}>
 ```
 
-It skips the marker lookup and its ownership check entirely: an explicit ref is unambiguous
-about which element it means.
+It skips the marker lookup. Pair it with an explicit `backgroundEffect` when the opener is
+outside that wrapper; the automatic default still checks opener ownership.
 
 <LinkCard
   title="Nested and morph"

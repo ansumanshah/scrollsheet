@@ -36,5 +36,5 @@ State attributes live on the `<dialog>` ancestor, so match them with v4's `in-*`
 
 ## Specificity
 
-The mechanics stylesheet only wins where it must (position, transform). Everything visual sits
-in zero-specificity `:where()` rules, so a Tailwind utility always overrides it.
+The mechanics stylesheet only wins where it must (position, transform). Default colors and decoration use low-specificity `:where()` rules. Layout and state rules can
+be more specific; use the documented CSS variables when a utility does not override them.

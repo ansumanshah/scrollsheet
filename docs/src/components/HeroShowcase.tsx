@@ -12,10 +12,8 @@ import {
 import { BUNDLE_SIZES } from "../lib/bundle-sizes.generated";
 
 /*
- * One live instance of every surface the library ships. The claim in the
- * lede is "one component for sheets, drawers, dialogs, side panels, and
- * toasts", and a visitor should be able to press each one rather than take
- * that on faith. Two mounts share this component:
+ * Interactive examples shared by the desktop frame and mobile homepage.
+ * Two mounts share this component:
  * - docs/src/pages/embed/hero.astro: inside the desktop hero's phone-frame
  *   iframe, a fixed 300x632 box. The tallest bottom-sheet detent there is
  *   0.93, not "full": at full the panel's top edge meets the frame's own
@@ -31,9 +29,9 @@ const MAX_DETENT = 0.93;
 const FEATURES = [
   "Bottom, top, left, right",
   "Modal and non-modal",
-  "Snap points and nesting",
-  "Keyboard-safe on iOS",
-  `${Math.round(BUNDLE_SIZES.index.gzipKb)} kB, zero dependencies`,
+  "Detents and nested sheets",
+  "iOS keyboard handling",
+  `${Math.round(BUNDLE_SIZES.index.gzipKb)} kB Sheet import`,
 ];
 
 /*
@@ -47,7 +45,7 @@ type Row = Surface | "toast";
 
 const ROWS: { id: Row; label: string; hint: string }[] = [
   { id: "sheet", label: "Bottom sheet", hint: "Two detents, draggable" },
-  { id: "drawer", label: "Side sheet", hint: "Any edge, modal or not" },
+  { id: "drawer", label: "Side sheet", hint: "Right edge, draggable" },
   { id: "dialog", label: "Dialog", hint: "Floating card, no drag" },
   { id: "nested", label: "Nested sheets", hint: "One opens the next" },
   { id: "toast", label: "Toasts", hint: "Stacked, self-dismissing" },
@@ -84,9 +82,7 @@ export default function HeroShowcase({
   };
 
   /*
-   * Toasts are not hand-drawn here: the library ships toast() and <Toaster>,
-   * and every card in the queue is a Sheet.Content underneath.
-   * Three at once, so the collapsed stack has ghosts behind the front card.
+   * Three toasts demonstrate the collapsed stack behind the front card.
    */
   const openRow = (id: Row) => {
     if (id !== "toast") {
@@ -105,7 +101,7 @@ export default function HeroShowcase({
         {/* The rows are the demos, so the header says what they are rather
             than dressing the screen up as some other app. */}
         <div className="hs-app-bar">
-          <h1>Surfaces</h1>
+          <h1>Try scrollsheet</h1>
           <span>Tap to open</span>
         </div>
         {ROWS.map((row) => (
@@ -135,10 +131,10 @@ export default function HeroShowcase({
             <XIcon />
           </Sheet.Close>
           <div className="demo-panel-body">
-            <Sheet.Title>A real &lt;dialog&gt;</Sheet.Title>
+            <Sheet.Title>Drag between detents</Sheet.Title>
             <Sheet.Description>
-              Drag the handle or the panel. CSS scroll-snap does the moving, so on touch there is no
-              JavaScript in the loop.
+              Drag the handle or panel between the two stops. Touch dragging uses native scrolling
+              and CSS scroll-snap.
             </Sheet.Description>
             <ul className="demo-panel-list">
               {FEATURES.map((feature) => (
@@ -199,7 +195,8 @@ export default function HeroShowcase({
           <div className="demo-panel-body">
             <Sheet.Title>Delete this place?</Sheet.Title>
             <Sheet.Description>
-              A dialog is the same sheet with dragging and light dismissal turned off.
+              This demo disables dragging, backdrop dismissal, and Escape. Choose either button to
+              close it.
             </Sheet.Description>
             <div className="hs-actions">
               <Sheet.Close className="hs-btn">Cancel</Sheet.Close>

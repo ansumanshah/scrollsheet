@@ -2,6 +2,12 @@
 
 All notable changes to this project are documented here.
 
+## 1.2.2 - 2026-11-04
+
+- **The README demo uses an absolute URL and a separate block.** GitHub and npm can load the refreshed browser recording without wrapping body text around it. The GIF is under 2 MB.
+- **Documentation matches the implementation.** Guides, API defaults, migration notes, examples, and plain-text references describe styling, body scroll locking, JavaScript fallbacks, and compatibility limits accurately.
+- **Contributor instructions share one maintained source.** Stale scratch-test configuration is removed and release steps use the current Bun toolchain.
+
 ## 1.2.1 - 2026-11-04
 
 - **Lazy keyboard loading preserves the pre-focus toolbar baseline.** A keyboard animation that starts before the optional engine loads no longer reduces the reported keyboard inset.
