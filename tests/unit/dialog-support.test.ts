@@ -15,7 +15,7 @@ import {
 } from "../../packages/scrollsheet/src/internal/env";
 
 /**
- * The crash guard for browsers without a real <dialog> (~4% global — Opera
+ * The crash guard for browsers without a real <dialog> (~3% global — Opera
  * Mini, some old in-app WebViews, iOS ≤15.3). `bun:test` itself has no DOM
  * globals at all (verified: `typeof HTMLDialogElement` is "undefined" here
  * by default, same as any other non-browser environment), so

@@ -1,0 +1,5 @@
+[fmt]
+semi = true
+singleQuote = false
+printWidth = 100
+ignorePatterns = ["**/*.generated.ts", "tests/e2e/_bughunt/"]

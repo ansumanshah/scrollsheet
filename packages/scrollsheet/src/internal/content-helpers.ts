@@ -95,7 +95,7 @@ export function isPhantomScrollStep(
 }
 export const TRAVEL_MS = 380;
 export const NO_DRAG_SELECTOR =
-  "button, a, input, textarea, select, label, [contenteditable], [data-scrollsheet-no-drag]";
+  "button, a, input, textarea, select, label, [contenteditable], [data-scrollsheet-no-drag], [data-vaul-no-drag]";
 export const DRAG_VELOCITY_WINDOW_MS = 100;
 /** Center presentation enter/exit: scale spans [1 - range, 1] over the leg. */
 export const CENTER_ZOOM_RANGE = 0.05;

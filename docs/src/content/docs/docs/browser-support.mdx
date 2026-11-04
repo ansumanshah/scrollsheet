@@ -1,6 +1,6 @@
 ---
 title: Browser support
-description: dialog and spring easing reach about 96% of browsers; the remaining ~4% get a plain fixed-position modal with no drag or detents.
+description: Native dialog reaches about 97% of browsers; the remaining ~3% get a plain fixed-position modal. Spring easing degrades independently.
 ---
 
 import { Aside, LinkCard } from '@astrojs/starlight/components';
@@ -55,7 +55,7 @@ import { Aside, LinkCard } from '@astrojs/starlight/components';
 
 <div className="table-scroll prop-table">
 
-| ~4% of browsers (Opera Mini, old in-app WebViews, iOS ≤15.3) | |
+| ~3% of browsers (Opera Mini, old in-app WebViews, iOS ≤15.3) | |
 | --- | --- |
 | You get | A fixed-position modal: backdrop, tap-to-close, Escape, focus moved into the panel on open and restored to the trigger on close, body scroll locked. Panel sizes to content up to 85% of the viewport, then scrolls internally |
 | Gone | Detents, drag, the enter/exit animation, the top layer (panel portals to `<body>` with a max `z-index` instead of a guarantee), the native focus trap. `Sheet.Handle` renders nothing |
@@ -65,9 +65,9 @@ import { Aside, LinkCard } from '@astrojs/starlight/components';
 
 The trade against libraries that portal a plain `<div>` (vaul, react-modal-sheet): their full
 gesture experience reaches these browsers and ours does not, on the bet that the top layer is
-worth more on the 96% than the gestures are on the 4%.
+worth more on the 97% than the gestures are on the 3%.
 
-Want your own UI for that ~4% instead of the built-in fallback? Check `isSupported()`
+Want your own UI for that ~3% instead of the built-in fallback? Check `isSupported()`
 client-side, after mount, so server and client agree on the first render:
 
 ```tsx

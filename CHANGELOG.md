@@ -2,6 +2,15 @@
 
 All notable changes to this project are documented here.
 
+## 1.2.1 - 2026-11-04
+
+- **Lazy keyboard loading preserves the pre-focus toolbar baseline.** A keyboard animation that starts before the optional engine loads no longer reduces the reported keyboard inset.
+- **Canceled toast swipes keep the toast visible and resume auto-dismiss timers.** `pointercancel` and lost pointer capture reset the gesture instead of treating it as a completed swipe, including fast swipes, gestures past the dismissal threshold, and reduced motion.
+- **Toast type classes follow Sonner's corrected behavior.** `toastOptions.classNames.default` applies only to default toasts; success, error, and loading toasts receive their own type classes while shared toast classes remain intact.
+- **Vaul's `data-vaul-no-drag` marker works after migration.** Descendants of marked custom controls stay interactive without capturing the pointer or moving the drawer, alongside the existing `data-scrollsheet-no-drag` marker.
+- **Bun builds JavaScript, measures bundles, and packs the release artifact.** `bun-plugin-dts` generates declarations in `dist/types/`, with strict NodeNext consumer coverage. Runtime imports and React 18+ support remain compatible; the package keeps zero runtime dependencies and its existing gzip budgets.
+- **Dependencies and verification are current.** Library source, tests, fixtures, and build configuration are typechecked with `bun check`; CI runs CSS compatibility and registry checks. TypeScript 6 supplies declaration generation and Astro's checker. The docs use Astro 7.4, and current browser-support copy reflects the conservative ~3% without native `<dialog>`.
+
 ## 1.2.0 - 2026-10-11
 
 - **`animationSpeed` on `Sheet.Root` makes every sheet animation faster or slower** ([#1](https://github.com/ansumanshah/scrollsheet/issues/1)). `2` halves every duration and `0.5` doubles it: the open/close spring, programmatic detent travel, the content-height morph, and the backdrop, recede, and `backgroundEffect` transitions. The spring keeps its shape (same damping ratio, no added overshoot), and an interrupted leg still hands its velocity to the next one. Finger-driven travel is unaffected and `prefers-reduced-motion` still wins. `Drawer.Root` and `Dialog.Root` forward it.

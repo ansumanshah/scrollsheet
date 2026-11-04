@@ -34,8 +34,8 @@ describe("dev-only warning strings", () => {
     "one substring per warnOnce chunk family: absent from every production .mjs, present in dist/dev (skipped: run `bun run build` first)",
     async () => {
       // Each call site is wrapped `if (process.env.NODE_ENV !== "production")
-      // warnOnce(...)` (internal/dev-warn.ts) — the production tsdown pass
-      // defines that check to a literal `false` and its `minify: "dce-only"`
+      // warnOnce(...)` (internal/dev-warn.ts) — the production Bun pass
+      // defines that check to a literal `false` and syntax minification
       // deletes the dead branch, call and message string included; the
       // development pass defines it `true` and keeps the branch. One
       // substring per file/chunk family is enough to prove the fold ran

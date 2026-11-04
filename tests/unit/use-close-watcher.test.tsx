@@ -33,7 +33,7 @@ afterEach(() => {
   if (Root) React.act(() => Root.unmount());
   container?.remove();
   // biome-ignore lint: test-only global cleanup
-  delete (globalThis.window as Record<string, unknown>).CloseWatcher;
+  delete (globalThis.window as unknown as Record<string, unknown>).CloseWatcher;
 });
 
 async function mount(element: React.ReactElement) {
@@ -102,33 +102,33 @@ describe("useCloseWatcher — CloseWatcher stubbed in", () => {
   });
 
   test("does not create a watcher on a fine-pointer (desktop) device — Esc stays focus-scoped there", async () => {
-    (globalThis.window as Record<string, unknown>).CloseWatcher = FakeCloseWatcher;
+    (globalThis.window as unknown as Record<string, unknown>).CloseWatcher = FakeCloseWatcher;
     stubPointer(false);
     await mount(<Harness present nonModal escapeDismissible onClose={() => {}} />);
     expect(FakeCloseWatcher.instances.length).toBe(0);
   });
 
   test("creates a watcher for an open, non-modal, dismissible sheet", async () => {
-    (globalThis.window as Record<string, unknown>).CloseWatcher = FakeCloseWatcher;
+    (globalThis.window as unknown as Record<string, unknown>).CloseWatcher = FakeCloseWatcher;
     await mount(<Harness present nonModal escapeDismissible onClose={() => {}} />);
     expect(FakeCloseWatcher.instances.length).toBe(1);
     expect(FakeCloseWatcher.instances[0]?.destroyed).toBe(false);
   });
 
   test("does not create a watcher for a modal sheet — closedby already owns that path", async () => {
-    (globalThis.window as Record<string, unknown>).CloseWatcher = FakeCloseWatcher;
+    (globalThis.window as unknown as Record<string, unknown>).CloseWatcher = FakeCloseWatcher;
     await mount(<Harness present nonModal={false} escapeDismissible onClose={() => {}} />);
     expect(FakeCloseWatcher.instances.length).toBe(0);
   });
 
   test("does not create a watcher for a non-dismissible sheet — must not consume the back gesture", async () => {
-    (globalThis.window as Record<string, unknown>).CloseWatcher = FakeCloseWatcher;
+    (globalThis.window as unknown as Record<string, unknown>).CloseWatcher = FakeCloseWatcher;
     await mount(<Harness present nonModal escapeDismissible={false} onClose={() => {}} />);
     expect(FakeCloseWatcher.instances.length).toBe(0);
   });
 
   test("the watcher's close event calls the latest onClose, even after a prop-only re-render", async () => {
-    (globalThis.window as Record<string, unknown>).CloseWatcher = FakeCloseWatcher;
+    (globalThis.window as unknown as Record<string, unknown>).CloseWatcher = FakeCloseWatcher;
     let calls = 0;
     const onCloseA = () => {
       calls += 1;
@@ -150,7 +150,7 @@ describe("useCloseWatcher — CloseWatcher stubbed in", () => {
   });
 
   test("destroys the watcher on unmount", async () => {
-    (globalThis.window as Record<string, unknown>).CloseWatcher = FakeCloseWatcher;
+    (globalThis.window as unknown as Record<string, unknown>).CloseWatcher = FakeCloseWatcher;
     await mount(<Harness present nonModal escapeDismissible onClose={() => {}} />);
     const watcher = FakeCloseWatcher.instances[0];
     expect(watcher?.destroyed).toBe(false);
@@ -159,7 +159,7 @@ describe("useCloseWatcher — CloseWatcher stubbed in", () => {
   });
 
   test("destroys and recreates the watcher when escapeDismissible flips off then on", async () => {
-    (globalThis.window as Record<string, unknown>).CloseWatcher = FakeCloseWatcher;
+    (globalThis.window as unknown as Record<string, unknown>).CloseWatcher = FakeCloseWatcher;
     await mount(<Harness present nonModal escapeDismissible onClose={() => {}} />);
     const first = FakeCloseWatcher.instances[0];
     await React.act(async () => {
@@ -176,7 +176,7 @@ describe("useCloseWatcher — CloseWatcher stubbed in", () => {
   });
 
   test("re-arms after a close while still present — a close request is one-shot per spec", async () => {
-    (globalThis.window as Record<string, unknown>).CloseWatcher = FakeCloseWatcher;
+    (globalThis.window as unknown as Record<string, unknown>).CloseWatcher = FakeCloseWatcher;
     let calls = 0;
     await mount(<Harness present nonModal escapeDismissible onClose={() => (calls += 1)} />);
     const first = FakeCloseWatcher.instances.at(-1);

@@ -23,7 +23,7 @@ export function injectToastStyles(nonce?: string): void {
  * instead of document.head — mirrors src/internal/styles.ts's
  * injectStylesInto. Call once per shadow root that hosts a <Toaster>,
  * before it first renders. A sibling export rather than folding into
- * injectStylesInto: the toast layer is its own chunk (dist/toast.mjs) that
+ * injectStylesInto: the toast layer is its own chunk (dist/toast/index.mjs) that
  * never loads for a core-only consumer, so its shadow-root injector has to
  * be reachable without pulling core's own chunk (and vice versa) — one
  * shared call would break that tree-shaking boundary.

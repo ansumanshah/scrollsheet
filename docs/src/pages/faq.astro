@@ -32,9 +32,9 @@ const faqs: FaqItem[] = [
   {
     id: "app-router-rsc",
     question: "Does it work with Next.js App Router and React Server Components?",
-    answerHtml: `Yes. Every module that touches state or the DOM opens with <code>"use client"</code>, including <code>Sheet.Root</code>, <code>Content</code>, <code>Handle</code>, <code>Trigger</code>, and both compat layers (vaul, sonner). Render <code>&lt;Sheet.Root&gt;</code> from a Server Component like any other client component; React draws the boundary for you.`,
+    answerHtml: `Yes, with one rule. Every dist chunk opens with <code>"use client"</code>, but a Server Component that imports <code>Sheet</code> gets one opaque client reference, so <code>Sheet.Root</code> reads as <code>undefined</code> there. Add <code>'use client'</code> to the file that renders <code>&lt;Sheet.Root&gt;</code>, like any other interactive component. See <a href="/docs/advanced/framework-support">Framework support</a>.`,
     answerText:
-      "Yes. Every module that touches state or the DOM opens with a use client directive, including Root, Content, Handle, Trigger, and both compat layers. Render Sheet.Root from a Server Component like any other client component.",
+      "Yes, with one rule. Every dist chunk opens with a use client directive, but a Server Component that imports Sheet gets one opaque client reference, so Sheet.Root is undefined there. Add use client to the file that renders Sheet.Root, like any other interactive component.",
   },
   {
     id: "tailwind",
@@ -74,9 +74,9 @@ const faqs: FaqItem[] = [
   {
     id: "snap-points",
     question: "Does it support snap points?",
-    answerHtml: `They're called detents, Apple's term. Accepted forms: <code>'full'</code>, <code>'medium'</code>, <code>'content'</code> (natural height), a fraction in <code>(0, 1]</code>, or a pixel string like <code>'320px'</code>. See <a href="/docs/detents-and-control/detents">Detents</a>.`,
+    answerHtml: `They're called detents, Apple's term. Accepted forms: <code>'full'</code>, <code>'medium'</code>, <code>'content'</code> (natural height), a fraction in <code>(0, 1]</code>, a pixel string like <code>'320px'</code>, or a bare number above 1 for pixels. See <a href="/docs/detents-and-control/detents">Detents</a>.`,
     answerText:
-      "They're called detents. Accepted forms are full, medium, content for natural height, a fraction between 0 and 1, or a pixel string like 320px.",
+      "They're called detents. Accepted forms are full, medium, content for natural height, a fraction between 0 and 1, a pixel string like 320px, or a bare number above 1 for pixels.",
   },
   {
     id: "ios-keyboard",
@@ -88,16 +88,16 @@ const faqs: FaqItem[] = [
   {
     id: "shadow-dom",
     question: "Does it work inside a Shadow DOM?",
-    answerHtml: `Rendering works, since the native dialog's top layer is document-level rather than shadow-scoped. The one thing you handle yourself: the auto-injected mechanics styles land in <code>document.head</code>, which a shadow root doesn't see, so call <code>injectStylesInto(shadowRoot)</code> before any <code>Sheet.Content</code> inside it opens. See <a href="/docs/advanced/shadow-dom">Shadow DOM</a>.`,
+    answerHtml: `Rendering works, since the native dialog's top layer is document-level rather than shadow-scoped. The one thing you handle yourself: mechanics styles land in <code>document.head</code>, which a shadow root doesn't see, so import from <code>scrollsheet/auto</code> and call <code>injectStylesInto(shadowRoot)</code> before any <code>Sheet.Content</code> inside it opens. See <a href="/docs/advanced/shadow-dom">Shadow DOM</a>.`,
     answerText:
-      "Rendering works, since the native dialog's top layer is document-level rather than shadow-scoped. The auto-injected mechanics styles land in document.head, which a shadow root doesn't see, so call injectStylesInto(shadowRoot) before any Sheet.Content inside it opens.",
+      "Rendering works, since the native dialog's top layer is document-level rather than shadow-scoped. Mechanics styles land in document.head, which a shadow root doesn't see, so import from scrollsheet/auto and call injectStylesInto(shadowRoot) before any Sheet.Content inside it opens.",
   },
   {
     id: "maintained",
     question: "Is it maintained, and by whom?",
-    answerHtml: `Yes. scrollsheet is built by Ansuman Shah under the NoodleApps studio name, MIT-licensed, currently at v1.0.0-beta.1. Source and issues at <a href="https://github.com/ansumanshah/scrollsheet" target="_blank" rel="noreferrer">github.com/ansumanshah/scrollsheet</a>.`,
+    answerHtml: `Yes. scrollsheet is built by Ansuman Shah under the NoodleApps studio name, MIT-licensed, published on npm as <code>scrollsheet</code>. Release notes are in the <a href="/changelog">changelog</a>; source and issues are at <a href="https://github.com/ansumanshah/scrollsheet" target="_blank" rel="noreferrer">github.com/ansumanshah/scrollsheet</a>.`,
     answerText:
-      "Yes. scrollsheet is built by Ansuman Shah under the NoodleApps studio name, MIT licensed, currently at version 1.0.0-beta.1.",
+      "Yes. scrollsheet is built by Ansuman Shah under the NoodleApps studio name, MIT licensed, published on npm as scrollsheet, with release notes in the changelog.",
   },
 ];
 

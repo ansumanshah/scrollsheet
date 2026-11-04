@@ -20,27 +20,16 @@ export type ToastType = "default" | "success" | "error" | "warning" | "info" | "
  * The six-value position union (matches real Sonner's own set). Every value
  * routes for real at this layer (see `selectPositionToasts` below) — how
  * many of the six a given `<Toaster>` actually renders is that component's
- * own call (`toaster.tsx`'s `resolveToasterPosition`), not something this
- * module gates.
+ * own call, not something this module gates.
  */
 export type ToastPosition =
-  | "top-left"
-  | "top-center"
-  | "top-right"
-  | "bottom-left"
-  | "bottom-center"
-  | "bottom-right";
+  "top-left" | "top-center" | "top-right" | "bottom-left" | "bottom-center" | "bottom-right";
 
 /** Compat alias for the pre-neutral-naming name — new code should use `ToastPosition`. */
 export type SonnerPosition = ToastPosition;
 
 /**
- * Real Sonner's own swipe-dismiss edge union (types.ts:152). A Toaster-level
- * `swipeDirections` override (see `ToasterProps` in `../toaster`) understands
- * these four values regardless of which position they're applied to — lives
- * here, not in the shell folder, so both the Sheet-backed `toaster.tsx` and
- * the new shell can reference the type without either depending on the
- * other's own directory.
+ * Shared swipe-dismiss edges for the shell and ToasterProps in toaster-shared.ts.
  */
 export type SwipeDirection = "top" | "right" | "bottom" | "left";
 
@@ -298,7 +287,7 @@ function dismiss(id?: number | string): number | string | undefined {
  * distinct (index.tsx's timer calls `toast.onAutoClose?.(toast)` then its
  * own `deleteToast()`, which never touches `ToastState.dismiss`), so a timed-
  * out toast and a user-dismissed one are observably different events. Not
- * part of the public `toast` API — only toaster.tsx's own timer calls this.
+ * part of the public `toast` API — only the toaster shell's timer calls this.
  */
 export function expire(id: number | string): void {
   const existing = toasts.find((t) => t.id === id);

@@ -1,7 +1,7 @@
 #!/usr/bin/env bun
 /**
- * CI bundle-size guard: bundles each public import shape with esbuild
- * --minify (react external), gzips the result, and fails any shape over its
+ * CI bundle-size guard: bundles each public import shape with Bun
+ * minification (react external), gzips the result, and fails any shape over its
  * own budget. The actual bundling/compression lives in
  * scripts/lib/bundle-measure.ts, shared with scripts/sync-sizes.ts so there
  * is exactly one implementation of "how big is this" in the repo.
@@ -13,7 +13,7 @@
  *
  * Also the doc-freshness gate for scripts/sync-sizes.ts's generated targets
  * (docs/src/lib/bundle-sizes.generated.ts, README.md, llms.txt,
- * .claude/ROADMAP.md, docs/public/llms-full.txt): reuses the measurements
+ * docs/public/llms-full.txt): reuses the measurements
  * taken above instead of re-bundling, and fails if any of them don't match.
  * Hooked in here rather than a dedicated CI step because ci.yml's `check`
  * job already runs `bun run size` right after `bun run build` — this makes

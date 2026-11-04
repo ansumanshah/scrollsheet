@@ -2,7 +2,11 @@ import * as React from "react";
 import { createRoot } from "react-dom/client";
 
 import { Sheet, injectStylesInto } from "../../../packages/scrollsheet/src/index";
-import { Toaster, injectToastStylesInto, toast } from "../../../packages/scrollsheet/src/toast/index";
+import {
+  Toaster,
+  injectToastStylesInto,
+  toast,
+} from "../../../packages/scrollsheet/src/toast/index";
 
 /**
  * Shadow DOM injection fixture (tests/e2e/platform/shadow-dom.spec.ts). A
@@ -13,16 +17,10 @@ import { Toaster, injectToastStylesInto, toast } from "../../../packages/scrolls
  * (injectStylesInto/injectToastStylesInto, src/internal/styles.ts and
  * src/toast/toast-styles.ts) exist for.
  *
- * Both dialogs (Sheet.Content and Toaster's own SheetContent) still portal
- * to `document.body` regardless (content.tsx's own createPortal target,
- * unconditional) — their visual styling comes from the library's automatic
- * document.head injection (content.tsx's `injectStyles(ctx.nonce)` /
- * toaster.tsx's `injectToastStyles(nonce)`, both called unconditionally on
- * open), not from the shadow-scoped calls below. What the shadow-scoped
- * calls below actually prove is that a stylesheet lands in the shadow root
- * ITSELF (adoptedStyleSheets, or a `<style>` fallback) without ever leaking
- * into `document.head` as a side effect of the shadow-root API — see the
- * spec for the exact assertions.
+ * Sheet.Content and the Toaster shell portal to document.body. Their styles
+ * come from document.head injection in content.tsx and toaster-shell.tsx.
+ * The explicit calls below independently exercise shadow-root injection
+ * without leaking styles into document.head.
  */
 function ShadowApp({ shadowRoot }: { shadowRoot: ShadowRoot }) {
   React.useEffect(() => {
@@ -50,7 +48,7 @@ function ShadowApp({ shadowRoot }: { shadowRoot: ShadowRoot }) {
         type="button"
         className="btn"
         // 60s duration: keeps auto-dismiss out of the way, same convention
-        // as tests/e2e/fixtures/app.tsx's SonnerFixture.
+        // as tests/e2e/fixtures/toast.tsx's SonnerFixture.
         onClick={() =>
           toast("Shadow toast", {
             description: "Fired from inside a shadow root",

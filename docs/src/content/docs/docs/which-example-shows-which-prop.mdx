@@ -1,12 +1,13 @@
 ---
 title: Which example shows which prop
-description: A table mapping every Sheet.Root prop to the example that exercises it.
+description: A table mapping each Sheet.Root prop to the example that exercises it, and the docs page for the props with no live example.
 ---
 
 import { LinkCard, CardGrid } from '@astrojs/starlight/components';
 
-Every Root prop, mapped to the example that shows it working. Some run on the
-[homepage](/#examples); the rest are inline further down in these docs, linked below.
+Root props mapped to the example that shows them working. Some run on the
+[homepage](/#examples); the rest are inline further down in these docs, linked below. Props with
+no live example are in the last two rows.
 
 | Prop | Example |
 | --- | --- |
@@ -23,6 +24,8 @@ Every Root prop, mapped to the example that shows it working. Some run on the
 | `scrollbar` | [Comments](/docs/scrolling-and-keyboard/scrollable-content) |
 | `open`, `defaultOpen`, `onOpenChange` | Toast, every controlled example |
 | `nonce` | CSP note in [Styling](/docs/styling/css) |
+| `desktopSide`, `desktopBreakpoint` | [Responsive](/docs/presentation/responsive-profiles) |
+| `keyboardExpands`, `animationSpeed`, `phantomScrollGuard`, `escapeDismissible`, `backdropDismissible`, `backgroundRef` | No live example. Described in the [API reference](/docs/reference/api); see also [Keyboard](/docs/scrolling-and-keyboard/keyboard), [Page transitions](/docs/presentation/page-transitions), and [Centered dialog](/docs/presentation/centered-dialog) |
 
 <CardGrid>
   <LinkCard

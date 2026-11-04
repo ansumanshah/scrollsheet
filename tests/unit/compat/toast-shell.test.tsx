@@ -628,6 +628,80 @@ describe("swipe: dismiss triggers", () => {
   });
 });
 
+describe("swipe: cancellation", () => {
+  test.each([
+    { event: "pointercancel", distance: 20, reducedMotion: false },
+    { event: "pointercancel", distance: 60, reducedMotion: false },
+    { event: "pointercancel", distance: 60, reducedMotion: true },
+    { event: "lostpointercapture", distance: 60, reducedMotion: false },
+  ])(
+    "$event resets a $distance px swipe (reduced motion: $reducedMotion)",
+    async ({ event, distance, reducedMotion }) => {
+      const restore = reducedMotion ? mockReducedMotion() : () => {};
+      try {
+        let dismissed = 0;
+        await mount(<ToasterShell />);
+        await React.act(async () => {
+          toast("Interrupted", {
+            duration: 60_000,
+            onDismiss: () => {
+              dismissed += 1;
+            },
+          });
+        });
+        const el = rows()[0] as HTMLElement;
+        await firePointer(el, "pointerdown", 0, 0);
+        await firePointer(el, "pointermove", distance, 0);
+        expect(el.hasPointerCapture(0)).toBe(true);
+        await firePointer(el, event, distance, 0);
+        expect(el.hasPointerCapture(0)).toBe(false);
+        expect(el.getAttribute("data-swiping")).toBe("false");
+        expect(el.getAttribute("data-swiped")).toBe("false");
+        expect(el.getAttribute("data-swipe-out")).not.toBe("true");
+        expect(el.style.getPropertyValue("--scrollsheet-toast-swipe-x")).toBe("0px");
+        expect(el.style.getPropertyValue("--scrollsheet-toast-swipe-y")).toBe("0px");
+        await firePointer(el, "pointerup", distance, 0);
+        await React.act(async () => el.dispatchEvent(new Event("animationend")));
+        expect(dismissed).toBe(0);
+        expect(el.hasAttribute("data-removed")).toBe(false);
+
+        await firePointer(el, "pointerdown", 0, 0);
+        await firePointer(el, "pointermove", 0, 10);
+        expect(el.style.getPropertyValue("--scrollsheet-toast-swipe-x")).toBe("0px");
+        expect(el.style.getPropertyValue("--scrollsheet-toast-swipe-y")).toBe("10px");
+        await firePointer(el, "pointercancel", 0, 10);
+        expect(dismissed).toBe(0);
+      } finally {
+        restore();
+      }
+    },
+  );
+
+  test("auto-dismiss resumes after pointercancel without a pointerup", async () => {
+    let autoClosed = 0;
+    await mount(<ToasterShell />);
+    await React.act(async () => {
+      toast("Paused", {
+        duration: 50,
+        onAutoClose: () => {
+          autoClosed += 1;
+        },
+      });
+    });
+    const el = rows()[0] as HTMLElement;
+    await firePointer(el, "pointerdown", 0, 0);
+    await React.act(async () => {
+      await sleep(90);
+    });
+    expect(autoClosed).toBe(0);
+    await firePointer(el, "pointercancel", 0, 0);
+    await React.act(async () => {
+      await sleep(90);
+    });
+    expect(autoClosed).toBe(1);
+  });
+});
+
 describe("swipe: Toaster-level swipeDirections override", () => {
   test("overrides the per-position default uniformly — a direction the default excluded now dismisses, and one it included no longer does", async () => {
     await mount(<ToasterShell visibleToasts={3} swipeDirections={["left"]} />);

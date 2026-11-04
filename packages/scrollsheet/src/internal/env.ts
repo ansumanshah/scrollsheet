@@ -43,7 +43,7 @@ export function _resetEnvForTests(): void {
 }
 
 /**
- * Whether the platform supports a real `<dialog>` (~96% global — missing on
+ * Whether the platform supports a real `<dialog>` (~97% global — missing on
  * Opera Mini, some old in-app WebViews, and iOS ≤15.3). Deliberately
  * uncached (unlike `env()` above): the check itself is a cheap `typeof` +
  * prototype probe, and tests need to flip the global between calls.

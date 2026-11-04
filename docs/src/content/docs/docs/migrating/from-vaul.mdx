@@ -30,14 +30,14 @@ separate `NestedRoot`.
 | `snapPoints`, `activeSnapPoint`, `direction` (all 4 edges), `modal={false}`, `onAnimationEnd`, `onClose`, `fadeFromIndex`, `handleOnly`, `snapToSequentialPoint`, `onRelease`, `preventCycle` (on `Drawer.Handle`), `asChild` | A real feature, 1:1 |
 | `shouldScaleBackground` | `backgroundEffect`; your `[data-vaul-drawer-wrapper]` is picked up automatically |
 | `closeThreshold` | A real feature; the adapter converts conventions (vaul counts the drag away, scrollsheet counts what remains), so vaul's `0.25` default keeps its feel. Only live when `snapPoints` is unset, matching vaul |
-| `onOpenStart` / `onCloseStart` | `onOpenChange` (fires at the state flip) |
-| `onOpenEnd` / `onCloseEnd` | `onOpenChangeComplete(open)` (fires once the transition visually finishes) |
+| `onAnimationEnd(open)` | Fires once the open or close transition visually finishes, not on a timer. On native `Sheet.Root` the prop is `onOpenChangeComplete` |
+| `onClose` | Fires on every dismiss path (swipe, Esc, backdrop, imperative close), layered on `onOpenChange`. On native `Sheet.Root`, check `open === false` in `onOpenChange` |
 | `onPointerDownOutside` / `onInteractOutside` with `preventDefault()` | `backdropDismissible={false}` on `Drawer.Root` (blocks backdrop tap, keeps drag and Esc); the `onEscapeKeyDown` version is `escapeDismissible={false}` |
 
 </div>
 
 Scrollsheet-native props with no vaul counterpart (`backdropDismissible`, `escapeDismissible`,
-`keyboardExpands`, `onTravel`, `scrollbar`, `actionsRef`) forward through `Drawer.Root`
+`keyboardExpands`, `onTravel`, `scrollbar`, `actionsRef`, `animationSpeed`) forward through `Drawer.Root`
 untranslated, so one native feature never forces a full conversion to `Sheet.*`.
 
 ## Width

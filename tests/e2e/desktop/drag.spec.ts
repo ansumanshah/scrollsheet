@@ -197,6 +197,79 @@ test.describe("desktop mouse drag", () => {
     await expect(dialog).toHaveAttribute("data-scrollsheet-state", "open");
   });
 
+  for (const marker of ["data-vaul-no-drag", "data-scrollsheet-no-drag"]) {
+    test(`${marker} preserves a descendant custom slider without capturing or dragging`, async ({
+      page,
+    }) => {
+      await page.goto("/");
+      const dialog = await openSheetByTrigger(page, "Drawer close threshold default sheet");
+      const track = dialog.locator(".scrollsheet-track");
+      // Overlay a widget without changing the content detent's measured height.
+      await dialog.evaluate((host, attribute) => {
+        const panel = host.querySelector<HTMLElement>(".scrollsheet-panel")!;
+        const widget = document.createElement("div");
+        widget.setAttribute(attribute, "");
+        widget.setAttribute("role", "slider");
+        widget.setAttribute("aria-label", "Map zoom");
+        widget.setAttribute("aria-valuemin", "0");
+        widget.setAttribute("aria-valuemax", "100");
+        widget.setAttribute("aria-valuenow", "0");
+        widget.dataset.captures = "0";
+        widget.dataset.dragged = "false";
+        widget.style.cssText =
+          "position:absolute;left:24px;top:90px;width:220px;height:160px;user-select:none";
+        const surface = document.createElement("span");
+        surface.textContent = "Drag to zoom";
+        surface.style.cssText = "display:block;width:100%;height:100%";
+        widget.appendChild(surface);
+        widget.addEventListener("pointermove", (event) => {
+          if (event.buttons !== 1) return;
+          const top = widget.getBoundingClientRect().top;
+          widget.setAttribute(
+            "aria-valuenow",
+            String(Math.round(Math.max(0, Math.min(100, event.clientY - top)))),
+          );
+        });
+        host.addEventListener(
+          "gotpointercapture",
+          () => {
+            widget.dataset.captures = String(Number(widget.dataset.captures) + 1);
+          },
+          { capture: true },
+        );
+        host.addEventListener("pointermove", () => {
+          if (host.hasAttribute("data-scrollsheet-dragging")) widget.dataset.dragged = "true";
+        });
+        panel.appendChild(widget);
+      }, marker);
+      const widget = dialog.getByRole("slider", { name: "Map zoom" });
+      const surface = widget.locator("span");
+      const box = await surface.boundingBox();
+      if (!box) throw new Error("slider surface bounding box unavailable");
+      const before = await waitForStableScrollTop(track);
+      await mouseDrag(page, box.x + box.width / 2, box.y + 20, box.y + 100, {
+        holdEndMs: 120,
+      });
+      await expect(widget).toHaveAttribute("aria-valuenow", "100");
+      await expect(widget).toHaveAttribute("data-captures", "0");
+      await expect(widget).toHaveAttribute("data-dragged", "false");
+      expect(await waitForStableScrollTop(track)).toBe(before);
+      await expect(dialog).toHaveAttribute("data-scrollsheet-state", "open");
+
+      const title = dialog.getByRole("heading", { name: "Close threshold default", exact: true });
+      const titleBox = await title.boundingBox();
+      if (!titleBox) throw new Error("drawer title bounding box unavailable");
+      await mouseDrag(
+        page,
+        titleBox.x + titleBox.width / 2,
+        titleBox.y + titleBox.height / 2,
+        titleBox.y + 240,
+        { holdEndMs: 120 },
+      );
+      await expect(dialog).toHaveCount(0, { timeout: SPRING_TIMEOUT });
+    });
+  }
+
   test("wheel still travels detents", async ({ page }) => {
     await page.goto("/");
     const dialog = await openSheetByTrigger(page, "Detents (35% / 70% / full)");

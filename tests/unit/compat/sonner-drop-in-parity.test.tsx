@@ -4,7 +4,7 @@ import * as React from "react";
 import type * as ReactDOMClient from "react-dom/client";
 import { ToasterShell as Toaster } from "../../../packages/scrollsheet/src/toast/shell/toaster-shell";
 import { _resetSonnerStoreForTests, toast } from "../../../packages/scrollsheet/src/toast/state";
-import { _resetWarnOnceForTests } from "../../../packages/scrollsheet/src/toast/toaster";
+import { _resetWarnOnceForTests } from "../../../packages/scrollsheet/src/toast/toaster-shared";
 
 /**
  * Real-DOM proof for the sonner drop-in parity round: Toaster's `id` prop
@@ -139,17 +139,30 @@ describe("classNames", () => {
     expect(row().classList.contains("success-class")).toBe(true);
   });
 
-  test("classNames.default lands on every toast regardless of type", async () => {
-    await mount(
-      <Toaster visibleToasts={3} toastOptions={{ classNames: { default: "default-class" } }} />,
-    );
-    await React.act(async () => {
-      toast.error("Oops", { duration: 60_000 });
-    });
-    // Proven against a non-default type — "default" is unconditional.
-    expect(row().dataset.type).toBe("error");
-    expect(row().classList.contains("default-class")).toBe(true);
-  });
+  test.each(["default", "success", "error", "loading"] as const)(
+    "a %s toast gets its type class and shared classes without another type's class",
+    async (type) => {
+      const classNames = {
+        toast: "shared-class",
+        default: "default-class",
+        success: "success-class",
+        error: "error-class",
+        loading: "loading-class",
+      };
+      await mount(<Toaster toastOptions={{ classNames }} />);
+      await React.act(async () => {
+        const options = { duration: 60_000, classNames: { toast: "per-toast-class" } };
+        if (type === "default") toast("Plain", options);
+        else toast[type]("Typed", options);
+      });
+      expect(row().dataset.type).toBe(type);
+      expect(row().classList.contains("shared-class")).toBe(true);
+      expect(row().classList.contains("per-toast-class")).toBe(true);
+      for (const candidate of ["default", "success", "error", "loading"] as const) {
+        expect(row().classList.contains(classNames[candidate])).toBe(candidate === type);
+      }
+    },
+  );
 
   test("classNames.title/description/icon/closeButton each land on their respective elements", async () => {
     await mount(

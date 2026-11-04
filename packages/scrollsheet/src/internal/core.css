@@ -1157,7 +1157,7 @@
 
 /*
  * ── No-<dialog> degradation path ─────────────────────────────────────────
- * Rendered by internal/fallback-sheet.tsx on the ~4% of browsers with no
+ * Rendered by internal/fallback-sheet.tsx on the ~3% of browsers with no
  * real <dialog> (Opera Mini, some old in-app WebViews, iOS <=15.3). Kept in
  * its own class namespace rather than reusing .scrollsheet-dialog's: every
  * rule there assumes the scroll-snap track (absolute panel, translate

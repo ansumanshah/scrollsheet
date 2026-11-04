@@ -21,6 +21,10 @@ A detent is a resting height, resolved to a scroll-snap stop. `'content'` measur
 height, `'medium'` is 50% of viewport, and `'full'` is viewport minus a top inset. Any other
 number is a fraction, or pixels above 1.
 
+List detents shortest first. The sheet sorts them by height for snapping, but `Sheet.Handle`'s
+click cycle, arrow keys, and slider value follow the order of your array. Detents that resolve to
+the same height collapse into one, and a spec that resolves to 0 or less is dropped.
+
 ## Tracking travel
 
 `onTravel(px, progress, info)` fires every frame the sheet moves, also published as

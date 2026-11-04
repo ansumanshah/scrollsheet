@@ -8,27 +8,6 @@ import * as React from "react";
  * which would race the state the feature exists to handle.
  */
 
-/** Chunks whose resolve gates an open sequence. Module-level: chunk
- *  residency is process-wide. */
-const pendingCritical = new Set<Promise<unknown>>();
-
-/** Entries self-remove on settle either way — a failed load must not wedge
- *  every future open. */
-export function trackCritical<T>(promise: Promise<T>): Promise<T> {
-  pendingCritical.add(promise);
-  const drop = () => {
-    pendingCritical.delete(promise);
-  };
-  promise.then(drop, drop);
-  return promise;
-}
-
-/** Null when nothing is pending, so the open path stays synchronous. */
-export function ensureFeatures(): Promise<void> | null {
-  if (pendingCritical.size === 0) return null;
-  return Promise.all([...pendingCritical]).then(() => undefined);
-}
-
 export interface FeatureLoader<T> {
   /** Fire (or join) the fetch; resolves null on failure, never rejects. */
   preload: () => Promise<T | null>;

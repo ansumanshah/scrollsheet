@@ -28,11 +28,11 @@ import { Sheet } from 'scrollsheet';
 | --- | --- | --- |
 | `Sheet.Root` | nothing itself | owns state. Skip `Trigger` and drive `open`/`onOpenChange` yourself for a fully controlled sheet |
 | `Sheet.Trigger` | `<button>` | opens on click. `asChild` renders your own element instead. `aria-haspopup`/`aria-expanded` wired automatically |
-| `Sheet.Content` | `<dialog>` + backdrop + scroll track + panel | everything you put inside renders on the panel. `className` styles the panel like a card |
-| `Sheet.Handle` | `<button>`, grab pill | click cycles detents, arrows move between them, down-arrow at the lowest detent dismisses. `asChild` supported |
+| `Sheet.Content` | `<dialog>` + backdrop + scroll track + panel | everything you put inside renders on the panel. `className` styles the panel like a card. `fill` stretches the body (see below); `asChild` renders your single child element as the panel |
+| `Sheet.Handle` | `<button>`, grab pill | click cycles detents, arrows move between them, down-arrow at the lowest detent dismisses. `variant`: `'inside'` (default), `'floating'` (overlays full-bleed content), `'outside'` (pill floats in the backdrop, bottom sheets only). `asChild` supported |
 | `Sheet.Title` | `<h2>` | wires `aria-labelledby` automatically when rendered |
 | `Sheet.Description` | `<p>` | wires `aria-describedby` automatically when rendered |
-| `Sheet.Close` | `<button>` | closes on click. `asChild` supported |
+| `Sheet.Close` | `<button>` | closes on click. `asChild` supported. With no children it renders a styled ✕ button |
 
 Import the stylesheet once per app (it carries the mechanics: position, transform, scroll-snap,
 backdrop, focus containment):
@@ -65,6 +65,9 @@ type DetentSpec = 'full' | 'medium' | 'content' | number | `${number}px`;
 - a bare number: a fraction (`0.35`) if ≤ 1, else pixels
 - `'320px'`: an explicit pixel string
 
+List detents shortest first: the sheet sorts them by height, but the Handle's click cycle, arrow
+keys, and slider value follow the array's order.
+
 `Sheet.Handle` cycles detents on click, moves with arrow keys (Left/Right on side sheets),
 Home/End jump to extremes. With 2+ detents it announces as `role="slider"`.
 
@@ -93,8 +96,9 @@ no-op'ing.
 
 `fill` stretches `[data-scrollsheet-body]` to the panel (flex column), so a fixed header plus an
 independently scrolling list needs no CSS chain of your own. Off by default because it changes
-what the `'content'` detent measures: with `fill`, the detent and content-morph both switch from
-the body's own box to its first child. Reaching for `fill` without a genuinely fixed-header +
+what the `'content'` detent measures: with `fill`, the detent and content-morph measure the
+natural size of all the body's children (margins included) instead of the body's own stretched
+box. Reaching for `fill` without a genuinely fixed-header +
 scrolling-list layout is the wrong tool: most sheets don't need it.
 
 ## onTravel + TravelInfo
@@ -108,8 +112,9 @@ scrolling-list layout is the wrong tool: most sheets don't need it.
 >
 ```
 
-Fires every frame the sheet moves, also published as `--scrollsheet-progress` CSS var (0-1) on
-the `<dialog>`. `info` (the third arg, `TravelInfo`) is reused and mutated in place each
+Fires every frame the sheet moves, also published as the `--scrollsheet-progress` CSS var (0-1)
+on the backdrop element (not the `<dialog>`: siblings don't inherit it, so read it from the
+backdrop, `[data-scrollsheet-backdrop]`). `info` (the third arg, `TravelInfo`) is reused and mutated in place each
 frame: **read it synchronously inside the callback, never store the reference.** Use
 `progressAtDetents` to drive an effect off a specific detent instead of only the nearest one.
 
@@ -173,8 +178,10 @@ natively.
 <Sheet.Root side="right" detents={['340px']}>
 ```
 
-`side`: `'bottom'` (default) | `'top'` | `'left'` | `'right'`. Left/right sheets scroll on the x
-axis, so detents are widths, not heights. The panel's rounded corner/shadow defaults to the lead
+`side`: `'bottom'` (default) | `'top'` | `'left'` | `'right'` | `'center'`. Left/right sheets scroll
+on the x axis, so detents are widths, not heights. `'center'` is a content-sized modal dialog
+(zoom+fade, no detents or drag; your CSS owns the width). `desktopSide` swaps the presentation at
+`desktopBreakpoint` (default `768`), for example `side="bottom" desktopSide="center"`. The panel's rounded corner/shadow defaults to the lead
 edge (the one opposite the anchored side).
 
 ## Non-modal
@@ -191,11 +198,12 @@ working while it's up.
 ## Shadow DOM
 
 ```tsx
-import { injectStylesInto } from 'scrollsheet';
+import { Sheet, injectStylesInto } from 'scrollsheet/auto';
 injectStylesInto(shadowRoot, nonce);
 ```
 
-Auto-injected styles land in `document.head`, invisible to a shadow root. Call once per shadow
+Styles land in `document.head`, invisible to a shadow root. Import from `scrollsheet/auto`
+(the default entry embeds no CSS, so its `injectStylesInto` does nothing) and call once per shadow
 root, before any `Sheet.Content` inside it opens: adopts the stylesheet via
 `adoptedStyleSheets` (falls back to a scoped `<style>` tag on engines without constructable
 stylesheets, e.g. Safari < 16.4). The `<dialog>` itself still portals to `document.body`
@@ -221,7 +229,7 @@ markup (trigger only, no dialog). No `window`/`document` access at module scope.
 | --- | --- | --- |
 | Sheet renders as a plain unstyled dialog | missing `import 'scrollsheet/styles.css'` (the dev build warns once) | add the import, or switch to `scrollsheet/auto`; on the `auto` entry under a strict CSP, pass `nonce` to `Sheet.Root` |
 | Inner list won't scroll independently | `handleOnly`/`disableDrag` set but the list has no `data-scrollsheet-nested-scroll` | add the attribute to the scrollable element |
-| `fill` set but detent measures wrong height | `fill` changes what `'content'` detent measures (body's first child, not the body box) | only use `fill` with a genuine fixed-header + flex-scroll layout, per the recipe above |
+| `fill` set but detent measures wrong height | `fill` changes what `'content'` detent measures (the natural size of all the body's children, not the stretched body box) | only use `fill` with a genuine fixed-header + flex-scroll layout, per the recipe above |
 | `onTravel`'s `info` looks stale/wrong values later | held a reference to `TravelInfo` across frames | read every field synchronously inside the callback; it's mutated in place, not reallocated |
 | `backgroundEffect="scale"` does nothing | no `[data-scrollsheet-background]` wrapper, or the sheet isn't a full-height mobile bottom sheet opened from inside it (default only fires that case) | mark the wrapper explicitly, or pass `backgroundRef` pointing at it |
 | Two sheets on one page fight over background scale | both rely on the implicit `[data-scrollsheet-background]` document query | give each its own `backgroundRef` |
@@ -234,5 +242,6 @@ Full prop tables (`Sheet.Root`, styling hooks, other exports): `docs/src/content
 repo, or https://scrollsheet.dev/docs/reference/api. `Sheet.Root` also exposes `open`, `defaultOpen`,
 `onOpenChange`, `onOpenChangeComplete`, `dismissible`, `escapeDismissible`, `backdropDismissible`,
 `themeColorDimming`, `scrollbar`, `largestUndimmedDetent`, `handleOnly`, `disableDrag`,
-`sequentialDetents`, `closeThreshold` (0-1, default `0.5`), `onRelease`: check the docs page for
-exact defaults before assuming one.
+`sequentialDetents`, `closeThreshold` (0-1, default `0.5`), `onRelease`, `keyboardExpands`
+(`false`), `phantomScrollGuard` (`true`), `animationSpeed` (`1`), `desktopSide`, and
+`desktopBreakpoint` (`768`): check the docs page for exact defaults before assuming one.

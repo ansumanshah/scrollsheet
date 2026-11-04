@@ -4,7 +4,7 @@ Bottom sheets for React that feel native. Because they are.
 
 <img src="docs/public/hero.gif" width="290" align="right" alt="A bottom sheet dragged between detents 1:1 and flick-dismissed, rendered in a native dialog">
 
-One primitive for bottom sheets, drawers, modal dialogs, side panels, and toasts. A real `<dialog>` in the top layer. The browser's own scroll engine for gestures. Spring physics compiled to CSS `linear()`. <!--size:index.gzip:1-->16.4<!--/size--> kB gzipped, <!--size:index.brotli:1-->14.7<!--/size--> kB brotli, plus a 3.9 kB stylesheet. React 18+.
+One primitive for bottom sheets, drawers, modal dialogs, side panels, and toasts. A real `<dialog>` in the top layer. The browser's own scroll engine for gestures. Spring physics compiled to CSS `linear()`. <!--size:index.gzip:1-->16.3<!--/size--> kB gzipped, <!--size:index.brotli:1-->14.6<!--/size--> kB brotli, plus a 3.9 kB stylesheet. React 18+.
 
 ## Why another drawer
 
@@ -26,8 +26,8 @@ bun add scrollsheet   # or npm/pnpm/yarn
 ## Use
 
 ```tsx
-import { Sheet } from 'scrollsheet';
-import 'scrollsheet/styles.css';
+import { Sheet } from "scrollsheet";
+import "scrollsheet/styles.css";
 
 <Sheet.Root>
   <Sheet.Trigger>Open</Sheet.Trigger>
@@ -37,7 +37,7 @@ import 'scrollsheet/styles.css';
     <Sheet.Description>Says what this sheet is for.</Sheet.Description>
     <Sheet.Close>Done</Sheet.Close>
   </Sheet.Content>
-</Sheet.Root>
+</Sheet.Root>;
 ```
 
 `Sheet.*` is client-only: state, event handlers, real DOM. In Next.js App Router, add `'use client'` to the file that renders it, same as any other interactive component.
@@ -65,16 +65,16 @@ Same component, same props, same focus behavior. [Guide](https://scrollsheet.dev
 
 ### API
 
-| Component | What it is |
-| --- | --- |
-| `Sheet.Root` | State owner. `open` / `onOpenChange`, `detents` / `activeDetent`, `side` (any edge or `'center'`), `desktopSide` / `desktopBreakpoint`, `modal`, the `dismissible` family, `actionsRef` (`open()` / `close()` / `snapTo(detent)`), plus travel, keyboard, and gesture tuning props |
-| `Sheet.Trigger` | Button wired with `aria-haspopup` / `aria-expanded` |
-| `Sheet.Content` | The `<dialog>`, backdrop, scroll track, and panel |
-| `Sheet.Handle` | Grabber pill: click cycles detents, arrows move, down-arrow at the lowest detent dismisses. `variant="floating"` overlays full-bleed content; `variant="outside"` floats the pill in the backdrop above the sheet |
-| `Sheet.Title` / `Sheet.Description` | Wire `aria-labelledby` / `aria-describedby` |
-| `Sheet.Close` | Closes on click. Self-closing `<Sheet.Close />` renders a styled ✕ button, top-right, 44px hit area, `aria-label` included |
+| Component                           | What it is                                                                                                                                                                                                                                                                                                                                                                             |
+| ----------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `Sheet.Root`                        | State owner. `open` / `onOpenChange`, `detents` / `activeDetent`, `side` (any edge or `'center'`), `desktopSide` / `desktopBreakpoint`, `modal`, the `dismissible` family, `actionsRef` (`open()` / `close()` / `snapTo(detent)`), plus travel, keyboard, animation (`animationSpeed`), and gesture tuning props (`handleOnly`, `disableDrag`, `closeThreshold`, `phantomScrollGuard`) |
+| `Sheet.Trigger`                     | Button wired with `aria-haspopup` / `aria-expanded`                                                                                                                                                                                                                                                                                                                                    |
+| `Sheet.Content`                     | The `<dialog>`, backdrop, scroll track, and panel. `fill` stretches the body for a fixed header over an inner-scroll list; `asChild` renders your element as the panel                                                                                                                                                                                                                 |
+| `Sheet.Handle`                      | Grabber pill: click cycles detents, arrows move, down-arrow at the lowest detent dismisses. `variant="floating"` overlays full-bleed content; `variant="outside"` floats the pill in the backdrop above the sheet                                                                                                                                                                      |
+| `Sheet.Title` / `Sheet.Description` | Wire `aria-labelledby` / `aria-describedby`                                                                                                                                                                                                                                                                                                                                            |
+| `Sheet.Close`                       | Closes on click. Self-closing `<Sheet.Close />` renders a styled ✕ button, top-right, 44px hit area, `aria-label` included                                                                                                                                                                                                                                                             |
 
-Also exported: `DetentSpec`, `Side`, `SheetActions`, `TravelInfo`, `spring(config?)`, `isSupported()`. Styling hooks (`data-scrollsheet-state`, `--scrollsheet-progress`, `--scrollsheet-travel: none`, and the rest) and the full prop reference: [scrollsheet.dev/docs/reference/api](https://scrollsheet.dev/docs/reference/api).
+Also exported: `DetentSpec`, `Side`, `SheetActions`, `TravelInfo`, `spring(config?)` with `SpringConfig` and `SpringCurve`, `isSupported()`, `injectStylesInto` and `injectToastStylesInto` (Shadow DOM, `scrollsheet/auto` only), and the `Drawer`, `Dialog`, `Toaster`, `toast`, `useToasts`, and `useSonner` compat exports. Styling hooks (`data-scrollsheet-state`, `--scrollsheet-progress`, `--scrollsheet-travel: none`, and the rest) and the full prop reference: [scrollsheet.dev/docs/reference/api](https://scrollsheet.dev/docs/reference/api).
 
 ### Also built in
 
@@ -88,39 +88,43 @@ Also exported: `DetentSpec`, `Side`, `SheetActions`, `TravelInfo`, `spring(confi
 - **Smaller things.** Desktop mouse drag, the `fill` prop, Shadow DOM injection, `themeColorDimming`, hidden scrollbars with an overlay thumb.
 - **Agent skills.** [`skills/`](skills/) ships `migrate-from-vaul`, `migrate-from-sonner`, `migrate-from-radix-dialog`, and `build-with-scrollsheet` for coding agents.
 - **Motion core (experimental).** `scrollsheet/motion` is the React-free layer the sheet runs on: closed-form spring solver, interruptible WAAPI wrapper, scroll tween. 1.6 kB gzipped standalone.
-- **Zero-config entry.** `scrollsheet/auto` embeds the stylesheet and injects it on first open: no CSS import needed, <!--size:auto.gzip:1-->20.8<!--/size--> kB gzip for `Sheet` against the default entry's <!--size:index.gzip:1-->16.4<!--/size-->.
+- **Zero-config entry.** `scrollsheet/auto` embeds the stylesheet and injects it on first open: no CSS import needed, <!--size:auto.gzip:1-->20.8<!--/size--> kB gzip for `Sheet` against the default entry's <!--size:index.gzip:1-->16.3<!--/size-->.
 
 Focus containment comes from the platform's `showModal()`, not a JS focus trap. On open, focus lands on the panel so mobile keyboards don't pop unasked; use native `autofocus` to override.
 
 ## The competition, honestly
 
-| | scrollsheet | vaul | Silk | react-modal-sheet |
-| --- | --- | --- | --- | --- |
-| Runtime deps | **0** | Radix Dialog (+24 transitive) | 0 | Motion (peer) |
-| Native `<dialog>` / top layer | **yes** | no | no | no |
-| Gesture engine | native scroll | pointer events | native scroll | Motion drag |
-| Toasts | **yes, sonner drop-in** | no | yes | no |
-| Lightbox | **yes** | no | yes | no |
-| No-`<dialog>` browsers (~4%) | plain modal, no gestures | **full support** | **full support** | **full support** |
-| License | **MIT** | MIT | commercial for advanced use | MIT |
-| Price | **free** | free | paid license for the full set | free |
+|                               | scrollsheet              | vaul                          | Silk                          | react-modal-sheet |
+| ----------------------------- | ------------------------ | ----------------------------- | ----------------------------- | ----------------- |
+| Runtime deps                  | **0**                    | Radix Dialog (+24 transitive) | 0                             | Motion (peer)     |
+| Native `<dialog>` / top layer | **yes**                  | no                            | no                            | no                |
+| Gesture engine                | native scroll            | pointer events                | native scroll                 | Motion drag       |
+| Toasts                        | **yes, sonner drop-in**  | no                            | yes                           | no                |
+| Lightbox                      | **yes**                  | no                            | yes                           | no                |
+| No-`<dialog>` browsers (~3%)  | plain modal, no gestures | **full support**              | **full support**              | **full support**  |
+| License                       | **MIT**                  | MIT                           | commercial for advanced use   | MIT               |
+| Price                         | **free**                 | free                          | paid license for the full set | free              |
 
-Building on `<dialog>` is a real trade. The others portal a plain `<div>`, so their full experience reaches the ~4% of browsers with no `<dialog>` (Opera Mini, some old in-app WebViews, iOS ≤15.3), where scrollsheet degrades to a static modal: backdrop, tap-to-close, Escape, content reachable, gestures gone. If pixel-identical drag on iOS 15.3 is a requirement, this is the wrong library.
+Building on `<dialog>` is a real trade. The others portal a plain `<div>`, so their full experience reaches the ~3% of browsers with no `<dialog>` (Opera Mini, some old in-app WebViews, iOS ≤15.3), where scrollsheet degrades to a static modal: backdrop, tap-to-close, Escape, content reachable, gestures gone. If pixel-identical drag on iOS 15.3 is a requirement, this is the wrong library.
 
 ## Browser support
 
-`<dialog>`: about 96% global. The spring easing needs CSS `linear()` (Chrome 113+, Safari 17.2+, Firefox 112+); below that, a plain ease-out at the same duration. Chrome/Edge 115+ and Safari 26+ run the backdrop dim and `--scrollsheet-progress` as compositor-side scroll-driven animations; everywhere else the same values update from JS. Below Safari 15.4, the static-modal fallback above, no code required. Full matrix: [browser support docs](https://scrollsheet.dev/docs/browser-support).
+`<dialog>`: about 97% global. The spring easing needs CSS `linear()` (Chrome 113+, Safari 17.2+, Firefox 112+); below that, a plain ease-out at the same duration. Chrome/Edge 115+ and Safari 26+ run the backdrop dim and `--scrollsheet-progress` as compositor-side scroll-driven animations; everywhere else the same values update from JS. Below Safari 15.4, the static-modal fallback above, no code required. Full matrix: [browser support docs](https://scrollsheet.dev/docs/browser-support).
 
-Want a different experience for that ~4% instead of the built-in fallback? Check client-side, after mount:
+Want a different experience for that ~3% instead of the built-in fallback? Check client-side, after mount:
 
 ```tsx
-import { Sheet, isSupported } from 'scrollsheet';
+import { Sheet, isSupported } from "scrollsheet";
 
 const [supported, setSupported] = useState(false);
 useEffect(() => setSupported(isSupported()), []);
 
 if (!supported) return <LegacyModal open={open} onClose={onClose} />;
-return <Sheet.Root open={open} onOpenChange={onClose}>...</Sheet.Root>;
+return (
+  <Sheet.Root open={open} onOpenChange={onClose}>
+    ...
+  </Sheet.Root>
+);
 ```
 
 ## shadcn/ui
