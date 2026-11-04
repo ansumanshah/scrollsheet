@@ -9,6 +9,10 @@ import { defineConfig } from "@playwright/test";
 // run alongside a locally running `bun run --cwd docs dev` without a
 // collision. Bypasses docs/package.json's "preview" script (which hardcodes
 // --port 4321) and calls astro directly so the override actually takes.
+// Parallel worktrees set SITE_E2E_PORT so reuseExistingServer cannot attach to
+// another checkout's build.
+const PORT = process.env.SITE_E2E_PORT ?? "4322";
+
 export default defineConfig({
   testDir: "tests/e2e",
   testMatch: /[\\/]site[\\/]/,
@@ -21,7 +25,7 @@ export default defineConfig({
   retries: process.env.CI ? 2 : 0,
   reporter: "list",
   use: {
-    baseURL: "http://localhost:4322",
+    baseURL: `http://localhost:${PORT}`,
     trace: "on-first-retry",
   },
   projects: [
@@ -36,9 +40,8 @@ export default defineConfig({
   ],
   webServer: {
     // Playwright owns the foreground server; Astro's agent detection can detach it.
-    command:
-      "bun run --cwd docs build && bun run --bun --cwd docs astro preview --ignore-lock --port 4322",
-    url: "http://localhost:4322",
+    command: `bun run --cwd docs build && bun run --bun --cwd docs astro preview --ignore-lock --port ${PORT}`,
+    url: `http://localhost:${PORT}`,
     reuseExistingServer: !process.env.CI,
     timeout: 120_000,
   },

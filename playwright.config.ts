@@ -1,5 +1,9 @@
 import { defineConfig } from "@playwright/test";
 
+// A shared port plus reuseExistingServer would run one checkout's tests against
+// another checkout's source, so parallel worktrees each set their own.
+const PORT = process.env.E2E_PORT ?? "5799";
+
 /**
  * Visual-regression lane (tests/e2e/visual/): Playwright's built-in
  * toHaveScreenshot, chromium-only for deterministic rendering (font hinting,
@@ -55,7 +59,7 @@ export default defineConfig({
   workers: process.env.CI ? 1 : "75%",
   reporter: "list",
   use: {
-    baseURL: "http://localhost:5799",
+    baseURL: `http://localhost:${PORT}`,
     trace: "on-first-retry",
   },
   projects: [
@@ -189,9 +193,9 @@ export default defineConfig({
   // playground's own Vite alias does.
   webServer: {
     command: "bun run tests/e2e/fixtures/serve.ts",
-    url: "http://localhost:5799",
+    url: `http://localhost:${PORT}`,
     reuseExistingServer: !process.env.CI,
     timeout: 60_000,
-    env: { PORT: "5799" },
+    env: { PORT },
   },
 });
