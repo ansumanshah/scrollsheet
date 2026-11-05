@@ -10,9 +10,10 @@ const entries = ["index.ts", "drawer/index.tsx", "dialog/index.tsx", "toast/inde
 const cssStubs: Bun.BunPlugin = {
   name: "css-stubs",
   setup(build) {
-    build.onResolve({ filter: /(?:^|\/)(?:core|toast)-css\.generated(?:\.ts)?$/ }, () => ({
-      path: `${src}/internal/css-stubs.ts`,
-    }));
+    build.onResolve(
+      { filter: /(?:^|\/)(?:(?:core|toast)-css\.generated|inject-styles)(?:\.ts)?$/ },
+      () => ({ path: `${src}/internal/css-stubs.ts` }),
+    );
   },
 };
 

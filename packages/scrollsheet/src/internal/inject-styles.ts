@@ -15,8 +15,6 @@ export function createStyleInjector(css: string, dataAttr: string) {
   const injectedRoots = new WeakSet<Document | ShadowRoot>();
 
   function injectInto(root: Document | ShadowRoot, nonce?: string): void {
-    // Empty css: the no-styles build (css-stubs.ts) — nothing to inject,
-    // the consumer imports the stylesheet file instead.
     if (!css) return;
     if (injectedRoots.has(root)) return;
     const existing =
