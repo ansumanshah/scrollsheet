@@ -30,15 +30,6 @@ Coming from vaul? Its [README](https://github.com/emilkowalski/vaul#readme) says
   </a>
 </p>
 
-## How sheets work
-
-1. **Native dialog.** Modal sheets use the browser's top layer, focus containment, and background inerting.
-2. **Scroll-based touch gestures.** A `scroll-snap` container defines the resting heights. Desktop mouse dragging and some non-modal gestures use pointer handlers.
-3. **Spring motion.** Spring curves are sampled into CSS `linear()` easing for Web Animations. Scroll corrections use interruptible JavaScript tweens.
-4. **Nested scrolling.** Mark inner scrollers with `data-scrollsheet-nested-scroll` to coordinate scrolling and sheet travel at their edges.
-
-Modal sheets lock background scrolling where needed. On iOS, this includes temporarily fixing the body in place and restoring its styles and scroll position when the last modal sheet closes.
-
 ## Install
 
 ```sh
@@ -51,116 +42,46 @@ bun add scrollsheet   # or npm/pnpm/yarn
 import { Sheet } from "scrollsheet";
 import "scrollsheet/styles.css";
 
-<Sheet.Root>
+<Sheet.Root detents={[0.35, 0.7, "full"]}>
   <Sheet.Trigger>Open</Sheet.Trigger>
   <Sheet.Content className="my-sheet">
     <Sheet.Handle />
     <Sheet.Title>Title</Sheet.Title>
     <Sheet.Description>Says what this sheet is for.</Sheet.Description>
-    <Sheet.Close>Done</Sheet.Close>
+    <Sheet.Footer>
+      <Sheet.Close>Done</Sheet.Close>
+    </Sheet.Footer>
   </Sheet.Content>
 </Sheet.Root>;
 ```
 
-`Sheet.*` is client-only: state, event handlers, real DOM. In Next.js App Router, add `'use client'` to the file that renders it, same as any other interactive component.
+In Next.js App Router, add `'use client'` to the file that renders it. No CSS import in your setup? Use `scrollsheet/auto`, which injects the stylesheets and supports Shadow DOM and CSP nonces.
 
-The stylesheet includes layout rules and default colors, radii, and shadows. Override them with CSS custom properties or `className`. If your setup cannot import CSS, use `scrollsheet/auto`: it embeds the stylesheets and injects them when needed. It also supports Shadow DOM and CSP nonces.
+## What you get
 
-Design systems and other libraries that re-bundle their CSS: if your pipeline statically compiles custom properties away (postcss-css-variables and similar), it destroys the runtime `--scrollsheet-*` variables the stylesheet's geometry runs on, and sheets break in subtle ways. Import from `scrollsheet/auto` there instead; the injected stylesheet never enters your build.
+- **Any presentation.** Bottom sheet, any edge, or a centered dialog. `desktopSide="center"` makes it a sheet on phones and a dialog from 768px.
+- **Native behavior.** A real `<dialog>` handles focus and the top layer, and touch drags are real scrolling.
+- **Pinned footer.** `Sheet.Footer` stays visible at every detent and above the keyboard.
+- **Keyboard handling.** Insets on every side, with `keyboardExpands` to grow while typing.
+- **Nesting.** Nested sheets, nested scrollers, and content that springs to its new height.
+- **Toasts.** `toast` and `Toaster`, with promises, six positions, and swipe dismissal.
+- **Migration adapters.** `Drawer` (vaul), `Dialog` (Radix), and `useSonner` (Sonner), with guides listing the differences.
 
-### Detents
-
-```tsx
-<Sheet.Root detents={[0.35, 0.7, 'full']} activeDetent={active} onActiveDetentChange={setActive}>
-```
-
-A detent is `'content'` (the default), `'medium'`, `'full'`, a fraction, or `'320px'`. The handle cycles detents on click and moves between them with arrow keys.
-
-### Centered dialogs
-
-```tsx
-<Sheet.Root side="center">           // a content-sized modal, zoom+fade, your CSS owns the width
-<Sheet.Root desktopSide="center">    // bottom sheet on phones, that modal at 768px and up
-```
-
-Same component, same props, same focus behavior. [Guide](https://scrollsheet.dev/docs/presentation/centered-dialog), [responsive profiles](https://scrollsheet.dev/docs/presentation/responsive-profiles).
-
-### API
-
-| Component                           | What it is                                                                                                                                                                                                                                                                                                                                                                             |
-| ----------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `Sheet.Root`                        | State owner. `open` / `onOpenChange`, `detents` / `activeDetent`, `side` (any edge or `'center'`), `desktopSide` / `desktopBreakpoint`, `modal`, the `dismissible` family, `actionsRef` (`open()` / `close()` / `snapTo(detent)`), plus travel, keyboard, animation (`animationSpeed`), and gesture tuning props (`handleOnly`, `disableDrag`, `closeThreshold`, `phantomScrollGuard`) |
-| `Sheet.Trigger`                     | Button wired with `aria-haspopup` / `aria-expanded`                                                                                                                                                                                                                                                                                                                                    |
-| `Sheet.Content`                     | The `<dialog>`, backdrop, scroll track, and panel. `fill` stretches the body for a fixed header over an inner-scroll list; `asChild` renders your element as the panel                                                                                                                                                                                                                 |
-| `Sheet.Handle`                      | Grabber pill: click cycles detents, arrows move, down-arrow at the lowest detent dismisses. `variant="floating"` overlays full-bleed content; `variant="outside"` floats the pill in the backdrop above the sheet                                                                                                                                                                      |
-| `Sheet.Title` / `Sheet.Description` | Wire `aria-labelledby` / `aria-describedby`                                                                                                                                                                                                                                                                                                                                            |
-| `Sheet.Close`                       | Closes on click. Self-closing `<Sheet.Close />` renders a styled ✕ button, top-right, 44px hit area, `aria-label` included                                                                                                                                                                                                                                                             |
-
-Also exported: `DetentSpec`, `Side`, `SheetActions`, `TravelInfo`, `spring(config?)` with `SpringConfig` and `SpringCurve`, `isSupported()`, `injectStylesInto` and `injectToastStylesInto` (Shadow DOM, `scrollsheet/auto` only), and the `Drawer`, `Dialog`, `Toaster`, `toast`, `useToasts`, and `useSonner` compat exports. Styling hooks (`data-scrollsheet-state`, `--scrollsheet-progress`, `--scrollsheet-travel: none`, and the rest) and the full prop reference: [scrollsheet.dev/docs/reference/api](https://scrollsheet.dev/docs/reference/api).
-
-### Also built in
-
-- **Nested sheets.** A `Sheet.Root` inside another sheet's `Content`; the parent recedes iOS-style.
-- **Nested scrollers.** Mark an inner list `data-scrollsheet-nested-scroll`: it scrolls, and at its top the same swipe continues as sheet travel.
-- **Content morph.** A `'content'` detent springs to new content height instead of jumping.
-- **Keyboard handling.** `visualViewport` measurements provide keyboard insets for each side. `keyboardExpands` promotes a sheet to its tallest detent while the keyboard is visible.
-- **Radix Dialog adapter.** `Dialog` supports the common Radix Dialog parts and `data-state` selectors with a centered presentation. Unsupported props warn once in development. [Migration guide](https://scrollsheet.dev/docs/migrating/from-radix-dialog).
-- **Vaul adapter.** `Drawer` maps common Vaul props and preserves its documented data attributes, including `data-vaul-no-drag`. [Migration guide](https://scrollsheet.dev/docs/migrating/from-vaul).
-- **Toasts.** `toast`, `Toaster`, and `useToasts` support promises, updates by ID, six positions, and swipe dismissal. Import `scrollsheet/toast.css` and customize `.scrollsheet-toast` classes or `--scrollsheet-toast-*` properties. Sonner class aliases and `useSonner` are available for migration; `sonnerCompat={false}` omits the aliases. [Migration guide](https://scrollsheet.dev/docs/migrating/from-sonner).
-- **Smaller things.** Desktop mouse drag, the `fill` prop, Shadow DOM injection, `themeColorDimming`, hidden scrollbars with an overlay thumb.
-- **Agent skills.** [`skills/`](https://github.com/ansumanshah/scrollsheet/tree/main/skills) contains `migrate-from-vaul`, `migrate-from-sonner`, `migrate-from-radix-dialog`, and `build-with-scrollsheet` for coding agents.
-- **Motion core (experimental).** `scrollsheet/motion` exports the React-free spring solver, Web Animations wrapper, and scroll tween.
-- **Zero-config entry.** `scrollsheet/auto` embeds the stylesheet and injects it on first open: no CSS import needed, <!--size:auto.brotli:1-->17.9<!--/size--> kB compressed for `Sheet` against the default entry's <!--size:index.brotli:1-->14.4<!--/size-->.
-
-Focus containment comes from the platform's `showModal()`, not a JS focus trap. On open, focus lands on the panel so mobile keyboards don't pop unasked; use native `autofocus` to override.
-
-## Compatibility limits
-
-The Vaul, Radix Dialog, and Sonner adapters cover common APIs, with differences listed in the migration guides. Check those differences before replacing an existing implementation.
-
-Browsers without native `<dialog>` support (about 3% of global usage) get a static modal with backdrop dismissal and Escape handling, without sheet gestures. Test the fallback if older browsers are part of your support requirements.
-
-## Browser support
-
-`<dialog>`: about 97% global. The spring easing needs CSS `linear()` (Chrome 113+, Safari 17.2+, Firefox 112+); below that, a plain ease-out at the same duration. Chrome/Edge 115+ and Safari 26+ run the backdrop dim and `--scrollsheet-progress` as compositor-side scroll-driven animations; everywhere else the same values update from JS. Below Safari 15.4, the static-modal fallback above, no code required. Full matrix: [browser support docs](https://scrollsheet.dev/docs/browser-support).
-
-Want a different experience for that ~3% instead of the built-in fallback? Check client-side, after mount:
-
-```tsx
-import { useEffect, useState } from "react";
-import { Sheet, isSupported } from "scrollsheet";
-import "scrollsheet/styles.css";
-
-const [supported, setSupported] = useState(false);
-useEffect(() => setSupported(isSupported()), []);
-
-if (!supported) return <LegacyModal open={open} onClose={onClose} />;
-return (
-  <Sheet.Root open={open} onOpenChange={(next) => { if (!next) onClose(); }}>
-    ...
-  </Sheet.Root>
-);
-```
+Full reference: [API docs](https://scrollsheet.dev/docs/reference/api).
 
 ## shadcn/ui
-
-Every primitive ships as a registry item:
 
 ```sh
 bunx shadcn@latest add https://scrollsheet.dev/r/drawer.json
 ```
 
-Items: `drawer`, `sheet`, `dialog`, `confirm`, `share-sheet`, `sidebar`, `toast`, plus `mobile-select`, `command-palette`, `picker-wheel`, and `action-sheet`. Each writes one file into `components/ui/` with shadcn's default styling applied, wrapping the primitives above. Swap `drawer.json` in the URL for any of them.
+Swap `drawer` for `sheet`, `dialog`, `confirm`, `share-sheet`, `sidebar`, `toast`, `mobile-select`, `command-palette`, `picker-wheel`, or `action-sheet`.
 
-## Development
+## Browser support
 
-```sh
-bun install
-bun run dev        # docs site with live examples (localhost:4321)
-bun run build      # required before unit tests read dist/
-bun run test       # unit tests
-bun run verify     # the full gate
-```
+Browsers without `<dialog>` (about 3% of global usage) get a static modal with backdrop dismissal and Escape, without sheet gestures. Springs need CSS `linear()` and fall back to ease-out. [Full matrix](https://scrollsheet.dev/docs/browser-support).
+
+## Contributing
 
 See [CONTRIBUTING.md](https://github.com/ansumanshah/scrollsheet/blob/main/CONTRIBUTING.md) and the [CHANGELOG](https://github.com/ansumanshah/scrollsheet/blob/main/CHANGELOG.md).
 
