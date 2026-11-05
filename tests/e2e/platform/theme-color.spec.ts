@@ -51,3 +51,57 @@ test("center: the meta dims via the open sequence, with no travel frames to carr
   });
   await expect.poll(() => page.evaluate(readMeta), { timeout: SPRING_TIMEOUT }).toBe("#ffffff");
 });
+
+/**
+ * A nested sheet snapshots the meta while its parent has it dimmed, so the two
+ * must restore child first when a close takes both down in one commit.
+ */
+for (const action of [
+  "Close nested theme parent",
+  "Close nested theme both",
+  "Unmount nested theme root",
+]) {
+  test(`nested sheets: "${action}" restores the meta`, async ({ page }) => {
+    await page.goto("/");
+    const parent = await openSheetByTrigger(page, "Nested theme parent");
+    await expect.poll(() => page.evaluate(readMeta), { timeout: SPRING_TIMEOUT }).not.toBe("#ffffff");
+    const firstDim = await page.evaluate(readMeta);
+
+    await parent.getByRole("button", { name: "Open nested theme child", exact: true }).click();
+    const child = page.locator("dialog.scrollsheet-dialog").nth(1);
+    await expect(child).toHaveAttribute("data-scrollsheet-state", "open", {
+      timeout: SPRING_TIMEOUT,
+    });
+    await child.getByRole("button", { name: action, exact: true }).click();
+    await expect(page.locator("dialog.scrollsheet-dialog")).toHaveCount(0, {
+      timeout: SPRING_TIMEOUT,
+    });
+    await expect.poll(() => page.evaluate(readMeta), { timeout: SPRING_TIMEOUT }).toBe("#ffffff");
+    // Past any late travel frame, and the next open starts from the real base.
+    await page.waitForTimeout(150);
+    expect(await page.evaluate(readMeta)).toBe("#ffffff");
+    if (action === "Unmount nested theme root") return;
+
+    await openSheetByTrigger(page, "Nested theme parent");
+    await expect.poll(() => page.evaluate(readMeta), { timeout: SPRING_TIMEOUT }).toBe(firstDim);
+  });
+}
+
+test("nested sheets: closing only the child hands the meta back to the parent's dim", async ({
+  page,
+}) => {
+  await page.goto("/");
+  const parent = await openSheetByTrigger(page, "Nested theme parent");
+  await expect.poll(() => page.evaluate(readMeta), { timeout: SPRING_TIMEOUT }).not.toBe("#ffffff");
+  const parentDim = await page.evaluate(readMeta);
+  await parent.getByRole("button", { name: "Open nested theme child", exact: true }).click();
+  const child = page.locator("dialog.scrollsheet-dialog").nth(1);
+  await expect(child).toHaveAttribute("data-scrollsheet-state", "open", {
+    timeout: SPRING_TIMEOUT,
+  });
+  await child.getByRole("button", { name: "Close nested theme child", exact: true }).click();
+  await expect(page.locator("dialog.scrollsheet-dialog")).toHaveCount(1, {
+    timeout: SPRING_TIMEOUT,
+  });
+  await expect.poll(() => page.evaluate(readMeta), { timeout: SPRING_TIMEOUT }).toBe(parentDim);
+});

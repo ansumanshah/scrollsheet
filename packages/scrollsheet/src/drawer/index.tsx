@@ -146,7 +146,7 @@ export function composeOpenChange(
  * Radix onPointerDownOutside/onInteractOutside preventDefault idiom),
  * `escapeDismissible` (same for onEscapeKeyDown), `flick`, `keyboardExpands`,
  * `onTravel` (the live counterpart of vaul's ignored `onDrag`), `scrollbar`,
- * `animationSpeed`, and `actionsRef`. Only props with no vaul name-collision are forwarded —
+ * `animationSpeed`, `nonce`, and `actionsRef`. Only props with no vaul name-collision are forwarded —
  * anything vaul also has (`closeThreshold`, `modal`, `dismissible`, …) keeps
  * its translated vaul semantics above.
  */
@@ -158,6 +158,7 @@ export interface DrawerRootProps extends Pick<
   | "escapeDismissible"
   | "keyboardExpands"
   | "flick"
+  | "nonce"
   | "onTravel"
   | "scrollbar"
 > {
@@ -277,6 +278,7 @@ export function Root(props: DrawerRootProps) {
     onTravel,
     scrollbar,
     animationSpeed,
+    nonce,
   } = props;
 
   // Fires during render (not an effect) so it also surfaces on the server —
@@ -342,8 +344,9 @@ export function Root(props: DrawerRootProps) {
   // PointerEvent), never a React SyntheticEvent — the cast to vaul's
   // React.PointerEvent<HTMLDivElement> is a type-level accommodation only,
   // so a handler typed against vaul's own declaration still compiles, not a
-  // claim that the runtime value is actually a SyntheticEvent.
-  const handleRelease = onRelease as unknown as SheetRootProps["onRelease"];
+  // claim that the runtime value is actually a SyntheticEvent. The `||`: the
+  // engine calls this with `?.`, and untyped JS can pass `cond && handler`.
+  const handleRelease = (onRelease || undefined) as unknown as SheetRootProps["onRelease"];
 
   // See composeOpenChange's doc comment for why layering onClose on
   // SheetRoot's own onOpenChange (rather than a separate wiring) is what
@@ -410,6 +413,7 @@ export function Root(props: DrawerRootProps) {
         onTravel={onTravel}
         scrollbar={scrollbar}
         animationSpeed={animationSpeed}
+        nonce={nonce}
       >
         {children}
       </SheetRoot>

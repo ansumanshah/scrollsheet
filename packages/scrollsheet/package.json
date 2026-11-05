@@ -67,6 +67,9 @@
   },
   "main": "./dist/index.mjs",
   "types": "./dist/types/index.d.ts",
+  "scripts": {
+    "prepack": "bun run --cwd ../.. build"
+  },
   "peerDependencies": {
     "react": ">=18",
     "react-dom": ">=18"

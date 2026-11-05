@@ -23,7 +23,7 @@ export interface UseContentMorphInput {
     track: HTMLElement,
     target: number,
     axis: "x" | "y",
-    suspendSnap?: boolean,
+    suspendSnap?: boolean | (() => void),
   ) => ScrollAnimation;
   /** Core helpers arrive as props: a static value edge would chain this
    *  lazy chunk back to the core (lazy-chunk-imports.test.ts). */
@@ -71,6 +71,40 @@ export function useContentMorph({
     if (!body || !track) return;
     let raf = 0;
     let stretched: unknown;
+    let endHold: (() => void) | undefined;
+
+    const tween = (rawTarget: number, axis: "x" | "y") => {
+      endHold?.();
+      // A hold leaves snap off, and the animator restores what it finds.
+      track.style.scrollSnapType = "";
+      startTween(track, rawTarget, axis, hold).finished.finally(syncSnapStops);
+    };
+
+    // A press freezes the morph where it is, so the press lands on what it
+    // aimed at, and the morph resumes on release. A pan cancels the pointer
+    // and rides native snap, against stops already rebuilt by then.
+    const hold = () => {
+      const held = animRef.current;
+      const end = (event: Event) => {
+        endHold?.();
+        // A committed drag owns snap and the outcome.
+        if (track.closest("[data-scrollsheet-dragging]")) return;
+        const geometry = geometryFor(ctxRef.current.side);
+        const target = resolveSpec(ctxRef.current.activeDetent);
+        if (event.type === "pointerup" && target && animRef.current === held) {
+          tween(mapScroll(target.height, maxDetentRef.current, geometry.sign), geometry.axis);
+        } else {
+          track.style.scrollSnapType = "";
+        }
+      };
+      endHold = () => {
+        endHold = undefined;
+        removeEventListener("pointerup", end, true);
+        removeEventListener("pointercancel", end, true);
+      };
+      addEventListener("pointerup", end, true);
+      addEventListener("pointercancel", end, true);
+    };
 
     const scheduleMorph = () => {
       if (raf) return;
@@ -119,11 +153,7 @@ export function useContentMorph({
           syncSnapStops();
           return;
         }
-        // suspendSnap: true — this is the one call site that needs it (see
-        // scroll-animator.ts's doc comment); the other two (Handle/keyboard
-        // detent travel, drag-release) omit it deliberately.
-        const animation = startTween(track, rawTarget, geometry.axis, true);
-        animation.finished.finally(syncSnapStops);
+        tween(rawTarget, geometry.axis);
       });
     };
 
@@ -164,6 +194,10 @@ export function useContentMorph({
       mutation.disconnect();
       observer.disconnect();
       if (raf) cancelAnimationFrame(raf);
+      if (endHold) {
+        endHold();
+        track.style.scrollSnapType = "";
+      }
     };
   }, [
     phase,

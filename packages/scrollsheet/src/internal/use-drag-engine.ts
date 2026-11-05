@@ -46,7 +46,7 @@ export interface UseDragEngineInput {
     track: HTMLElement,
     target: number,
     axis: "x" | "y",
-    suspendSnap?: boolean,
+    suspendSnap?: boolean | (() => void),
   ) => ScrollAnimation;
 }
 
@@ -118,8 +118,8 @@ export function useDragEngine({
     let wheelAccumulated = 0;
     let wheelTimer: ReturnType<typeof setTimeout> | undefined;
     // This drag session began by grabbing the sheet mid-entrance (see
-    // onPointerDown) — a no-move release then resumes toward the intended
-    // detent instead of being judged (and possibly dismissed) on the
+    // onPointerDown) or mid-morph — a no-move release then resumes toward the
+    // intended detent instead of being judged (and possibly dismissed) on the
     // partial position the grab happened to freeze.
     let enterGrab = false;
 
@@ -645,6 +645,8 @@ export function useDragEngine({
       samples = [{ t: origin?.t ?? performance.now(), pos: startPos }];
       maxMove = 0;
       animRef.current?.cancel();
+      // Still suspended here: a press just froze a morph.
+      if (track.style.scrollSnapType) enterGrab = true;
       track.style.scrollSnapType = "none";
       snapSuspended = true;
       // Capture on the actual pointerdown target, not unconditionally on

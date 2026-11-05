@@ -60,3 +60,54 @@ test("a press that began outside still dismisses after a press inside was abando
   await page.mouse.click(x, y);
   await expect(page.locator(".scrollsheet-dialog")).toHaveCount(0, { timeout: SPRING_TIMEOUT });
 });
+
+const clickTrack = (overlay: Locator) =>
+  overlay.locator(".scrollsheet-track").evaluate((track: HTMLElement) => track.click());
+
+/** A click from script has no press behind it, so no earlier press can block it. */
+test("a scripted track click dismisses after a click on content", async ({ page }) => {
+  await page.goto("/");
+  const overlay = await openOverlayByTrigger(page, "Footer detents");
+  await overlay.getByRole("textbox", { name: "Top field" }).click();
+  await clickTrack(overlay);
+  await expect(page.locator(".scrollsheet-dialog")).toHaveCount(0, { timeout: SPRING_TIMEOUT });
+});
+
+test("a scripted track click dismisses after a drag on content, which clicks nothing", async ({
+  page,
+}) => {
+  await page.goto("/");
+  const overlay = await openOverlayByTrigger(page, "Footer detents");
+  const from = await center(overlay.getByRole("textbox", { name: "Top field" }));
+  await page.mouse.move(from.x, from.y - 40);
+  await page.mouse.down();
+  await page.mouse.move(from.x, from.y - 20, { steps: 4 });
+  await page.mouse.up();
+  await page.waitForTimeout(600);
+  await expect(overlay).toHaveAttribute("data-scrollsheet-state", "open");
+  await clickTrack(overlay);
+  await expect(page.locator(".scrollsheet-dialog")).toHaveCount(0, { timeout: SPRING_TIMEOUT });
+});
+
+test("a press abandoned on content doesn't outlive the presentation", async ({ page }) => {
+  await page.goto("/");
+  let overlay = await openOverlayByTrigger(page, "Footer detents");
+  await pressAndReleaseOutside(page, overlay.getByRole("textbox", { name: "Top field" }));
+  await overlay.getByRole("textbox", { name: "Top field" }).click();
+  await page.keyboard.press("Escape");
+  await expect(page.locator(".scrollsheet-dialog")).toHaveCount(0, { timeout: SPRING_TIMEOUT });
+  overlay = await openOverlayByTrigger(page, "Footer detents");
+  await clickTrack(overlay);
+  await expect(page.locator(".scrollsheet-dialog")).toHaveCount(0, { timeout: SPRING_TIMEOUT });
+});
+
+test("the press guard is one press long: a real click outside after one inside dismisses", async ({
+  page,
+}) => {
+  await page.goto("/");
+  const overlay = await openOverlayByTrigger(page, "Footer detents");
+  await overlay.getByRole("textbox", { name: "Top field" }).click();
+  const { x, y } = await outsidePoint(page);
+  await page.mouse.click(x, y);
+  await expect(page.locator(".scrollsheet-dialog")).toHaveCount(0, { timeout: SPRING_TIMEOUT });
+});

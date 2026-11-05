@@ -7,9 +7,10 @@
  * dist/toast.css), and the dist/dev sibling tree the "development" export
  * condition points at — package.json's `files`/`exports` fields are easy to
  * drift from what `bun run build` actually emits. Run after build (this
- * inspects the packed tarball).
+ * inspects the packed tarball). A sentinel left in dist/ must not survive the
+ * pack: prepack's rebuild clears dist/, so a tarball with it shipped stale files.
  */
-import { mkdtemp, rm } from "node:fs/promises";
+import { mkdtemp, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -38,6 +39,8 @@ const REQUIRED_FILES = [
   "dist/dev/auto/index.mjs",
 ];
 
+const STALE_SENTINEL = "stale-sentinel.txt";
+
 const { Glob } = await import("bun");
 const dist = fileURLToPath(new URL("../packages/scrollsheet/dist/", import.meta.url));
 const chunks = new Map<string, string>();
@@ -50,6 +53,7 @@ assertEmbeddedStyles(chunks);
 const dir = await mkdtemp(join(tmpdir(), "scrollsheet-pack-"));
 try {
   const tarball = join(dir, "package.tgz");
+  await writeFile(join(dist, STALE_SENTINEL), "");
   const proc = Bun.spawn([process.execPath, "pm", "pack", "--filename", tarball, "--quiet"], {
     cwd: fileURLToPath(new URL("../packages/scrollsheet/", import.meta.url)),
     stdout: "pipe",
@@ -68,6 +72,9 @@ try {
     throw new Error(
       `scrollsheet: package tarball is missing required files: ${missing.join(", ")}`,
     );
+  }
+  if (files.has(`package/dist/${STALE_SENTINEL}`)) {
+    throw new Error("scrollsheet: packing did not rebuild dist/ (prepack hook missing?)");
   }
   console.log(`✔ bun pm pack contains: ${REQUIRED_FILES.join(", ")}`);
 } finally {

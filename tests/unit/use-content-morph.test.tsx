@@ -188,6 +188,6 @@ describe("useContentMorph — reduced motion", () => {
     });
 
     expect(scrollToCalls).toHaveLength(0);
-    expect(startTweenCalls).toEqual([[500, "y", true]]);
+    expect(startTweenCalls).toEqual([[500, "y", expect.any(Function)]]);
   });
 });

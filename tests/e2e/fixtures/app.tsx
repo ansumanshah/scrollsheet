@@ -4,6 +4,7 @@ import {
   SinglePxSideSheet,
   BasicSheet,
   ThemeColorSheet,
+  NestedThemeColorSheet,
   CenterSheet,
   ResponsiveProfileSheet,
   ResponsiveSideSheet,
@@ -11,6 +12,7 @@ import {
   KeyboardSheet,
   ControlledSheet,
   MultiViewSheet,
+  MorphPressSheet,
   FillSheet,
   FullHeightSheet,
   NoTravelSheet,
@@ -57,8 +59,10 @@ import {
   DrawerContentAsChildSheet,
   DrawerContentAsChildFragmentSheet,
   DrawerSelectableTextSheet,
+  DrawerNonceSheet,
+  DrawerOnReleaseFalseSheet,
 } from "./drawer";
-import { DialogAcceptanceModal } from "./dialog";
+import { DialogAcceptanceModal, DialogNonceModal } from "./dialog";
 import { FlickSheets, FooterSheets } from "./footer";
 import {
   SonnerFixture,
@@ -116,6 +120,7 @@ export function App() {
         <FloatingHandleSheet />
         <BasicSheet />
         <ThemeColorSheet />
+        <NestedThemeColorSheet />
         <CenterSheet />
         <ResponsiveProfileSheet />
         <ResponsiveSideSheet />
@@ -124,10 +129,14 @@ export function App() {
           trigger="Dialog acceptance modal (backdrop blocked)"
           backdropDismissible={false}
         />
+        <DialogNonceModal />
+        <DrawerNonceSheet />
+        <DrawerOnReleaseFalseSheet />
         <ThreeDetentSheet />
         <KeyboardSheet />
         <ControlledSheet />
         <MultiViewSheet />
+        <MorphPressSheet />
         <FillSheet />
         <AsChildSheet />
         <ReopenSheet />

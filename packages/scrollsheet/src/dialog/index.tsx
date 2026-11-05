@@ -61,6 +61,7 @@ export interface DialogRootProps extends Pick<
   | "animationSpeed"
   | "backdropDismissible"
   | "escapeDismissible"
+  | "nonce"
   | "onOpenChangeComplete"
 > {
   children?: React.ReactNode;
@@ -87,6 +88,7 @@ export function Root({
   escapeDismissible,
   onOpenChangeComplete,
   animationSpeed,
+  nonce,
 }: DialogRootProps) {
   return (
     <SheetRoot
@@ -100,6 +102,7 @@ export function Root({
       backdropDismissible={backdropDismissible}
       escapeDismissible={escapeDismissible}
       animationSpeed={animationSpeed}
+      nonce={nonce}
     >
       {children}
     </SheetRoot>

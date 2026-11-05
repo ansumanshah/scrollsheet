@@ -277,3 +277,29 @@ export function DrawerSelectableTextSheet({
     </Drawer.Root>
   );
 }
+
+export function DrawerNonceSheet() {
+  return (
+    <Drawer.Root nonce="e2e-nonce">
+      <Drawer.Trigger className="btn">Drawer nonce sheet</Drawer.Trigger>
+      <Drawer.Content className="sheet" aria-label="Drawer nonce sheet">
+        <Drawer.Title>Nonce</Drawer.Title>
+      </Drawer.Content>
+    </Drawer.Root>
+  );
+}
+
+/** `cond && handler` from untyped JS passes `false`, which vaul tolerates. */
+export function DrawerOnReleaseFalseSheet() {
+  return (
+    <Drawer.Root onRelease={false as never}>
+      <Drawer.Trigger className="btn">Drawer onRelease false sheet</Drawer.Trigger>
+      <Drawer.Content className="sheet" aria-label="Drawer onRelease false sheet">
+        <Drawer.Handle />
+        <div className="sheet-inner">
+          <Drawer.Title>onRelease false</Drawer.Title>
+        </div>
+      </Drawer.Content>
+    </Drawer.Root>
+  );
+}

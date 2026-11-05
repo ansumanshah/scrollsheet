@@ -160,7 +160,7 @@ export const Content = /* @__PURE__ */ React.forwardRef<HTMLDivElement, SheetCon
     const dimStartRef = React.useRef(0);
     const dimEndRef = React.useRef(0);
     const atMaxRef = React.useRef(false);
-    const pressedOutsideRef = React.useRef(true);
+    const pressedInsideRef = React.useRef(false);
     // onTravel's 3rd arg: one object + one Map, reused and mutated in place
     // every travel frame instead of allocated fresh — see TravelInfo's TSDoc.
     const travelInfoRef = React.useRef<{
@@ -502,7 +502,7 @@ export const Content = /* @__PURE__ */ React.forwardRef<HTMLDivElement, SheetCon
         track: HTMLElement,
         target: number,
         axis: "x" | "y",
-        suspendSnap = false,
+        suspendSnap: boolean | (() => void) = false,
       ): ScrollAnimation => {
         const durationMs = TRAVEL_MS / ctxRef.current.animationSpeed;
         const animation = animateScrollTo(track, target, durationMs, axis, suspendSnap);
@@ -548,7 +548,8 @@ export const Content = /* @__PURE__ */ React.forwardRef<HTMLDivElement, SheetCon
       // re-tweens after the idle gap, and scrollend must not pre-empt it.
       if (dialogRef.current?.hasAttribute("data-scrollsheet-wheel-session")) return;
       const track = trackRef.current;
-      if (!track) return;
+      // Snap suspended: a held morph, whose position nobody chose.
+      if (!track || track.style.scrollSnapType) return;
       const current = ctxRef.current;
       const geometry = geometryFor(current.side);
       /* A phantom-flagged excursion (see PHANTOM_SCROLL_JUMP_PX) winds back
@@ -698,6 +699,7 @@ export const Content = /* @__PURE__ */ React.forwardRef<HTMLDivElement, SheetCon
 
     // ── Close request ────────────────────────────────────────────────────────
     React.useEffect(() => {
+      if (!ctx.open) pressedInsideRef.current = false;
       if (!ctx.open && (phase === "opening" || phase === "open")) {
         animRef.current?.cancel();
         // Un-dim immediately so the browser chrome matches the backdrop's own
@@ -1163,7 +1165,6 @@ export const Content = /* @__PURE__ */ React.forwardRef<HTMLDivElement, SheetCon
       themeMod && ctx.themeColorDimming ? <themeMod.ThemeColorFeature {...featureProps} /> : null;
     const innerContent = (
       <>
-        {themeFeature}
         {flipFeature}
         {morphFeature}
         {kbFeature}
@@ -1213,10 +1214,14 @@ export const Content = /* @__PURE__ */ React.forwardRef<HTMLDivElement, SheetCon
           // A press on content released out here clicks their common ancestor.
           // Capture phase, so content that stops pointerdown can't hide it.
           onPointerDownCapture={(event) => {
-            pressedOutsideRef.current = isOutside(event.target);
+            pressedInsideRef.current = !isOutside(event.target);
           }}
           onClick={(event) => {
-            if (ctx.backdropDismissible && isOutside(event.target) && pressedOutsideRef.current) {
+            // Detail 0 is a scripted click, with no press of its own to match:
+            // the last press may have ended in a pan or drag that clicks nothing.
+            const pressedInside = pressedInsideRef.current && event.detail > 0;
+            pressedInsideRef.current = false;
+            if (ctx.backdropDismissible && isOutside(event.target) && !pressedInside) {
               ctx.setOpen(false);
             }
           }}
@@ -1287,6 +1292,10 @@ export const Content = /* @__PURE__ */ React.forwardRef<HTMLDivElement, SheetCon
             {kbFadeEl}
           </div>
         </div>
+        {/* After the track: a deleted subtree runs cleanups in tree order, and a
+            nested sheet's snapshot of this meta holds this sheet's dim, so its
+            restore has to run first. */}
+        {themeFeature}
       </>
     );
 
