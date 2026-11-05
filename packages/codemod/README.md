@@ -16,13 +16,19 @@ clean git tree so the diff is the review.
 
 ## What it rewrites
 
-- `from "vaul"` to `from "scrollsheet"`, including aliased imports such as
-  `import { Drawer as DrawerPrimitive } from "vaul"` (the shadcn drawer) and `import * as`.
-- `import "vaul/style.css"` to `import "scrollsheet/styles.css"`, and `@import "vaul/style.css"`
-  in `.css`, `.scss`, and `.pcss` files.
-- `require("vaul")` and `import("vaul")`.
+- `import { Drawer } from "vaul"` to `from "scrollsheet"`, including aliased imports such as
+  `import { Drawer as DrawerPrimitive } from "vaul"` (the shadcn drawer), and `import("vaul")`.
+- `import "vaul/style.css"` to `import "scrollsheet/styles.css"`, but only when nothing else in
+  that file stays on `vaul`. The stylesheet follows the components: if the file keeps a `vaul`
+  import, its `vaul/style.css` import stays too and is reported.
+- `@import "vaul/style.css"` in `.css`, `.scss`, and `.pcss` files. The codemod cannot see
+  which components use a stylesheet in a separate file, so keep `vaul/style.css` available until
+  no file imports `vaul`. When any file still does, the summary lists it.
 - A `vaul` import that mixes supported and unsupported names is split: `Drawer` moves, the rest
   stay on `vaul` and are reported. An existing `scrollsheet` import is reused.
+
+`import * as V from "vaul"` and `require("vaul")` are left on `vaul` and reported, not rewritten:
+scrollsheet's top-level members are not vaul's, and it is ESM only.
 
 Quotes follow the file. Formatting is preserved by [recast](https://github.com/benjamn/recast)
 through [jscodeshift](https://github.com/facebook/jscodeshift).
@@ -35,7 +41,7 @@ Each item has a kind:
 | --- | --- |
 | `ignored` | The prop is accepted and dropped. `Drawer.Root` `onDrag`, `noBodyStyles`, `container`, `nested`, `fixed`, and the other no-op props, and Radix `Drawer.Content` props such as `onEscapeKeyDown`. The message names the replacement when there is one, such as `escapeDismissible={false}` |
 | `changed` | It works, but behaves differently: `direction="left"` and `"right"` (width comes from `snapPoints`), `onRelease`'s second argument, and `Drawer.Overlay`, which renders nothing |
-| `manual` | An import with no scrollsheet equivalent, left on `vaul` |
+| `manual` | Left alone for you to finish. Imports with no scrollsheet equivalent (`import *`, `require`, `vaul/dist/*`, template-literal specifiers), a `vaul/style.css` import kept because the file still uses `vaul`, an unquoted `@import url(vaul/style.css)`, and `const { Root } = Drawer` or `const Comp = Drawer.Root`, whose props the tool cannot follow |
 | `info` | Worth a look: spread props the tool cannot see through, `closeThreshold` alongside `snapPoints` |
 
 The full table of differences is in

@@ -22,6 +22,8 @@ export interface Finding {
 export interface TransformResult {
   output: string;
   changed: boolean;
+  /** True when the output still imports vaul at runtime, so vaul's stylesheet is still needed. */
+  usesVaul: boolean;
   findings: Finding[];
 }
 
@@ -127,25 +129,112 @@ export function transformVaul(source: string, options: TransformOptions = {}): T
   rewriteImports(root);
   rewriteRequireAndDynamicImport(root);
   reportUnrewritten(root);
+  const usesVaul = stillUsesVaul(root);
+  rewriteStylesheetImports(root, usesVaul);
 
   if (drawerNames.size > 0) {
     reportJsx(root);
+    reportIndirectUse(root);
   }
 
   findings.sort((a, b) => a.line - b.line || a.column - b.column);
   return {
-    output: changed ? root.toSource({ quote: dominantQuote(source), lineTerminator }) : source,
+    output: changed ? printSource() : source,
     changed,
+    usesVaul,
     findings,
   };
 
+  /** recast reprints a directive's own semicolon, so `"use client";` can come out as `"use client";;`. */
+  function printSource(): string {
+    const printed = root.toSource({ quote: dominantQuote(source), lineTerminator });
+    return source.includes(";;") ? printed : printed.replace(/^(\s*["']use [\w ]+["']);;/gm, "$1;");
+  }
+
+  /** True when a runtime import, require or re-export of vaul survives the rewrite. */
+  function stillUsesVaul(collection: Collection): boolean {
+    const isRuntimeVaul = (value: unknown) =>
+      value === VAUL || (typeof value === "string" && value.startsWith("vaul/") && value !== VAUL_CSS);
+    const isTypeOnly = (decl: ImportDeclaration) =>
+      decl.importKind === "type" ||
+      ((decl.specifiers ?? []).length > 0 &&
+        (decl.specifiers ?? []).every(
+          (s) => (s as { importKind?: string }).importKind === "type",
+        ));
+    if (
+      collection
+        .find(j.ImportDeclaration)
+        .some((p) => isRuntimeVaul(p.node.source.value) && !isTypeOnly(p.node))
+    ) {
+      return true;
+    }
+    if (
+      collection
+        .find(j.ExportNamedDeclaration)
+        .some((p) => isRuntimeVaul(p.node.source?.value) && p.node.exportKind !== "type")
+    ) {
+      return true;
+    }
+    if (collection.find(j.ExportAllDeclaration).some((p) => isRuntimeVaul(p.node.source.value))) {
+      return true;
+    }
+    return collection.find(j.CallExpression).some((p) => {
+      const callee = p.node.callee;
+      if (!(callee.type === "Import" || (callee.type === "Identifier" && callee.name === "require"))) {
+        return false;
+      }
+      const specifier = moduleSpecifier(p.node.arguments[0]);
+      return isRuntimeVaul(specifier);
+    });
+  }
+
+  /** `vaul/style.css` follows the components: it moves only when nothing in the file stays on vaul. */
+  function rewriteStylesheetImports(collection: Collection, vaulRemains: boolean) {
+    const keep = (node: { loc?: { start: { line: number; column: number } } | null }, subject: string) =>
+      report(
+        node,
+        "manual",
+        subject,
+        "Left on 'vaul/style.css'. This file still imports vaul components, which need it. Switch it to 'scrollsheet/styles.css' once the file is off vaul.",
+      );
+    collection.find(j.ImportDeclaration).forEach((path) => {
+      if (path.node.source.value !== VAUL_CSS) return;
+      if (vaulRemains) return keep(path.node, "import 'vaul/style.css'");
+      path.node.source = j.stringLiteral(SCROLLSHEET_CSS);
+      changed = true;
+    });
+    collection.find(j.CallExpression).forEach((path) => {
+      const callee = path.node.callee;
+      const isRequire = callee.type === "Identifier" && callee.name === "require";
+      if (!(isRequire || callee.type === "Import")) return;
+      if (moduleSpecifier(path.node.arguments[0]) !== VAUL_CSS) return;
+      const argument = path.node.arguments[0]!;
+      if (argument.type === "TemplateLiteral") {
+        return report(
+          path.node,
+          "manual",
+          `${isRequire ? "require" : "import"}(\`vaul/style.css\`)`,
+          "Left on 'vaul/style.css'. Template literals are not rewritten: switch it to 'scrollsheet/styles.css' by hand once the file is off vaul.",
+        );
+      }
+      if (vaulRemains) return keep(path.node, `${isRequire ? "require" : "import"}('vaul/style.css')`);
+      path.node.arguments[0] = j.stringLiteral(SCROLLSHEET_CSS);
+      changed = true;
+    });
+  }
+
   function rewriteImports(collection: Collection) {
+    let rewrote = false;
     collection.find(j.ImportDeclaration).forEach((path) => {
       const decl = path.node;
       const from = decl.source.value;
-      if (from === VAUL_CSS) {
-        decl.source = j.stringLiteral(SCROLLSHEET_CSS);
-        changed = true;
+      if (typeof from === "string" && from.startsWith("vaul/") && from !== VAUL_CSS) {
+        report(
+          decl,
+          "manual",
+          `import from '${from}'`,
+          "Left on 'vaul'. Deep vaul paths have no scrollsheet equivalent: import { Drawer } from 'scrollsheet' instead.",
+        );
         return;
       }
       if (from !== VAUL) return;
@@ -197,18 +286,20 @@ export function transformVaul(source: string, options: TransformOptions = {}): T
       if (supported.length === 0) return;
 
       changed = true;
+      rewrote = true;
       if (leftover.length === 0) {
         decl.source = j.stringLiteral(SCROLLSHEET);
         return;
       }
-      // Split: supported specifiers move, the rest stay on vaul.
+      // Split: supported specifiers move, the rest stay on vaul. The new import goes after the
+      // original so file headers and directives above it keep their place.
       decl.specifiers = leftover;
       const moved = j.importDeclaration(supported, j.stringLiteral(SCROLLSHEET));
       moved.importKind = decl.importKind;
-      path.insertBefore(moved);
+      path.insertAfter(moved);
     });
 
-    mergeDuplicateScrollsheetImports(collection);
+    if (rewrote) mergeDuplicateScrollsheetImports(collection);
   }
 
   /** `import { Drawer } from 'scrollsheet'` twice becomes one declaration. */
@@ -246,11 +337,31 @@ export function transformVaul(source: string, options: TransformOptions = {}): T
       const isRequire = callee.type === "Identifier" && callee.name === "require";
       const isDynamic = callee.type === "Import";
       if (!(isRequire || isDynamic) || arg === undefined) return;
-      if (arg.type !== "StringLiteral" && arg.type !== "Literal") return;
-      const value = (arg as { value: unknown }).value;
-      if (value !== VAUL && value !== VAUL_CSS) return;
+      const value = moduleSpecifier(arg);
+      if (value === VAUL_CSS || typeof value !== "string") return;
+      const form = isRequire ? "require" : "import";
 
-      if (isRequire && value === VAUL) {
+      if (arg.type === "TemplateLiteral" && (value === VAUL || value.startsWith("vaul/"))) {
+        report(
+          path.node,
+          "manual",
+          `${form}(\`${value}\`)`,
+          "Left on 'vaul'. Template literals are not rewritten: import { Drawer } from 'scrollsheet' by hand.",
+        );
+        return;
+      }
+      if (value.startsWith("vaul/")) {
+        report(
+          path.node,
+          "manual",
+          `${form}('${value}')`,
+          "Left on 'vaul'. Deep vaul paths have no scrollsheet equivalent: use { Drawer } from 'scrollsheet' instead.",
+        );
+        return;
+      }
+      if (value !== VAUL) return;
+
+      if (isRequire) {
         report(
           path.node,
           "manual",
@@ -259,22 +370,21 @@ export function transformVaul(source: string, options: TransformOptions = {}): T
         );
         return;
       }
-      path.node.arguments[0] = j.stringLiteral(value === VAUL ? SCROLLSHEET : SCROLLSHEET_CSS);
+      path.node.arguments[0] = j.stringLiteral(SCROLLSHEET);
       changed = true;
-      if (value === VAUL) {
-        report(
-          path.node,
-          "info",
-          "import('vaul')",
-          "Rewritten to 'scrollsheet'. The Drawer namespace is the same shape; check the members you destructure.",
-        );
-      }
+      report(
+        path.node,
+        "info",
+        "import('vaul')",
+        "Rewritten to 'scrollsheet'. The Drawer namespace is the same shape; check the members you destructure.",
+      );
     });
   }
 
   /** Forms the codemod never rewrites but must not leave behind silently. */
   function reportUnrewritten(collection: Collection) {
-    const isVaul = (value: unknown) => value === VAUL || value === VAUL_CSS;
+    const isVaul = (value: unknown) =>
+      value === VAUL || (typeof value === "string" && value.startsWith("vaul/"));
     collection.find(j.ExportNamedDeclaration).forEach((path) => {
       if (isVaul(path.node.source?.value)) {
         report(
@@ -332,16 +442,49 @@ export function transformVaul(source: string, options: TransformOptions = {}): T
   }
 
   /** Resolves a JSX tag to the vaul namespace member it names, if any. */
-  function memberOf(opening: JSXOpeningElement): string | null {
-    const name = opening.name;
+  function memberOf(path: ASTPath<JSXOpeningElement>): string | null {
+    const name = path.node.name;
     if (name.type !== "JSXMemberExpression") return null;
     const member = name.property.name;
     if (!NAMESPACE_MEMBERS.has(member)) return null;
     const object = name.object;
     if (object.type === "JSXIdentifier") {
-      return drawerNames.has(text(object.name)) ? member : null;
+      const local = text(object.name);
+      return drawerNames.has(local) && !isShadowed(path, local) ? member : null;
     }
     return null;
+  }
+
+  /** A parameter or local declaration of the same name hides the import. */
+  function isShadowed(path: ASTPath, name: string): boolean {
+    const scope = path.scope?.lookup(name);
+    return scope !== null && scope !== undefined && !scope.isGlobal;
+  }
+
+  /** `const { Root } = Drawer` and `const Comp = Drawer.Root` hide props from the JSX pass. */
+  function reportIndirectUse(collection: Collection) {
+    collection.find(j.VariableDeclarator).forEach((path) => {
+      const init = path.node.init;
+      if (!init) return;
+      let base: string | null = null;
+      if (init.type === "Identifier") base = init.name;
+      else if (
+        init.type === "MemberExpression" &&
+        init.object.type === "Identifier" &&
+        !init.computed
+      ) {
+        base = init.object.name;
+      }
+      if (base === null || !drawerNames.has(base) || isShadowed(path, base)) return;
+      const target = path.node.id.type === "Identifier" ? path.node.id.name : "{ ... }";
+      const subject = `const ${target} = ${init.type === "Identifier" ? base : `${base}.${text((init as { property: { name?: unknown } }).property.name)}`}`;
+      report(
+        path.node,
+        "manual",
+        subject,
+        `Not checked. Drawer members used through a variable are not scanned for props scrollsheet ignores or handles differently: check the JSX that uses it against the migration table.`,
+      );
+    });
   }
 
   function attrName(attr: JSXAttribute): string {
@@ -366,7 +509,7 @@ export function transformVaul(source: string, options: TransformOptions = {}): T
   function reportJsx(collection: Collection) {
     collection.find(j.JSXOpeningElement).forEach((path: ASTPath<JSXOpeningElement>) => {
       const opening = path.node;
-      const member = memberOf(opening);
+      const member = memberOf(path);
       if (!member) return;
 
       const attrs = opening.attributes ?? [];
@@ -458,6 +601,21 @@ export function transformVaul(source: string, options: TransformOptions = {}): T
   }
 }
 
+/** The module a `require(...)` or `import(...)` names, when it is a plain string or template. */
+function moduleSpecifier(node: unknown): string | null {
+  const arg = node as
+    | { type?: string; value?: unknown; quasis?: { value: { cooked?: string | null } }[]; expressions?: unknown[] }
+    | undefined;
+  if (!arg) return null;
+  if (arg.type === "StringLiteral" || arg.type === "Literal") {
+    return typeof arg.value === "string" ? arg.value : null;
+  }
+  if (arg.type === "TemplateLiteral" && arg.expressions?.length === 0 && arg.quasis?.length === 1) {
+    return arg.quasis[0]!.value.cooked ?? null;
+  }
+  return null;
+}
+
 /** New string literals follow the file's own style, judged by its imports. */
 function dominantQuote(source: string): "single" | "double" {
   const single = (source.match(/(?:from|import|require\()\s*'/g) ?? []).length;
@@ -474,10 +632,24 @@ function specifierKey(
 }
 
 /** Rewrites `@import 'vaul/style.css'` in stylesheets. */
-export function transformVaulCss(source: string): TransformResult {
+export function transformVaulCss(source: string, file = ""): TransformResult {
   const output = source.replace(
     /(@import\s+(?:url\()?\s*["'])vaul\/style\.css(["'])/g,
     `$1${SCROLLSHEET_CSS}$2`,
   );
-  return { output, changed: output !== source, findings: [] };
+  const findings: Finding[] = [];
+  for (const match of source.matchAll(/@import\s+url\(\s*vaul\/style\.css\s*\)/g)) {
+    const before = source.slice(0, match.index);
+    const line = before.split("\n").length;
+    findings.push({
+      file,
+      line,
+      column: match.index - (before.lastIndexOf("\n") + 1) + 1,
+      kind: "manual",
+      subject: "@import url(vaul/style.css)",
+      message:
+        "Left on 'vaul/style.css'. Unquoted url() is not rewritten: change it to 'scrollsheet/styles.css' by hand once nothing uses vaul.",
+    });
+  }
+  return { output, changed: output !== source, usesVaul: false, findings };
 }

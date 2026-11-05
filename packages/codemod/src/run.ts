@@ -18,10 +18,12 @@ export interface RunResult {
   findings: Finding[];
   /** Files that could not be parsed. The run continues past them. */
   errors: { file: string; message: string }[];
+  /** Files that still import vaul after the run, so vaul and its stylesheet are still needed. */
+  usesVaul: string[];
 }
 
 /** A quoted `vaul` or `vaul/...` specifier, so "vault" never matches. */
-const MENTIONS_VAUL = /(["'`])vaul(?:\/[^"'`]*)?\1/;
+const MENTIONS_VAUL = /(["'`])vaul(?:\/[^"'`]*)?\1|url\(\s*vaul\//;
 const TS_ONLY_EXTENSIONS = new Set([".ts", ".mts", ".cts"]);
 
 /** `tsx` first; a TypeScript-only file retries with `ts` for `<T>x` assertions. */
@@ -52,7 +54,7 @@ function* walk(path: string): Generator<string> {
 /** Runs the vaul migration over files and directories, writing in place unless `dryRun`. */
 export function runVaul(paths: string[], options: RunOptions = {}): RunResult {
   const cwd = options.cwd ?? process.cwd();
-  const result: RunResult = { scanned: 0, changedFiles: [], findings: [], errors: [] };
+  const result: RunResult = { scanned: 0, changedFiles: [], findings: [], errors: [], usesVaul: [] };
 
   for (const input of paths) {
     for (const absolute of walk(resolve(cwd, input))) {
@@ -61,23 +63,39 @@ export function runVaul(paths: string[], options: RunOptions = {}): RunResult {
       if (!isSource && !STYLE_EXTENSIONS.has(extension)) continue;
       if (absolute.endsWith(".d.ts")) continue;
 
-      const source = readFileSync(absolute, "utf8");
+      const rel = relative(cwd, absolute);
+      const file = rel.startsWith("..") ? absolute : rel;
+      const fail = (error: unknown) =>
+        result.errors.push({ file, message: error instanceof Error ? error.message : String(error) });
+
+      let source: string;
+      try {
+        source = readFileSync(absolute, "utf8");
+      } catch (error: unknown) {
+        fail(error);
+        continue;
+      }
       if (!MENTIONS_VAUL.test(source)) continue;
 
       result.scanned += 1;
-      const rel = relative(cwd, absolute);
-      const file = rel.startsWith("..") ? absolute : rel;
       let outcome;
       try {
-        outcome = isSource ? parseAndTransform(source, file, extension) : transformVaulCss(source);
+        outcome = isSource
+          ? parseAndTransform(source, file, extension)
+          : transformVaulCss(source, file);
       } catch (error: unknown) {
-        result.errors.push({ file, message: error instanceof Error ? error.message : String(error) });
+        fail(error);
         continue;
       }
       result.findings.push(...outcome.findings);
+      if (outcome.usesVaul) result.usesVaul.push(file);
       if (outcome.changed) {
-        result.changedFiles.push(file);
-        if (!options.dryRun) writeFileSync(absolute, outcome.output);
+        try {
+          if (!options.dryRun) writeFileSync(absolute, outcome.output);
+          result.changedFiles.push(file);
+        } catch (error: unknown) {
+          fail(error);
+        }
       }
     }
   }

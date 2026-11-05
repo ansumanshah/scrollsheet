@@ -61,6 +61,13 @@ function main(argv: string[]): number {
       `${result.findings.length} item${result.findings.length === 1 ? "" : "s"} to review ` +
       `(${result.scanned} file${result.scanned === 1 ? "" : "s"} mentioning vaul).`,
   );
+  if (result.usesVaul.length > 0) {
+    const count = result.usesVaul.length;
+    console.log(
+      `${count} file${count === 1 ? " still imports" : "s still import"} vaul, so keep the vaul package and vaul/style.css until ` +
+        `${count === 1 ? "it is" : "they are"} migrated: ${result.usesVaul.join(", ")}.`,
+    );
+  }
   if (result.errors.length > 0) {
     console.error(`${result.errors.length} file${result.errors.length === 1 ? "" : "s"} could not be processed.`);
     return 1;

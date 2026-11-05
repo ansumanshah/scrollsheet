@@ -9,7 +9,7 @@ Two-step migration. Do step 1 first, always. Step 2 is optional and separate.
 
 ## Step 1: change the import and stylesheet
 
-`npx scrollsheet-codemod vaul src` makes this change and reports each prop to check, with file and line. By hand:
+`npx scrollsheet-codemod vaul src` makes this change and reports each prop to check, with file and line. It leaves `import * as`, `require("vaul")` and anything else it cannot map on vaul and reports them, and it moves `vaul/style.css` only in files that no longer import vaul. Keep the vaul package and stylesheet until the summary lists no file that still uses vaul. By hand:
 
 ```diff
 - import { Drawer } from 'vaul';

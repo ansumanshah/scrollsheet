@@ -1,7 +1,7 @@
 import { Sheet, Drawer } from "scrollsheet";
 import { Content as DrawerContent, type DrawerProps } from "vaul";
 import * as Vaul from "vaul";
-import "scrollsheet/styles.css";
+import "vaul/style.css";
 
 const lazy = () => import("scrollsheet");
 const legacy = require("vaul");
