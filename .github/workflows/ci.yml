@@ -99,15 +99,36 @@ jobs:
   # in one job, and each job now installs only the one browser engine it
   # needs. tests/e2e/fixtures/ bundles straight from ../../src (see serve.ts),
   # never the built package, so this job does not need `bun run build` first.
+  changes:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    outputs:
+      browsers: ${{ steps.filter.outputs.browsers }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          fetch-depth: 0
+      # Browser tests bundle from packages/ and tests/, so these paths can't affect them.
+      - id: filter
+        env:
+          BASE: ${{ github.event.pull_request.base.sha }}
+        run: |
+          browsers=true
+          if [ -n "$BASE" ] && ! git diff --name-only "$BASE" "$GITHUB_SHA" | grep -qvE '(\.md$|^docs/|^skills/|^assets/|^llms\.txt$|^LICENSE$)'; then
+            browsers=false
+          fi
+          echo "browsers=$browsers" >> "$GITHUB_OUTPUT"
+
   e2e:
     runs-on: ubuntu-latest
     timeout-minutes: 30
     # Browsers and their system packages ship in the image; installing WebKit's
     # took longer than its tests. tests/unit/ci-playwright-image.test.ts keeps
     # this tag on the installed @playwright/test version.
-    container:
-      image: mcr.microsoft.com/playwright:v1.64.1-noble
-      options: --user 1001
+    needs: changes
+    # Required checks need every matrix name, and a skipped job doesn't report
+    # them, so docs-only changes run this job with its steps skipped.
+    container: ${{ needs.changes.outputs.browsers == 'true' && fromJSON('{"image":"mcr.microsoft.com/playwright:v1.64.1-noble","options":"--user 1001"}') || null }}
     strategy:
       fail-fast: false
       matrix:
@@ -124,20 +145,26 @@ jobs:
             browser: chromium
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        if: needs.changes.outputs.browsers == 'true'
       # setup-bun needs unzip, which the image lacks and a non-root user can't install.
       - run: |
+        if: needs.changes.outputs.browsers == 'true'
           npm install --prefix "$HOME/bun" bun@1.4.4
           echo "$HOME/bun/node_modules/.bin" >> "$GITHUB_PATH"
       - id: bun-cache-dir
+        if: needs.changes.outputs.browsers == 'true'
         run: echo "path=$(bun pm cache)" >> "$GITHUB_OUTPUT"
       - name: Cache bun packages
+        if: needs.changes.outputs.browsers == 'true'
         uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6
         with:
           path: ${{ steps.bun-cache-dir.outputs.path }}
           key: ${{ runner.os }}-bun-${{ hashFiles('bun.lock') }}
           restore-keys: ${{ runner.os }}-bun-
       - run: bun install --frozen-lockfile --filter=scrollsheet
+        if: needs.changes.outputs.browsers == 'true'
       - run: bun run test:e2e -- --project=${{ matrix.project }}
+        if: needs.changes.outputs.browsers == 'true'
 
   docs:
     runs-on: ubuntu-latest
