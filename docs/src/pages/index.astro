@@ -3,6 +3,11 @@ import Base from "../layouts/Base.astro";
 import ExampleCard from "../components/ExampleCard.astro";
 import ExamplePreview from "../components/ExamplePreview";
 import HeroShowcase from "../components/HeroShowcase";
+import InstallBox from "../components/InstallBox.astro";
+import MigrationDiff from "../components/MigrationDiff.astro";
+import LaunchVideo from "../components/LaunchVideo.astro";
+import JsonLd from "../components/JsonLd.astro";
+import { softwareSourceCode } from "../lib/jsonld";
 
 import { examples, exampleGroups } from "../../../examples/index";
 import "../../../examples/examples.css";
@@ -82,13 +87,6 @@ const SCOPED: Record<string, { css: string; icons: string }> = Object.fromEntrie
   ]),
 );
 
-const INSTALL = [
-  { id: "bun", cmd: "bun add scrollsheet" },
-  { id: "npm", cmd: "npm i scrollsheet" },
-  { id: "pnpm", cmd: "pnpm add scrollsheet" },
-  { id: "yarn", cmd: "yarn add scrollsheet" },
-];
-
 /*
  * Version floors match the Browser support section in docs.mdx, which is the
  * source of truth for them; the dates are the caniuse release dates for those
@@ -157,14 +155,14 @@ const COMPARE_ROWS: {
     values: ["Sheets and side panels", "vaul migration", "Radix Dialog migration", "Notifications"],
   },
   {
-    label: "Initial JavaScript, gzip",
+    label: "Initial JavaScript, compressed",
     values: [
-      `${BUNDLE_SIZES.index.gzipKb.toFixed(2)} kB`,
-      `${BUNDLE_SIZES.drawer.gzipKb.toFixed(2)} kB`,
-      `${BUNDLE_SIZES.dialog.gzipKb.toFixed(2)} kB`,
-      `${BUNDLE_SIZES.toast.gzipKb.toFixed(2)} kB`,
+      `${BUNDLE_SIZES.index.brotliKb.toFixed(2)} kB`,
+      `${BUNDLE_SIZES.drawer.brotliKb.toFixed(2)} kB`,
+      `${BUNDLE_SIZES.dialog.brotliKb.toFixed(2)} kB`,
+      `${BUNDLE_SIZES.toast.brotliKb.toFixed(2)} kB`,
     ],
-    note: "Measured with Bun after minification, with React excluded. Includes static imports; excludes CSS and feature chunks loaded on demand.",
+    note: "Compressed means brotli, measured with Bun after minification, with React excluded. Includes static imports; excludes CSS and feature chunks loaded on demand. Many libraries quote gzip, which runs larger for the same code.",
   },
   {
     label: "Position",
@@ -179,12 +177,12 @@ const COMPARE_ROWS: {
     values: ["Configurable", "Configurable", "Configurable", "no"],
   },
   {
-    label: "Stylesheet, gzip",
+    label: "Stylesheet, compressed",
     values: [
-      `${STYLESHEET_SIZES.core.gzipKb.toFixed(2)} kB`,
-      `${STYLESHEET_SIZES.core.gzipKb.toFixed(2)} kB`,
-      `${STYLESHEET_SIZES.core.gzipKb.toFixed(2)} kB`,
-      `${STYLESHEET_SIZES.toast.gzipKb.toFixed(2)} kB`,
+      `${STYLESHEET_SIZES.core.brotliKb.toFixed(2)} kB`,
+      `${STYLESHEET_SIZES.core.brotliKb.toFixed(2)} kB`,
+      `${STYLESHEET_SIZES.core.brotliKb.toFixed(2)} kB`,
+      `${STYLESHEET_SIZES.toast.brotliKb.toFixed(2)} kB`,
     ],
     note: "Import scrollsheet/styles.css for sheets and scrollsheet/toast.css for toasts, or use scrollsheet/auto to embed the stylesheets.",
   },
@@ -217,58 +215,31 @@ const noteNumber = (note?: string) => (note ? footnotes.indexOf(note) + 1 : 0);
  * nuanced values keep their text. */
 const cellParts = (value: string) => {
   if (value === "yes") return { glyph: "✓", rest: "", cls: "is-yes" };
-  if (value === "no") return { glyph: "—", rest: "", cls: "is-no" };
+  if (value === "no") return { glyph: "", rest: "No", cls: "is-no" };
   if (value.startsWith("yes, ")) return { glyph: "✓", rest: value.slice(5), cls: "is-yes" };
   return { glyph: "", rest: value, cls: "" };
 };
 
 const title = "scrollsheet: native bottom sheets and drawers for React";
-const description = `React bottom sheets, drawers, dialogs, side panels, and toast notifications. Native dialog and scroll-snap for sheets; ${Math.round(BUNDLE_SIZES.index.gzipKb)} kB gzipped for the Sheet import, excluding CSS and lazy chunks.`;
+const description = `React bottom sheets, drawers, dialogs, side panels, and toast notifications. Native dialog and scroll-snap for sheets; ${Math.round(BUNDLE_SIZES.index.brotliKb)} kB compressed for the Sheet import, excluding CSS and lazy chunks.`;
 ---
 
 <Base title={title} description={description}>
+  <Fragment slot="head">
+    <JsonLd data={softwareSourceCode()} />
+  </Fragment>
   <section class="container hero">
-    <div>
-      <h1>Bottom sheets for React</h1>
+    <div class="hero-copy">
+      <h1>Bottom sheets for React in {Math.round(BUNDLE_SIZES.index.brotliKb)}&nbsp;kB compressed</h1>
       <p class="hero-lede">
-        React components for bottom sheets, drawers, dialogs, side panels, and toasts.
-        The Sheet import is {Math.round(BUNDLE_SIZES.index.gzipKb)}&nbsp;kB gzipped,
-        excluding CSS and lazy chunks. No runtime dependencies. MIT licensed.
+        That is the Sheet import, with detents, nested sheets and side panels. No runtime
+        dependencies. The Drawer export accepts common vaul props.
       </p>
       <div class="hero-actions">
-        <div class="install" id="install">
-          <div class="install-tabs" role="tablist" aria-label="Package manager">
-            {INSTALL.map((pm, i) => (
-              <button
-                type="button"
-                role="tab"
-                id={`pm-tab-${pm.id}`}
-                aria-controls="install-cmd"
-                aria-selected={i === 0 ? "true" : "false"}
-                tabindex={i === 0 ? undefined : -1}
-                data-cmd={pm.cmd}
-              >
-                {pm.id}
-              </button>
-            ))}
-          </div>
-          <div class="install-box">
-            <span id="install-cmd" role="tabpanel" aria-labelledby="pm-tab-bun">
-              <span class="prompt">$</span><code>{INSTALL[0]!.cmd}</code>
-            </span>
-            <button
-              class="copy-btn"
-              type="button"
-              data-copy={INSTALL[0]!.cmd}
-              aria-label="Copy install command"
-            >
-              <svg viewBox="0 0 20 20" fill="none" aria-hidden="true">
-                <rect x="7" y="7" width="10" height="10" rx="2" stroke="currentColor" stroke-width="1.6"/>
-                <path d="M4 13H3.5A1.5 1.5 0 0 1 2 11.5v-8A1.5 1.5 0 0 1 3.5 2h8A1.5 1.5 0 0 1 13 3.5V4" stroke="currentColor" stroke-width="1.6"/>
-              </svg>
-            </button>
-          </div>
-        </div>
+        <InstallBox />
+      </div>
+      <div class="hero-migrate">
+        <MigrationDiff compact />
       </div>
     </div>
 
@@ -299,46 +270,6 @@ const description = `React bottom sheets, drawers, dialogs, side panels, and toa
   </section>
 
   <script>
-    // Package-manager tabs. The command text and the copy button's payload
-    // are the same string, so the button can never copy a command the
-    // visitor is not looking at.
-    {
-      const tabs = [
-        ...document.querySelectorAll<HTMLButtonElement>('.install-tabs [role="tab"]'),
-      ];
-      const code = document.querySelector<HTMLElement>("#install-cmd code");
-      const copy = document.querySelector<HTMLButtonElement>(".install .copy-btn");
-
-      const select = (tab: HTMLButtonElement) => {
-        const cmd = tab.dataset.cmd;
-        if (!cmd || !code || !copy) return;
-        for (const other of tabs) {
-          other.setAttribute("aria-selected", String(other === tab));
-          other.tabIndex = other === tab ? 0 : -1;
-        }
-        code.textContent = cmd;
-        copy.dataset.copy = cmd;
-        document.getElementById("install-cmd")?.setAttribute("aria-labelledby", tab.id);
-      };
-
-      for (const tab of tabs) {
-        tab.addEventListener("click", () => select(tab));
-        // Roving tabindex: a tablist is one tab stop, arrows move within it.
-        tab.addEventListener("keydown", (event) => {
-          const step = event.key === "ArrowRight" ? 1 : event.key === "ArrowLeft" ? -1 : 0;
-          if (!step) return;
-          event.preventDefault();
-          const next = tabs[(tabs.indexOf(tab) + step + tabs.length) % tabs.length];
-          if (next) {
-            select(next);
-            next.focus();
-          }
-        });
-      }
-    }
-  </script>
-
-  <script>
     // The phone frame only makes sense once there's room for it beside the
     // copy (matches the .hero two-column breakpoint in home.css). Below
     // that, .hero-inline-demo takes over via CSS and this never fires, so
@@ -358,13 +289,50 @@ const description = `React bottom sheets, drawers, dialogs, side panels, and toa
     mql.addEventListener("change", sync);
   </script>
 
+  <LaunchVideo />
+
+  <section class="container section" aria-labelledby="alternatives-heading">
+    <div class="section-head">
+      <h2 id="alternatives-heading">Compared with the alternatives</h2>
+      <p>
+        New to bottom sheets? Start with the <a href="/react-bottom-sheet">React bottom sheet guide</a>.
+      </p>
+    </div>
+    <ul class="seo__links">
+      <li>
+        <a href="/compare/vaul">
+          <strong>vs vaul</strong>
+          <span>A two-line import swap, and the vaul options Drawer ignores.</span>
+        </a>
+      </li>
+      <li>
+        <a href="/compare/base-ui">
+          <strong>vs Base UI Drawer</strong>
+          <span>Unstyled and maintained, against a styled package with fewer dependencies.</span>
+        </a>
+      </li>
+      <li>
+        <a href="/compare/react-modal-sheet">
+          <strong>vs react-modal-sheet</strong>
+          <span>The Motion dependency, bundle size, and who handles focus.</span>
+        </a>
+      </li>
+      <li>
+        <a href="/compare/radix-dialog">
+          <strong>vs Radix Dialog</strong>
+          <span>Native dialog against a JavaScript focus scope, and when to keep Radix.</span>
+        </a>
+      </li>
+    </ul>
+  </section>
+
   <section class="container section" aria-labelledby="compare-heading">
     <div class="section-head">
       <h2 id="compare-heading">Choose an API</h2>
       <p>
-        Use Sheet directly, or review the adapters for
-        <a href="/docs/migrating/from-vaul">vaul</a>,
-        <a href="/docs/migrating/from-radix-dialog">Radix Dialog</a>, and
+        Use Sheet directly, or review the adapters for{" "}
+        <a href="/docs/migrating/from-vaul">vaul</a>,{" "}
+        <a href="/docs/migrating/from-radix-dialog">Radix Dialog</a>, and{" "}
         <a href="/docs/migrating/from-sonner">Sonner</a>.
       </p>
     </div>

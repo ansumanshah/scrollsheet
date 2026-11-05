@@ -2,15 +2,15 @@
 
 React bottom sheets, drawers, dialogs, side panels, and toasts.
 
-> Sheets use native `<dialog>` and CSS scroll snap. No runtime dependencies, ~<!--size:index.gzip:0-->16<!--/size--> kB gzipped, React 18+, MIT licensed.
+> Sheets use native `<dialog>` and CSS scroll snap. No runtime dependencies, ~<!--size:index.brotli:0-->14<!--/size--> kB compressed (brotli), React 18+, MIT licensed.
 
 scrollsheet renders a real `<dialog>` in the browser's top layer and drives its drag gesture
 with a native `scroll-snap-type: y mandatory` container for modal touch gestures. Desktop
 mouse dragging and some non-modal gestures use pointer handlers. Detents (resting heights)
 are scroll-snap stops; spring curves are sampled into CSS `linear()` easing; enter/exit runs as an
 interruptible Web Animations leg (grab a sheet mid-open, reopen mid-close, and it bends from
-where it is, carrying velocity). Seven parts: `Sheet.Root`, `Sheet.Trigger`,
-`Sheet.Content`, `Sheet.Handle`, `Sheet.Title`, `Sheet.Description`, `Sheet.Close`.
+where it is, carrying velocity). Eight parts: `Sheet.Root`, `Sheet.Trigger`,
+`Sheet.Content`, `Sheet.Handle`, `Sheet.Footer`, `Sheet.Title`, `Sheet.Description`, `Sheet.Close`.
 `Trigger`, `Content`, `Title`, `Description`, `Close`, and `Handle` take `asChild` to render your own element with the behavior
 merged in. A multi-detent `Handle` exposes slider semantics (role, value, arrow/Home/End keys).
 `side="center"` renders a centered modal dialog (content-sized, zoom+fade,
@@ -27,6 +27,9 @@ yourself), `scrollsheet/auto` (same exports, stylesheets embedded, injected on f
 ## Docs
 
 - [Docs](https://scrollsheet.dev/docs): Install, the styling model, detents, keyboard handling, desktop drag, nesting and content morph, migrating from vaul, Radix Dialog, and Sonner, browser support, and the full API reference. One page per topic.
+
+- [Migrate from vaul](https://scrollsheet.dev/docs/migrating/from-vaul): `npx scrollsheet-codemod vaul src` rewrites the imports and lists every prop to check.
+- [Compare](https://scrollsheet.dev/compare): scrollsheet against vaul, Base UI, react-modal-sheet, and Radix Dialog, including what scrollsheet does worse.
 
 ## Optional
 

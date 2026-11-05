@@ -1,0 +1,33 @@
+{
+  "name": "scrollsheet-codemod",
+  "version": "0.1.0",
+  "description": "Codemods for moving to scrollsheet. Rewrites vaul imports and reports every prop scrollsheet ignores or handles differently, with file and line.",
+  "license": "MIT",
+  "author": "Ansuman Shah <ansumanshah@gmail.com>",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/ansumanshah/scrollsheet.git",
+    "directory": "packages/codemod"
+  },
+  "homepage": "https://scrollsheet.dev/docs/migrating/from-vaul",
+  "bugs": "https://github.com/ansumanshah/scrollsheet/issues",
+  "keywords": ["scrollsheet", "vaul", "codemod", "migration", "jscodeshift", "drawer"],
+  "type": "module",
+  "bin": {
+    "scrollsheet-codemod": "dist/cli.js"
+  },
+  "files": ["dist"],
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "prepack": "bun run build",
+    "build": "bun build src/cli.ts --target node --outfile dist/cli.js --external jscodeshift --banner '#!/usr/bin/env node' && chmod +x dist/cli.js"
+  },
+  "dependencies": {
+    "jscodeshift": "^17.4.0"
+  },
+  "devDependencies": {
+    "@types/jscodeshift": "^17.3.0"
+  }
+}

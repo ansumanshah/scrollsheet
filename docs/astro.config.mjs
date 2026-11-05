@@ -144,6 +144,7 @@ export default defineConfig({
           items: [
             { slug: "docs/scrolling-and-keyboard/scrollable-content" },
             { slug: "docs/scrolling-and-keyboard/keyboard" },
+            { slug: "docs/scrolling-and-keyboard/pinned-footer" },
           ],
         },
         {
@@ -176,6 +177,15 @@ export default defineConfig({
           items: [
             { slug: "docs/advanced/shadow-dom" },
             { slug: "docs/advanced/framework-support" },
+          ],
+        },
+        {
+          label: "Components",
+          items: [
+            { slug: "docs/components/mobile-select" },
+            { slug: "docs/components/command-palette" },
+            { slug: "docs/components/picker-wheel" },
+            { slug: "docs/components/action-sheet" },
           ],
         },
         { slug: "docs/reference/api" },

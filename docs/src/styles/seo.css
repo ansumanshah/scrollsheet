@@ -1,0 +1,485 @@
+/* ─────────────────────────────────────────────────────────────────────────
+   Homepage hero additions, migration block, launch video, and the SEO pages
+   (/compare/*, /react-bottom-sheet). Springs come from --spring-* in Base.
+   ───────────────────────────────────────────────────────────────────────── */
+
+/* ── Hero: compact headline, install above the fold, vaul migration ───── */
+
+.hero {
+  padding-block-start: clamp(28px, 4vw, 52px);
+}
+
+.hero h1 {
+  font-size: clamp(2.1rem, 5.4vw, 3.5rem);
+  margin-bottom: 16px;
+}
+
+.hero-lede {
+  margin-bottom: 22px;
+}
+
+.hero-actions {
+  margin-bottom: 20px;
+}
+
+.hero-migrate {
+  max-width: 520px;
+  text-align: left;
+}
+
+@media (max-width: 979px) {
+  .hero {
+    padding-block: 28px 32px;
+    gap: 20px;
+    /* minmax(0, ...) stops the unbreakable diff lines from widening the track. */
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .hero > *,
+  .hero-copy > * {
+    min-width: 0;
+  }
+  /* The copy column dissolves so the install box, the live demo and the
+     migration block can be ordered independently of the DOM. */
+  .hero-copy {
+    display: contents;
+  }
+  .hero h1 {
+    order: 1;
+    margin-bottom: 0;
+  }
+  .hero-lede {
+    order: 2;
+    margin-bottom: 0;
+  }
+  .hero-actions {
+    order: 3;
+    margin-bottom: 0;
+  }
+  .hero-stage {
+    order: 4;
+  }
+  /* The demo's markup streams in after the migration block does. Reserving its
+     height keeps the block from jumping when it arrives. */
+  .hero-inline-demo {
+    min-height: 25rem;
+  }
+  .hero-migrate {
+    order: 5;
+    justify-self: center;
+    width: 100%;
+  }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  /* Transform only: opacity stays 1 so the headline is paintable at once. */
+  .hero-copy > *,
+  .hero-stage {
+    animation: hero-rise var(--spring-default-dur, 500ms) var(--spring-default, ease-out) both;
+  }
+  .hero-copy > :nth-child(2) {
+    animation-delay: 40ms;
+  }
+  .hero-copy > :nth-child(3) {
+    animation-delay: 80ms;
+  }
+  .hero-copy > :nth-child(4) {
+    animation-delay: 120ms;
+  }
+  .hero-stage {
+    animation-delay: 100ms;
+  }
+}
+
+@keyframes hero-rise {
+  from {
+    transform: translateY(14px);
+  }
+  to {
+    transform: none;
+  }
+}
+
+/* Interactive states settle on the library's own springs. */
+.install-tabs button,
+.copy-btn,
+.seo__links a {
+  transition-property: color, background-color, transform, border-color;
+  transition-duration: var(--spring-snappy-dur, 200ms);
+  transition-timing-function: var(--spring-snappy, ease-out);
+}
+
+.copy-btn:active,
+.install-tabs button:active {
+  transform: scale(0.94);
+}
+
+.copy-btn[data-copied="true"] {
+  transform: scale(1.08);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .install-tabs button,
+  .copy-btn,
+  .seo__links a {
+    transition-duration: 120ms;
+    transition-timing-function: ease-out;
+  }
+  .copy-btn[data-copied="true"] {
+    transform: none;
+  }
+}
+
+/* ── Migration diff ────────────────────────────────────────────────────── */
+
+.migrate {
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  background: var(--bg-elevated);
+  padding: 14px 16px;
+}
+
+.migrate__title {
+  font-size: 0.92rem;
+  font-weight: 650;
+}
+
+.migrate__title span {
+  display: block;
+  margin-top: 2px;
+  font-weight: 400;
+  font-size: 0.84rem;
+  color: var(--fg-muted);
+}
+
+.migrate__title a,
+.migrate__links a {
+  color: var(--accent);
+  text-underline-offset: 3px;
+}
+
+.migrate__code {
+  position: relative;
+  margin-top: 10px;
+  border-radius: var(--radius-sm);
+  background: var(--bg-code);
+  color: #e8e6f0;
+}
+
+.migrate__code pre {
+  margin: 0;
+  padding: 12px 52px 12px 14px;
+  overflow-x: auto;
+  font-size: 0.8rem;
+  line-height: 1.55;
+}
+
+.migrate__code code {
+  font-family: var(--font-mono);
+  white-space: pre;
+}
+
+.migrate__code .copy-btn {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+}
+
+.migrate__links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 18px;
+  margin-top: 10px;
+  font-size: 0.86rem;
+  font-weight: 600;
+}
+
+.diff-del {
+  color: #ff8d84;
+}
+
+.diff-add {
+  color: #7be0a4;
+}
+
+.prose pre .diff-del,
+.prose pre .diff-add {
+  display: inline;
+}
+
+/* ── Launch video slot ─────────────────────────────────────────────────── */
+
+.launch-video video {
+  display: block;
+  width: 100%;
+  max-width: 880px;
+  margin-inline: auto;
+  aspect-ratio: 16 / 9;
+  object-fit: contain;
+  border-radius: var(--radius-lg);
+  background: var(--bg-code);
+}
+
+/* ── Link list (homepage and /compare) ─────────────────────────────────── */
+
+.seo__links {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 10px;
+  grid-template-columns: 1fr;
+}
+
+@media (min-width: 760px) {
+  .seo__links {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+.seo__links a {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  height: 100%;
+  padding: 16px 18px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  background: var(--bg-elevated);
+  text-decoration: none;
+  color: var(--fg);
+}
+
+.seo__links a:hover {
+  border-color: var(--accent);
+  transform: translateY(-2px);
+}
+
+.seo__links strong {
+  font-size: 1rem;
+}
+
+.seo__links span {
+  font-size: 0.9rem;
+  color: var(--fg-muted);
+}
+
+/* ── SEO pages ─────────────────────────────────────────────────────────── */
+
+.seo {
+  max-width: 940px;
+  padding-block: 28px 80px;
+}
+
+.seo__crumbs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  font-size: 0.85rem;
+  color: var(--fg-faint);
+}
+
+.seo__crumbs a {
+  color: var(--fg-muted);
+  text-decoration: none;
+}
+
+.seo__crumbs a:hover {
+  color: var(--accent);
+}
+
+.seo__head {
+  margin: 20px 0 36px;
+}
+
+.seo__head h1 {
+  font-size: clamp(2rem, 5vw, 3rem);
+  letter-spacing: -0.03em;
+  line-height: 1.08;
+  margin-bottom: 14px;
+}
+
+.seo__head p {
+  max-width: 62ch;
+  font-size: 1.1rem;
+  color: var(--fg-muted);
+}
+
+.seo__body.prose {
+  max-width: none;
+}
+
+.seo__body > p,
+.seo__body > ul,
+.seo__body > ol,
+.seo__body > h3 {
+  max-width: 70ch;
+}
+
+.seo__body > h2 {
+  margin-top: 2.6rem;
+}
+
+.seo__body .compare-footnotes {
+  max-width: 78ch;
+}
+
+.seo__body pre.language-diff {
+  max-width: 70ch;
+  padding: 14px 16px;
+  border-radius: var(--radius-sm);
+  background: var(--bg-code);
+  color: #e8e6f0;
+  overflow-x: auto;
+  font-size: 0.82rem;
+  line-height: 1.55;
+}
+
+/* Cells here hold sentences with inline code, so they flow as text rather
+   than as the flex row the homepage table uses for short values. */
+.seo__body .cmp-val {
+  display: block;
+  text-align: left;
+}
+
+/* In prose, cells hold inline code; keep it quiet inside the table. */
+.seo__body .compare-table code {
+  font-size: 0.82em;
+}
+
+.seo__body .compare-table td,
+.seo__body .compare-table th {
+  text-align: left;
+}
+
+@container (min-width: 760px) {
+  .seo__body .compare-table thead th:not(:first-child),
+  .seo__body .compare-table td {
+    text-align: left;
+    vertical-align: top;
+  }
+  .seo__body .compare-table thead th:first-child {
+    width: 20%;
+  }
+}
+
+/* ── FAQ ───────────────────────────────────────────────────────────────── */
+
+.seo__faq {
+  margin-top: 3rem;
+  max-width: 70ch;
+}
+
+.seo__faq h2 {
+  font-size: 1.4rem;
+  margin-bottom: 10px;
+}
+
+.seo__faq details {
+  border-bottom: 1px solid var(--border);
+}
+
+.seo__faq summary {
+  cursor: pointer;
+  list-style: none;
+  padding: 16px 28px 16px 0;
+  position: relative;
+  font-weight: 600;
+}
+
+.seo__faq summary::-webkit-details-marker {
+  display: none;
+}
+
+.seo__faq summary::after {
+  content: "";
+  position: absolute;
+  right: 4px;
+  top: 50%;
+  width: 8px;
+  height: 8px;
+  margin-top: -6px;
+  border-right: 2px solid var(--fg-muted);
+  border-bottom: 2px solid var(--fg-muted);
+  transform: rotate(45deg);
+  transition: transform var(--spring-snappy-dur, 200ms) var(--spring-snappy, ease-out);
+}
+
+.seo__faq details[open] summary::after {
+  transform: translateY(5px) rotate(225deg);
+}
+
+.seo__faq details p {
+  padding-bottom: 18px;
+  color: var(--fg-muted);
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .seo__faq details[open] p {
+    animation: faq-in var(--spring-default-dur, 400ms) var(--spring-default, ease-out) both;
+  }
+}
+
+@keyframes faq-in {
+  from {
+    transform: translateY(-6px);
+    opacity: 0;
+  }
+  to {
+    transform: none;
+    opacity: 1;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .seo__faq summary::after {
+    transition-duration: 0.01ms;
+  }
+}
+
+/* ── Closing install ───────────────────────────────────────────────────── */
+
+.seo__install {
+  margin-top: 3.5rem;
+  padding: 24px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  background: var(--bg-inset);
+}
+
+.seo__install h2 {
+  font-size: 1.3rem;
+  margin-bottom: 14px;
+}
+
+.seo__install p {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 20px;
+  margin-top: 14px;
+  font-weight: 600;
+  font-size: 0.92rem;
+}
+
+.seo__install a {
+  color: var(--accent);
+  text-underline-offset: 3px;
+}
+
+/* Prose styling for inline code must not reach the install command. */
+.seo__body .install-box code {
+  padding: 0;
+  border: 0;
+  background: none;
+  color: #e8e6f0;
+  font-size: inherit;
+}
+
+.seo__note {
+  margin-top: 18px;
+  color: var(--fg-muted);
+}
+
+.seo__note a {
+  color: var(--accent);
+  text-underline-offset: 3px;
+}

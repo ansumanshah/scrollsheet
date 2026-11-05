@@ -37,8 +37,8 @@ jobs:
           key: ${{ runner.os }}-bun-${{ hashFiles('bun.lock') }}
           restore-keys: ${{ runner.os }}-bun-
       # docs/ is the other workspace and none of its deps are needed here;
-      # --filter keeps this job on the library's own dependency set.
-      - run: bun install --frozen-lockfile --filter=scrollsheet
+      # --filter skips the docs site; typecheck and pack:check also cover the codemod.
+      - run: bun install --frozen-lockfile --filter=scrollsheet --filter=scrollsheet-codemod
       - run: bun run typecheck
       - run: bun run check:compat
       - run: bun run check:deps

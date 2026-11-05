@@ -9,11 +9,24 @@ React bottom sheets, drawers, dialogs, side panels, and toasts.
 
 **[Live demos](https://scrollsheet.dev/#examples)** · **[Docs](https://scrollsheet.dev/docs/)** · **[Migrate from vaul](https://scrollsheet.dev/docs/migrating/from-vaul)** · **[Migrate from Sonner](https://scrollsheet.dev/docs/migrating/from-sonner)** · **[Migrate from Radix Dialog](https://scrollsheet.dev/docs/migrating/from-radix-dialog)**
 
-Sheets use a native `<dialog>` and CSS scroll snap, with spring motion expressed as CSS `linear()`. <!--size:index.gzip:1-->16.3<!--/size--> kB gzipped, <!--size:index.brotli:1-->14.7<!--/size--> kB brotli, plus a 3.9 kB stylesheet. React 18+; no runtime dependencies.
+Compared with [vaul](https://scrollsheet.dev/compare/vaul), [Base UI](https://scrollsheet.dev/compare/base-ui), [react-modal-sheet](https://scrollsheet.dev/compare/react-modal-sheet) and [Radix Dialog](https://scrollsheet.dev/compare/radix-dialog), including what scrollsheet does worse.
+
+Sheets use a native `<dialog>` and CSS scroll snap, with spring motion expressed as CSS `linear()`. The `Sheet` import is <!--size:index.brotli:1-->14.4<!--/size--> kB compressed, plus a <!--size:styles.brotli:1-->3.4<!--/size--> kB stylesheet. Sizes are brotli; many libraries quote gzip, which runs larger. React 18+; no runtime dependencies.
+
+Coming from vaul? Its [README](https://github.com/emilkowalski/vaul#readme) says the repo is unmaintained. The `Drawer` adapter takes common vaul props, so two lines change:
+
+```diff
+- import { Drawer } from 'vaul';
+- import 'vaul/style.css';
++ import { Drawer } from 'scrollsheet';
++ import 'scrollsheet/styles.css';
+```
+
+`npx scrollsheet-codemod vaul src` makes that change and lists every prop to check. Read the [differences](https://scrollsheet.dev/docs/migrating/from-vaul) before you remove vaul.
 
 <p align="center">
   <a href="https://scrollsheet.dev/">
-    <img src="https://raw.githubusercontent.com/ansumanshah/scrollsheet/2e04c4b374039c4840e4189f36437bb8854638bb/docs/public/hero.gif" width="290" alt="A bottom sheet opening, snapping between detents, and closing">
+    <img src="https://scrollsheet.dev/launch/hero.gif" width="290" alt="A bottom sheet opening, snapping between detents, and closing">
   </a>
 </p>
 
@@ -97,7 +110,7 @@ Also exported: `DetentSpec`, `Side`, `SheetActions`, `TravelInfo`, `spring(confi
 - **Smaller things.** Desktop mouse drag, the `fill` prop, Shadow DOM injection, `themeColorDimming`, hidden scrollbars with an overlay thumb.
 - **Agent skills.** [`skills/`](https://github.com/ansumanshah/scrollsheet/tree/main/skills) contains `migrate-from-vaul`, `migrate-from-sonner`, `migrate-from-radix-dialog`, and `build-with-scrollsheet` for coding agents.
 - **Motion core (experimental).** `scrollsheet/motion` exports the React-free spring solver, Web Animations wrapper, and scroll tween.
-- **Zero-config entry.** `scrollsheet/auto` embeds the stylesheet and injects it on first open: no CSS import needed, <!--size:auto.gzip:1-->20.8<!--/size--> kB gzip for `Sheet` against the default entry's <!--size:index.gzip:1-->16.3<!--/size-->.
+- **Zero-config entry.** `scrollsheet/auto` embeds the stylesheet and injects it on first open: no CSS import needed, <!--size:auto.brotli:1-->17.9<!--/size--> kB compressed for `Sheet` against the default entry's <!--size:index.brotli:1-->14.4<!--/size-->.
 
 Focus containment comes from the platform's `showModal()`, not a JS focus trap. On open, focus lands on the panel so mobile keyboards don't pop unasked; use native `autofocus` to override.
 
@@ -134,10 +147,10 @@ return (
 Every primitive ships as a registry item:
 
 ```sh
-bunx shadcn@latest add https://raw.githubusercontent.com/ansumanshah/scrollsheet/main/registry/drawer.json
+bunx shadcn@latest add https://scrollsheet.dev/r/drawer.json
 ```
 
-Items: `drawer`, `sheet`, `dialog`, `confirm`, `share-sheet`, `sidebar`, `toast`. Each writes one file into `components/ui/` with shadcn's default styling applied, wrapping the primitives above. Swap `drawer.json` in the URL for any of them.
+Items: `drawer`, `sheet`, `dialog`, `confirm`, `share-sheet`, `sidebar`, `toast`, plus `mobile-select`, `command-palette`, `picker-wheel`, and `action-sheet`. Each writes one file into `components/ui/` with shadcn's default styling applied, wrapping the primitives above. Swap `drawer.json` in the URL for any of them.
 
 ## Development
 

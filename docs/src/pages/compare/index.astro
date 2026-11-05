@@ -1,0 +1,60 @@
+---
+import Base from "../../layouts/Base.astro";
+import JsonLd from "../../components/JsonLd.astro";
+import { breadcrumbs, softwareSourceCode } from "../../lib/jsonld";
+
+const items = [
+  {
+    href: "/compare/vaul",
+    name: "vaul",
+    line: "Two-line import swap, the drag engine, and which vaul options are ignored.",
+  },
+  {
+    href: "/compare/base-ui",
+    name: "Base UI Drawer",
+    line: "Unstyled and maintained, against a styled package. What shadcn/ui's Base UI flavour uses, and when each fits.",
+  },
+  {
+    href: "/compare/react-modal-sheet",
+    name: "react-modal-sheet",
+    line: "The Motion dependency, bundle size, and who handles focus.",
+  },
+  {
+    href: "/compare/radix-dialog",
+    name: "Radix Dialog",
+    line: "Native dialog against a JavaScript focus scope, and when Radix is the better fit.",
+  },
+];
+---
+
+<Base
+  title="Compare scrollsheet"
+  description="scrollsheet compared with vaul, react-modal-sheet and Radix Dialog, with sizes measured the same way and a list of what scrollsheet does worse."
+>
+  <Fragment slot="head">
+    <JsonLd data={softwareSourceCode()} />
+    <JsonLd data={breadcrumbs([{ name: "scrollsheet", path: "/" }, { name: "Compare", path: "/compare" }])} />
+  </Fragment>
+  <div class="container seo">
+    <header class="seo__head">
+      <h1>Compare scrollsheet</h1>
+      <p>
+        Each page lists what is the same, what differs, and where the other library is the better
+        choice. Sizes are measured the same way for every library.
+      </p>
+    </header>
+    <ul class="seo__links">
+      {items.map((item) => (
+        <li>
+          <a href={item.href}>
+            <strong>scrollsheet vs {item.name}</strong>
+            <span>{item.line}</span>
+          </a>
+        </li>
+      ))}
+    </ul>
+    <p class="seo__note">
+      New to bottom sheets? Start with the <a href="/react-bottom-sheet">React bottom sheet guide</a>.
+    </p>
+  </div>
+</Base>

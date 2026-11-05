@@ -3,7 +3,7 @@
 import * as React from "react";
 import { createPortal } from "react-dom";
 
-import { StackContext, type SheetContextValue, type TravelInfo, useSheetContext } from "./context";
+import { StackContext, type SheetContextValue, useSheetContext } from "./context";
 import {
   DEFAULT_RADIUS_PX,
   FULL_HEIGHT_RADIUS_FLATTEN_PX,
@@ -13,24 +13,25 @@ import {
   TRAVEL_MS,
   applyBackgroundEffect,
   applyFullHeightRadius,
+  clamp01,
   clearRecede,
+  fillProgressAtDetents,
   isMarkLive,
   isPhantomScrollStep,
   jumpScroll,
-  measureContentHeight,
-  resolveClosedBy,
   readRevealed,
+  round3,
+  sampleViewportGap,
+  sdaOwnsBackdrop,
+  resolveClosedBy,
   restoreFocusFallback,
   setBoolAttr,
 } from "./internal/content-helpers";
 import {
   clampSequentialDetent,
-  type DetentContext,
   type DetentSpec,
   isBelowCloseThreshold,
   nearestDetent,
-  resolveDetent,
-  resolveDetents,
   type ResolvedDetent,
 } from "./internal/detents";
 import {
@@ -41,14 +42,13 @@ import {
   isIOS,
   warnContentAsChildInvalidChild,
   warnCoreStylesMissing,
-  warnLargestUndimmedDetentOutOfRange,
   warnMissingDialogSupport,
 } from "./internal/env";
-import { preloadFallbackSheet } from "./internal/fallback-sheet-loader";
+import { fallbackSheet } from "./internal/fallback-sheet-loader";
 import { Slot, composeRefs } from "./internal/slot";
 import { injectStyles } from "./internal/styles";
-import type { ThemeColorController } from "./internal/theme-color";
-import { preloadThemeColor } from "./internal/theme-color-loader";
+import type { ThemeColorController, ThemeColorFeatureProps } from "./internal/theme-color";
+import { themeColor } from "./internal/theme-color-loader";
 import { useBackgroundEffect } from "./internal/use-background-effect";
 import { useCloseWatcher } from "./internal/use-close-watcher";
 import { contentMorph } from "./internal/content-morph-loader";
@@ -56,7 +56,6 @@ import type { UseContentMorphInput } from "./internal/use-content-morph";
 import { geometryFor, mapScroll } from "./motion/geometry";
 import { type ScrollAnimation, animateScrollTo } from "./motion/scroll-animator";
 import { isAtScrollBoundary } from "./motion/scroll-handoff";
-import { syncSnapStops as syncSnapStopsImpl } from "./motion/snap-stops";
 import { SHEET_SPRING } from "./motion/spring";
 import { useDragEngine } from "./internal/use-drag-engine";
 import { useEnterExitLeg } from "./internal/use-enter-exit-leg";
@@ -69,6 +68,7 @@ import { nestedScroll } from "./internal/nested-scroll-loader";
 import type { UseNestedScrollInput } from "./internal/use-nested-scroll";
 import { createThumbController, hasScrollableOverflow } from "./internal/scrollbar-layout";
 import { useOverlayScrollbar } from "./internal/use-overlay-scrollbar";
+import { useSheetMeasure } from "./internal/use-sheet-measure";
 import { useStackRecede } from "./internal/use-stack-recede";
 
 // Marks an Escape keydown as already claimed by the topmost non-modal sheet,
@@ -104,49 +104,6 @@ export interface SheetContentProps extends React.ComponentProps<"div"> {
    * @default false
    */
   asChild?: boolean;
-}
-
-/**
- * Pure per-frame math for onTravel's TravelInfo. Mutates `target` in
- * place (the reused-Map contract TravelInfo's TSDoc documents) rather than
- * returning a fresh Map. Keyed by resolved px height, not DetentSpec, since
- * `resolved` is already de-duped by height (resolveDetents' contract) — a
- * duplicate-resolving spec must not double-count here either.
- */
-export function fillProgressAtDetents(
-  target: Map<number, number>,
-  resolved: readonly ResolvedDetent[],
-  revealed: number,
-): void {
-  target.clear();
-  for (const detent of resolved) {
-    const progress = detent.height > 0 ? Math.min(1, Math.max(0, revealed / detent.height)) : 0;
-    target.set(detent.height, progress);
-  }
-}
-
-function round3(x: number): string {
-  return String(Math.round(x * 1000) / 1000);
-}
-
-/**
- * Whether the CSS scroll-driven-animation path (core.css's `@supports
- * (animation-timeline: scroll())` block, active once `data-scrollsheet-sda`
- * is stamped) owns the backdrop's dim opacity and `--scrollsheet-progress`
- * for this frame — updateTravel must skip writing either then, or the JS
- * write and the compositor animation fight over the same custom properties
- * for no reason (the animation always wins the cascade regardless, so the
- * skip is a pure main-thread-cost cut, not a correctness fix).
- *
- * Scoped to phase 'open' only, matching core.css's own selector: during
- * 'opening'/'closing' the track's scroll position is already at rest (jumped
- * to its target before the WAAPI enter/exit leg starts animating the
- * PANEL's transform — see the open sequence effect), so there is no live
- * scroll delta for a timeline to read yet. That entrance/exit fade stays the
- * existing transition-driven write on every engine, SDA or not.
- */
-export function sdaOwnsBackdrop(sdaSupported: boolean, phase: Phase): boolean {
-  return sdaSupported && phase === "open";
 }
 
 export const Content = /* @__PURE__ */ React.forwardRef<HTMLDivElement, SheetContentProps>(
@@ -192,11 +149,18 @@ export const Content = /* @__PURE__ */ React.forwardRef<HTMLDivElement, SheetCon
       [ctx.setCanvasEl],
     );
 
-    const lastInsetMirrorRef = React.useRef("");
     const resolvedRef = React.useRef<ResolvedDetent[]>([]);
-    const measureCtxRef = React.useRef<DetentContext | null>(null);
     const maxDetentRef = React.useRef(0);
     const firstDetentRef = React.useRef(0);
+    // largestUndimmedDetent's resolved dim range, px — see updateTravel's
+    // `dimProgress` (backdrop/themeColorDimming only; travelProgress, driving
+    // everything else, is unaffected by this prop). dimStart 0 / dimEnd
+    // firstDetent (the prop's default, unset) reduces to today's behavior
+    // exactly.
+    const dimStartRef = React.useRef(0);
+    const dimEndRef = React.useRef(0);
+    const atMaxRef = React.useRef(false);
+    const pressedInsideRef = React.useRef(false);
     // onTravel's 3rd arg: one object + one Map, reused and mutated in place
     // every travel frame instead of allocated fresh — see TravelInfo's TSDoc.
     const travelInfoRef = React.useRef<{
@@ -206,14 +170,12 @@ export const Content = /* @__PURE__ */ React.forwardRef<HTMLDivElement, SheetCon
       range: [0, 0],
       progressAtDetents: new Map(),
     });
-    // largestUndimmedDetent's resolved dim range, px — see updateTravel's
-    // `dimProgress` (backdrop/themeColorDimming only; travelProgress, driving
-    // everything else, is unaffected by this prop). dimStart 0 / dimEnd
-    // firstDetent (the prop's default, unset) reduces to today's behavior
-    // exactly.
-    const dimStartRef = React.useRef(0);
-    const dimEndRef = React.useRef(0);
-    const atMaxRef = React.useRef(false);
+    // Last written --scrollsheet-kb-hang / --scrollsheet-reveal px, to skip
+    // same-value writes on the travel hot path (at rest neither changes
+    // frame to frame).
+    const lastKbHangRef = React.useRef(-1);
+    const lastRevealRef = React.useRef(-1);
+    const radiusOverrideAppliedRef = React.useRef(false);
     const animRef = React.useRef<ScrollAnimation | null>(null);
     // Set for the lifetime of any in-flight animateScrollTo tween (Handle/
     // keyboard detent travel, content-morph, drag-release-to-nearest-detent —
@@ -232,11 +194,6 @@ export const Content = /* @__PURE__ */ React.forwardRef<HTMLDivElement, SheetCon
     // (see the JSX comment where it renders). updateTravel mirrors the dim
     // var onto it because the var is scoped per-element, not on the dialog.
     const topChromeRef = React.useRef<HTMLDivElement | null>(null);
-    // Last written --scrollsheet-kb-hang / --scrollsheet-reveal px, to skip
-    // same-value writes on the travel hot path (at rest neither changes
-    // frame to frame).
-    const lastKbHangRef = React.useRef(-1);
-    const lastRevealRef = React.useRef(-1);
     // Bottom mirror of topChromeRef (see the JSX comment where it renders).
     const bottomChromeDimRef = React.useRef<HTMLDivElement | null>(null);
     const previousFocusRef = React.useRef<HTMLElement | null>(null);
@@ -246,7 +203,6 @@ export const Content = /* @__PURE__ */ React.forwardRef<HTMLDivElement, SheetCon
     const baseRadiusRef = React.useRef(DEFAULT_RADIUS_PX);
     const fullHeightRef = React.useRef(false);
     const detachedRef = React.useRef(false);
-    const radiusOverrideAppliedRef = React.useRef(false);
     /** Which effect updateTravel last wrote, so it can be wound back. */
     const backgroundAppliedRef = React.useRef<"scale" | "parallax" | null>(null);
 
@@ -270,14 +226,25 @@ export const Content = /* @__PURE__ */ React.forwardRef<HTMLDivElement, SheetCon
     const markProgrammaticScroll = React.useCallback(() => {
       programmaticScrollMarkRef.current = performance.now();
     }, []);
-    // fill is a Content prop, not context — measure() (a `[]`-deps useCallback)
     // reads it via ref like every other per-render value it needs.
     const fillRef = React.useRef(fill);
+    const present = dialogOk && mounted && (ctx.open || phase !== "pre");
+    const initialBaselineGapRef = React.useRef<number | undefined>(undefined);
     React.useInsertionEffect(() => {
       ctxRef.current = ctx;
       phaseRef.current = phase;
       parentStackRef.current = parentStack;
       fillRef.current = fill;
+      // Ahead of the layout phase, where React runs a child's autoFocus: past
+      // that, the focused element and the viewport gap both describe the sheet
+      // rather than the page it opened over. The stylesheet must be in by then
+      // too, so that autoFocus can land (the "pre" rule in core.css).
+      if (present && ctx.open && !overlayOpenRef.current) {
+        injectStyles(ctx.nonce);
+        const preOpenFocus = document.activeElement;
+        previousFocusRef.current = preOpenFocus instanceof HTMLElement ? preOpenFocus : null;
+        sampleViewportGap(initialBaselineGapRef);
+      }
     });
 
     /**
@@ -309,7 +276,6 @@ export const Content = /* @__PURE__ */ React.forwardRef<HTMLDivElement, SheetCon
       return "scale";
     }, []);
 
-    const present = dialogOk && mounted && (ctx.open || phase !== "pre");
     // No enter/exit legs on the degraded path (no WAAPI travel to run), so it
     // tracks ctx.open directly instead of the phase machine — it appears and
     // disappears rather than animating.
@@ -333,19 +299,7 @@ export const Content = /* @__PURE__ */ React.forwardRef<HTMLDivElement, SheetCon
     // it. Keyed on the platform probe at MOUNT (not on open) so the module
     // is resident before the first open on the platforms that need it; a
     // defaultOpen first render there shows the modal one microtask late.
-    const [LoadedFallbackSheet, setLoadedFallbackSheet] = React.useState<
-      typeof import("./internal/fallback-sheet").FallbackSheet | null
-    >(null);
-    React.useEffect(() => {
-      if (dialogOk || !mounted || LoadedFallbackSheet) return;
-      let alive = true;
-      void preloadFallbackSheet().then((mod) => {
-        if (alive && mod) setLoadedFallbackSheet(() => mod.FallbackSheet);
-      });
-      return () => {
-        alive = false;
-      };
-    }, [dialogOk, mounted, LoadedFallbackSheet]);
+    const fallbackMod = fallbackSheet.useFeature(!dialogOk && mounted);
 
     // panelRef never changes identity, so this only re-composes when the
     // consumer's own ref does.
@@ -369,196 +323,29 @@ export const Content = /* @__PURE__ */ React.forwardRef<HTMLDivElement, SheetCon
       setChildCount,
     });
 
-    /**
-     * Resolve detents against the current viewport and rebuild snap stops.
-     * `rebuildSnapStops` defaults to true for every caller except the
-     * content-morph effect, which defers the snap-stop DOM rebuild until
-     * after its own tween lands — see `syncSnapStops`'s doc comment below for
-     * why.
-     */
-    const measure = React.useCallback((rebuildSnapStops = true) => {
-      const dialog = dialogRef.current;
-      const track = trackRef.current;
-      const canvas = canvasRef.current;
-      const body = bodyRef.current;
-      const panel = panelRef.current;
-      if (!dialog || !track || !canvas || !body || !panel) return;
-      const geometry = geometryFor(ctxRef.current.side);
+    const [measure, syncSnapStops, resolveSpec] = useSheetMeasure(
+      dialogRef,
+      trackRef,
+      canvasRef,
+      panelRef,
+      bodyRef,
+      ctxRef,
+      fillRef,
+      resolvedRef,
+      maxDetentRef,
+      firstDetentRef,
+      dimStartRef,
+      dimEndRef,
+      baseRadiusRef,
+      fullHeightRef,
+      detachedRef,
+    );
 
-      // Feeds .scrollsheet-canvas::after's overdraw fill — see styles.ts for
-      // why this can't just be `background: inherit` on the pseudo itself.
-      // One computed-style resolve per measure — three separate calls each
-      // forced style recalc on a hot path (every resize/keyboard/morph).
-      const panelStyle = getComputedStyle(panel);
-      canvas.style.setProperty("--scrollsheet-panel-bg", panelStyle.backgroundColor);
-
-      // Desktop drawers take the Handle out of flow, so the top spacing the
-      // pill would otherwise provide has to be added back explicitly — only
-      // on sheets that actually render one. Reflected as an attribute rather than matched with
-      // :has() so the rule holds on every browser the library supports (:has()
-      // is Firefox 121+, above this library's 112 floor), and re-evaluated with
-      // the rest of measure() so a multi-view sheet that swaps a handle in or
-      // out doesn't keep stale spacing.
-      // Written only on an actual change: this attribute drives a padding rule,
-      // so an unconditional write would invalidate style every measure() and
-      // force a recalc on the `contentHeight` read below — measure() runs on
-      // every resize, keyboard move, and content morph.
-      const hasHandle = body.querySelector("[data-scrollsheet-handle]") !== null;
-      setBoolAttr(dialog, "data-scrollsheet-has-handle", hasHandle);
-
-      // Center presentation: the panel is content-sized by the center CSS
-      // block and there is no travel range — detent resolution, snap stops,
-      // dim ranges, and the detached/full-height machinery are all inert.
-      // Only the two writes above (overdraw fill color, handle spacing) are
-      // meaningful, and every measure() caller (resize, keyboard, morph)
-      // stays safe through this single early return.
-      if (ctxRef.current.center) return;
-
-      const viewportSize = track[geometry.clientSizeProp];
-      // Detached (floating-card) sheets reserve their margin out of the
-      // detent space itself: 'full' resolves to viewport minus the top and
-      // bottom gaps, so a full detent still floats instead of touching the
-      // edges. Parsed here (not only in the detached block below) because the
-      // detent resolution needs it first.
-      const rawInsetBottom = panelStyle.getPropertyValue("--scrollsheet-inset-bottom");
-      const parsedInsetBottom = Number.parseFloat(rawInsetBottom);
-      const detached = Number.isFinite(parsedInsetBottom) && parsedInsetBottom > 0;
-      // Written HERE, before contentHeight is read below and before the
-      // detent resolution. core.css's own [data-scrollsheet-detached] rule
-      // replaces the panel's padding-bottom (the attached rule clears the
-      // home indicator; the detached one must not, or the card pads twice),
-      // and measureContentHeight reads that padding off panelStyle — the
-      // attribute must land before that first read, or a detached sheet's
-      // first measure sizes against the attached padding and opens taller
-      // than its content by the safe-area inset, with nothing to remeasure it.
-      // Conditional write for the same reason has-handle above is: an
-      // unconditional one invalidates style on every measure().
-      detachedRef.current = detached;
-      setBoolAttr(dialog, "data-scrollsheet-detached", detached);
-      // Mirrored onto the canvas for the outside-variant Handle's offset:
-      // --scrollsheet-inset-bottom is scoped to the PANEL (the desktop dock
-      // sets it there, consumers' detached-card classes target it there),
-      // and the canvas-portaled pill is a sibling — it never inherits the
-      // real value, so without this mirror it would silently read 0.
-      // Conditional write, same reason as the attributes above.
-      const insetMirror = `${detached ? parsedInsetBottom : 0}px`;
-      if (canvas && lastInsetMirrorRef.current !== insetMirror) {
-        lastInsetMirrorRef.current = insetMirror;
-        canvas.style.setProperty("--scrollsheet-ib", insetMirror);
+    const writeDim = (value: string) => {
+      for (const el of [backdropRef.current, topChromeRef.current, bottomChromeDimRef.current]) {
+        el?.style.setProperty("--scrollsheet-dim", value);
       }
-      const measureCtx: DetentContext = {
-        viewportHeight: viewportSize,
-        contentHeight: measureContentHeight(
-          body,
-          geometry.offsetSizeProp,
-          fillRef.current,
-          panelStyle,
-          geometry.axis,
-        ),
-        topInset: detached ? parsedInsetBottom * 2 : 0,
-      };
-      measureCtxRef.current = measureCtx;
-      const resolved = resolveDetents(ctxRef.current.detents, measureCtx);
-      resolvedRef.current = resolved;
-      const maxDetent = resolved[resolved.length - 1]?.height ?? 0;
-      const firstDetent = resolved[0]?.height ?? 0;
-      maxDetentRef.current = maxDetent;
-      firstDetentRef.current = firstDetent;
-
-      // largestUndimmedDetent: dimStart is its resolved height (0 if unset —
-      // the prop's default), dimEnd is the next *resolved* detent above it, or
-      // maxDetent if it's already the tallest. Clamped to maxDetent-1 so
-      // dimStart < dimEnd always holds, even when largestUndimmedDetent
-      // resolves at or above every configured detent (e.g. a short
-      // 'content'-only detents list with a taller largestUndimmedDetent) —
-      // without this an inverted dimStart > dimEnd range gets written to
-      // --scrollsheet-fade-start/-end, which is undefined behavior on the CSS
-      // scroll-driven-animation fast path (core.css's animation-range).
-      const undimmedSpec = ctxRef.current.largestUndimmedDetent;
-      const resolvedDimStart =
-        undimmedSpec !== undefined ? Math.round(resolveDetent(undimmedSpec, measureCtx)) : 0;
-      const dimStart = Math.max(0, Math.min(maxDetent - 1, resolvedDimStart));
-      // Warn only when it resolves *above* every configured detent (the actual
-      // misconfiguration — e.g. a short 'content'-only detents list with a
-      // taller largestUndimmedDetent) — not merely equal to the tallest one,
-      // which is a legitimate, common pattern (vaul's own default: "fade only
-      // at the topmost snap point") that the clamp above already handles
-      // correctly with no behavior change worth flagging.
-      if (
-        process.env.NODE_ENV !== "production" &&
-        undimmedSpec !== undefined &&
-        resolvedDimStart > maxDetent
-      ) {
-        warnLargestUndimmedDetentOutOfRange();
-      }
-      const dimEnd = resolved.find((d) => d.height > dimStart)?.height ?? maxDetent;
-      dimStartRef.current = dimStart;
-      dimEndRef.current = dimEnd;
-
-      dialog.style.setProperty("--scrollsheet-max-detent", `${maxDetent}px`);
-      // The SDA progress animation's own range (core.css): 0 at rest-closed
-      // through firstDetent, matching travelProgress's own definition below —
-      // written unconditionally like max-detent/fade-start/-end, cheap and
-      // harmless on engines that never read it.
-      dialog.style.setProperty("--scrollsheet-first-detent", `${firstDetent}px`);
-      dialog.style.setProperty("--scrollsheet-fade-start", `${dimStart}px`);
-      dialog.style.setProperty("--scrollsheet-fade-end", `${dimEnd}px`);
-
-      // Full-height detection (radius-flatten): the largest detent reaching
-      // the true viewport edge (resolveDetent caps every spec at
-      // viewportHeight - topInset, so "full" and any >=100% fraction land
-      // here within rounding).
-      fullHeightRef.current = maxDetent >= viewportSize - 1;
-      // --scrollsheet-radius is declared as a real custom property on the
-      // panel's default-look rule in styles.ts (not just embedded inside a
-      // var(...,fallback) call), specifically so it's reliably readable here
-      // regardless of whether a consumer overrode it.
-      const rawRadius = panelStyle.getPropertyValue("--scrollsheet-radius").trim();
-      const parsedRadius = Number.parseFloat(rawRadius);
-      baseRadiusRef.current = Number.isFinite(parsedRadius) ? parsedRadius : DEFAULT_RADIUS_PX;
-
-      // Direction mirror for the desktop drawer's travel rules: core.css keys
-      // its RTL resting transforms on this, and transformSide() reads the same
-      // computed direction — the signal margin-inline (the dock itself)
-      // resolves against, which a :dir() selector would miss for a CSS-only
-      // `direction: rtl`. Conditional write like has-handle above: it drives
-      // transform rules and measure() runs on every resize/keyboard/morph —
-      // which is also this mirror's refresh cadence, so a live direction flip
-      // with the sheet open waits for the next of those (the WAAPI legs read
-      // computed direction directly and stay correct regardless).
-      const rtl = panelStyle.direction === "rtl";
-      setBoolAttr(dialog, "data-scrollsheet-rtl", rtl);
-
-      if (rebuildSnapStops) syncSnapStops();
-    }, []);
-
-    // Deferred to after the content-morph tween's own scrollTo lands — see
-    // syncSnapStops's doc comment for why an inline rebuild mid-tween misfires.
-    const syncSnapStops = React.useCallback(() => {
-      syncSnapStopsImpl({
-        canvas: canvasRef.current,
-        side: ctxRef.current.side,
-        dismissible: ctxRef.current.dismissible,
-        resolved: resolvedRef.current,
-        maxDetent: maxDetentRef.current,
-      });
-    }, []);
-
-    const resolveSpec = React.useCallback((spec: DetentSpec): ResolvedDetent | undefined => {
-      const resolved = resolvedRef.current;
-      const bySpec = resolved.find((d) => Object.is(d.spec, spec));
-      if (bySpec) return bySpec;
-      // The spec collapsed into another during de-dup (two specs resolved to the
-      // same height). Resolve its true height and snap to the nearest survivor
-      // rather than guessing by list position — the sorted/deduped `resolved`
-      // array and the declaration-order detents array are different index spaces.
-      const measureCtx = measureCtxRef.current;
-      if (measureCtx) {
-        const height = Math.round(resolveDetent(spec, measureCtx));
-        return nearestDetent(height, resolved) ?? resolved[resolved.length - 1];
-      }
-      return resolved[resolved.length - 1];
-    }, []);
+    };
 
     const updateTravel = React.useCallback(() => {
       const dialog = dialogRef.current;
@@ -614,7 +401,7 @@ export const Content = /* @__PURE__ */ React.forwardRef<HTMLDivElement, SheetCon
       const dimRange = dimEndRef.current - dimStart;
       const dimProgress =
         dimRange > 0
-          ? Math.min(1, Math.max(0, (revealed - dimStart) / dimRange))
+          ? clamp01((revealed - dimStart) / dimRange)
           : revealed >= dimEndRef.current
             ? 1
             : 0;
@@ -627,10 +414,7 @@ export const Content = /* @__PURE__ */ React.forwardRef<HTMLDivElement, SheetCon
       // straight off the track's live scroll position, off the main thread.
       if (!sdaOwnsBackdrop(env().scrollTimeline, phaseRef.current)) {
         backdropRef.current?.style.setProperty("--scrollsheet-progress", round3(travelProgress));
-        const dimValue = round3(dimProgress);
-        for (const el of [backdropRef.current, topChromeRef.current, bottomChromeDimRef.current]) {
-          el?.style.setProperty("--scrollsheet-dim", dimValue);
-        }
+        writeDim(round3(dimProgress));
       }
       // Not CSS-drivable (it sets a <meta> tag, not a style) — computed and
       // applied every frame regardless of SDA.
@@ -638,8 +422,7 @@ export const Content = /* @__PURE__ */ React.forwardRef<HTMLDivElement, SheetCon
       const atMax = maxDetent > 0 && revealed >= maxDetent - 1;
       if (atMax !== atMaxRef.current) {
         atMaxRef.current = atMax;
-        if (atMax) dialog.setAttribute("data-scrollsheet-at-max", "");
-        else dialog.removeAttribute("data-scrollsheet-at-max");
+        setBoolAttr(dialog, "data-scrollsheet-at-max", atMax);
       }
       if (ctxRef.current.onTravel) {
         const info = travelInfoRef.current;
@@ -658,7 +441,7 @@ export const Content = /* @__PURE__ */ React.forwardRef<HTMLDivElement, SheetCon
       // prefers-reduced-motion doesn't apply.
       const panel = panelRef.current;
       if (panel && fullHeightRef.current && !detachedRef.current) {
-        const t = Math.min(Math.max((maxDetent - revealed) / FULL_HEIGHT_RADIUS_FLATTEN_PX, 0), 1);
+        const t = clamp01((maxDetent - revealed) / FULL_HEIGHT_RADIUS_FLATTEN_PX);
         applyFullHeightRadius(panel, ctxRef.current.side, baseRadiusRef.current * t);
         radiusOverrideAppliedRef.current = true;
       } else if (panel && radiusOverrideAppliedRef.current) {
@@ -719,7 +502,7 @@ export const Content = /* @__PURE__ */ React.forwardRef<HTMLDivElement, SheetCon
         track: HTMLElement,
         target: number,
         axis: "x" | "y",
-        suspendSnap = false,
+        suspendSnap: boolean | (() => void) = false,
       ): ScrollAnimation => {
         const durationMs = TRAVEL_MS / ctxRef.current.animationSpeed;
         const animation = animateScrollTo(track, target, durationMs, axis, suspendSnap);
@@ -765,7 +548,8 @@ export const Content = /* @__PURE__ */ React.forwardRef<HTMLDivElement, SheetCon
       // re-tweens after the idle gap, and scrollend must not pre-empt it.
       if (dialogRef.current?.hasAttribute("data-scrollsheet-wheel-session")) return;
       const track = trackRef.current;
-      if (!track) return;
+      // Snap suspended: a held morph, whose position nobody chose.
+      if (!track || track.style.scrollSnapType) return;
       const current = ctxRef.current;
       const geometry = geometryFor(current.side);
       /* A phantom-flagged excursion (see PHANTOM_SCROLL_JUMP_PX) winds back
@@ -806,6 +590,27 @@ export const Content = /* @__PURE__ */ React.forwardRef<HTMLDivElement, SheetCon
       }
     }, [resolveSpec, startTween]);
 
+    const openOverlay = (dialog: HTMLElement) => {
+      if (overlayOpenRef.current) return;
+      // Trigger-recorded opener wins; focus is the fallback for programmatic
+      // opens and is wrong on Safari (buttons never focus on click/tap).
+      openerElementRef.current = ctx.openerRef.current ?? previousFocusRef.current;
+      ctx.openerRef.current = null;
+      // A field autofocused during this commit keeps focus through the
+      // platform's focusing steps, which honor [autofocus]: moving it away
+      // and back would fire the field's blur handlers on open.
+      const held = dialog.contains(document.activeElement) ? document.activeElement : null;
+      held?.setAttribute("autofocus", "");
+      if ("showModal" in dialog) {
+        if (ctx.modal) (dialog as HTMLDialogElement).showModal();
+        else (dialog as HTMLDialogElement).show();
+      } else {
+        (dialog as HTMLDivElement & { showPopover: () => void }).showPopover();
+      }
+      held?.removeAttribute("autofocus");
+      overlayOpenRef.current = true;
+    };
+
     // ── Open sequence ────────────────────────────────────────────────────────
     React.useLayoutEffect(() => {
       if (!present || !ctx.open || phase !== "pre") return;
@@ -815,26 +620,7 @@ export const Content = /* @__PURE__ */ React.forwardRef<HTMLDivElement, SheetCon
       if (!dialog || !track || !panel) return;
       const geometry = geometryFor(ctx.side);
 
-      injectStyles(ctx.nonce);
-      if (!overlayOpenRef.current) {
-        // Snapshot focus the same instant showModal()/showPopover() would, so
-        // a manual restore-fallback on close (see restoreFocusFallback)
-        // targets exactly what the platform's own focus-restoration algorithm
-        // would (dialog) or what we restore ourselves (popover/non-modal).
-        const preOpenFocus = document.activeElement;
-        previousFocusRef.current = preOpenFocus instanceof HTMLElement ? preOpenFocus : null;
-        // Trigger-recorded opener wins; focus is the fallback for programmatic
-        // opens and is wrong on Safari (buttons never focus on click/tap).
-        openerElementRef.current = ctx.openerRef.current ?? previousFocusRef.current;
-        ctx.openerRef.current = null;
-        if ("showModal" in dialog) {
-          if (ctx.modal) (dialog as HTMLDialogElement).showModal();
-          else (dialog as HTMLDialogElement).show();
-        } else {
-          (dialog as HTMLDivElement & { showPopover: () => void }).showPopover();
-        }
-        overlayOpenRef.current = true;
-      }
+      openOverlay(dialog);
       measure();
       if (ctx.center) {
         // No travel: the backdrop's dim rides the state-transition CSS
@@ -843,9 +629,7 @@ export const Content = /* @__PURE__ */ React.forwardRef<HTMLDivElement, SheetCon
         // same var (they render for modal themeColorDimming regardless of
         // side).
         backdropRef.current?.style.setProperty("--scrollsheet-progress", "1");
-        for (const el of [backdropRef.current, topChromeRef.current, bottomChromeDimRef.current]) {
-          el?.style.setProperty("--scrollsheet-dim", "1");
-        }
+        writeDim("1");
         // The meta-tag blend is JS-only (updateTravel's apply() never runs
         // for center), so pin it to settled-open here too. The controller
         // arrives async; the creation effect re-applies for center on
@@ -889,7 +673,6 @@ export const Content = /* @__PURE__ */ React.forwardRef<HTMLDivElement, SheetCon
       ctx.open,
       phase,
       ctx.activeDetent,
-      ctx.nonce,
       ctx.side,
       // ctx.side stays "bottom" across a bottom<->center flip (center is the
       // flag, not the side), so the flag must invalidate this effect itself.
@@ -916,6 +699,7 @@ export const Content = /* @__PURE__ */ React.forwardRef<HTMLDivElement, SheetCon
 
     // ── Close request ────────────────────────────────────────────────────────
     React.useEffect(() => {
+      if (!ctx.open) pressedInsideRef.current = false;
       if (!ctx.open && (phase === "opening" || phase === "open")) {
         animRef.current?.cancel();
         // Un-dim immediately so the browser chrome matches the backdrop's own
@@ -935,61 +719,12 @@ export const Content = /* @__PURE__ */ React.forwardRef<HTMLDivElement, SheetCon
     }, [ctx.open, phase]);
 
     // ── Theme-color dimming ──────────────────────────────────────────────────
-    // Lives for as long as the sheet is present at all (mount through the close
-    // animation), so `restore()` always fires on both close and unmount via the
-    // effect cleanup — there's no separate teardown path to keep in sync.
-    // The module behind the opt-in prop is code-split; kick the load at mount
+    // The module behind the opt-in prop is code-split; the load starts at mount
     // (prop set, sheet not yet open) so it is resident before a user gesture
-    // can open the sheet, instead of racing the first open.
-    React.useEffect(() => {
-      if (ctx.themeColorDimming) void preloadThemeColor();
-    }, [ctx.themeColorDimming]);
-
-    React.useEffect(() => {
-      if (!present || !ctx.themeColorDimming) return;
-      let cancelled = false;
-      let controller: ThemeColorController | null = null;
-      // Resolved from the mount-time preload's cached promise — a microtask,
-      // not a network fetch, in every case but a defaultOpen first render.
-      // The controller is only ever consumed on travel frames (themeColorRef,
-      // read by updateTravel), so a late arrival degrades to the next frame
-      // picking it up, never a missed teardown: cleanup runs on the same
-      // closure regardless of when creation resolved.
-      void preloadThemeColor().then((mod) => {
-        if (cancelled || !mod) return;
-        controller = mod.createThemeColorController({
-          getBackdropColor: () => {
-            // The attribute, not the class: the top-chrome strip shares the
-            // class and would match first in document order.
-            const backdrop = dialogRef.current?.querySelector("[data-scrollsheet-backdrop]");
-            return backdrop ? getComputedStyle(backdrop).backgroundColor : null;
-          },
-          // Already resolved by measure() onto the canvas — a style.getPropertyValue
-          // read, not a second getComputedStyle call.
-          getPanelColor: () =>
-            canvasRef.current?.style.getPropertyValue("--scrollsheet-panel-bg") || null,
-          isBottomAttached: () =>
-            ctxRef.current.side === "bottom" && !ctxRef.current.center && !detachedRef.current,
-          getBottomChromeEl: () => bottomChromeRef.current,
-          getBottomDimEl: () => bottomChromeDimRef.current,
-        });
-        themeColorRef.current = controller;
-        // The next scroll/settle frame (already in flight from the open
-        // sequence's own scrollTop assignment) calls updateTravel() and
-        // applies the current progress — no initial value computed here.
-        // EXCEPT center: it has no travel frames, so nothing ever applies a
-        // value after this resolve. Apply settled-open unconditionally —
-        // this effect only runs while the sheet is present, and dimming a
-        // frame before "opening" matches the chrome strips' own pre-state
-        // snap (iOS samples its backings at that exact first paint).
-        if (ctxRef.current.center) controller?.apply(1, true);
-      });
-      return () => {
-        cancelled = true;
-        controller?.restore();
-        themeColorRef.current = null;
-      };
-    }, [present, ctx.themeColorDimming]);
+    // can open the sheet, instead of racing the first open. The controller is
+    // only ever consumed on travel frames, so a late arrival degrades to the
+    // next frame picking it up, never a missed teardown.
+    const themeMod = themeColor.useFeature(ctx.themeColorDimming);
 
     useBackgroundEffect({
       present,
@@ -1177,95 +912,39 @@ export const Content = /* @__PURE__ */ React.forwardRef<HTMLDivElement, SheetCon
     }, [ctx.activeDetent, detentsKey, phase, resolveSpec, startTween]);
 
     const morphMod = contentMorph.useFeature(true);
-    const morphProps: UseContentMorphInput = {
-      phase,
-      phaseRef,
-      bodyRef,
-      trackRef,
-      ctxRef,
-      fill,
-      maxDetentRef,
-      animRef,
-      measure,
-      resolveSpec,
-      syncSnapStops,
-      startTween,
-      geometryFor,
-      mapScroll,
-      jumpScroll,
-    };
 
     // Loads on the first editable focus inside the dialog, so input-less
-    // sheets never fetch the keyboard engine. The pre-focus baseline gap is
-    // sampled here at open (the chunk resolves after focus by definition)
-    // and handed over raw — the chunk owns the clamp.
+    // sheets never fetch the keyboard engine.
     const [kbNeeded, setKbNeeded] = React.useState(false);
-    const initialBaselineGapRef = React.useRef<number | undefined>(undefined);
     React.useEffect(() => {
       if (!present || kbNeeded) return;
       const dialog = dialogRef.current;
       if (!dialog) return;
-      // The gap sample must run synchronously inside the focus event — a
-      // passive-effect resample lands frames later, when the keyboard
-      // animation may already be shrinking the visual viewport, and a
-      // poisoned baseline overshoots the inset for the whole session.
-      const sampleGap = () => {
-        const vv = window.visualViewport;
-        if (vv && vv.scale === 1) {
-          const layoutH = document.documentElement.clientHeight || window.innerHeight;
-          initialBaselineGapRef.current = Math.max(0, layoutH - vv.height);
-        }
-      };
       const isEditable = (t: unknown): t is HTMLElement =>
         t instanceof HTMLElement &&
         (t.isContentEditable || t.tagName === "INPUT" || t.tagName === "TEXTAREA");
-      // Cheap overmatch (a checkbox focus loads the chunk pointlessly but
-      // harmlessly); the chunk's willOpenKeyboard applies the precise gate.
-      const detect = (event: FocusEvent) => {
-        if (isEditable(event.target)) {
-          sampleGap();
-          setKbNeeded(true);
-        }
-      };
-      // autoFocus commits during the layout phase, before this effect
-      // attaches — arm from the live activeElement so autofocused sheets
-      // still load the engine (the gap sample is best-effort there; the
-      // chunk's clamp discards a keyboard-contaminated value).
+      // Focus that landed before this effect (autofocus, a child's own effect)
+      // keeps the sample taken at open: resampling here could catch the
+      // keyboard mid-rise, and a value under the toolbar cap would then poison
+      // the inset for the whole session.
       if (isEditable(document.activeElement) && dialog.contains(document.activeElement)) {
-        sampleGap();
         setKbNeeded(true);
         return;
       }
-      sampleGap();
+      // Cheap overmatch (a checkbox focus loads the chunk pointlessly but
+      // harmlessly); the chunk's willOpenKeyboard applies the precise gate.
+      // The toolbar may have moved since open, and inside the focus event the
+      // keyboard has not started yet, so this is the one safe resample.
+      const detect = (event: FocusEvent) => {
+        if (isEditable(event.target)) {
+          sampleViewportGap(initialBaselineGapRef);
+          setKbNeeded(true);
+        }
+      };
       dialog.addEventListener("focusin", detect, { capture: true, passive: true });
       return () => dialog.removeEventListener("focusin", detect, { capture: true });
     }, [present, kbNeeded]);
     const kbMod = keyboardViewport.useFeature(kbNeeded);
-    const kbProps: UseKeyboardViewportInput = {
-      present,
-      markProgrammaticScroll,
-      jumpScroll,
-      initialBaselineGapPx: initialBaselineGapRef.current,
-      // Center rides the inert "bottom" here ON PURPOSE and it is
-      // load-bearing: the hook's isBottom path writes --scrollsheet-vv-top/
-      // -vv-height, which the base track rule sizes off — without them a
-      // center dialog's grid box would size against the full layout viewport
-      // instead of the keyboard-shrunk visual one and miscenter under a
-      // keyboard. measure()/updateTravel() have their own center gates, so
-      // the detent-flavored branches downstream all no-op safely.
-      side: ctx.side,
-      activeDetent: ctx.activeDetent,
-      dialogRef,
-      panelRef,
-      trackRef,
-      measure,
-      resolveSpec,
-      resolvedRef,
-      updateTravel,
-      phaseRef,
-      ctxRef,
-      animRef,
-    };
 
     // desktopSide re-presenting the sheet while it's already open (see the
     // chunk's own doc comment for why the open-sequence effect above can't
@@ -1273,29 +952,6 @@ export const Content = /* @__PURE__ */ React.forwardRef<HTMLDivElement, SheetCon
     // desktopSide; preload fires at mount, the component mounts while
     // present and reconciles a flip that landed before the chunk resolved.
     const flipMod = presentationFlip.useFeature(ctx.desktopProfile);
-    const flipProps: UsePresentationFlipInput = {
-      present,
-      phase,
-      phaseRef,
-      ctxRef,
-      side: ctx.side,
-      center: ctx.center,
-      dialogRef,
-      trackRef,
-      backdropRef,
-      topChromeRef,
-      bottomChromeDimRef,
-      themeColorRef,
-      maxDetentRef,
-      animRef,
-      measure,
-      resolveSpec,
-      updateTravel,
-      geometryFor,
-      mapScroll,
-      jumpScroll,
-      markProgrammaticScroll,
-    };
 
     useOverlayScrollbar({ present, scrollbar: ctx.scrollbar, panelRef, scrollbarRef });
 
@@ -1336,10 +992,54 @@ export const Content = /* @__PURE__ */ React.forwardRef<HTMLDivElement, SheetCon
       return () => observer.disconnect();
     }, [present, nestedNeeded]);
     const nestedMod = nestedScroll.useFeature(nestedNeeded);
-    const nestedProps: UseNestedScrollInput = {
+
+    // One object for every lazy feature: each reads only its own fields, and
+    // object keys survive minification.
+    const featureProps: UseContentMorphInput &
+      UseKeyboardViewportInput &
+      UsePresentationFlipInput &
+      UseNestedScrollInput &
+      ThemeColorFeatureProps = {
       present,
+      phase,
+      phaseRef,
+      bodyRef,
+      trackRef,
+      ctxRef,
+      fill,
+      maxDetentRef,
+      animRef,
+      measure,
+      resolveSpec,
+      syncSnapStops,
+      startTween,
+      geometryFor,
+      mapScroll,
+      jumpScroll,
+      markProgrammaticScroll,
+      initialBaselineGapRef,
+      // Center rides the inert "bottom" here ON PURPOSE and it is
+      // load-bearing: the keyboard hook's isBottom path writes
+      // --scrollsheet-vv-top/-vv-height, which the base track rule sizes off —
+      // without them a center dialog's grid box would size against the full
+      // layout viewport instead of the keyboard-shrunk visual one and miscenter
+      // under a keyboard. measure()/updateTravel() have their own center gates,
+      // so the detent-flavored branches downstream all no-op safely.
+      side: ctx.side,
+      center: ctx.center,
+      activeDetent: ctx.activeDetent,
       scrollbar: ctx.scrollbar,
       dialogRef,
+      panelRef,
+      resolvedRef,
+      updateTravel,
+      backdropRef,
+      canvasRef,
+      detachedRef,
+      topChromeRef,
+      bottomChromeRef,
+      bottomChromeDimRef,
+      themeColorRef,
       isAtScrollBoundary,
       setBoolAttr,
       createThumbController,
@@ -1394,12 +1094,13 @@ export const Content = /* @__PURE__ */ React.forwardRef<HTMLDivElement, SheetCon
       // state-driven open. The forwarded ref reaches the fallback panel so
       // compat layers that bridge attributes off the panel node (Dialog's
       // data-state) keep working on this path.
-      if (!LoadedFallbackSheet) return null;
+      if (!fallbackMod) return null;
       return (
-        <LoadedFallbackSheet
+        <fallbackMod.FallbackSheet
           ref={composedPanelRef}
           side={ctx.center ? "center" : ctx.side}
           modal={ctx.modal !== false}
+          nonce={ctx.nonce}
           backdropDismissible={ctx.backdropDismissible}
           escapeDismissible={ctx.escapeDismissible}
           onDismiss={() => ctx.setOpen(false)}
@@ -1409,7 +1110,7 @@ export const Content = /* @__PURE__ */ React.forwardRef<HTMLDivElement, SheetCon
           panelProps={panelProps}
         >
           {children}
-        </LoadedFallbackSheet>
+        </fallbackMod.FallbackSheet>
       );
     }
 
@@ -1450,14 +1151,18 @@ export const Content = /* @__PURE__ */ React.forwardRef<HTMLDivElement, SheetCon
         <div className="scrollsheet-kb-fade" aria-hidden="true" />
       ) : null;
 
+    const isOutside = (target: EventTarget) =>
+      target === trackRef.current || target === canvasRef.current;
     const chromeStrips = !nonModal && ctx.themeColorDimming;
     const flipFeature =
-      flipMod && ctx.desktopProfile ? <flipMod.PresentationFlipFeature {...flipProps} /> : null;
-    const morphFeature = morphMod ? <morphMod.ContentMorphFeature {...morphProps} /> : null;
-    const kbFeature = kbMod && kbNeeded ? <kbMod.KeyboardViewportFeature {...kbProps} /> : null;
+      flipMod && ctx.desktopProfile ? <flipMod.PresentationFlipFeature {...featureProps} /> : null;
+    const morphFeature = morphMod ? <morphMod.ContentMorphFeature {...featureProps} /> : null;
+    const kbFeature = kbMod && kbNeeded ? <kbMod.KeyboardViewportFeature {...featureProps} /> : null;
     const nestedFeature =
-      nestedMod && nestedNeeded ? <nestedMod.NestedScrollFeature {...nestedProps} /> : null;
+      nestedMod && nestedNeeded ? <nestedMod.NestedScrollFeature {...featureProps} /> : null;
     const freezeFeature = freezeMod ? <freezeMod.BodyFreezeFeature active={ctx.modal} /> : null;
+    const themeFeature =
+      themeMod && ctx.themeColorDimming ? <themeMod.ThemeColorFeature {...featureProps} /> : null;
     const innerContent = (
       <>
         {flipFeature}
@@ -1490,15 +1195,33 @@ export const Content = /* @__PURE__ */ React.forwardRef<HTMLDivElement, SheetCon
           />
         )}
         {!nonModal && (
-          <div ref={backdropRef} className="scrollsheet-backdrop" data-scrollsheet-backdrop />
+          <div
+            // Over an open modal this overlay is inert until it opens itself, and
+            // focus() on an inert field is a no-op. Refs attach in tree order, so
+            // this lands ahead of the autoFocus of anything after the backdrop.
+            ref={(el) => {
+              backdropRef.current = el;
+              if (el && parentStack && ctx.open) openOverlay(el.parentElement!);
+            }}
+            className="scrollsheet-backdrop"
+            data-scrollsheet-backdrop
+          />
         )}
         <div
           ref={trackRef}
           className="scrollsheet-track"
           role="presentation"
+          // A press on content released out here clicks their common ancestor.
+          // Capture phase, so content that stops pointerdown can't hide it.
+          onPointerDownCapture={(event) => {
+            pressedInsideRef.current = !isOutside(event.target);
+          }}
           onClick={(event) => {
-            if (!ctx.backdropDismissible) return;
-            if (event.target === trackRef.current || event.target === canvasRef.current) {
+            // Detail 0 is a scripted click, with no press of its own to match:
+            // the last press may have ended in a pan or drag that clicks nothing.
+            const pressedInside = pressedInsideRef.current && event.detail > 0;
+            pressedInsideRef.current = false;
+            if (ctx.backdropDismissible && isOutside(event.target) && !pressedInside) {
               ctx.setOpen(false);
             }
           }}
@@ -1569,6 +1292,10 @@ export const Content = /* @__PURE__ */ React.forwardRef<HTMLDivElement, SheetCon
             {kbFadeEl}
           </div>
         </div>
+        {/* After the track: a deleted subtree runs cleanups in tree order, and a
+            nested sheet's snapshot of this meta holds this sheet's dim, so its
+            restore has to run first. */}
+        {themeFeature}
       </>
     );
 
@@ -1603,46 +1330,47 @@ export const Content = /* @__PURE__ */ React.forwardRef<HTMLDivElement, SheetCon
     // tradeoff for that rare engine. The shared attribute set below is
     // spread first so any per-shape attribute is a one-place edit.
     const Host = (usePopover ? "div" : "dialog") as "dialog";
-    const hostProps: React.ComponentProps<"dialog"> & { "data-scrollsheet-modal"?: string } = nonModal
-      ? {
-          popover: usePopover ? "manual" : undefined,
-          "data-scrollsheet-modal": "false",
-          role: "dialog",
-          "aria-modal": "false",
-          onKeyDown: onNonModalKeyDown,
-        }
-      : {
-          // Feature-detected: unsupported engines (Safari as of mid-2026) get
-          // no attribute at all. Never "any" — see resolveClosedBy's doc
-          // comment for why. The cancel/close handlers below are unchanged
-          // either way; this only changes which platform signals reach them.
-          closedby: hasClosedBySupport() ? resolveClosedBy(ctx.escapeDismissible) : undefined,
-          onCancel: (event) => {
-            // 'cancel' doesn't bubble in the DOM, but React still replays it up
-            // the *component* tree — so a nested <Sheet.Content> dialog's Esc
-            // reaches an ancestor sheet's onCancel too. Only react to the event
-            // when this dialog is the one that actually fired it.
-            if (event.target !== event.currentTarget) return;
-            event.preventDefault();
-            if (ctx.escapeDismissible) ctx.setOpen(false);
-          },
-          onClose: (event) => {
-            // Same non-bubbling-but-tree-replayed quirk as onCancel above.
-            if (event.target !== event.currentTarget) return;
-            // The platform closed us directly (form method="dialog", etc.).
-            if (phaseRef.current !== "closing" && phaseRef.current !== "pre") {
-              overlayOpenRef.current = false;
-              restoreFocusFallback(previousFocusRef.current);
-              previousFocusRef.current = null;
-              ctx.setOpen(false);
-              setPhase("pre");
-              // This path never reaches the exit leg (the platform already
-              // removed the dialog — there is nothing left to animate), so
-              // the leg's own completion callback can't fire for it.
-              ctx.onOpenChangeComplete?.(false);
-            }
-          },
-        };
+    const hostProps: React.ComponentProps<"dialog"> & { "data-scrollsheet-modal"?: string } =
+      nonModal
+        ? {
+            popover: usePopover ? "manual" : undefined,
+            "data-scrollsheet-modal": "false",
+            role: "dialog",
+            "aria-modal": "false",
+            onKeyDown: onNonModalKeyDown,
+          }
+        : {
+            // Feature-detected: unsupported engines (Safari as of mid-2026) get
+            // no attribute at all. Never "any" — see resolveClosedBy's doc
+            // comment for why. The cancel/close handlers below are unchanged
+            // either way; this only changes which platform signals reach them.
+            closedby: hasClosedBySupport() ? resolveClosedBy(ctx.escapeDismissible) : undefined,
+            onCancel: (event) => {
+              // 'cancel' doesn't bubble in the DOM, but React still replays it up
+              // the *component* tree — so a nested <Sheet.Content> dialog's Esc
+              // reaches an ancestor sheet's onCancel too. Only react to the event
+              // when this dialog is the one that actually fired it.
+              if (event.target !== event.currentTarget) return;
+              event.preventDefault();
+              if (ctx.escapeDismissible) ctx.setOpen(false);
+            },
+            onClose: (event) => {
+              // Same non-bubbling-but-tree-replayed quirk as onCancel above.
+              if (event.target !== event.currentTarget) return;
+              // The platform closed us directly (form method="dialog", etc.).
+              if (phaseRef.current !== "closing" && phaseRef.current !== "pre") {
+                overlayOpenRef.current = false;
+                restoreFocusFallback(previousFocusRef.current);
+                previousFocusRef.current = null;
+                ctx.setOpen(false);
+                setPhase("pre");
+                // This path never reaches the exit leg (the platform already
+                // removed the dialog — there is nothing left to animate), so
+                // the leg's own completion callback can't fire for it.
+                ctx.onOpenChangeComplete?.(false);
+              }
+            },
+          };
 
     return createPortal(
       <>
@@ -1654,6 +1382,7 @@ export const Content = /* @__PURE__ */ React.forwardRef<HTMLDivElement, SheetCon
           data-scrollsheet-side={ctx.center ? "center" : ctx.side}
           data-scrollsheet-sda={sda ? "" : undefined}
           data-scrollsheet-scrollbar={ctx.scrollbar}
+          data-scrollsheet-flick={ctx.flick}
           data-scrollsheet-handle-only={ctx.handleOnly ? "" : undefined}
           data-scrollsheet-disable-drag={ctx.disableDrag ? "" : undefined}
           data-scrollsheet-behind={childCount > 0 ? "" : undefined}

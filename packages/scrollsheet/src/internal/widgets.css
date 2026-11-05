@@ -7,7 +7,8 @@
 /* Cosmetic defaults below — :where() so a className on Sheet.Handle can
    override at normal specificity regardless of this stylesheet's (lazy,
    first-open) injection order relative to the consumer's own CSS. */
-.scrollsheet-handle::before {
+.scrollsheet-handle::before,
+.scrollsheet-close::before {
   /* 44px hit area — left at normal specificity, not a "look" to override. */
   content: "";
   position: absolute;
@@ -147,14 +148,7 @@
     box-shadow 150ms ease;
 }
 .scrollsheet-close::before {
-  /* 44px hit area — normal specificity, a capability, not a "look". */
-  content: "";
-  position: absolute;
-  left: 50%;
-  top: 50%;
-  transform: translate(-50%, -50%);
   width: 44px;
-  height: 44px;
 }
 :where(.scrollsheet-close:hover) {
   background: var(--scrollsheet-close-bg-hover, rgb(0 0 0 / 0.1));
@@ -198,19 +192,19 @@
       var(--scrollsheet-focus-ring, rgb(99 102 241 / 0.6));
 }
 /* Vertical pill for left/right sheets. */
-.scrollsheet-dialog[data-scrollsheet-side="left"] .scrollsheet-handle::before,
-.scrollsheet-dialog[data-scrollsheet-side="right"] .scrollsheet-handle::before {
+.scrollsheet-dialog:is([data-scrollsheet-side="left"], [data-scrollsheet-side="right"])
+  .scrollsheet-handle::before {
   width: 44px;
   height: max(100%, 44px);
 }
-.scrollsheet-dialog[data-scrollsheet-side="left"] :where(.scrollsheet-handle),
-.scrollsheet-dialog[data-scrollsheet-side="right"] :where(.scrollsheet-handle) {
+.scrollsheet-dialog:is([data-scrollsheet-side="left"], [data-scrollsheet-side="right"])
+  :where(.scrollsheet-handle) {
   width: 5px;
   height: 44px;
   margin: auto 8px;
 }
-.scrollsheet-dialog[data-scrollsheet-side="left"] :where(.scrollsheet-handle:active),
-.scrollsheet-dialog[data-scrollsheet-side="right"] :where(.scrollsheet-handle:active) {
+.scrollsheet-dialog:is([data-scrollsheet-side="left"], [data-scrollsheet-side="right"])
+  :where(.scrollsheet-handle:active) {
   transform: scaleY(1.3);
 }
 

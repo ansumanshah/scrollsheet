@@ -31,8 +31,7 @@ test.describe("sonner compat: basic toast lifecycle", () => {
     await expect(overlay.locator(".sonner-toast-description")).toHaveText("Monday at 9am");
     // Non-modal by construction now: a bare `<section aria-live="polite">`
     // portal, not a <dialog> — there's no modal semantics left to assert
-    // against (the top-layer tradeoff this costs is an honest, documented
-    // gap — see src/toast's own module doc comment).
+    // against. Modal stacking is pinned in sonner-modal.spec.ts.
   });
 
   test("toast.success renders with data-type=success on the row and its icon", async ({ page }) => {

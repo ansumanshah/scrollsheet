@@ -29,7 +29,7 @@ import from `scrollsheet/auto` instead and drop the stylesheet import.
 | `[data-state="open"]` / `[data-state="closed"]` keyframes | stamped on Content's element, existing animation CSS keeps matching |
 
 Beyond radix, `Root` also takes scrollsheet's own `actionsRef`, `animationSpeed`,
-`backdropDismissible`, `escapeDismissible`, and `onOpenChangeComplete` (fires after an open or close
+`backdropDismissible`, `escapeDismissible`, `nonce`, and `onOpenChangeComplete` (fires after an open or close
 transition ends).
 
 ## What changes
@@ -68,4 +68,10 @@ including `desktopSide` to show a dialog on desktop and a bottom sheet on phones
   title="Centered dialog"
   description="The presentation this adapter renders, documented on its own."
   href="/docs/presentation/centered-dialog"
+/>
+
+<LinkCard
+  title="scrollsheet vs Radix Dialog"
+  description="Native dialog against a JavaScript focus scope, with sizes measured the same way and when keeping Radix is the better call."
+  href="/compare/radix-dialog"
 />

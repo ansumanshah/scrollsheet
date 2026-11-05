@@ -383,12 +383,8 @@ function applyPromiseSettlement(
   description: React.ReactNode,
   type: "success" | "error",
 ): void {
-  if (isPromiseExtendedResult(resolved)) {
-    const { message, ...rest } = resolved;
-    upsert(id, { ...base, description, ...rest, title: message ?? fallbackTitle, type }, type);
-    return;
-  }
-  upsert(id, { ...base, title: resolved ?? fallbackTitle, description, type }, type);
+  const { message, ...rest } = isPromiseExtendedResult(resolved) ? resolved : { message: resolved };
+  upsert(id, { ...base, description, ...rest, title: message ?? fallbackTitle, type }, type);
 }
 
 function promiseImpl<T>(
@@ -422,29 +418,24 @@ function promiseImpl<T>(
 
   // Settled outcome tracked for `.unwrap()` below — resolved off this same
   // chain, never by re-running promiseOrFn (matches real Sonner).
-  let settled: { ok: true; value: T } | { ok: false; reason: unknown } | undefined;
+  let settled!: { ok: true; value: T } | { ok: false; reason: unknown };
 
   const chain = settle
     .then(async (result) => {
-      if (isHttpResponse(result) && !result.ok) {
+      const failure =
+        isHttpResponse(result) && !result.ok
+          ? `HTTP error! status: ${result.status}`
+          : result instanceof Error && result;
+      if (failure) {
         settled = { ok: false, reason: result };
-        const statusMessage = `HTTP error! status: ${result.status}`;
         // `await` binds tighter than `?:`, so it only ever applies to the
         // function-call branch — a static description costs zero extra
         // microtask ticks, matching real Sonner's own inline ternary exactly
         // (a separate async helper would wrap even the static case in a
         // Promise, adding a tick that isn't there in real Sonner).
         const resolvedDescription =
-          typeof description === "function" ? await description(statusMessage) : description;
-        const resolved = typeof error === "function" ? await error(statusMessage) : error;
-        applyPromiseSettlement(id, rest, resolved, "Error", resolvedDescription, "error");
-        return;
-      }
-      if (result instanceof Error) {
-        settled = { ok: false, reason: result };
-        const resolvedDescription =
-          typeof description === "function" ? await description(result) : description;
-        const resolved = typeof error === "function" ? await error(result) : error;
+          typeof description === "function" ? await description(failure) : description;
+        const resolved = typeof error === "function" ? await error(failure) : error;
         applyPromiseSettlement(id, rest, resolved, "Error", resolvedDescription, "error");
         return;
       }
@@ -473,7 +464,6 @@ function promiseImpl<T>(
 
   const unwrap = (): Promise<T> =>
     chain.then(() => {
-      if (!settled) throw new Error("scrollsheet toast.promise: chain settled with no outcome");
       if (settled.ok) return settled.value;
       throw settled.reason;
     });

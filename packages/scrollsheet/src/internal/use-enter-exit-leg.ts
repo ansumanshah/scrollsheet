@@ -14,7 +14,7 @@ import {
   transformSide,
   restoreFocusFallback,
 } from "./content-helpers";
-import { env } from "./env";
+import { env, prefersReducedMotion } from "./env";
 
 export interface UseEnterExitLegInput {
   phase: Phase;
@@ -84,8 +84,7 @@ export function useEnterExitLeg({
       const distance = to - from;
       velocity = Math.abs(distance) > 1e-3 ? s.velocity / distance : 0;
     }
-    const reduced =
-      typeof matchMedia === "function" && matchMedia("(prefers-reduced-motion: reduce)").matches;
+    const reduced = prefersReducedMotion();
     // Consumer opt-out of the travel animation (--scrollsheet-travel: none),
     // for sheets whose entrance is carried by something else — a View
     // Transition morphing a thumbnail into the panel reads wrong with a

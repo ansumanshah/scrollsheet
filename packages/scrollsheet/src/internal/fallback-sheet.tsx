@@ -2,6 +2,7 @@ import * as React from "react";
 
 import { createPortal } from "react-dom";
 import type { Side } from "../motion/geometry";
+import { FALLBACK_CSS } from "./fallback-css.generated";
 
 /**
  * The no-`<dialog>` degradation path (~3% global: Opera Mini, some old in-app
@@ -78,9 +79,23 @@ function pushEscapeHandler(handler: () => void): () => void {
   };
 }
 
+/**
+ * This path's rules live here rather than in styles.css, so only the browsers
+ * that fetch this chunk pay for them. The marker covers duplicate bundle copies.
+ */
+function injectFallbackStyles(nonce?: string): void {
+  if (document.querySelector("style[data-scrollsheet-fallback]")) return;
+  const style = document.createElement("style");
+  style.setAttribute("data-scrollsheet-fallback", "");
+  if (nonce) style.nonce = nonce;
+  style.textContent = FALLBACK_CSS;
+  document.head.appendChild(style);
+}
+
 export interface FallbackSheetProps {
   side: Side | "center";
   modal: boolean;
+  nonce?: string;
   backdropDismissible: boolean;
   escapeDismissible: boolean;
   onDismiss: () => void;
@@ -96,6 +111,7 @@ export const FallbackSheet = React.forwardRef<HTMLDivElement, FallbackSheetProps
     {
       side,
       modal,
+      nonce,
       backdropDismissible,
       escapeDismissible,
       onDismiss,
@@ -113,7 +129,10 @@ export const FallbackSheet = React.forwardRef<HTMLDivElement, FallbackSheetProps
     const dismissRef = React.useRef(onDismiss);
     dismissRef.current = onDismiss;
 
-    // Style injection is the CALLER's job (content.tsx's degraded effect):
+    // Ahead of the first paint, so the panel never shows unstyled.
+    React.useInsertionEffect(() => injectFallbackStyles(nonce), [nonce]);
+
+    // Core style injection is the CALLER's job (content.tsx's degraded effect):
     // this module is a lazily loaded chunk, and importing styles.ts here would
     // statically chain it to the sheet-core chunk, un-tree-shaking every entry
     // that shares a chunk with it. Same constraint as mergeRefs above.

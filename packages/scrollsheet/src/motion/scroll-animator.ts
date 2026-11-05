@@ -43,10 +43,21 @@ export function animateScrollTo(
    * content-morph omits this, since their scroll targets are already
    * registered snap stops; content-morph's target can be a position the
    * container's current snap-stop set doesn't know about yet.
+   *
+   * A function also suspends, and a press then stops the tween with snap left
+   * off and calls it: a position between stale stops can't be handed back to
+   * snap, which would land it on the nearest one, possibly the closed stop.
+   * The caller owns restoring snap from there. Wheel input doesn't stop this
+   * form, since no release would ever follow it.
    */
-  suspendSnap = false,
+  suspendSnap: boolean | (() => void) = false,
 ): ScrollAnimation {
   const scrollProp = axis === "y" ? "scrollTop" : "scrollLeft";
+  const onHold = typeof suspendSnap === "function" ? suspendSnap : null;
+  const previousSnapType = el.style.scrollSnapType;
+  // Ahead of the read below: it flushes layout, and that must not re-snap a
+  // position a tween just cancelled in this same task left between stops.
+  if (suspendSnap) el.style.scrollSnapType = "none";
   const from = el[scrollProp];
   const delta = target - from;
   let raf = 0;
@@ -64,23 +75,21 @@ export function animateScrollTo(
   // back to the *starting* detent instead of landing on the target, on both
   // engines — so only the one call site that actually needs it (content-morph)
   // pays for it.
-  const previousSnapType = el.style.scrollSnapType;
-  if (suspendSnap) el.style.scrollSnapType = "none";
-  const restoreSnapType = () => {
-    if (suspendSnap) el.style.scrollSnapType = previousSnapType;
-  };
-
-  const stop = (completed: boolean) => {
+  const stop = (completed: boolean, hold?: boolean) => {
     if (done) return;
     done = true;
     cancelAnimationFrame(raf);
     el.removeEventListener("pointerdown", onInput);
     el.removeEventListener("wheel", onInput);
     el.removeEventListener("touchstart", onInput);
-    restoreSnapType();
+    if (suspendSnap && !hold) el.style.scrollSnapType = previousSnapType;
     resolveFinished(completed);
   };
-  const onInput = () => stop(false);
+  const onInput = () => {
+    if (done) return;
+    stop(false, !!onHold);
+    onHold?.();
+  };
 
   const setRaw = (value: number) => jumpScroll(el, axis, value);
 
@@ -91,7 +100,7 @@ export function animateScrollTo(
   }
 
   el.addEventListener("pointerdown", onInput, { passive: true });
-  el.addEventListener("wheel", onInput, { passive: true });
+  if (!onHold) el.addEventListener("wheel", onInput, { passive: true });
   el.addEventListener("touchstart", onInput, { passive: true });
 
   const start = performance.now();

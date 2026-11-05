@@ -25,6 +25,13 @@ import type { SwipeDirection, ToastClassnames, ToastIcons, ToastRecord, ToastTyp
 import { useMountedFlag } from "../toaster-shared";
 import { useToastSwipe } from "./use-toast-swipe";
 
+const DEFAULT_ICONS: Partial<Record<ToastType, string>> = {
+  success: "✓",
+  error: "✕",
+  warning: "!",
+  info: "i",
+};
+
 function ToastIcon({
   type,
   icons,
@@ -34,22 +41,9 @@ function ToastIcon({
   icons?: ToastIcons;
   spinnerClassName?: string;
 }) {
-  if (type === "loading") {
-    if (icons?.loading) return <>{icons.loading}</>;
-    return <span className={spinnerClassName} />;
-  }
-  switch (type) {
-    case "success":
-      return <>{icons?.success ?? "✓"}</>;
-    case "error":
-      return <>{icons?.error ?? "✕"}</>;
-    case "warning":
-      return <>{icons?.warning ?? "!"}</>;
-    case "info":
-      return <>{icons?.info ?? "i"}</>;
-    default:
-      return null;
-  }
+  if (type === "loading") return icons?.loading || <span className={spinnerClassName} />;
+  const fallback = DEFAULT_ICONS[type];
+  return fallback ? (icons?.[type as keyof ToastIcons] ?? fallback) : null;
 }
 
 export interface ToastRowProps {
@@ -58,7 +52,6 @@ export interface ToastRowProps {
   index: number;
   /** Total live rows in this row's own position group — z-index is `total - index`, matching real Sonner. */
   total: number;
-  toastsBefore: number;
   stackOffset: number;
   /** This record's own last-measured height, or `undefined` before its first ResizeObserver fire. */
   height: number | undefined;
@@ -89,7 +82,6 @@ export function ToastRow({
   record,
   index,
   total,
-  toastsBefore,
   stackOffset,
   height,
   frontHeight,
@@ -143,7 +135,7 @@ export function ToastRow({
   // merge order (internal vars, then toastOptions.style, then toast.style),
   // so a per-toast `style` can reposition a row or override any variable.
   const style = {
-    "--scrollsheet-toast-toasts-before": toastsBefore,
+    "--scrollsheet-toast-toasts-before": index,
     "--scrollsheet-toast-stack-offset": `${stackOffset}px`,
     "--scrollsheet-toast-front-height": frontHeight !== undefined ? `${frontHeight}px` : "0px",
     "--scrollsheet-toast-initial-height": height !== undefined ? `${height}px` : "auto",
@@ -177,7 +169,14 @@ export function ToastRow({
     record.classNames?.[record.type],
   );
 
-  const motionAttrs = {
+  const rootProps = {
+    ref: setRefs,
+    className: rootClassName,
+    "data-scrollsheet-toast": "",
+    "data-sonner-toast": sonnerCompat ? "" : undefined,
+    "data-testid": record.testId,
+    role,
+    style,
     "data-mounted": mounted ? "" : undefined,
     "data-removed": removed ? "" : undefined,
     "data-visible": visible ? "true" : "false",
@@ -196,22 +195,15 @@ export function ToastRow({
     "data-swiping": "false",
     "data-swiped": "false",
     "aria-hidden": removed ? "true" : undefined,
+    ...swipeHandlers,
   } as const;
 
   if (record.jsx !== undefined) {
     return (
       <div
-        ref={setRefs}
-        className={rootClassName}
-        data-scrollsheet-toast=""
-        data-sonner-toast={sonnerCompat ? "" : undefined}
+        {...rootProps}
         data-scrollsheet-custom=""
         data-sonner-custom={sonnerCompat ? "" : undefined}
-        data-testid={record.testId}
-        role={role}
-        style={style}
-        {...motionAttrs}
-        {...swipeHandlers}
       >
         {record.jsx}
       </div>
@@ -224,18 +216,7 @@ export function ToastRow({
     record.closeButtonAriaLabel ?? toasterCloseButtonAriaLabel ?? "Close toast";
 
   return (
-    <div
-      ref={setRefs}
-      className={rootClassName}
-      data-scrollsheet-toast=""
-      data-sonner-toast={sonnerCompat ? "" : undefined}
-      data-type={record.type}
-      data-testid={record.testId}
-      role={role}
-      style={style}
-      {...motionAttrs}
-      {...swipeHandlers}
-    >
+    <div {...rootProps} data-type={record.type}>
       <span className={slot("icon", "icon")} data-type={record.type} aria-hidden="true">
         {record.icon ?? (
           <ToastIcon

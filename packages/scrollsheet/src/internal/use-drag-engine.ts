@@ -46,7 +46,7 @@ export interface UseDragEngineInput {
     track: HTMLElement,
     target: number,
     axis: "x" | "y",
-    suspendSnap?: boolean,
+    suspendSnap?: boolean | (() => void),
   ) => ScrollAnimation;
 }
 
@@ -116,10 +116,10 @@ export function useDragEngine({
     // here would retrigger the freeze/teleport bug that suspension exists
     // to avoid for drag).
     let wheelAccumulated = 0;
-    let wheelTimer: ReturnType<typeof setTimeout> | null = null;
+    let wheelTimer: ReturnType<typeof setTimeout> | undefined;
     // This drag session began by grabbing the sheet mid-entrance (see
-    // onPointerDown) — a no-move release then resumes toward the intended
-    // detent instead of being judged (and possibly dismissed) on the
+    // onPointerDown) or mid-morph — a no-move release then resumes toward the
+    // intended detent instead of being judged (and possibly dismissed) on the
     // partial position the grab happened to freeze.
     let enterGrab = false;
 
@@ -181,7 +181,9 @@ export function useDragEngine({
         snapSuspended = false;
       }
       dialog.removeAttribute("data-scrollsheet-dragging");
-      if (maxMove > DRAG_CLICK_SUPPRESS_PX) {
+      // Below this a press is a tap: its few pixels can still measure as speed.
+      const moved = maxMove > DRAG_CLICK_SUPPRESS_PX;
+      if (moved) {
         suppressClick = true;
         // Safety net: the browser's own click follows pointerup within a
         // frame or two, but if none arrives (pointer left the window, etc.)
@@ -201,7 +203,7 @@ export function useDragEngine({
       const first = samples[0];
       const last = samples[samples.length - 1];
       let velocityPos = 0;
-      if (first && last && last.t > first.t) {
+      if (moved && first && last && last.t > first.t) {
         const stale = performance.now() - last.t > MAX_RELEASE_VELOCITY_AGE_MS;
         if (!stale) {
           const rawVelocity = (last.pos - first.pos) / (last.t - first.t);
@@ -225,7 +227,7 @@ export function useDragEngine({
       // let go) resumes toward the detent it was opening to — the frozen
       // partial position is where the *animation* was, not where the user
       // dragged to, so the dismiss projection below must not judge it.
-      if (wasEnterGrab && maxMove <= DRAG_CLICK_SUPPRESS_PX) {
+      if (wasEnterGrab && !moved) {
         const target = resolveSpec(current.activeDetent);
         if (target) {
           animRef.current?.cancel();
@@ -240,15 +242,28 @@ export function useDragEngine({
         return;
       }
 
+      const step = current.flick === "step" && Math.abs(revealedVelocity) > 0.3;
       if (
         current.dismissible &&
-        isBelowCloseThreshold(projected, firstDetentRef.current, current.closeThreshold)
+        isBelowCloseThreshold(
+          // Only the first detent has nothing below it to step to.
+          step && startDetentIndex > 0 ? revealed : projected,
+          firstDetentRef.current,
+          current.closeThreshold,
+        )
       ) {
         current.onRelease?.(event, false);
         current.setOpen(false);
         return;
       }
       let nearest = nearestDetent(projected, resolvedRef.current);
+      if (step) {
+        // The next detent past the release, so it never moves against the flick.
+        const past = resolvedRef.current.filter(
+          (detent) => (detent.height - revealed) * revealedVelocity > 0,
+        );
+        nearest = past[revealedVelocity > 0 ? 0 : past.length - 1] ?? nearest;
+      }
       // sequentialDetents: a fast fling never skips past the neighbor of
       // the detent this drag started from, regardless of how far the
       // velocity projection carried `projected`.
@@ -258,7 +273,13 @@ export function useDragEngine({
       if (nearest) {
         animRef.current?.cancel();
         const rawTarget = mapScroll(nearest.height, maxDetent, geometry.sign);
-        startTween(track, rawTarget, geometry.axis, true);
+        const landing = nearest.spec;
+        // A click never moved, and its own handler picks the detent after this.
+        // The tween's own scrollends are suppressed and its last frame may not
+        // move a whole pixel, so settle() is not guaranteed to run after it.
+        void startTween(track, rawTarget, geometry.axis, true).finished.then((completed) => {
+          if (completed && moved) ctxRef.current.setActiveDetent(landing);
+        });
       }
       current.onRelease?.(event, true);
     };
@@ -273,9 +294,9 @@ export function useDragEngine({
     // background windows (and heavily loaded headless workers), which froze
     // both the judgment probe and the correction verification exactly when
     // the compositor was busiest. setTimeout keeps firing there.
-    let wheelProbeTimer: ReturnType<typeof setTimeout> | null = null;
-    let wheelCapTimer: ReturnType<typeof setTimeout> | null = null;
-    let wheelVerifyTimer: ReturnType<typeof setTimeout> | null = null;
+    let wheelProbeTimer: ReturnType<typeof setTimeout> | undefined;
+    let wheelCapTimer: ReturnType<typeof setTimeout> | undefined;
+    let wheelVerifyTimer: ReturnType<typeof setTimeout> | undefined;
     let wheelScrollEndJudge: (() => void) | null = null;
     // Armed on the session's first tick: where the last scrollend left the
     // track. A match at idle time means the UA is done scrolling and
@@ -287,22 +308,10 @@ export function useDragEngine({
       wheelSessionScrollEndPos = track[geometryFor(ctxRef.current.side).scrollProp];
     };
     const cancelWheelSettleWatch = () => {
-      if (wheelProbeTimer) {
-        clearTimeout(wheelProbeTimer);
-        wheelProbeTimer = null;
-      }
-      if (wheelCapTimer) {
-        clearTimeout(wheelCapTimer);
-        wheelCapTimer = null;
-      }
-      if (wheelVerifyTimer) {
-        clearTimeout(wheelVerifyTimer);
-        wheelVerifyTimer = null;
-      }
-      if (wheelScrollEndJudge) {
-        track.removeEventListener("scrollend", wheelScrollEndJudge);
-        wheelScrollEndJudge = null;
-      }
+      clearTimeout(wheelProbeTimer);
+      clearTimeout(wheelCapTimer);
+      clearTimeout(wheelVerifyTimer);
+      track.removeEventListener("scrollend", wheelScrollEndJudge!);
     };
 
     /**
@@ -319,7 +328,7 @@ export function useDragEngine({
     };
 
     const endWheelSession = () => {
-      wheelTimer = null;
+      wheelTimer = undefined;
       track.removeEventListener("scrollend", onSessionScrollEnd);
       const current = ctxRef.current;
       if (
@@ -410,7 +419,6 @@ export function useDragEngine({
           startTween(track, target, geometry.axis, true);
           const startGap = Math.abs(track[geometry.scrollProp] - target);
           wheelVerifyTimer = setTimeout(() => {
-            wheelVerifyTimer = null;
             const gap = Math.abs(track[geometry.scrollProp] - target);
             if (gap <= 2 || gap < startGap) return;
             if (attempt >= 2) {
@@ -438,7 +446,6 @@ export function useDragEngine({
       track.addEventListener("scrollend", judge);
       const posAtIdle = track[geometry.scrollProp];
       wheelProbeTimer = setTimeout(() => {
-        wheelProbeTimer = null;
         if (track[geometry.scrollProp] === posAtIdle) {
           judge();
           return;
@@ -495,7 +502,7 @@ export function useDragEngine({
       // deltaY grows scrollTop) — unlike the pointer path's authored deltas,
       // so no negation: revealed tracks mapScroll's own derivative.
       wheelAccumulated += geometry.sign * raw * unit;
-      if (wheelTimer) clearTimeout(wheelTimer);
+      clearTimeout(wheelTimer);
       wheelTimer = setTimeout(endWheelSession, WHEEL_SESSION_IDLE_MS);
     };
 
@@ -591,14 +598,21 @@ export function useDragEngine({
         // to ever commit — dies. Capture alone doesn't suppress selection;
         // only preventDefault would.
         pending = { id: event.pointerId, x: event.clientX, y: event.clientY, t: performance.now() };
-        try {
-          (target ?? panel).setPointerCapture(event.pointerId);
-        } catch (err) {
-          if (!(err instanceof DOMException && err.name === "NotFoundError")) throw err;
-        }
+        capture(target ?? panel, event);
         return;
       }
       beginDragSession(event, targetOf(event));
+    };
+
+    // Throws NotFoundError if the pointer already left (a very fast gesture, or
+    // the OS stealing it). The drag proceeds without capture, it just won't
+    // survive the pointer leaving `panel`'s bounds as gracefully.
+    const capture = (element: Element, event: PointerEvent) => {
+      try {
+        element.setPointerCapture(event.pointerId);
+      } catch (err) {
+        if (!(err instanceof DOMException && err.name === "NotFoundError")) throw err;
+      }
     };
 
     const beginDragSession = (
@@ -616,10 +630,8 @@ export function useDragEngine({
       // A real drag owns the gesture: a wheel session's stale timer or
       // pending stability watch must not re-decide the outcome after
       // resolveDrag has already settled it.
-      if (wheelTimer) {
-        clearTimeout(wheelTimer);
-        wheelTimer = null;
-      }
+      clearTimeout(wheelTimer);
+      wheelTimer = undefined;
       cancelWheelSettleWatch();
       track.removeEventListener("scrollend", onSessionScrollEnd);
       wheelAccumulated = 0;
@@ -633,20 +645,14 @@ export function useDragEngine({
       samples = [{ t: origin?.t ?? performance.now(), pos: startPos }];
       maxMove = 0;
       animRef.current?.cancel();
+      // Still suspended here: a press just froze a morph.
+      if (track.style.scrollSnapType) enterGrab = true;
       track.style.scrollSnapType = "none";
       snapSuspended = true;
-      try {
-        // Capture on the actual pointerdown target, not unconditionally on
-        // panel — a captured pointer's click gets retargeted to the
-        // capturing element, which would break Handle's own onClick.
-        (captureTarget ?? panel).setPointerCapture(event.pointerId);
-      } catch (err) {
-        // Spec: throws NotFoundError if the pointer has already left before
-        // capture is requested (a very fast gesture, or the OS stealing the
-        // pointer) — the drag can still proceed without capture, it just
-        // won't survive the pointer leaving `panel`'s bounds as gracefully.
-        if (!(err instanceof DOMException && err.name === "NotFoundError")) throw err;
-      }
+      // Capture on the actual pointerdown target, not unconditionally on
+      // panel — a captured pointer's click gets retargeted to the capturing
+      // element, which would break Handle's own onClick.
+      capture(captureTarget ?? panel, event);
       dialog.setAttribute("data-scrollsheet-dragging", "");
     };
 
@@ -743,7 +749,7 @@ export function useDragEngine({
       dialog.removeEventListener("pointercancel", endDrag);
       dialog.removeEventListener("click", onClickCapture, { capture: true });
       track.removeEventListener("wheel", onWheel);
-      if (wheelTimer) clearTimeout(wheelTimer);
+      clearTimeout(wheelTimer);
       cancelWheelSettleWatch();
       track.removeEventListener("scrollend", onSessionScrollEnd);
       dialog.removeAttribute("data-scrollsheet-wheel-session");

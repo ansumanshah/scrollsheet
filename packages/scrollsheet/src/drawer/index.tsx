@@ -23,8 +23,13 @@ import { Root as SheetRoot, type SheetRootProps } from "../root";
 import { Trigger } from "../trigger";
 import { Content as SheetContent, type SheetContentProps } from "../content";
 import { Handle as SheetHandle } from "../handle";
-import { Close, Description, Title } from "../misc";
-import type { SheetCloseProps, SheetDescriptionProps, SheetTitleProps } from "../misc";
+import { Close, Description, Footer, Title } from "../misc";
+import type {
+  SheetCloseProps,
+  SheetDescriptionProps,
+  SheetFooterProps,
+  SheetTitleProps,
+} from "../misc";
 import type { SheetHandleProps } from "../handle";
 import type { SheetTriggerProps } from "../trigger";
 import type { DetentSpec } from "../internal/detents";
@@ -139,9 +144,9 @@ export function composeOpenChange(
  * props that have no vaul counterpart and forward to `Sheet.Root`
  * untranslated: `backdropDismissible` (the escape hatch vaul served with the
  * Radix onPointerDownOutside/onInteractOutside preventDefault idiom),
- * `escapeDismissible` (same for onEscapeKeyDown), `keyboardExpands`,
+ * `escapeDismissible` (same for onEscapeKeyDown), `flick`, `keyboardExpands`,
  * `onTravel` (the live counterpart of vaul's ignored `onDrag`), `scrollbar`,
- * `animationSpeed`, and `actionsRef`. Only props with no vaul name-collision are forwarded —
+ * `animationSpeed`, `nonce`, and `actionsRef`. Only props with no vaul name-collision are forwarded —
  * anything vaul also has (`closeThreshold`, `modal`, `dismissible`, …) keeps
  * its translated vaul semantics above.
  */
@@ -152,6 +157,8 @@ export interface DrawerRootProps extends Pick<
   | "backdropDismissible"
   | "escapeDismissible"
   | "keyboardExpands"
+  | "flick"
+  | "nonce"
   | "onTravel"
   | "scrollbar"
 > {
@@ -255,32 +262,23 @@ export function Root(props: DrawerRootProps) {
     activeSnapPoint,
     setActiveSnapPoint,
     onAnimationEnd,
-    autoFocus,
-    nested,
     direction,
     modal,
     shouldScaleBackground,
-    setBackgroundColorOnScale,
-    noBodyStyles,
-    disablePreventScroll,
-    preventScrollRestoration,
-    repositionInputs,
-    scrollLockTimeout,
     closeThreshold,
     fadeFromIndex,
     snapToSequentialPoint,
     handleOnly,
-    onDrag,
     onRelease,
-    container,
-    fixed,
     actionsRef,
     backdropDismissible,
     escapeDismissible,
     keyboardExpands,
+    flick,
     onTravel,
     scrollbar,
     animationSpeed,
+    nonce,
   } = props;
 
   // Fires during render (not an effect) so it also surfaces on the server —
@@ -291,23 +289,23 @@ export function Root(props: DrawerRootProps) {
   // entirely instead of just the message string.
   if (process.env.NODE_ENV !== "production") {
     const ignored = collectIgnored([
-      ["setBackgroundColorOnScale", setBackgroundColorOnScale],
-      ["noBodyStyles", noBodyStyles],
-      ["disablePreventScroll", disablePreventScroll],
-      ["preventScrollRestoration", preventScrollRestoration],
-      ["repositionInputs", repositionInputs],
-      ["scrollLockTimeout", scrollLockTimeout],
-      ["onDrag", onDrag],
-      ["container", container],
-      ["fixed", fixed],
-      ["autoFocus", autoFocus],
-      ["nested", nested],
+      ["setBackgroundColorOnScale", props.setBackgroundColorOnScale],
+      ["noBodyStyles", props.noBodyStyles],
+      ["disablePreventScroll", props.disablePreventScroll],
+      ["preventScrollRestoration", props.preventScrollRestoration],
+      ["repositionInputs", props.repositionInputs],
+      ["scrollLockTimeout", props.scrollLockTimeout],
+      ["onDrag", props.onDrag],
+      ["container", props.container],
+      ["fixed", props.fixed],
+      ["autoFocus", props.autoFocus],
+      ["nested", props.nested],
     ]);
     if (ignored.length > 0) {
       warnOnce(
         "root-ignored-props",
         `[scrollsheet Drawer] These <Drawer.Root> props from vaul have no effect in this compat layer and are ignored: ${ignored.join(", ")}. See the vaul migration notes in the README.${
-          onDrag !== undefined
+          props.onDrag !== undefined
             ? " onDrag: the native onTravel prop works on this same <Drawer.Root>."
             : ""
         }`,
@@ -346,11 +344,9 @@ export function Root(props: DrawerRootProps) {
   // PointerEvent), never a React SyntheticEvent — the cast to vaul's
   // React.PointerEvent<HTMLDivElement> is a type-level accommodation only,
   // so a handler typed against vaul's own declaration still compiles, not a
-  // claim that the runtime value is actually a SyntheticEvent.
-  const handleRelease = onRelease
-    ? (event: PointerEvent, willRemainOpen: boolean) =>
-        onRelease(event as unknown as React.PointerEvent<HTMLDivElement>, willRemainOpen)
-    : undefined;
+  // claim that the runtime value is actually a SyntheticEvent. The `||`: the
+  // engine calls this with `?.`, and untyped JS can pass `cond && handler`.
+  const handleRelease = (onRelease || undefined) as unknown as SheetRootProps["onRelease"];
 
   // See composeOpenChange's doc comment for why layering onClose on
   // SheetRoot's own onOpenChange (rather than a separate wiring) is what
@@ -413,9 +409,11 @@ export function Root(props: DrawerRootProps) {
         backdropDismissible={backdropDismissible}
         escapeDismissible={escapeDismissible}
         keyboardExpands={keyboardExpands}
+        flick={flick}
         onTravel={onTravel}
         scrollbar={scrollbar}
         animationSpeed={animationSpeed}
+        nonce={nonce}
       >
         {children}
       </SheetRoot>
@@ -451,16 +449,16 @@ export interface DrawerPortalProps {
   container?: HTMLElement | null;
 }
 
-export function Portal({ children, container }: DrawerPortalProps) {
+export function Portal(props: DrawerPortalProps) {
   if (process.env.NODE_ENV !== "production") {
-    if (container !== undefined) {
+    if (props.container !== undefined) {
       warnOnce(
         "portal-container",
         "[scrollsheet Drawer] <Drawer.Portal container> has no effect — scrollsheet's <dialog> always renders into the browser's top layer (effectively document.body), so there's no separate container to portal into.",
       );
     }
   }
-  return <>{children}</>;
+  return <>{props.children}</>;
 }
 
 /* ── Overlay ──────────────────────────────────────────────────────────── */
@@ -645,11 +643,12 @@ const DrawerClose = /* @__PURE__ */ React.forwardRef<HTMLButtonElement, SheetClo
   },
 );
 
-export { Title, Description, DrawerClose as Close };
+export { Title, Description, DrawerClose as Close, Footer };
 export type {
   SheetTitleProps as DrawerTitleProps,
   SheetDescriptionProps as DrawerDescriptionProps,
   SheetCloseProps as DrawerCloseProps,
+  SheetFooterProps as DrawerFooterProps,
 };
 
 /* ── Namespace ────────────────────────────────────────────────────────── */
@@ -666,4 +665,5 @@ export const Drawer = {
   Title,
   Description,
   Handle,
+  Footer,
 };

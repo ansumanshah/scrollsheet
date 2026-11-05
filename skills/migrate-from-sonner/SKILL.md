@@ -6,7 +6,7 @@ description: Migrate a React app off Sonner onto scrollsheet's toast adapter. Ch
 # Migrate from Sonner
 
 Start with the import and stylesheet, then check the differences below. `Toaster` renders
-a persistent card per toast through one shared `<section>` in `document.body`. It uses CSS
+a persistent card per toast through one shared `<section>` in `document.body`, or in the topmost modal `<dialog>` while one is open. It uses CSS
 positioning and is independent of `Sheet.Root`.
 
 ## Step 1: swap the import
@@ -132,7 +132,9 @@ unsupported props may instead be rejected by TypeScript.
 | `dir` / RTL | not implemented: no prop exists |
 | `offset` as an object (`{ top, right, bottom, left }`) | not implemented: `offset` only accepts `number \| string` |
 | `mobileOffset` as a `Toaster` prop | not implemented as a prop — the underlying breakpoint is still stylable directly via the `--scrollsheet-toast-mobile-offset` CSS custom property |
-| Behind a modal sheet | A toast fired while a modal `Sheet.Root` is open renders behind it rather than above it: the toaster is outside the dialog's top layer |
+| Modal in a shadow root | The toaster moves into any open modal `<dialog>` to stay above it, but can't see one inside a shadow root, so it renders behind that one |
+| Your own modal `<dialog>` | The toaster becomes its last child while it's open, so `:last-child` selectors on its children stop matching. A dialog with a `transform`, `filter`, `backdrop-filter`, `perspective` or `contain` would clip the toasts, so the toaster stays in `document.body` and renders behind that dialog. Put those styles on a child element to keep toasts on top |
+| Non-modal sheet | A `modal={false}` sheet is in the top layer, so it paints over a toast it overlaps |
 
 If your app relies on any of these, stay on real `sonner` for now, or file the gap: don't assume
 silent parity.

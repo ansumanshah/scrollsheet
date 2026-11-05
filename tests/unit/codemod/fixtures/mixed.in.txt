@@ -1,0 +1,15 @@
+import { Sheet } from "scrollsheet";
+import { Drawer, Content as DrawerContent, type DrawerProps } from "vaul";
+import * as Vaul from "vaul";
+import "vaul/style.css";
+
+const lazy = () => import("vaul");
+const legacy = require("vaul");
+
+export const A = () => (
+  <Vaul.Drawer.Root dismissible={false} fixed>
+    <Vaul.Drawer.Content />
+  </Vaul.Drawer.Root>
+);
+
+export const B = (props: DrawerProps) => <Drawer.Root {...props} />;

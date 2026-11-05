@@ -23,7 +23,7 @@ export interface UseContentMorphInput {
     track: HTMLElement,
     target: number,
     axis: "x" | "y",
-    suspendSnap?: boolean,
+    suspendSnap?: boolean | (() => void),
   ) => ScrollAnimation;
   /** Core helpers arrive as props: a static value edge would chain this
    *  lazy chunk back to the core (lazy-chunk-imports.test.ts). */
@@ -70,12 +70,53 @@ export function useContentMorph({
     const track = trackRef.current;
     if (!body || !track) return;
     let raf = 0;
+    let stretched: unknown;
+    let endHold: (() => void) | undefined;
+
+    const tween = (rawTarget: number, axis: "x" | "y") => {
+      endHold?.();
+      // A hold leaves snap off, and the animator restores what it finds.
+      track.style.scrollSnapType = "";
+      startTween(track, rawTarget, axis, hold).finished.finally(syncSnapStops);
+    };
+
+    // A press freezes the morph where it is, so the press lands on what it
+    // aimed at, and the morph resumes on release. A pan cancels the pointer
+    // and rides native snap, against stops already rebuilt by then.
+    const hold = () => {
+      const held = animRef.current;
+      const end = (event: Event) => {
+        endHold?.();
+        // A committed drag owns snap and the outcome.
+        if (track.closest("[data-scrollsheet-dragging]")) return;
+        const geometry = geometryFor(ctxRef.current.side);
+        const target = resolveSpec(ctxRef.current.activeDetent);
+        if (event.type === "pointerup" && target && animRef.current === held) {
+          tween(mapScroll(target.height, maxDetentRef.current, geometry.sign), geometry.axis);
+        } else {
+          track.style.scrollSnapType = "";
+        }
+      };
+      endHold = () => {
+        endHold = undefined;
+        removeEventListener("pointerup", end, true);
+        removeEventListener("pointercancel", end, true);
+      };
+      addEventListener("pointerup", end, true);
+      addEventListener("pointercancel", end, true);
+    };
 
     const scheduleMorph = () => {
       if (raf) return;
       raf = requestAnimationFrame(() => {
         raf = 0;
         if (phaseRef.current !== "open") return;
+        // A footer mounting inside a display:contents wrapper fires no watched
+        // childList, only this resize of the still-unstretched body.
+        if (!stretched && body.querySelector("[data-scrollsheet-footer]")) {
+          observer.disconnect();
+          observeBody();
+        }
         const geometry = geometryFor(ctxRef.current.side);
         const before = maxDetentRef.current;
         // false: defer the snap-stop DOM rebuild to syncSnapStops() below,
@@ -112,45 +153,51 @@ export function useContentMorph({
           syncSnapStops();
           return;
         }
-        // suspendSnap: true — this is the one call site that needs it (see
-        // scroll-animator.ts's doc comment); the other two (Handle/keyboard
-        // detent travel, drag-release) omit it deliberately.
-        const animation = startTween(track, rawTarget, geometry.axis, true);
-        animation.finished.finally(syncSnapStops);
+        tween(rawTarget, geometry.axis);
       });
     };
 
     const observer = new ResizeObserver(scheduleMorph);
-    let mutation: MutationObserver | undefined;
-    if (fill) {
-      // Mirrors measure()'s own switch: once fill stretches body, its box no
-      // longer changes with content, so the observer watches every direct
-      // child — the same set the stretch-neutralized measurement reads. A
-      // single-child watch missed changes in later children (a second view
-      // mounting, a list growing) and left the panel at a stale height.
-      const syncObserved = () => {
-        observer.disconnect();
-        for (const child of body.children) observer.observe(child);
-      };
-      syncObserved();
-      // ResizeObserver never reports for elements that weren't observed when
-      // they appeared (or that left the DOM) — childList changes both re-sync
-      // the watch set and are themselves content-height changes.
-      mutation = new MutationObserver(() => {
-        syncObserved();
-        scheduleMorph();
-      });
-      mutation.observe(body, { childList: true });
-    } else {
-      observer.observe(body);
-    }
+    // ResizeObserver never reports for elements that weren't observed when
+    // they appeared (or that left the DOM) — childList changes both re-sync
+    // the watch set and are themselves content-height changes.
+    const mutation = new MutationObserver(() => {
+      observer.disconnect();
+      observeBody();
+      scheduleMorph();
+    });
+    // Mirrors measure()'s own switch: once fill or a footer stretches body, its
+    // box no longer changes with content, so the observer watches every direct
+    // child — the same set the stretch-neutralized measurement reads. A
+    // single-child watch missed changes in later children (a second view
+    // mounting, a list growing) and left the panel at a stale height. A
+    // display:contents wrapper has no box to observe, so its children stand in
+    // and its childList is watched like body's.
+    const observeChildren = (parent: Element) => {
+      mutation.observe(parent, { childList: true });
+      for (const child of parent.children) {
+        if (getComputedStyle(child).display === "contents") observeChildren(child);
+        else observer.observe(child);
+      }
+    };
+    const observeBody = () => {
+      stretched = fill || body.querySelector("[data-scrollsheet-footer]");
+      if (stretched) observeChildren(body);
+      else observer.observe(body);
+    };
+    mutation.observe(body, { childList: true });
+    observeBody();
     // Reconcile: a resize landing before this chunk resolved left a stale
     // height; the scheduled morph no-ops when nothing changed.
     scheduleMorph();
     return () => {
-      mutation?.disconnect();
+      mutation.disconnect();
       observer.disconnect();
       if (raf) cancelAnimationFrame(raf);
+      if (endHold) {
+        endHold();
+        track.style.scrollSnapType = "";
+      }
     };
   }, [
     phase,

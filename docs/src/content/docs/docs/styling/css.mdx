@@ -34,8 +34,8 @@ only render after JS runs, and the stylesheet is injected before the sheet is op
 import { Sheet } from "scrollsheet/auto";
 ```
 
-The embed costs {BUNDLE_SIZES.auto.gzipKb.toFixed(1)} kB gzip for `Sheet` against the default
-entry's {BUNDLE_SIZES.index.gzipKb.toFixed(1)}. Toasts on the default entry need `scrollsheet/toast.css`; add `scrollsheet/styles.css`
+The embed costs {BUNDLE_SIZES.auto.brotliKb.toFixed(1)} kB compressed for `Sheet` against the default
+entry's {BUNDLE_SIZES.index.brotliKb.toFixed(1)}. Toasts on the default entry need `scrollsheet/toast.css`; add `scrollsheet/styles.css`
 when the app also uses sheets or dialogs. Use one entry consistently to avoid duplicate
 component code and separate state instances.
 
@@ -49,7 +49,8 @@ The `themeColorDimming` controller is a separate chunk, fetched when the prop is
 <Aside type="tip">
   For CSP with the `auto` entry, pass `nonce` to `Sheet.Root`. Shadow DOM injection
   (`injectStylesInto`) also needs the `auto` entry; the default entry has no stylesheet to
-  inject.
+  inject. The one exception on either entry: browsers with no `<dialog>` fetch a fallback chunk
+  that injects its own small stylesheet, so a strict CSP that must cover them needs `nonce` too.
 </Aside>
 
 ## Dark mode

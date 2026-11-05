@@ -1,0 +1,155 @@
+---
+import SeoPage from "../../layouts/SeoPage.astro";
+import CompareTable from "../../components/CompareTable.astro";
+import DocExample from "../../components/DocExample.astro";
+import { BUNDLE_SIZES, STYLESHEET_SIZES } from "../../lib/bundle-sizes.generated";
+import type { Faq } from "../../lib/jsonld";
+
+const sheetKb = BUNDLE_SIZES.index.brotliKb.toFixed(2);
+const cssKb = STYLESHEET_SIZES.core.brotliKb.toFixed(2);
+
+const rows = [
+  {
+    label: "Maintenance",
+    us: "Releases continue; 1.3.0 shipped on 5 Nov 2026. The first npm release was in August 2026",
+    them: "Version 1.9.0, MIT, from the MUI team. shadcn/ui moved its Base UI drawer onto it on 2 Jul 2026",
+    note: "npm registry, checked 4 Nov 2026. shadcn/ui pull request 10430, &ldquo;migrate base drawer to @base-ui/react/drawer&rdquo;.",
+  },
+  {
+    label: "Scope",
+    us: "Sheets, drawers, dialogs, side panels and toasts",
+    them: "A library of unstyled components (Dialog, Menu, Popover, Select and more). Drawer is one of them",
+  },
+  {
+    label: "Relationship to Dialog",
+    us: "A dialog is one presentation of a sheet",
+    them: "Drawer extends Dialog with gestures, snap points and indent effects",
+    note: "Base UI Drawer docs, &ldquo;Usage guidelines&rdquo;.",
+  },
+  {
+    label: "Styling",
+    us: `Ships a ${cssKb} kB compressed stylesheet. Override with CSS properties or <code>className</code>`,
+    them: "Unstyled. You write the CSS, including the transform that follows <code>--drawer-swipe-movement-y</code>",
+  },
+  {
+    label: "Touch dragging",
+    us: "The browser scrolls a CSS scroll-snap container",
+    them: "Touch and pointer handlers in <code>DrawerViewport</code> publish the movement as CSS variables",
+    note: "@base-ui/react 1.9.0 package source. scrollsheet: README, &ldquo;How sheets work&rdquo;. Desktop mouse drag in scrollsheet uses pointer handlers.",
+  },
+  {
+    label: "Snap points",
+    us: "<code>detents</code>: fractions, pixels, <code>content</code>, <code>medium</code>, <code>full</code>",
+    them: "<code>snapPoints</code>: fractions, pixels, <code>px</code> and <code>rem</code> strings. <code>snapToSequentialPoints</code>, controlled <code>snapPoint</code>",
+  },
+  {
+    label: "Edges",
+    us: "Four, plus a centered dialog",
+    them: "Four (<code>swipeDirection</code>)",
+  },
+  {
+    label: "Modal modes",
+    us: "<code>modal</code> true or false. Modal sheets use native <code>showModal()</code>",
+    them: "<code>modal</code> true, false or <code>'trap-focus'</code> (focus trap without page scroll lock)",
+  },
+  {
+    label: "Software keyboard",
+    us: "Automatic, from <code>visualViewport</code>",
+    them: "Opt in with <code>Drawer.VirtualKeyboardProvider</code>",
+  },
+  {
+    label: "Direct dependencies",
+    us: "0",
+    them: "5, including <code>@floating-ui/react-dom</code>",
+  },
+  {
+    label: "JavaScript, compressed",
+    us: `${sheetKb} kB (<code>Sheet</code> import)`,
+    them: "21.96 kB for seven parts (Root, Trigger, Portal, Backdrop, Popup, Title, Close). 28.66 kB with all ten Drawer parts",
+    note: "Bundled with Bun, minified, React external, using the options in <code>scripts/lib/bundle-measure.ts</code>. @base-ui/react 1.9.0, measured 5 Nov 2026. CSS is not included for either. Both figures are brotli; many libraries quote gzip, which runs larger.",
+  },
+  {
+    label: "React versions",
+    us: "18+",
+    them: "17 and up",
+  },
+  {
+    label: "npm downloads, last week",
+    us: "241",
+    them: "27,113,868",
+    note: "npm downloads API for the whole @base-ui/react package, 28 Oct to 3 Nov 2026. It covers every Base UI component, not only Drawer.",
+  },
+];
+
+const faqs: Faq[] = [
+  {
+    id: "base-ui-shadcn",
+    question: "Did shadcn/ui drop vaul?",
+    answerHtml: `Partly. Its Base UI flavour moved to <code>@base-ui/react/drawer</code> on 2 Jul 2026. The Radix flavour and the <code>new-york-v4</code> style still import <code>Drawer</code> from vaul (checked in the shadcn/ui repository on 4 Nov 2026). Which one your app has depends on the base you chose when you set shadcn/ui up.`,
+    answerText: `Partly. Its Base UI flavour moved to @base-ui/react/drawer on 2 Jul 2026. The Radix flavour and the new-york-v4 style still import Drawer from vaul (checked in the shadcn/ui repository on 4 Nov 2026). Which one your app has depends on the base you chose when you set shadcn/ui up.`,
+  },
+  {
+    id: "base-ui-leaving-vaul",
+    question: "I am leaving vaul. Base UI or scrollsheet?",
+    answerHtml: `If the rest of your app is on Radix, scrollsheet's <code>Drawer</code> accepts common vaul props, so the import and the stylesheet change and you then check the <a href="/docs/migrating/from-vaul">differences</a>. If you are moving your components to Base UI anyway, use its Drawer: the parts differ from vaul (<code>Drawer.Popup</code>, <code>swipeDirection</code>), so plan to touch each drawer's markup.`,
+    answerText: `If the rest of your app is on Radix, scrollsheet's Drawer accepts common vaul props, so the import and the stylesheet change and you then check the differences. If you are moving your components to Base UI anyway, use its Drawer: the parts differ from vaul (Drawer.Popup, swipeDirection), so plan to touch each drawer's markup.`,
+  },
+  {
+    id: "base-ui-unstyled",
+    question: "Is Base UI's Drawer styled?",
+    answerHtml: `No. Its docs call it an unstyled drawer with swipe-to-dismiss gestures. You write the layout, the backdrop and the transform that follows the swipe variables. scrollsheet ships default styles you override.`,
+    answerText: `No. Its docs call it an unstyled drawer with swipe-to-dismiss gestures. You write the layout, the backdrop and the transform that follows the swipe variables. scrollsheet ships default styles you override.`,
+  },
+];
+---
+
+<SeoPage
+  title="scrollsheet vs Base UI Drawer: React drawer comparison"
+  description="Base UI's Drawer and scrollsheet compared for React: unstyled versus styled, maintenance, snap points, keyboard handling, bundle size measured the same way, and when each is the better choice."
+  h1="scrollsheet vs Base UI Drawer"
+  lede="Base UI is a maintained, unstyled component library, and shadcn/ui's Base UI flavour uses its Drawer. scrollsheet is a smaller, styled package that only does sheets, dialogs and toasts. Here is where each one wins."
+  crumbs={[{ name: "Compare", path: "/compare" }, { name: "Base UI", path: "/compare/base-ui" }]}
+  faqs={faqs}
+>
+  <h2>Side by side</h2>
+  <CompareTable themName="Base UI Drawer" rows={rows} />
+
+  <h2>Leaving vaul: two destinations</h2>
+  <p>
+    vaul's README says the repo is unmaintained. Two maintained options are worth a look.
+    Base UI's Drawer is the match if your app is moving to Base UI. scrollsheet is the match if
+    you stay on the Radix side: its <code>Drawer</code> accepts common vaul props, so the import
+    and the stylesheet change.
+  </p>
+  <p>
+    See <a href="/compare/vaul">scrollsheet vs vaul</a> for the import swap and
+    what <code>Drawer</code> does not support.
+  </p>
+
+  <h2>Try the detents</h2>
+  <DocExample
+    name="snap-heights"
+    caption="Three detents. Drag the sheet or use the arrow keys on the handle."
+  />
+
+  <h2>Choose Base UI if</h2>
+  <ul>
+    <li>You already use Base UI, or shadcn/ui's Base UI flavour, and want one library for dialogs, menus and drawers.</li>
+    <li>You want an unstyled drawer and full control of the markup and the animation.</li>
+    <li>You need <code>rem</code> snap points, a controlled snap point, or the <code>'trap-focus'</code> modal mode.</li>
+    <li>You support React 17.</li>
+    <li>You want the larger user base behind the package.</li>
+  </ul>
+
+  <h2>Choose scrollsheet if</h2>
+  <ul>
+    <li>You are coming from vaul and staying on Radix, and want the smallest change.</li>
+    <li>You want default styles and a software-keyboard fix without wiring a provider.</li>
+    <li>You want fewer dependencies and a smaller bundle for sheets, plus toasts from the same package.</li>
+    <li>You want touch dragging to be the browser's scrolling.</li>
+  </ul>
+  <p>
+    scrollsheet is new, and it only covers sheets, dialogs and toasts. If you need menus,
+    popovers or selects from the same family, Base UI covers those and scrollsheet does not.
+  </p>
+</SeoPage>

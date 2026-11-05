@@ -2,7 +2,7 @@
 
 > React bottom sheets, drawers, dialogs, side panels, and toasts. Sheets use native
 > <dialog> and CSS scroll snap. No runtime dependencies,
-> ~<!--size:index.gzip:0-->16<!--/size--> kB gzipped, React 18+, MIT licensed.
+> ~<!--size:index.brotli:0-->14<!--/size--> kB compressed (brotli), React 18+, MIT licensed.
 
 This file provides a plain-text reference for tools that cannot crawl
 https://scrollsheet.dev/docs. The site contains the guides and interactive examples.
@@ -295,7 +295,7 @@ pointerdown. Overlay renders nothing; restyle the real backdrop with --scrollshe
 
 scrollsheet's Sonner adapter provides toast, useSonner, and Toaster
 exports, running on the same architecture real Sonner uses: a persistent card per toast, all
-portaled through one shared <section> in document.body, positioned with CSS instead of stacked
+portaled through one shared <section> in document.body (or in the topmost modal <dialog> while one is open), positioned with CSS instead of stacked
 inside a shared sheet panel. toast(), .success(), .error(), .info(), .warning(), .loading(),
 .message(), .custom(jsx), .promise(), and .dismiss(id?) all work before or after any <Toaster>
 mounts, backed by scrollsheet's module-level queue. A repeated id updates a toast
@@ -320,9 +320,9 @@ Limitations: theme defaults to light; dark and system warn once and still render
 card. richColors=true is unsupported and warns once. toast.dismiss() with no id
 clears every toast across every mounted <Toaster>, matching real Sonner's own dismiss() exactly.
 useSonner() returns every toast across every toaster, unfiltered; a <Toaster id> does its
-own filtering internally. A toast fired while a modal Sheet.Root is open renders behind it
-rather than above it, matching real Sonner's own limitation against a native <dialog> elsewhere
-on the page.
+own filtering internally. While a modal <dialog> is open, including a modal Sheet.Root, the toaster
+moves inside it so toasts stay above it and clickable. It can't see a modal inside a shadow root.
+A modal={false} sheet is in the top layer and paints over a toast it overlaps.
 
 Import scrollsheet/toast.css for toasts. Add scrollsheet/styles.css when also using sheets,
 drawers, or dialogs. For automatic style injection, import toast and Toaster from
@@ -413,6 +413,7 @@ Full reference with every default: https://scrollsheet.dev/docs/reference/api
 | data-scrollsheet-detached | <dialog> | present once --scrollsheet-inset-bottom is set (the inset-card recipe) |
 | data-scrollsheet-sda | <dialog> | present once CSS scroll-driven animations own the backdrop dim |
 | data-scrollsheet-has-handle | <dialog> | present while a Sheet.Handle is rendered |
+| data-scrollsheet-has-footer | <dialog> | present while a Sheet.Footer is rendered |
 | data-scrollsheet-rtl | <dialog> | present when the panel's computed direction is rtl |
 | data-scrollsheet-fill | panel and body | present when fill |
 | data-scrollsheet-no-drag | anywhere | opts an element out of desktop drag |
@@ -444,6 +445,7 @@ Full reference with every default: https://scrollsheet.dev/docs/reference/api
 |---|---|
 | Sheet | namespace object: Root, Trigger, Content, Handle, Title, Description, Close |
 | Sheet.Trigger | <button>, opens on click. asChild renders your own element instead |
+| Sheet.Footer | <div>, stays on the sheet's visible bottom edge at every detent and above the keyboard, absorbs the bottom safe-area inset. Direct child of Sheet.Content, or inside a display:contents wrapper. asChild supported |
 | Sheet.Handle | <button>, drag grip; arrows/Home/End move detents, announces as a slider with 2+ detents. List detents shortest first. asChild supported |
 | Sheet.Title / Sheet.Description | <h2> / <p>, auto-wires aria-labelledby / aria-describedby. asChild supported |
 | Sheet.Close | <button>, closes on click. asChild supported. With no children it renders a styled X button |

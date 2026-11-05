@@ -106,6 +106,69 @@ export function ThemeColorSheet() {
 }
 
 /**
+ * Two nested themeColorDimming sheets, with every way of taking them down at
+ * once reachable from the child (the only part of the page not inert). Reads
+ * the meta ThemeColorSheet provides.
+ */
+function NestedThemeColorChild({
+  closeParent,
+  unmountRoot,
+}: {
+  closeParent: () => void;
+  unmountRoot: () => void;
+}) {
+  const [open, setOpen] = React.useState(false);
+  return (
+    <Sheet.Root open={open} onOpenChange={setOpen} themeColorDimming>
+      <Sheet.Trigger className="btn">Open nested theme child</Sheet.Trigger>
+      <Sheet.Content className="sheet" aria-label="Nested theme child">
+        <div className="sheet-inner">
+          <Sheet.Title>Nested theme child</Sheet.Title>
+          <button className="btn" onClick={() => setOpen(false)}>
+            Close nested theme child
+          </button>
+          <button className="btn" onClick={closeParent}>
+            Close nested theme parent
+          </button>
+          <button
+            className="btn"
+            onClick={() => {
+              closeParent();
+              setOpen(false);
+            }}
+          >
+            Close nested theme both
+          </button>
+          <button className="btn" onClick={unmountRoot}>
+            Unmount nested theme root
+          </button>
+        </div>
+      </Sheet.Content>
+    </Sheet.Root>
+  );
+}
+
+export function NestedThemeColorSheet() {
+  const [mounted, setMounted] = React.useState(true);
+  const [open, setOpen] = React.useState(false);
+  if (!mounted) return null;
+  return (
+    <Sheet.Root open={open} onOpenChange={setOpen} themeColorDimming>
+      <Sheet.Trigger className="btn">Nested theme parent</Sheet.Trigger>
+      <Sheet.Content className="sheet" aria-label="Nested theme parent">
+        <div className="sheet-inner">
+          <Sheet.Title>Nested theme parent</Sheet.Title>
+          <NestedThemeColorChild
+            closeParent={() => setOpen(false)}
+            unmountRoot={() => setMounted(false)}
+          />
+        </div>
+      </Sheet.Content>
+    </Sheet.Root>
+  );
+}
+
+/**
  * side="center": a centered modal dialog. Carries a Handle on purpose (the
  * spec asserts center mode hides it), a fixed consumer width (the spec
  * asserts consumer sizing wins over core), and the standard Close.
@@ -238,6 +301,31 @@ export function ControlledSheet() {
 }
 
 /** One sheet, two views, differing content height — for the content-morph (ResizeObserver-driven detent travel) test. */
+/** A large content-height jump, with press targets that stay on screen for it. */
+export function MorphPressSheet() {
+  const [rows, setRows] = React.useState(1);
+  return (
+    <Sheet.Root detents={["content"]}>
+      <Sheet.Trigger className="btn">Morph press</Sheet.Trigger>
+      <Sheet.Content className="sheet" aria-label="Morph press">
+        <Sheet.Handle />
+        <button type="button" style={{ height: 60 }} onClick={() => setRows(12)}>
+          Grow
+        </button>
+        <button type="button" style={{ height: 60 }} onClick={() => setRows(1)}>
+          Shrink
+        </button>
+        <div data-testid="morph-spot" style={{ height: 60 }} />
+        {Array.from({ length: rows }, (_, i) => (
+          <div key={i} style={{ height: 40 }}>
+            Row {i}
+          </div>
+        ))}
+      </Sheet.Content>
+    </Sheet.Root>
+  );
+}
+
 export function MultiViewSheet() {
   const [view, setView] = React.useState<"menu" | "key">("menu");
   const [open, setOpen] = React.useState(false);
@@ -445,6 +533,81 @@ export function KeyboardExpandSheet() {
         </div>
       </Sheet.Content>
     </Sheet.Root>
+  );
+}
+
+type AutofocusMode = "prop" | "attr" | "effect";
+
+function AutofocusField({ mode, label }: { mode: AutofocusMode; label: string }) {
+  const ref = React.useRef<HTMLInputElement>(null);
+  React.useEffect(() => {
+    if (mode === "effect") ref.current?.focus();
+  }, [mode]);
+  return (
+    <input
+      ref={(el) => {
+        ref.current = el;
+        // A raw attribute, since React strips the autoFocus prop from the DOM.
+        if (mode === "attr") el?.setAttribute("autofocus", "");
+      }}
+      type="text"
+      aria-label={label}
+      autoFocus={mode === "prop"}
+      onBlur={(event) => {
+        event.currentTarget.dataset.blurred = "true";
+      }}
+    />
+  );
+}
+
+/** One sheet per way a field can take focus at open, for the keyboard arming specs. */
+function AutofocusSheet({
+  mode,
+  trigger,
+  modal = true,
+}: {
+  mode: AutofocusMode;
+  trigger: string;
+  modal?: boolean;
+}) {
+  const [active, setActive] = React.useState<DetentSpec>(0.3);
+  return (
+    <Sheet.Root
+      detents={[0.3, 0.85]}
+      keyboardExpands
+      modal={modal}
+      activeDetent={active}
+      onActiveDetentChange={setActive}
+    >
+      <Sheet.Trigger className="btn">{trigger}</Sheet.Trigger>
+      <Sheet.Content className="sheet" aria-label={trigger}>
+        <Sheet.Handle />
+        <div className="sheet-inner">
+          <Sheet.Title>{trigger}</Sheet.Title>
+          <code data-testid="autofocus-active">{String(active)}</code>
+          <Sheet.Close>Close autofocus sheet</Sheet.Close>
+          <AutofocusField mode={mode} label={`${trigger} input`} />
+        </div>
+      </Sheet.Content>
+    </Sheet.Root>
+  );
+}
+
+export function AutofocusSheets() {
+  return (
+    <>
+      <AutofocusSheet mode="prop" trigger="Autofocus prop" />
+      <AutofocusSheet mode="attr" trigger="Autofocus attr" />
+      <AutofocusSheet mode="effect" trigger="Autofocus effect" />
+      <AutofocusSheet mode="prop" trigger="Autofocus non-modal" modal={false} />
+      <Sheet.Root detents={[0.6]}>
+        <Sheet.Trigger className="btn">Autofocus parent</Sheet.Trigger>
+        <Sheet.Content className="sheet" aria-label="Autofocus parent">
+          <Sheet.Title>Autofocus parent</Sheet.Title>
+          <AutofocusSheet mode="prop" trigger="Autofocus nested" />
+        </Sheet.Content>
+      </Sheet.Root>
+    </>
   );
 }
 

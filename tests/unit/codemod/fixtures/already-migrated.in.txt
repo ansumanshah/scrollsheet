@@ -1,0 +1,4 @@
+import { Drawer } from "scrollsheet";
+import "scrollsheet/styles.css";
+
+export const C = () => <Drawer.Root onDrag={() => {}} />;

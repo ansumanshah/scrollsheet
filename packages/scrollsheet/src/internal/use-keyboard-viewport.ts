@@ -71,8 +71,9 @@ export interface UseKeyboardViewportInput {
   /** Raw pre-focus layout/visual viewport gap, sampled by core at open —
    *  this chunk can resolve after focus (its load trigger IS the first
    *  editable focus), too late to sample an unfocused baseline itself.
-   *  Clamped here, not in core, so the cap has one home. */
-  initialBaselineGapPx?: number;
+   *  Clamped here, not in core, so the cap has one home. A ref: core writes
+   *  it after render, in the same commit that mounts this feature. */
+  initialBaselineGapRef: React.RefObject<number | undefined>;
   side: SheetContextValue["side"];
   /** Reactive (not via ctxRef): the divergence effect must observe changes. */
   activeDetent: DetentSpec;
@@ -114,7 +115,7 @@ export function useKeyboardViewport({
   present,
   markProgrammaticScroll,
   jumpScroll,
-  initialBaselineGapPx,
+  initialBaselineGapRef,
   side,
   activeDetent,
   dialogRef,
@@ -192,10 +193,8 @@ export function useKeyboardViewport({
     // the gap then) and subtracted from the armed estimate. Seeded from
     // core's pre-focus sample (clamped here) for the case where this chunk
     // resolved after focus.
-    let baselineDelta =
-      initialBaselineGapPx !== undefined && initialBaselineGapPx <= KEYBOARD_BASELINE_MAX_PX
-        ? Math.max(0, initialBaselineGapPx)
-        : 0;
+    const seed = initialBaselineGapRef.current;
+    let baselineDelta = seed !== undefined && seed <= KEYBOARD_BASELINE_MAX_PX ? seed : 0;
 
     /**
      * The keyboard estimate, computed synchronously so the caller can write
@@ -449,8 +448,7 @@ export function useKeyboardViewport({
     const panel = panelRef.current;
     if (!panel) return;
 
-    const onFocusIn = (event: FocusEvent) => {
-      const target = event.target;
+    const scheduleFocusScroll = (target: EventTarget | null) => {
       if (!(target instanceof HTMLElement)) return;
       if (!willOpenKeyboard(target)) return;
       if (focusScrollTimerRef.current) clearTimeout(focusScrollTimerRef.current);
@@ -459,8 +457,12 @@ export function useKeyboardViewport({
         target.scrollIntoView({ block: "nearest", inline: "nearest" });
       }, FOCUS_SCROLL_DEBOUNCE_MS);
     };
+    const onFocusIn = (event: FocusEvent) => scheduleFocusScroll(event.target);
 
     panel.addEventListener("focusin", onFocusIn);
+    // Late-attach reconcile, as in the tracking effect above: the focus that
+    // loaded this chunk has already fired.
+    if (panel.contains(document.activeElement)) scheduleFocusScroll(document.activeElement);
     return () => {
       panel.removeEventListener("focusin", onFocusIn);
       if (focusScrollTimerRef.current) {

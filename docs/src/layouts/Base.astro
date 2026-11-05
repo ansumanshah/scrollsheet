@@ -2,6 +2,7 @@
 import Header from "../components/Header.astro";
 import Footer from "../components/Footer.astro";
 import "../styles/global.css";
+import { springCss } from "../lib/springs";
 
 interface Props {
   title: string;
@@ -81,6 +82,7 @@ const pageTitle = title.startsWith("scrollsheet") ? title : `${title} · scrolls
     <meta name="twitter:description" content={description} />
     <meta name="twitter:image" content={ogImageURL} />
 
+    <style is:inline set:html={springCss}></style>
     <link rel="alternate" type="text/plain" title="llms.txt" href="/llms.txt" />
     <slot name="head" />
   </head>

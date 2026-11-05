@@ -1,0 +1,30 @@
+---
+import { existsSync } from "node:fs";
+import { resolve } from "node:path";
+
+/*
+ * The launch film is produced separately and lands in public/launch/. Checked
+ * at build time so the page ships no empty player: with the files absent this
+ * renders nothing and the phone embed in the hero is the demo.
+ */
+const dirs = [resolve(process.cwd(), "public/launch"), resolve(process.cwd(), "docs/public/launch")];
+const dir = dirs.find((d) => existsSync(resolve(d, "scrollsheet-launch.mp4")));
+const hasVideo = Boolean(dir);
+const hasPoster = Boolean(dir && existsSync(resolve(dir, "scrollsheet-launch-poster.jpg")));
+---
+
+{
+  hasVideo && (
+    <section class="container section launch-video" aria-labelledby="video-heading">
+      <h2 id="video-heading" class="visually-hidden">Launch video</h2>
+      <video
+        controls
+        playsinline
+        preload="none"
+        poster={hasPoster ? "/launch/scrollsheet-launch-poster.jpg" : undefined}
+      >
+        <source src="/launch/scrollsheet-launch.mp4" type="video/mp4" />
+      </video>
+    </section>
+  )
+}

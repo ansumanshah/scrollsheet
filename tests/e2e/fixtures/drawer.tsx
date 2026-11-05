@@ -253,3 +253,53 @@ export function DrawerContentAsChildFragmentSheet() {
     </Drawer.Root>
   );
 }
+
+/** vaul compat: selectable body text inside a Drawer (vaul #346); handleOnly toggles the variant. */
+export function DrawerSelectableTextSheet({
+  handleOnly,
+  trigger,
+}: {
+  handleOnly?: boolean;
+  trigger: string;
+}) {
+  return (
+    <Drawer.Root handleOnly={handleOnly}>
+      <Drawer.Trigger className="btn">{trigger}</Drawer.Trigger>
+      <Drawer.Content className="sheet" aria-label={trigger}>
+        <Drawer.Handle />
+        <div className="sheet-inner" style={{ height: 320 }}>
+          <Drawer.Title>{trigger}</Drawer.Title>
+          <p data-testid="selectable-copy" style={{ margin: "16px 0", width: "max-content" }}>
+            Selectable alpha bravo charlie delta echo
+          </p>
+        </div>
+      </Drawer.Content>
+    </Drawer.Root>
+  );
+}
+
+export function DrawerNonceSheet() {
+  return (
+    <Drawer.Root nonce="e2e-nonce">
+      <Drawer.Trigger className="btn">Drawer nonce sheet</Drawer.Trigger>
+      <Drawer.Content className="sheet" aria-label="Drawer nonce sheet">
+        <Drawer.Title>Nonce</Drawer.Title>
+      </Drawer.Content>
+    </Drawer.Root>
+  );
+}
+
+/** `cond && handler` from untyped JS passes `false`, which vaul tolerates. */
+export function DrawerOnReleaseFalseSheet() {
+  return (
+    <Drawer.Root onRelease={false as never}>
+      <Drawer.Trigger className="btn">Drawer onRelease false sheet</Drawer.Trigger>
+      <Drawer.Content className="sheet" aria-label="Drawer onRelease false sheet">
+        <Drawer.Handle />
+        <div className="sheet-inner">
+          <Drawer.Title>onRelease false</Drawer.Title>
+        </div>
+      </Drawer.Content>
+    </Drawer.Root>
+  );
+}

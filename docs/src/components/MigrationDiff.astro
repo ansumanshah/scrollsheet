@@ -1,0 +1,40 @@
+---
+interface Props {
+  /** Compact variant for the hero: no heading, tighter padding. */
+  compact?: boolean;
+}
+const { compact = false } = Astro.props;
+
+const removed = ['import { Drawer } from "vaul";', 'import "vaul/style.css";'];
+const added = ['import { Drawer } from "scrollsheet";', 'import "scrollsheet/styles.css";'];
+// The clipboard gets only the new lines, never the diff markers.
+const copyText = added.join("\n");
+---
+
+<div class:list={["migrate", { "migrate--compact": compact }]}>
+  <div class="migrate__bar">
+    <p class="migrate__title">
+      Coming from vaul?
+      <span>
+        Its <a
+          href="https://github.com/emilkowalski/vaul#readme"
+          target="_blank"
+          rel="noreferrer">README</a
+        > says the repo is unmaintained.
+      </span>
+    </p>
+  </div>
+  <div class="migrate__code" role="group" aria-label="Import changes from vaul to scrollsheet">
+    <pre><code>{removed.map((line) => (<span class="diff-del"><span aria-hidden="true">- </span>{line}{"\n"}</span>))}{added.map((line) => (<span class="diff-add"><span aria-hidden="true">+ </span>{line}{"\n"}</span>))}</code></pre>
+    <button class="copy-btn" type="button" data-copy={copyText} aria-label="Copy the scrollsheet imports">
+      <svg viewBox="0 0 20 20" fill="none" aria-hidden="true">
+        <rect x="7" y="7" width="10" height="10" rx="2" stroke="currentColor" stroke-width="1.6"/>
+        <path d="M4 13H3.5A1.5 1.5 0 0 1 2 11.5v-8A1.5 1.5 0 0 1 3.5 2h8A1.5 1.5 0 0 1 13 3.5V4" stroke="currentColor" stroke-width="1.6"/>
+      </svg>
+    </button>
+  </div>
+  <p class="migrate__links">
+    <a href="/docs/migrating/from-vaul">Migration guide</a>
+    <a href="/compare/vaul">What differs from vaul</a>
+  </p>
+</div>

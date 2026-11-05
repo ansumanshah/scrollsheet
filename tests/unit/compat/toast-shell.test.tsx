@@ -510,7 +510,7 @@ describe("swipe: dampening against a disallowed direction", () => {
 });
 
 describe("swipe: dismiss triggers", () => {
-  test("past the distance threshold in an allowed direction: data-swipe-out/-direction are set, and onDismiss fires once the exit animation ends", async () => {
+  test("past the distance threshold in an allowed direction: data-swipe-out/-direction are set, and onDismiss fires on release", async () => {
     let dismissed = 0;
     await mount(<ToasterShell visibleToasts={3} />);
     await React.act(async () => {
@@ -527,13 +527,6 @@ describe("swipe: dismiss triggers", () => {
     await firePointer(el, "pointerup", 60, 0);
     expect(el.getAttribute("data-swipe-out")).toBe("true");
     expect(el.getAttribute("data-swipe-direction")).toBe("right");
-    // Not dismissed yet — happy-dom never actually runs the CSS animation,
-    // so the hook's own onDismiss only fires once a (real or, here,
-    // manually-simulated) animationend reaches its listener.
-    expect(dismissed).toBe(0);
-    await React.act(async () => {
-      el.dispatchEvent(new Event("animationend"));
-    });
     expect(dismissed).toBe(1);
   });
 

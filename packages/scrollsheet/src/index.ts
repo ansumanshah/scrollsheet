@@ -2,8 +2,13 @@ export { Root, type SheetRootProps, type SheetActions } from "./root";
 export { Trigger, type SheetTriggerProps } from "./trigger";
 export { Content, type SheetContentProps } from "./content";
 export { Handle, type SheetHandleProps } from "./handle";
-export { Title, Description, Close } from "./misc";
-export type { SheetTitleProps, SheetDescriptionProps, SheetCloseProps } from "./misc";
+export { Title, Description, Close, Footer } from "./misc";
+export type {
+  SheetTitleProps,
+  SheetDescriptionProps,
+  SheetCloseProps,
+  SheetFooterProps,
+} from "./misc";
 export type { DetentSpec } from "./internal/detents";
 export type { TravelInfo } from "./context";
 export type { Side } from "./motion";
@@ -44,6 +49,7 @@ export type {
   DrawerTitleProps,
   DrawerDescriptionProps,
   DrawerCloseProps,
+  DrawerFooterProps,
 } from "./drawer";
 export { Dialog } from "./dialog";
 export type {
@@ -91,7 +97,7 @@ import { Root } from "./root";
 import { Trigger } from "./trigger";
 import { Content } from "./content";
 import { Handle } from "./handle";
-import { Close, Description, Title } from "./misc";
+import { Close, Description, Footer, Title } from "./misc";
 
 /** Namespace-style access: `<Sheet.Root>…</Sheet.Root>` */
 export const Sheet = {
@@ -102,4 +108,5 @@ export const Sheet = {
   Title,
   Description,
   Close,
+  Footer,
 };

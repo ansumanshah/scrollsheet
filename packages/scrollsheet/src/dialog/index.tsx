@@ -61,6 +61,7 @@ export interface DialogRootProps extends Pick<
   | "animationSpeed"
   | "backdropDismissible"
   | "escapeDismissible"
+  | "nonce"
   | "onOpenChangeComplete"
 > {
   children?: React.ReactNode;
@@ -87,6 +88,7 @@ export function Root({
   escapeDismissible,
   onOpenChangeComplete,
   animationSpeed,
+  nonce,
 }: DialogRootProps) {
   return (
     <SheetRoot
@@ -100,6 +102,7 @@ export function Root({
       backdropDismissible={backdropDismissible}
       escapeDismissible={escapeDismissible}
       animationSpeed={animationSpeed}
+      nonce={nonce}
     >
       {children}
     </SheetRoot>
@@ -119,16 +122,16 @@ export interface DialogPortalProps {
   container?: HTMLElement | null;
 }
 
-export function Portal({ children, container }: DialogPortalProps) {
+export function Portal(props: DialogPortalProps) {
   if (process.env.NODE_ENV !== "production") {
-    if (container !== undefined) {
+    if (props.container !== undefined) {
       warnOnce(
         "dialog-portal-container",
         "[scrollsheet Dialog] <Dialog.Portal container> has no effect — scrollsheet's <dialog> always renders into the browser's top layer (effectively document.body), so there's no separate container to portal into.",
       );
     }
   }
-  return <>{children}</>;
+  return <>{props.children}</>;
 }
 
 /* ── Overlay ──────────────────────────────────────────────────────────── */

@@ -18,10 +18,10 @@
  * card would be a real behavior mismatch, not a compatible default). Forced
  * dark/system theming is a v1.1 follow-up, not attempted here.
  *
- * No Sheet dependency: the Toaster shell portals a bare `<section>`/`<ol>`
- * straight to `document.body` (see shell/toaster-shell.tsx) — nothing here
- * shares a selector, a class, or a specificity fight with core.css or a
- * Sheet.Root elsewhere on the page.
+ * No Sheet dependency: the Toaster shell portals a bare `<section>`/`<ol>` to
+ * `document.body`, or into the topmost modal dialog while one is open (see
+ * shell/use-toaster-host.ts) — nothing here shares a selector, a class, or a
+ * specificity fight with core.css or a Sheet.Root elsewhere on the page.
  */
 
 /* Shared card chrome, reused by every .scrollsheet-toast regardless of
@@ -32,12 +32,7 @@
   border-radius: var(--scrollsheet-toast-radius, 14px);
   background: #fff;
   box-shadow: 0 4px 12px rgb(0 0 0 / 0.1);
-}
-
-/* 16px padding, 13px text — Sonner's own default look (the shared card
-   chrome — radius, border, fill, shadow — is factored out above). */
-.scrollsheet-toast {
-  position: relative;
+  /* 16px padding, 13px text — Sonner's own default look. */
   display: flex;
   align-items: flex-start;
   gap: 10px;
@@ -196,7 +191,6 @@
   padding: 0;
   list-style: none;
   outline: none;
-  transition: transform 400ms ease;
 }
 [data-scrollsheet-toaster][data-x-position="right"] {
   right: var(--scrollsheet-toast-offset, var(--sonner-offset, 24px));
@@ -258,8 +252,6 @@
 }
 .scrollsheet-toast[data-y-position="bottom"] {
   bottom: 0;
-  --scrollsheet-toast-lift: -1;
-  --scrollsheet-toast-y: translateY(100%);
 }
 .scrollsheet-toast[data-mounted] {
   --scrollsheet-toast-y: translateY(0);
@@ -286,6 +278,13 @@
 }
 .scrollsheet-toast[data-expanded="false"][data-front="false"] > * {
   opacity: 0;
+}
+/* spring({ stiffness: 600, damping: 49 }), thinned to the points that shape it;
+   mostly landed by the end of the card's 250ms move. :where() so a consumer's
+   own transition on a toast's content still wins. */
+:where(.scrollsheet-toast) > * {
+  transition: opacity 417ms
+    linear(0, 0.197 8%, 0.486 16%, 0.702 24%, 0.837 32%, 0.914 40%, 0.989 64%, 1);
 }
 .scrollsheet-toast[data-mounted][data-expanded="true"] {
   --scrollsheet-toast-y: translateY(
@@ -388,10 +387,12 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
-  [data-scrollsheet-toaster],
   .scrollsheet-toast {
     transition: none !important;
     animation: none !important;
+  }
+  .scrollsheet-toast > * {
+    transition-duration: 120ms;
   }
 }
 
@@ -408,8 +409,6 @@
     width: 100%;
   }
   [data-scrollsheet-toaster] .scrollsheet-toast {
-    left: 0;
-    right: 0;
     width: calc(100% - var(--scrollsheet-toast-mobile-offset, var(--sonner-mobile-offset, 16px)) * 2);
   }
   [data-scrollsheet-toaster][data-x-position="left"] {

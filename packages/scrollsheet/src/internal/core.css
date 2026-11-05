@@ -44,6 +44,12 @@
   --scrollsheet-ease: ${SHEET_SPRING.easing};
   --scrollsheet-dur: ${SHEET_SPRING.durationMs}ms;
 }
+/* Rendered for the one commit before showModal()/showPopover(). React runs a
+   child's autoFocus in that commit, and a closed overlay's display:none would
+   make its focus() a silent no-op. Same task as the open, so it never paints. */
+.scrollsheet-dialog[data-scrollsheet-state="pre"] {
+  display: block;
+}
 .scrollsheet-dialog::backdrop {
   /* we draw our own backdrop so it can track scroll progress */
   background: transparent;
@@ -214,7 +220,7 @@
 }
 /*
  * Overdraw past the panel's far edge, filled with the panel's own computed
- * background (tracked into --scrollsheet-panel-bg by content.tsx's
+ * background (tracked into --scrollsheet-panel-bg by use-sheet-measure.ts's
  * measure()). Masks the keyboard-inset timing gap (bottom sheets) and iOS's
  * rubber-band overshoot past the max detent. Lives on .scrollsheet-canvas,
  * not .scrollsheet-panel: panel's own overflow:hidden/auto (content
@@ -302,6 +308,9 @@
   pointer-events: none;
   scroll-snap-align: start;
 }
+.scrollsheet-dialog[data-scrollsheet-flick="step"] .scrollsheet-snap {
+  scroll-snap-stop: always;
+}
 .scrollsheet-dialog:is([data-scrollsheet-side="left"], [data-scrollsheet-side="right"])
   .scrollsheet-snap {
   left: auto;
@@ -357,6 +366,7 @@
      base rule's bottom clearance for top clearance. */
   padding-bottom: 0;
   padding-top: max(var(--scrollsheet-safe-area-top, env(safe-area-inset-top, 0px)), 0px);
+  flex-direction: column;
 }
 /* Shared full-height side geometry; each side then adds only its own
    anchor edge, travel direction, and notch clearance. Full-height panels
@@ -375,6 +385,7 @@
   left: var(--scrollsheet-inset-left, 0px);
   transform: translate3d(-100%, 0, 0);
   padding-left: max(var(--scrollsheet-safe-area-left, env(safe-area-inset-left, 0px)), 0px);
+  flex-direction: row;
 }
 .scrollsheet-dialog[data-scrollsheet-side="right"] .scrollsheet-panel {
   left: auto;
@@ -400,12 +411,6 @@
   display: flex;
   justify-content: flex-end;
 }
-.scrollsheet-dialog[data-scrollsheet-side="top"] .scrollsheet-panel {
-  flex-direction: column;
-}
-.scrollsheet-dialog[data-scrollsheet-side="left"] .scrollsheet-panel {
-  flex-direction: row;
-}
 /* The far-edge anchor must not shrink content narrower than the panel:
    an intrinsic-width body in a wider detent left a blank stripe on the
    panel's near edge at rest. Full-basis keeps the anchor for the reveal
@@ -417,20 +422,13 @@
 
 /* Cosmetic default — :where() so a consumer className on Sheet.Content can
    restore a visible scrollbar at normal specificity, e.g.
-   .my-sheet { scrollbar-width: thin }. The track already hides its own. */
-:where(.scrollsheet-panel) {
+   .my-sheet { scrollbar-width: thin }. The track already hides its own.
+   Nested-scroll markers get the same default (opted out below for
+   scrollbar='native'). */
+:where(.scrollsheet-panel, [data-scrollsheet-nested-scroll]) {
   scrollbar-width: none;
 }
-:where(.scrollsheet-panel)::-webkit-scrollbar {
-  display: none;
-}
-
-/* Nested-scroll markers get the same native-scrollbar-hide default as the
-   panel (opted out below for scrollbar='native'). */
-:where([data-scrollsheet-nested-scroll]) {
-  scrollbar-width: none;
-}
-:where([data-scrollsheet-nested-scroll])::-webkit-scrollbar {
+:where(.scrollsheet-panel, [data-scrollsheet-nested-scroll])::-webkit-scrollbar {
   display: none;
 }
 /* Containing block for the injected thumb (use-nested-scroll.ts), scoped
@@ -628,7 +626,7 @@
     pointer-events: auto;
   }
   /* Scoped to sheets that actually render a Handle (attribute set in
-     content.tsx's measure()). A sheet with no Handle never had an in-flow
+     use-sheet-measure.ts's measure()). A sheet with no Handle never had an in-flow
      pill to lose, so this spacing would be 18px of dead space above its
      content — most visible on a full-bleed media panel. */
   .scrollsheet-dialog[data-scrollsheet-side="bottom"][data-scrollsheet-has-handle]
@@ -644,7 +642,7 @@
 
 /*
  * Detached (floating-card) sheets — a consumer set --scrollsheet-inset-bottom
- * > 0; detected in content.tsx's measure() and reflected as
+ * > 0; detected in use-sheet-measure.ts's measure() and reflected as
  * data-scrollsheet-detached: no doubled-up safe-area padding (the card's own
  * margin already clears the home indicator), the bottom offset guarantees at
  * least the safe-area amount, and radius applies to all four corners instead
@@ -671,17 +669,12 @@
 
 /* scrollbar='native': opt out of both the hidden-native-scrollbar default
    above and the overlay thumb (which simply isn't rendered in this mode). */
-.scrollsheet-dialog[data-scrollsheet-scrollbar="native"] .scrollsheet-panel {
-  scrollbar-width: auto;
-}
-.scrollsheet-dialog[data-scrollsheet-scrollbar="native"] .scrollsheet-panel::-webkit-scrollbar {
-  display: block;
-}
-.scrollsheet-dialog[data-scrollsheet-scrollbar="native"] [data-scrollsheet-nested-scroll] {
+.scrollsheet-dialog[data-scrollsheet-scrollbar="native"]
+  :is(.scrollsheet-panel, [data-scrollsheet-nested-scroll]) {
   scrollbar-width: auto;
 }
 .scrollsheet-dialog[data-scrollsheet-scrollbar="native"]
-  [data-scrollsheet-nested-scroll]::-webkit-scrollbar {
+  :is(.scrollsheet-panel, [data-scrollsheet-nested-scroll])::-webkit-scrollbar {
   display: block;
 }
 /* Resting transforms only — each state's value is the *end* of its
@@ -689,8 +682,8 @@
    driven from content.tsx (interruptible, velocity-carrying), not a CSS
    transition. If that animation can't run (no WAAPI at all), these resting
    values still land the sheet in the right place, just without the travel. */
-.scrollsheet-dialog[data-scrollsheet-state="opening"] .scrollsheet-panel,
-.scrollsheet-dialog[data-scrollsheet-state="open"] .scrollsheet-panel {
+.scrollsheet-dialog:is([data-scrollsheet-state="opening"], [data-scrollsheet-state="open"])
+  .scrollsheet-panel {
   transform: translate3d(0, 0, 0);
 }
 .scrollsheet-dialog[data-scrollsheet-state="closing"] .scrollsheet-panel {
@@ -768,7 +761,10 @@
 .scrollsheet-kb-fade {
   display: none;
 }
-.scrollsheet-dialog[data-scrollsheet-kb][data-scrollsheet-side="bottom"] .scrollsheet-kb-fade {
+.scrollsheet-dialog[data-scrollsheet-kb][data-scrollsheet-side="bottom"]:not(
+    [data-scrollsheet-has-footer]
+  )
+  .scrollsheet-kb-fade {
   display: block;
   position: absolute;
   left: var(--scrollsheet-inset-x, 0px);
@@ -817,8 +813,8 @@
  * panel's content back to its own top edge doesn't chain into track's native
  * scroll and re-open the drag handleOnly/disableDrag are meant to block.
  */
-.scrollsheet-dialog[data-scrollsheet-handle-only] .scrollsheet-panel,
-.scrollsheet-dialog[data-scrollsheet-disable-drag] .scrollsheet-panel {
+.scrollsheet-dialog:is([data-scrollsheet-handle-only], [data-scrollsheet-disable-drag])
+  .scrollsheet-panel {
   touch-action: pan-y;
 }
 /*
@@ -829,9 +825,9 @@
  * scoping, so the handleOnly/disableDrag guarantee holds outside a live
  * marked-element touch).
  */
-.scrollsheet-dialog[data-scrollsheet-handle-only]:not([data-scrollsheet-at-nested-boundary])
-  .scrollsheet-panel,
-.scrollsheet-dialog[data-scrollsheet-disable-drag]:not([data-scrollsheet-at-nested-boundary])
+.scrollsheet-dialog:is([data-scrollsheet-handle-only], [data-scrollsheet-disable-drag]):not(
+    [data-scrollsheet-at-nested-boundary]
+  )
   .scrollsheet-panel {
   overscroll-behavior: contain;
 }
@@ -845,18 +841,11 @@
  * direction follows the sheet's own travel axis, same split as the
  * left/right track/canvas rules further up.
  */
-.scrollsheet-dialog[data-scrollsheet-at-nested-boundary] .scrollsheet-track,
-.scrollsheet-dialog[data-scrollsheet-at-nested-boundary] .scrollsheet-canvas {
+.scrollsheet-dialog[data-scrollsheet-at-nested-boundary] :is(.scrollsheet-track, .scrollsheet-canvas) {
   touch-action: pan-y;
 }
-.scrollsheet-dialog[data-scrollsheet-side="left"][data-scrollsheet-at-nested-boundary]
-  .scrollsheet-track,
-.scrollsheet-dialog[data-scrollsheet-side="left"][data-scrollsheet-at-nested-boundary]
-  .scrollsheet-canvas,
-.scrollsheet-dialog[data-scrollsheet-side="right"][data-scrollsheet-at-nested-boundary]
-  .scrollsheet-track,
-.scrollsheet-dialog[data-scrollsheet-side="right"][data-scrollsheet-at-nested-boundary]
-  .scrollsheet-canvas {
+.scrollsheet-dialog:is([data-scrollsheet-side="left"], [data-scrollsheet-side="right"])[data-scrollsheet-at-nested-boundary]
+  :is(.scrollsheet-track, .scrollsheet-canvas) {
   touch-action: pan-x;
 }
 
@@ -980,6 +969,61 @@
   cursor: grabbing;
 }
 
+/* Sheet.Footer. Sticky against the track, not a per-frame JS write: the browser
+   holds it at the track's far edge during a scroll, which a main-thread write
+   would trail by a frame. Bounded by the body, so it follows the panel's top
+   edge down once the reveal is shorter than the footer, and its bottom edge on
+   a floating card. The panel has to clip rather than hide below the tallest
+   detent, or it would be the sticky scrollport itself; at max and under a
+   keyboard it is the scrollport, and the same bottom:0 lands on the same edge.
+   The inset is a transparent border, since the background paints under it and
+   a consumer's own padding cannot wipe it out. */
+.scrollsheet-footer {
+  position: sticky;
+  bottom: 0;
+  z-index: 1;
+  flex: none;
+  margin-top: auto;
+  border-bottom: max(var(--scrollsheet-safe-area, env(safe-area-inset-bottom, 0px)), 0px) solid
+    transparent;
+}
+:where(.scrollsheet-footer) {
+  background: var(--scrollsheet-panel-bg, transparent);
+}
+.scrollsheet-dialog:is(
+    [data-scrollsheet-side="top"],
+    [data-scrollsheet-side="center"],
+    [data-scrollsheet-detached],
+    [data-scrollsheet-kb]
+  )
+  .scrollsheet-footer {
+  border-bottom-width: 0;
+}
+.scrollsheet-dialog[data-scrollsheet-has-footer] .scrollsheet-panel {
+  display: flex;
+  padding-bottom: 0;
+  scroll-padding-bottom: var(--scrollsheet-footer-height, 0px);
+}
+.scrollsheet-dialog[data-scrollsheet-has-footer]:not([data-scrollsheet-side="left"])
+  .scrollsheet-panel {
+  flex-direction: column;
+}
+.scrollsheet-dialog[data-scrollsheet-side="bottom"][data-scrollsheet-has-footer]:not(
+    [data-scrollsheet-at-max],
+    [data-scrollsheet-kb]
+  )
+  .scrollsheet-panel {
+  overflow: clip;
+}
+.scrollsheet-dialog[data-scrollsheet-has-footer] [data-scrollsheet-body] {
+  display: flex;
+  flex-direction: column;
+}
+.scrollsheet-dialog[data-scrollsheet-has-footer]:not([data-scrollsheet-side="left"])
+  [data-scrollsheet-body]:not([data-scrollsheet-fill]) {
+  flex: 1 0 auto;
+}
+
 /* Software keyboard on edge-anchored sides: the panel never moves (it's
    pinned to its edge, unlike a bottom sheet's lift), but a focused field in
    its lower half still ends up under the keyboard. --scrollsheet-keyboard
@@ -995,7 +1039,17 @@
     [data-scrollsheet-side="right"]
   )
   .scrollsheet-panel {
-  scroll-padding-bottom: var(--scrollsheet-keyboard, 0px);
+  scroll-padding-bottom: calc(
+    var(--scrollsheet-keyboard, 0px) + var(--scrollsheet-footer-height, 0px)
+  );
+}
+.scrollsheet-dialog:is(
+    [data-scrollsheet-side="top"],
+    [data-scrollsheet-side="left"],
+    [data-scrollsheet-side="right"]
+  )
+  .scrollsheet-footer {
+  bottom: var(--scrollsheet-keyboard, 0px);
 }
 .scrollsheet-dialog:is(
     [data-scrollsheet-side="top"],
@@ -1156,141 +1210,6 @@
 }
 
 /*
- * ── No-<dialog> degradation path ─────────────────────────────────────────
- * Rendered by internal/fallback-sheet.tsx on the ~3% of browsers with no
- * real <dialog> (Opera Mini, some old in-app WebViews, iOS <=15.3). Kept in
- * its own class namespace rather than reusing .scrollsheet-dialog's: every
- * rule there assumes the scroll-snap track (absolute panel, translate
- * resting transforms, visual-viewport pinning) that this path deliberately
- * does not build.
- *
- * The THEMING custom properties are shared on purpose — --scrollsheet-bg,
- * -fg, -radius, -shadow, -backdrop and -safe-area all resolve here exactly
- * as they do on the main path, so a consumer who themed their sheet gets
- * that theming in the fallback without writing a second set of rules.
- */
-.scrollsheet-fallback {
-  position: fixed;
-  inset: 0;
-  z-index: 2147483647;
-  display: flex;
-  /* No top layer here, so this element is subject to normal stacking and to
-     ancestor clipping. Portaled to <body> (fallback-sheet.tsx) to dodge the
-     clipping; the max z-index is the best available answer to the stacking
-     half. Documented as a known limitation, not papered over. */
-}
-/* Non-modal: only the panel is a hit target, matching the main path's rule
-   so a click outside still reaches the page behind. */
-.scrollsheet-fallback[data-scrollsheet-modal="false"] {
-  pointer-events: none;
-}
-.scrollsheet-fallback[data-scrollsheet-modal="false"] .scrollsheet-fallback-panel {
-  pointer-events: auto;
-}
-
-.scrollsheet-fallback-backdrop {
-  position: fixed;
-  inset: 0;
-  background: var(--scrollsheet-backdrop, rgb(0 0 0 / 0.32));
-}
-
-:where(.scrollsheet-fallback-panel) {
-  --scrollsheet-radius: 20px;
-  position: relative;
-  background: var(--scrollsheet-bg, #fff);
-  color: var(--scrollsheet-fg, #1d1d1f);
-  box-shadow: var(--scrollsheet-shadow, 0 -8px 32px rgb(0 0 0 / 0.16));
-  outline: none;
-  overflow-y: auto;
-  overscroll-behavior: contain;
-  -webkit-overflow-scrolling: touch;
-}
-/* Same light-default, opt-in-dark contract as the panel block above. */
-:where([data-scrollsheet-theme="dark"]) :where(.scrollsheet-fallback-panel) {
-  background: var(--scrollsheet-bg, #1c1c1e);
-  color: var(--scrollsheet-fg, #f5f5f7);
-}
-@media (prefers-color-scheme: dark) {
-  :where([data-scrollsheet-theme="system"]) :where(.scrollsheet-fallback-panel) {
-    background: var(--scrollsheet-bg, #1c1c1e);
-    color: var(--scrollsheet-fg, #f5f5f7);
-  }
-}
-
-/* Per-side anchoring. Heights are capped rather than detent-resolved: there
-   is no measurement pass on this path, so the panel sizes to its content up
-   to a cap and scrolls internally past it. */
-.scrollsheet-fallback[data-scrollsheet-side="bottom"] {
-  align-items: flex-end;
-}
-.scrollsheet-fallback[data-scrollsheet-side="bottom"] :where(.scrollsheet-fallback-panel) {
-  width: 100%;
-  max-height: 85%;
-  border-radius: var(--scrollsheet-radius) var(--scrollsheet-radius) 0 0;
-  padding-bottom: max(var(--scrollsheet-safe-area, env(safe-area-inset-bottom, 0px)), 0px);
-}
-.scrollsheet-fallback[data-scrollsheet-side="top"] {
-  align-items: flex-start;
-}
-.scrollsheet-fallback[data-scrollsheet-side="top"] :where(.scrollsheet-fallback-panel) {
-  width: 100%;
-  max-height: 85%;
-  border-radius: 0 0 var(--scrollsheet-radius) var(--scrollsheet-radius);
-  box-shadow: var(--scrollsheet-shadow, 0 8px 32px rgb(0 0 0 / 0.16));
-  padding-top: max(var(--scrollsheet-safe-area-top, env(safe-area-inset-top, 0px)), 0px);
-}
-/* Centered variant: the degraded shape of side="center" (and every Dialog
-   compat consumer). Same max-inline guard vars as the real center panel so
-   consumer overrides carry across the degradation. */
-.scrollsheet-fallback[data-scrollsheet-side="center"] {
-  align-items: center;
-  justify-content: center;
-}
-.scrollsheet-fallback[data-scrollsheet-side="center"] :where(.scrollsheet-fallback-panel) {
-  max-inline-size: var(--scrollsheet-center-max-inline, min(560px, calc(100% - 40px)));
-  max-height: 85%;
-  border-radius: var(--scrollsheet-radius);
-  box-shadow: var(--scrollsheet-shadow, 0 8px 32px rgb(0 0 0 / 0.16));
-}
-
-.scrollsheet-fallback[data-scrollsheet-side="left"] {
-  justify-content: flex-start;
-}
-.scrollsheet-fallback[data-scrollsheet-side="right"] {
-  justify-content: flex-end;
-}
-.scrollsheet-fallback:is([data-scrollsheet-side="left"], [data-scrollsheet-side="right"])
-  :where(.scrollsheet-fallback-panel) {
-  height: 100%;
-  max-width: 85%;
-  border-radius: 0;
-  padding-top: max(var(--scrollsheet-safe-area-top, env(safe-area-inset-top, 0px)), 0px);
-  padding-bottom: max(var(--scrollsheet-safe-area, env(safe-area-inset-bottom, 0px)), 0px);
-}
-.scrollsheet-fallback[data-scrollsheet-side="left"] :where(.scrollsheet-fallback-panel) {
-  box-shadow: var(--scrollsheet-shadow, 8px 0 32px rgb(0 0 0 / 0.16));
-}
-.scrollsheet-fallback[data-scrollsheet-side="right"] :where(.scrollsheet-fallback-panel) {
-  box-shadow: var(--scrollsheet-shadow, -8px 0 32px rgb(0 0 0 / 0.16));
-}
-
-/* Desktop: same 768px breakpoint the main path's presentation uses, so a
-   browser that falls back doesn't switch layout at a different width. */
-@media (min-width: 768px) {
-  .scrollsheet-fallback[data-scrollsheet-side="bottom"] :where(.scrollsheet-fallback-panel),
-  .scrollsheet-fallback[data-scrollsheet-side="top"] :where(.scrollsheet-fallback-panel) {
-    max-width: var(--scrollsheet-max-inline, 640px);
-    margin-inline: auto;
-  }
-}
-
-/* The drag handle is a gesture affordance and there are no gestures here —
-   showing one advertises an interaction that does nothing. */
-.scrollsheet-fallback [data-scrollsheet-handle] {
-  display: none;
-}
-
-/*
  * ── Forced colors (Windows High Contrast, `forced-colors: active`) ────────
  * Verified against real forced-colors emulation, not assumed: box-shadow is
  * discarded outright (computes to none regardless of its value), and a
@@ -1298,24 +1217,21 @@
  * browser's forced palette while the alpha channel survives — so the
  * backdrop and the panel behind it resolve to the SAME forced color, and a
  * same-color layer stacked at any opacity over an identical background
- * produces no visible dimming at all. Applies to both the main path and the
- * no-<dialog> fallback panel above, in one block since the treatment is
- * identical.
+ * produces no visible dimming at all. fallback.css repeats the treatment for
+ * the no-<dialog> path.
  */
 @media (forced-colors: active) {
   /* The backdrop carries no text and conveys no information by color alone —
      forced-color-adjust: none keeps its authored translucent black instead
      of losing the dimming cue to the RGB-forcing described above. */
-  :where(.scrollsheet-backdrop),
-  :where(.scrollsheet-fallback-backdrop) {
+  :where(.scrollsheet-backdrop) {
     forced-color-adjust: none;
   }
 
   /* Panel vs page: both would otherwise resolve to the identical forced
      Canvas, and box-shadow is discarded in this mode too (per above) —
      without a real border the sheet has no visible boundary at all. */
-  :where(.scrollsheet-panel),
-  :where(.scrollsheet-fallback-panel) {
+  :where(.scrollsheet-panel) {
     background: Canvas;
     color: CanvasText;
     border: 1px solid ButtonBorder;
@@ -1327,9 +1243,7 @@
      the border/background from the rule above still applies underneath
      (different property, no conflict). */
   .scrollsheet-dialog:is([data-scrollsheet-side="top"], [data-scrollsheet-side="left"], [data-scrollsheet-side="right"])
-    :where(.scrollsheet-panel),
-  .scrollsheet-fallback:is([data-scrollsheet-side="top"], [data-scrollsheet-side="left"], [data-scrollsheet-side="right"])
-    :where(.scrollsheet-fallback-panel) {
+    :where(.scrollsheet-panel) {
     box-shadow: none;
   }
 

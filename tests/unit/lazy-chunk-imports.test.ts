@@ -5,13 +5,17 @@ import { describe, expect, test } from "bun:test";
  * single value import of a sheet-core module (slot.tsx, styles.ts, ...)
  * statically chains their chunk to the core chunk, and every entry that
  * shares a chunk with it stops tree-shaking — measured once as the toast
- * shape ballooning from 6.6 to 21.7 kB gzip. The size budgets would catch
+ * shape growing more than threefold. The size budgets would catch
  * that regression indirectly and confusingly; this names it.
  */
 
 const ALLOWED: Record<string, readonly string[]> = {
-  "packages/scrollsheet/src/internal/fallback-sheet.tsx": ["react", "react-dom"],
-  "packages/scrollsheet/src/internal/theme-color.ts": [],
+  "packages/scrollsheet/src/internal/fallback-sheet.tsx": [
+    "react",
+    "react-dom",
+    "./fallback-css.generated",
+  ],
+  "packages/scrollsheet/src/internal/theme-color.ts": ["react"],
   "packages/scrollsheet/src/internal/use-presentation-flip.ts": ["react"],
   "packages/scrollsheet/src/internal/use-content-morph.ts": ["react"],
   "packages/scrollsheet/src/internal/use-keyboard-viewport.ts": ["react"],

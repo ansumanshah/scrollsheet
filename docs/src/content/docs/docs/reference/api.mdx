@@ -36,8 +36,14 @@ import DocExample from '../../../../components/DocExample.astro';
 | `activeDetent` | `DetentSpec` | first entry in `detents`, or `'content'` if empty |
 | `onActiveDetentChange` | `(detent: DetentSpec) => void` | |
 | `sequentialDetents` | `boolean` | `false` |
+| `flick` | `'step' \| 'project'` | `'project'` |
 
 </div>
+
+`flick` decides where a fast release lands. `'project'` carries the velocity forward, so one flick
+can cross several detents. `'step'` lands on the next detent past where you let go, the way Apple's
+sheets do. Speed alone can dismiss only from the first detent; from a higher one, the release has to
+be under `closeThreshold`. A slow release settles on the nearest detent either way.
 
 ### Dismissal
 
@@ -153,6 +159,23 @@ full-bleed content such as maps or photos. `'outside'` floats the pill in the ba
 sheet (bottom sheets only; other sides render `'inside'`). All three drag, click, and respond to
 keys the same way.
 
+## Sheet.Footer
+
+Extends `<div>`.
+
+<div className="table-scroll prop-table">
+
+| Prop | Type | Default |
+| --- | --- | --- |
+| `asChild` | `boolean` | `false` |
+
+</div>
+
+Stays on the sheet's visible bottom edge at every detent and above the on-screen keyboard, and
+absorbs the bottom safe-area inset so its background runs under the home indicator. Render it as a
+direct child of `Sheet.Content`, or inside a wrapper with `display: contents`. See
+[Pinned footer](/docs/scrolling-and-keyboard/pinned-footer).
+
 ## Sheet.Content styling hooks
 
 ### Data attributes
@@ -176,9 +199,11 @@ keys the same way.
 | `data-scrollsheet-detached` | `<dialog>` | present once `--scrollsheet-inset-bottom` is set (the inset-card recipe) |
 | `data-scrollsheet-sda` | `<dialog>` | present once CSS scroll-driven animations own the backdrop dim + `--scrollsheet-progress`, see [Browser support](/docs/browser-support) |
 | `data-scrollsheet-has-handle` | `<dialog>` | present while a `Sheet.Handle` is rendered inside the body |
+| `data-scrollsheet-has-footer` | `<dialog>` | present while a `Sheet.Footer` is rendered inside the body |
 | `data-scrollsheet-rtl` | `<dialog>` | present when the panel's computed `direction` is `rtl` |
 | `data-scrollsheet-handle-variant` | `Sheet.Handle` | `floating` \| `outside`, absent for `inside` |
 | `data-scrollsheet-fill` | panel and body | present when `fill` |
+| `data-scrollsheet-footer` | `Sheet.Footer` | always present |
 | `data-scrollsheet-background` | your page wrapper (set by you) | marks the element `backgroundEffect` targets, see [Page transitions](/docs/presentation/page-transitions) |
 | `data-scrollsheet-nested-scroll` | an inner scroller (set by you) | scroll the list first, then hand off to sheet travel, see [Scrollable content](/docs/scrolling-and-keyboard/scrollable-content) |
 | `data-scrollsheet-theme` | an ancestor, usually `<html>` (set by you) | `dark` \| `system`, anything else renders light, see [CSS](/docs/styling/css#dark-mode) |
@@ -199,6 +224,7 @@ keys the same way.
 | `--scrollsheet-stack-progress` | parent panel | `0` to `1`, set while a child sheet is open. Read it in your own CSS to replace the built-in scale + dim recede with something else |
 | `--scrollsheet-max-detent` | `<dialog>` | tallest resolved detent, px |
 | `--scrollsheet-keyboard` | `<dialog>` | on-screen-keyboard inset, px |
+| `--scrollsheet-footer-height` | `<dialog>` | measured `Sheet.Footer` height, px, set only while one is rendered |
 | `--scrollsheet-backdrop` | panel (set by you) | any CSS color |
 | `--scrollsheet-handle` / `-handle-hover` | panel (set by you) | handle pill color, resting / hover |
 | `--scrollsheet-safe-area` | panel (set by you) | usually `env(safe-area-inset-bottom)` |
@@ -225,7 +251,7 @@ keys the same way.
 
 | Export | Extends / type |
 | --- | --- |
-| `Sheet` | The namespace object: `Sheet.Root`, `Trigger`, `Content`, `Handle`, `Title`, `Description`, `Close`. The same components are also named exports (`Root`, `Trigger`, and so on) |
+| `Sheet` | The namespace object: `Sheet.Root`, `Trigger`, `Content`, `Handle`, `Footer`, `Title`, `Description`, `Close`. The same components are also named exports (`Root`, `Trigger`, and so on) |
 | `Sheet.Trigger` | `<button>`, opens on click. `asChild` renders your own element instead |
 | `Sheet.Title` / `Sheet.Description` | `<h2>` / `<p>`, auto-wires `aria-labelledby` / `aria-describedby`. `asChild` supported |
 | `Sheet.Close` | `<button>`, closes on click. `asChild` supported. Rendered with no children, it draws a styled ✕ button (top-right, 44px hit area, `aria-label="Close"`) |
@@ -233,7 +259,7 @@ keys the same way.
 | `Side` | `'bottom' \| 'top' \| 'left' \| 'right'`. The `side` and `desktopSide` props also accept `'center'` |
 | `SheetActions` | `{ open(): void; close(): void; snapTo(detent: DetentSpec): void }` |
 | `TravelInfo` | `onTravel`'s third argument: `range: readonly [number, number]` (`[0, tallest detent]`, px) and `progressAtDetents: ReadonlyMap<number, number>` (resolved detent height in px to 0-1 progress). Reused and mutated every frame, so read it synchronously |
-| `SheetRootProps`, `SheetContentProps`, `SheetHandleProps`, `SheetTriggerProps`, `SheetTitleProps`, `SheetDescriptionProps`, `SheetCloseProps` | The prop types of the components above |
+| `SheetRootProps`, `SheetContentProps`, `SheetHandleProps`, `SheetTriggerProps`, `SheetFooterProps`, `SheetTitleProps`, `SheetDescriptionProps`, `SheetCloseProps` | The prop types of the components above |
 | `spring(config?)` | `(config?: SpringConfig) => SpringCurve`. Compiles a damped spring to a CSS `linear()` easing; see [`scrollsheet/motion`](#scrollsheetmotion) |
 | `SpringConfig`, `SpringCurve` | `{ stiffness?, damping?, mass?, velocity?, restDelta? }` and `{ easing: string; durationMs: number }` |
 | `isSupported()` | `() => boolean`, false on the ~3% of browsers with no `<dialog>`, where the sheet falls back to a plain modal (see [Without `<dialog>`](/docs/browser-support#without-dialog)) |
@@ -265,14 +291,14 @@ vaul's and Radix's components collide by name with the ones above.
 
 | Export | Members and notes |
 | --- | --- |
-| `Drawer` | vaul-compatible: `Root`, `NestedRoot` (alias of `Root`), `Trigger`, `Portal`, `Overlay`, `Content`, `Handle`, `Title`, `Description`, `Close`. `Root` takes vaul's props (`snapPoints`, `direction`, `onClose`, `fadeFromIndex`, and the rest) plus `actionsRef`, `animationSpeed`, `backdropDismissible`, `escapeDismissible`, `keyboardExpands`, `onTravel`, and `scrollbar`. `Handle` adds `preventCycle`. `Overlay` renders nothing. See [Migrate from vaul](/docs/migrating/from-vaul) |
-| `Dialog` | Radix-compatible, always the centered presentation: `Root`, `Trigger`, `Portal`, `Overlay`, `Content`, `Title`, `Description`, `Close`. `Root` takes `open`, `defaultOpen`, `onOpenChange`, `modal`, plus `actionsRef`, `animationSpeed`, `backdropDismissible`, `escapeDismissible`, and `onOpenChangeComplete`. `Content` stamps `data-state`. See [Migrate from Radix Dialog](/docs/migrating/from-radix-dialog) |
+| `Drawer` | vaul-compatible: `Root`, `NestedRoot` (alias of `Root`), `Trigger`, `Portal`, `Overlay`, `Content`, `Handle`, `Footer`, `Title`, `Description`, `Close`. `Root` takes vaul's props (`snapPoints`, `direction`, `onClose`, `fadeFromIndex`, and the rest) plus `actionsRef`, `animationSpeed`, `backdropDismissible`, `escapeDismissible`, `flick`, `keyboardExpands`, `nonce`, `onTravel`, and `scrollbar`. `Handle` adds `preventCycle`. `Overlay` renders nothing. See [Migrate from vaul](/docs/migrating/from-vaul) |
+| `Dialog` | Radix-compatible, always the centered presentation: `Root`, `Trigger`, `Portal`, `Overlay`, `Content`, `Title`, `Description`, `Close`. `Root` takes `open`, `defaultOpen`, `onOpenChange`, `modal`, plus `actionsRef`, `animationSpeed`, `backdropDismissible`, `escapeDismissible`, `nonce`, and `onOpenChangeComplete`. `Content` stamps `data-state`. See [Migrate from Radix Dialog](/docs/migrating/from-radix-dialog) |
 
 </div>
 
 Prop types: `DrawerRootProps`, `DrawerNestedRootProps`, `DrawerTriggerProps`, `DrawerPortalProps`,
 `DrawerOverlayProps`, `DrawerContentProps`, `DrawerHandleProps`, `DrawerTitleProps`,
-`DrawerDescriptionProps`, `DrawerCloseProps`, `VaulSnapPoint` (`number | string`), and the
+`DrawerDescriptionProps`, `DrawerCloseProps`, `DrawerFooterProps`, `VaulSnapPoint` (`number | string`), and the
 `Dialog*` equivalents (`DialogRootProps`, `DialogTriggerProps`, `DialogPortalProps`,
 `DialogOverlayProps`, `DialogContentProps`, `DialogTitleProps`, `DialogDescriptionProps`,
 `DialogCloseProps`).
@@ -376,7 +402,7 @@ The React-free layer the sheet runs on. Experimental: the surface may change in 
 | `spring` | `(config?: SpringConfig) => SpringCurve`. Defaults: `stiffness` 260, `damping` 30, `mass` 1, `velocity` 0, `restDelta` 0.001. Throws if the config cannot settle within 2 seconds, such as zero damping |
 | `sampleSpringAt` | `(config: SpringConfig, atMs: number) => { value: number; velocity: number }`. Position (0 to 1) and velocity of the same spring at a time, in closed form |
 | `animate` | `(el, prop, from, to, toCss: (value: number) => string, curve: SpringCurve, config: SpringConfig, extraChannels?) => AnimateHandle`. One Web Animations spring leg. `AnimateHandle` has `finished`, `settled`, `to`, `durationMs`, `stop()` (freezes the element and returns `{ value, velocity }` for a velocity-carrying next leg), and `cancel()` |
-| `animateScrollTo` | `(el, target, durationMs, axis?: 'x' \| 'y', suspendSnap?: boolean) => ScrollAnimation`. A rAF scroll tween that any pointer, wheel, or touch input cancels. `ScrollAnimation` has `cancel()` and `finished: Promise<boolean>` |
+| `animateScrollTo` | `(el, target, durationMs, axis?: 'x' \| 'y', suspendSnap?: boolean \| (() => void)) => ScrollAnimation`. A rAF scroll tween that any pointer, wheel, or touch input cancels. A `suspendSnap` function is called when a press stops the tween, with snap left off for you to restore. `ScrollAnimation` has `cancel()` and `finished: Promise<boolean>` |
 | `geometryFor` | `(side: Side) => SideGeometry`. Axis, scroll property, and sign for a side |
 | `mapScroll` | `(value, maxDetent, sign: 1 \| -1) => number`. Converts between raw scroll position and revealed px; it is its own inverse |
 | `recedeTransform` | `(geometry: SideGeometry, progress, scale) => string`. The `translate3d(...) scale(...)` a receded parent panel gets |

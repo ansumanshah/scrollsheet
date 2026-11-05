@@ -19,6 +19,11 @@ const INDEX_HTML = await Bun.file(new URL("./index.html", ROOT)).text();
 // other 40+ fixtures sharing app.tsx's single page.
 const SHADOW_DOM_HTML = await Bun.file(new URL("./shadow-dom.html", ROOT)).text();
 
+// Registry-item fixtures (tests/e2e/registry/): the shadcn items' real source
+// from registry/src, mounted on their own route so they never share a page
+// with app.tsx's fixtures.
+const REGISTRY_HTML = await Bun.file(new URL("./registry.html", ROOT)).text();
+
 /** Shared by every entrypoint below — same bundler options, different source file. */
 async function buildJs(entrypointFile: string): Promise<string> {
   const result = await Bun.build({
@@ -65,8 +70,18 @@ Bun.serve({
         headers: { "content-type": "text/html; charset=utf-8" },
       });
     }
-    if (url.pathname === "/main.js" || url.pathname === "/shadow-dom.js") {
-      const entrypoint = url.pathname === "/main.js" ? "./main.tsx" : "./shadow-dom.tsx";
+    if (url.pathname === "/registry") {
+      return new Response(REGISTRY_HTML, {
+        headers: { "content-type": "text/html; charset=utf-8" },
+      });
+    }
+    const ENTRYPOINTS: Record<string, string> = {
+      "/main.js": "./main.tsx",
+      "/shadow-dom.js": "./shadow-dom.tsx",
+      "/registry.js": "./registry.tsx",
+    };
+    const entrypoint = ENTRYPOINTS[url.pathname];
+    if (entrypoint) {
       try {
         const js = await buildJs(entrypoint);
         return new Response(js, { headers: { "content-type": "text/javascript; charset=utf-8" } });

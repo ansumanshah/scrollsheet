@@ -2,7 +2,6 @@
 import Base from "../layouts/Base.astro";
 import { BUNDLE_SIZES } from "../lib/bundle-sizes.generated";
 
-const indexGzip = BUNDLE_SIZES.index.gzipKb.toFixed(2);
 const indexBrotli = BUNDLE_SIZES.index.brotliKb.toFixed(2);
 
 interface FaqItem {
@@ -17,14 +16,14 @@ const faqs: FaqItem[] = [
   {
     id: "why-not-vaul",
     question: "How does it differ from vaul?",
-    answerHtml: `scrollsheet uses native scroll-snap for touch dragging and a <code>&lt;dialog&gt;</code> for modal sheets. The <code>Drawer</code> adapter supports common vaul APIs. Styling differs and some props are unsupported. Review <a href="/docs/migrating/from-vaul">the migration guide</a> before changing imports.`,
-    answerText: `scrollsheet uses native scroll-snap for touch dragging and a dialog for modal sheets. The Drawer adapter supports common vaul APIs. Styling differs and some props are unsupported. Review the migration guide before changing imports.`,
+    answerHtml: `scrollsheet uses native scroll-snap for touch dragging and a <code>&lt;dialog&gt;</code> for modal sheets. The <code>Drawer</code> adapter supports common vaul APIs. Styling differs and some props are unsupported. Review <a href="/docs/migrating/from-vaul">the migration guide</a> before changing imports, or read the <a href="/compare/vaul">full comparison</a>.`,
+    answerText: `scrollsheet uses native scroll-snap for touch dragging and a dialog for modal sheets. The Drawer adapter supports common vaul APIs. Styling differs and some props are unsupported. Review the migration guide before changing imports, or read the full comparison.`,
   },
   {
     id: "how-big",
     question: "What is the bundle size?",
-    answerHtml: `The <code>Sheet</code> import is ${indexGzip} kB gzipped or ${indexBrotli} kB brotli after bundling and minification with Bun. These measurements exclude React, stylesheets, and feature chunks loaded on demand. There are no runtime dependencies; <code>react</code> and <code>react-dom</code> are peers, both <code>&gt;=18</code>. See <a href="/docs/getting-started/install">Install</a>.`,
-    answerText: `The Sheet import is ${indexGzip} kB gzipped or ${indexBrotli} kB brotli after bundling and minification with Bun. These measurements exclude React, stylesheets, and feature chunks loaded on demand. There are no runtime dependencies; react and react-dom are peers, both 18 or newer.`,
+    answerHtml: `The <code>Sheet</code> import is ${indexBrotli} kB compressed (brotli) after bundling and minification with Bun. Most libraries quote gzip, so compare brotli to brotli. These measurements exclude React, stylesheets, and feature chunks loaded on demand. There are no runtime dependencies; <code>react</code> and <code>react-dom</code> are peers, both <code>&gt;=18</code>. See <a href="/docs/getting-started/install">Install</a>.`,
+    answerText: `The Sheet import is ${indexBrotli} kB compressed (brotli) after bundling and minification with Bun. Most libraries quote gzip, so compare brotli to brotli. These measurements exclude React, stylesheets, and feature chunks loaded on demand. There are no runtime dependencies; react and react-dom are peers, both 18 or newer.`,
   },
   {
     id: "app-router-rsc",

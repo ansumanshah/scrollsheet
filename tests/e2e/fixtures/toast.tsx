@@ -1,5 +1,6 @@
 import * as React from "react";
 
+import { Sheet } from "../../../packages/scrollsheet/src/index";
 import { toast, Toaster } from "../../../packages/scrollsheet/src/toast/index";
 
 /**
@@ -187,6 +188,102 @@ export function SonnerFixture() {
         placeholder="Focus me, then fire a toast"
       />
       <Toaster closeButton visibleToasts={3} />
+    </div>
+  );
+}
+
+/**
+ * Own `toasterId` so firing from inside the sheet never mixes with
+ * SonnerFixture's default queue. The Toaster stays at page level, outside
+ * Sheet.Content: that placement is the scenario under test.
+ */
+export function SonnerModalFixture() {
+  const fire = (title: string) => {
+    const w = window as unknown as { __sonnerModalAction?: number };
+    toast(title, {
+      toasterId: "modal",
+      duration: 60_000,
+      action: {
+        label: "Undo",
+        onClick: () => {
+          w.__sonnerModalAction = (w.__sonnerModalAction ?? 0) + 1;
+        },
+      },
+    });
+  };
+  return (
+    <div className="sonner-modal-fixture">
+      <button type="button" className="btn" onClick={() => fire("From the page")}>
+        Sonner modal: fire from page
+      </button>
+      {/* React bubbles the sheet's events here through its portal, so this counts
+          anything a toast sitting inside the dialog wrongly replays to it. */}
+      <div
+        onClick={() => {
+          const w = window as unknown as { __sheetParentClicks?: number };
+          w.__sheetParentClicks = (w.__sheetParentClicks ?? 0) + 1;
+        }}
+      >
+        <Sheet.Root>
+          <Sheet.Trigger className="btn">Sonner modal: open sheet</Sheet.Trigger>
+          <Sheet.Content className="sheet" aria-label="Toast host sheet">
+            <div className="sheet-inner">
+              <Sheet.Title>Toast host</Sheet.Title>
+              <button type="button" className="btn" onClick={() => fire("From the sheet")}>
+                Sonner modal: fire from sheet
+              </button>
+              <Sheet.Root>
+                <Sheet.Trigger className="btn">Sonner modal: open nested sheet</Sheet.Trigger>
+                <Sheet.Content className="sheet" aria-label="Nested toast host sheet">
+                  <div className="sheet-inner">
+                    <Sheet.Title>Nested toast host</Sheet.Title>
+                    <button type="button" className="btn" onClick={() => fire("From the nested")}>
+                      Sonner modal: fire from nested sheet
+                    </button>
+                    <Sheet.Close className="btn">Sonner modal: close nested sheet</Sheet.Close>
+                  </div>
+                </Sheet.Content>
+              </Sheet.Root>
+              <Sheet.Close className="btn">Sonner modal: close sheet</Sheet.Close>
+            </div>
+          </Sheet.Content>
+        </Sheet.Root>
+      </div>
+      <Toaster toasterId="modal" visibleToasts={3} />
+    </div>
+  );
+}
+
+/** The pinned-footer docs' placements, against a footer's 44px button. */
+export function FooterToastFixture() {
+  const fire = (toasterId: string) => () => toast("Saved", { toasterId, duration: 60_000 });
+  return (
+    <div>
+      <Sheet.Root detents={[0.4, "full"]}>
+        <Sheet.Trigger className="btn">Footer toast: open sheet</Sheet.Trigger>
+        <Sheet.Content className="sheet" aria-label="Footer toast">
+          <div className="sheet-inner">
+            <Sheet.Title>Footer toast</Sheet.Title>
+            <button type="button" onClick={fire("footer-default")}>
+              Fire default
+            </button>
+            <button type="button" onClick={fire("footer-top")}>
+              Fire top
+            </button>
+            <button type="button" onClick={fire("footer-raised")}>
+              Fire raised
+            </button>
+          </div>
+          <Sheet.Footer style={{ padding: "12px 16px" }}>
+            <button type="button" data-testid="footer-toast-action" style={{ height: 44 }}>
+              Pay
+            </button>
+          </Sheet.Footer>
+        </Sheet.Content>
+      </Sheet.Root>
+      <Toaster toasterId="footer-default" />
+      <Toaster toasterId="footer-top" position="top-center" />
+      <Toaster toasterId="footer-raised" style={{ bottom: 84 }} />
     </div>
   );
 }

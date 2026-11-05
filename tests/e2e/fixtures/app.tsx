@@ -1,8 +1,10 @@
 import {
+  AutofocusSheets,
   SideSheet,
   SinglePxSideSheet,
   BasicSheet,
   ThemeColorSheet,
+  NestedThemeColorSheet,
   CenterSheet,
   ResponsiveProfileSheet,
   ResponsiveSideSheet,
@@ -10,6 +12,7 @@ import {
   KeyboardSheet,
   ControlledSheet,
   MultiViewSheet,
+  MorphPressSheet,
   FillSheet,
   FullHeightSheet,
   NoTravelSheet,
@@ -55,9 +58,19 @@ import {
   DrawerSharedWrapperSheets,
   DrawerContentAsChildSheet,
   DrawerContentAsChildFragmentSheet,
+  DrawerSelectableTextSheet,
+  DrawerNonceSheet,
+  DrawerOnReleaseFalseSheet,
 } from "./drawer";
-import { DialogAcceptanceModal } from "./dialog";
-import { SonnerFixture, SonnerQueueFixture, SonnerShrinkFixture } from "./toast";
+import { DialogAcceptanceModal, DialogNonceModal } from "./dialog";
+import { FlickSheets, FooterSheets } from "./footer";
+import {
+  SonnerFixture,
+  FooterToastFixture,
+  SonnerModalFixture,
+  SonnerQueueFixture,
+  SonnerShrinkFixture,
+} from "./toast";
 
 export function App() {
   return (
@@ -94,6 +107,9 @@ export function App() {
         <InputTypesSheet />
         <KeyboardExpandSheet />
         <SideKeyboardSheet />
+        <AutofocusSheets />
+        <FooterSheets />
+        <FlickSheets />
         <NoHandleSheet side="bottom" trigger="No handle bottom" />
         <NoHandleSheet side="top" trigger="No handle top" />
         <NoHandleSheet side="left" trigger="No handle left" />
@@ -104,6 +120,7 @@ export function App() {
         <FloatingHandleSheet />
         <BasicSheet />
         <ThemeColorSheet />
+        <NestedThemeColorSheet />
         <CenterSheet />
         <ResponsiveProfileSheet />
         <ResponsiveSideSheet />
@@ -112,10 +129,14 @@ export function App() {
           trigger="Dialog acceptance modal (backdrop blocked)"
           backdropDismissible={false}
         />
+        <DialogNonceModal />
+        <DrawerNonceSheet />
+        <DrawerOnReleaseFalseSheet />
         <ThreeDetentSheet />
         <KeyboardSheet />
         <ControlledSheet />
         <MultiViewSheet />
+        <MorphPressSheet />
         <FillSheet />
         <AsChildSheet />
         <ReopenSheet />
@@ -142,6 +163,8 @@ export function App() {
         />
         <ActionsRefSheet />
         <DrawerFadeFromIndexOmittedSheet />
+        <DrawerSelectableTextSheet trigger="Drawer selectable text sheet" />
+        <DrawerSelectableTextSheet handleOnly trigger="Drawer selectable text handleOnly sheet" />
         <NestedScrollHandoffSheet trigger="Nested scroll handoff sheet" />
         <NestedScrollHandoffSheet
           trigger="Nested scroll handoff sheet (starts empty)"
@@ -160,6 +183,8 @@ export function App() {
         <SonnerFixture />
         <SonnerQueueFixture />
         <SonnerShrinkFixture />
+        <SonnerModalFixture />
+        <FooterToastFixture />
       </div>
       <section className="filler">
         {Array.from({ length: 20 }, (_, i) => (

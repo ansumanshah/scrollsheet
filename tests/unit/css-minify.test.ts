@@ -52,7 +52,11 @@ describe("generated CORE_CSS", () => {
     // with the old OS-tracking behavior kept as an opt-in
     // [data-scrollsheet-theme="system"] variant — doubling each of those
     // three rule pairs instead of replacing them.
-    expect(CORE_CSS.length).toBeLessThan(27_200);
+    // Raised to 28.6k (28473 actual) for Sheet.Footer's sticky pinning, its
+    // per-side safe-area and keyboard rules, and the pre-state display rule
+    // that lets a child's autoFocus land before showModal().
+    // Lowered to 24.3k once the no-<dialog> rules moved to fallback.css.
+    expect(CORE_CSS.length).toBeLessThan(24_300);
   });
 
   test("keeps brace structure balanced", () => {
@@ -95,6 +99,20 @@ describe("generated CORE_CSS", () => {
       new URL("../../packages/scrollsheet/src/internal/core-css.generated.ts", import.meta.url),
     ).text();
     expect(generated).toContain(`export const CORE_CSS = \`${minifyCss(`${core}\n${widgets}`)}\`;`);
+  });
+
+  test("fallback-css.generated.ts is fresh against fallback.css (run scripts/gen-css.ts if this fails)", async () => {
+    const authored = await Bun.file(
+      new URL("../../packages/scrollsheet/src/internal/fallback.css", import.meta.url),
+    ).text();
+    const generated = await Bun.file(
+      new URL("../../packages/scrollsheet/src/internal/fallback-css.generated.ts", import.meta.url),
+    ).text();
+    expect(generated).toContain(`export const FALLBACK_CSS = \`${minifyCss(authored)}\`;`);
+  });
+
+  test("the no-<dialog> rules stay out of the shipped core stylesheet", () => {
+    expect(CORE_CSS).not.toContain("scrollsheet-fallback");
   });
 });
 

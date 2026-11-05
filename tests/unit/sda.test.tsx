@@ -3,7 +3,7 @@ import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, test } fr
 import * as React from "react";
 import type * as ReactDOMClient from "react-dom/client";
 
-import { sdaOwnsBackdrop } from "../../packages/scrollsheet/src/content";
+import { sdaOwnsBackdrop } from "../../packages/scrollsheet/src/internal/content-helpers";
 import { Sheet } from "../../packages/scrollsheet/src/index";
 import { _resetEnvForTests } from "../../packages/scrollsheet/src/internal/env";
 

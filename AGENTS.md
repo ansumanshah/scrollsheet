@@ -26,7 +26,7 @@ bun run build            # required before unit tests: use-client.test.ts reads 
 bun test tests/unit
 bun run test:e2e:fast    # chromium-mobile only
 bun run test:e2e --workers=3 # full browser, visual, and performance matrix
-bun run size             # gzip budgets per entry; fails if size docs are stale
+bun run size             # brotli budgets per entry; fails if size docs are stale
 bun scripts/sync-sizes.ts  # rewrite size numbers in README/llms.txt/docs after a size change
 bun run verify           # the whole local gate
 ```
@@ -36,7 +36,7 @@ In a cloud container, Playwright's Chromium is at `/opt/pw-browsers`; do not run
 
 ## Rules
 
-- Never hand-edit `*-css.generated.ts`. Edit `core.css`, `widgets.css`, or `toast.css`, then `bun run gen:css`.
+- Never hand-edit `*-css.generated.ts`. Edit `core.css`, `widgets.css`, `fallback.css`, or `toast.css`, then `bun run gen:css`.
 - Every byte in the default `Sheet` entry is weighed. Prefer platform behavior over JS, keep new
   features small, or move optional systems behind a lazy loader like the existing `*-loader.ts`.
 - Code comments state constraints and reasons; no review narrative, dates, or consumer names.

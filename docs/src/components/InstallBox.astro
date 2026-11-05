@@ -1,0 +1,80 @@
+---
+const INSTALL = [
+  { id: "bun", cmd: "bun add scrollsheet" },
+  { id: "npm", cmd: "npm i scrollsheet" },
+  { id: "pnpm", cmd: "pnpm add scrollsheet" },
+  { id: "yarn", cmd: "yarn add scrollsheet" },
+];
+---
+
+<div class="install" id="install">
+  <div class="install-tabs" role="tablist" aria-label="Package manager">
+    {INSTALL.map((pm, i) => (
+      <button
+        type="button"
+        role="tab"
+        id={`pm-tab-${pm.id}`}
+        aria-controls="install-cmd"
+        aria-selected={i === 0 ? "true" : "false"}
+        tabindex={i === 0 ? undefined : -1}
+        data-cmd={pm.cmd}
+      >
+        {pm.id}
+      </button>
+    ))}
+  </div>
+  <div class="install-box">
+    <span id="install-cmd" role="tabpanel" aria-labelledby="pm-tab-bun">
+      <span class="prompt">$</span><code>{INSTALL[0]!.cmd}</code>
+    </span>
+    <button
+      class="copy-btn"
+      type="button"
+      data-copy={INSTALL[0]!.cmd}
+      aria-label="Copy install command"
+    >
+      <svg viewBox="0 0 20 20" fill="none" aria-hidden="true">
+        <rect x="7" y="7" width="10" height="10" rx="2" stroke="currentColor" stroke-width="1.6"/>
+        <path d="M4 13H3.5A1.5 1.5 0 0 1 2 11.5v-8A1.5 1.5 0 0 1 3.5 2h8A1.5 1.5 0 0 1 13 3.5V4" stroke="currentColor" stroke-width="1.6"/>
+      </svg>
+    </button>
+  </div>
+</div>
+
+<script>
+  // Package-manager tabs. The command text and the copy button's payload
+  // are the same string, so the button can never copy a command the
+  // visitor is not looking at.
+  {
+    const tabs = [...document.querySelectorAll<HTMLButtonElement>('.install-tabs [role="tab"]')];
+    const code = document.querySelector<HTMLElement>("#install-cmd code");
+    const copy = document.querySelector<HTMLButtonElement>(".install .copy-btn");
+
+    const select = (tab: HTMLButtonElement) => {
+      const cmd = tab.dataset.cmd;
+      if (!cmd || !code || !copy) return;
+      for (const other of tabs) {
+        other.setAttribute("aria-selected", String(other === tab));
+        other.tabIndex = other === tab ? 0 : -1;
+      }
+      code.textContent = cmd;
+      copy.dataset.copy = cmd;
+      document.getElementById("install-cmd")?.setAttribute("aria-labelledby", tab.id);
+    };
+
+    for (const tab of tabs) {
+      tab.addEventListener("click", () => select(tab));
+      // Roving tabindex: a tablist is one tab stop, arrows move within it.
+      tab.addEventListener("keydown", (event) => {
+        const step = event.key === "ArrowRight" ? 1 : event.key === "ArrowLeft" ? -1 : 0;
+        if (!step) return;
+        event.preventDefault();
+        const next = tabs[(tabs.indexOf(tab) + step + tabs.length) % tabs.length];
+        if (next) {
+          select(next);
+          next.focus();
+        }
+      });
+    }
+  }
+</script>

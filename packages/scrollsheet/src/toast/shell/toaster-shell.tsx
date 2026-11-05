@@ -1,8 +1,8 @@
 "use client";
 
 /**
- * One shared body portal groups persistent toast rows by position. Hidden
- * rows stay mounted so promotion and expansion preserve each row's state.
+ * One shared portal groups persistent toast rows by position. Hidden rows stay
+ * mounted so promotion and expansion preserve each row's state.
  * Keep this independent of Sheet so toast-only imports exclude its engine.
  */
 import * as React from "react";
@@ -16,7 +16,6 @@ import {
   expire,
   selectPositionToasts,
   selectToasterToasts,
-  selectToastWindow,
   toast,
   useSonner,
 } from "../state";
@@ -33,6 +32,7 @@ import {
 import { getDefaultSwipeDirections } from "./swipe-math";
 import { ToastRow } from "./toast-row";
 import { useToastHeights } from "./use-toast-heights";
+import { useToasterHost } from "./use-toaster-host";
 
 const DEFAULT_HOTKEY: readonly string[] = ["altKey", "KeyT"];
 
@@ -102,14 +102,8 @@ function PositionGroup({
     [toasts, position, defaultPosition],
   );
   // state.ts's own array stays append-only oldest-first — the newest-first
-  // reversal happens here at the render boundary, same as
-  // selectToastWindow's own doc comment describes.
+  // reversal happens here at the render boundary.
   const newestFirst = React.useMemo(() => [...positionToasts].reverse(), [positionToasts]);
-  const window_ = React.useMemo(
-    () => selectToastWindow(positionToasts, visibleToasts),
-    [positionToasts, visibleToasts],
-  );
-  const visibleIds = React.useMemo(() => new Set(window_.visible.map((t) => t.id)), [window_]);
 
   const { heights, observe, forget } = useToastHeights();
   const exitRows = useToastExit(newestFirst);
@@ -129,7 +123,6 @@ function PositionGroup({
     () => computeRowOffsets(newestFirst, heights, gap),
     [newestFirst, heights, gap],
   );
-  const offsetById = React.useMemo(() => new Map(offsets.map((o) => [o.id, o])), [offsets]);
 
   // An exit-only row (dropped out of the store, still playing its own exit
   // transition) has no CURRENT offset to compute — it keeps rendering with
@@ -174,8 +167,6 @@ function PositionGroup({
         {
           ...baseStyle,
           "--scrollsheet-toast-gap": `${gap}px`,
-          "--scrollsheet-toast-front-height":
-            frontHeight !== undefined ? `${frontHeight}px` : undefined,
         } as React.CSSProperties
       }
       onMouseEnter={onHoverEnter}
@@ -191,7 +182,7 @@ function PositionGroup({
       onLostPointerCapture={() => onInteractingChange(false)}
     >
       {exitRows.map(({ record, exiting }) => {
-        const offset = offsetById.get(record.id) ?? lastOffsetRef.current.get(record.id);
+        const offset = lastOffsetRef.current.get(record.id);
         const index = offset?.index ?? newestFirst.length;
         return (
           <ToastRow
@@ -199,11 +190,10 @@ function PositionGroup({
             record={record}
             index={index}
             total={newestFirst.length}
-            toastsBefore={offset?.toastsBefore ?? index}
             stackOffset={offset?.stackOffset ?? 0}
             height={heights.get(record.id)}
             frontHeight={frontHeight}
-            visible={visibleIds.has(record.id)}
+            visible={!exiting && index < visibleToasts}
             expanded={expanded}
             removed={exiting}
             yPosition={y}
@@ -298,13 +288,9 @@ export function ToasterShell({
     injectToastStyles(nonce);
   }, [nonce]);
 
-  // SSR-safety gate: `createPortal` needs a real `document`, and a `<section>`
-  // rendered during renderToString would double up once the client takes
-  // over anyway (this component has no hydration story — it's a pure
-  // client-portalled overlay, same reasoning as the Sheet-backed Toaster's
-  // own Content, which is behind an equivalent client-only mount gate).
-  const [mounted, setMounted] = React.useState(false);
-  React.useEffect(() => setMounted(true), []);
+  // Null until mounted: `createPortal` needs a real `document`, and this
+  // overlay has no server-rendered output to hydrate.
+  const host = useToasterHost();
 
   // No focus-driven expand: real Sonner's own onFocus/onBlur only track
   // lastFocusedElementRef/isFocusWithinRef bookkeeping for restoring focus
@@ -366,6 +352,8 @@ export function ToasterShell({
         ([, el]) => active === el || el.contains(active),
       );
       if (!focusedEntry) return;
+      // Otherwise the same press also closes a modal hosting the toaster.
+      event.preventDefault();
       if (hotkeyExpanded) {
         setHotkeyExpanded(false);
         return;
@@ -462,7 +450,7 @@ export function ToasterShell({
     },
   });
 
-  if (!mounted || typeof document === "undefined") return null;
+  if (!host) return null;
 
   const offsetValue =
     offset !== undefined ? (typeof offset === "number" ? `${offset}px` : offset) : undefined;
@@ -478,7 +466,6 @@ export function ToasterShell({
       aria-live="polite"
       aria-relevant="additions text"
       aria-atomic="false"
-      suppressHydrationWarning
       data-react-aria-top-layer=""
     >
       {possiblePositions.map((groupPosition) => (
@@ -505,6 +492,6 @@ export function ToasterShell({
         />
       ))}
     </section>,
-    document.body,
+    host,
   );
 }

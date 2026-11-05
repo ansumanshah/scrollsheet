@@ -9,7 +9,8 @@ import * as React from "react";
  */
 
 export interface FeatureLoader<T> {
-  /** Fire (or join) the fetch; resolves null on failure, never rejects. */
+  /** Fire (or join) the fetch; resolves null on failure, never rejects, and a
+   *  later call retries. */
   preload: () => Promise<T | null>;
   /** Null until resolved. `active` false never fetches (and is the SSR
    *  guard — the fetch lives in an effect). */
@@ -22,7 +23,7 @@ export function createFeatureLoader<T>(importer: () => Promise<T>): FeatureLoade
   const preload = () =>
     (pending ??= importer()
       .then((m) => (resident = m))
-      .catch(() => null));
+      .catch(() => (pending = null)));
   // A resident chunk resolves in the first render, so a feature that was
   // preloaded applies in the same commit as the state it guards.
   function useFeature(active: boolean): T | null {

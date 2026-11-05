@@ -11,6 +11,13 @@ export {}; // top-level await requires this file to be a module, not a script
 import { readdir } from "node:fs/promises";
 import { join } from "node:path";
 
+import {
+  buildRegistryIndex,
+  buildRegistryItem,
+  registryJsonPath,
+  sourceItems,
+} from "./lib/registry-build";
+
 interface RegistryFile {
   path: string;
   content: string;
@@ -122,6 +129,29 @@ for (const [name, item] of items) {
     if (!items.has(dep)) {
       errors.push(`${name}.json: registryDependencies references unknown item "${dep}"`);
     }
+  }
+}
+
+// Items authored as real .tsx files must have their embedded copy in sync.
+for (const source of sourceItems) {
+  const onDisk = await Bun.file(registryJsonPath(source.name)).text().catch(() => "");
+  if (onDisk !== (await buildRegistryItem(source))) {
+    errors.push(`${source.name}.json is out of date with registry/src/${source.name}: run bun run gen:registry`);
+  }
+}
+
+// The index served as /r/registry.json lists every item and carries no file content.
+const index = JSON.parse(await buildRegistryIndex()) as {
+  name?: string;
+  homepage?: string;
+  items: { name: string; files: { path: string; content?: string }[] }[];
+};
+if (index.items.length !== items.size) {
+  errors.push(`registry index lists ${index.items.length} items, expected ${items.size}`);
+}
+for (const entry of index.items) {
+  if (entry.files.some((file) => "content" in file)) {
+    errors.push(`registry index item "${entry.name}" must not include file content`);
   }
 }
 

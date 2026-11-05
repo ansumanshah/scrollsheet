@@ -13,7 +13,8 @@ import DocExample from '../../../../components/DocExample.astro';
 ```
 
 The `toast`, `useSonner`, and `Toaster` exports use a persistent card per toast, portaled through
-one shared `<section>` in `document.body` and positioned with CSS.
+one shared `<section>` in `document.body`, or in the topmost modal `<dialog>` while one is open, and
+positioned with CSS.
 
 The methods (`toast()`, `.success()`, `.error()`, `.info()`, `.warning()`, `.loading()`,
 `.message()`, `.custom(render)`, `.promise()`, `.dismiss(id?)`) work before or after a
@@ -74,7 +75,9 @@ disables these transitions.
 | `richColors` | Not implemented, warns once |
 | `toast.dismiss()` with no `id` | Clears the shared queue across all toaster instances |
 | `useSonner()` | Returns every toast across every toaster, unfiltered; `<Toaster id>` filters internally |
-| Behind a modal sheet | A toast fired while a modal `Sheet.Root` is open renders behind it rather than above it: the toaster is outside the dialog's top layer |
+| Modal in a shadow root | The toaster moves into any open modal `<dialog>` to stay above it, but can't see one inside a shadow root, so it renders behind that one |
+| Your own modal `<dialog>` | The toaster becomes its last child while it's open, so `:last-child` selectors on its children stop matching. A dialog with a `transform`, `filter`, `backdrop-filter`, `perspective` or `contain` would clip the toasts, so the toaster stays in `document.body` and renders behind that dialog. Put those styles on a child element to keep toasts on top |
+| Non-modal sheet | A `modal={false}` sheet is in the top layer, so it paints over a toast it overlaps |
 
 </div>
 </Aside>

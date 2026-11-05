@@ -1,0 +1,146 @@
+---
+import SeoPage from "../../layouts/SeoPage.astro";
+import CompareTable from "../../components/CompareTable.astro";
+import DocExample from "../../components/DocExample.astro";
+import { BUNDLE_SIZES } from "../../lib/bundle-sizes.generated";
+import type { Faq } from "../../lib/jsonld";
+
+const sheetKb = BUNDLE_SIZES.index.brotliKb.toFixed(2);
+
+const rows = [
+  {
+    label: "Touch dragging",
+    us: "The browser scrolls a CSS scroll-snap container",
+    them: "Motion drag gestures (<code>dragElastic</code>, <code>dragMomentum</code> set in <code>sheet.tsx</code>)",
+    note: "react-modal-sheet 5.6.0 source and README.",
+  },
+  {
+    label: "Dependencies",
+    us: "0 runtime, React as a peer",
+    them: "<code>motion</code> as a peer (11 or newer), plus <code>react-use-measure</code>",
+  },
+  {
+    label: "JavaScript, compressed",
+    us: `${sheetKb} kB (<code>Sheet</code> import)`,
+    them: "52.65 kB with Motion bundled. 7.88 kB if your app already ships Motion",
+    note: "Bundled with Bun, minified, React external, using the options in <code>scripts/lib/bundle-measure.ts</code>. react-modal-sheet 5.6.0 and motion 14.9.1, measured 5 Nov 2026. Both figures are brotli; many libraries quote gzip, which runs larger. How much of Motion an app already includes depends on which Motion features it uses, so the second figure is a floor.",
+  },
+  {
+    label: "Modal semantics",
+    us: "Native <code>&lt;dialog&gt;</code> <code>showModal()</code>: focus containment and an inert page behind it",
+    them: "None built in. The README says it ships no accessibility properties and shows a React Aria recipe for focus trapping",
+    note: "react-modal-sheet README, &ldquo;Accessibility&rdquo;. The source has no <code>&lt;dialog&gt;</code>, <code>role</code> or <code>inert</code>.",
+  },
+  {
+    label: "API shape",
+    us: "<code>Sheet.Root</code>, <code>Trigger</code>, <code>Content</code>, <code>Handle</code>, <code>Title</code>, <code>Close</code>",
+    them: "<code>Sheet</code> with <code>isOpen</code> / <code>onClose</code>, plus <code>Container</code>, <code>Header</code>, <code>Content</code>, <code>Backdrop</code>",
+  },
+  {
+    label: "Snap points",
+    us: "<code>detents</code>: fractions, pixels, <code>content</code>, <code>medium</code>, <code>full</code>",
+    them: "<code>snapPoints</code> array and <code>snapTo(index)</code>; <code>detent</code> of default, content or full",
+  },
+  {
+    label: "Edges",
+    us: "Four edges, or a centered dialog",
+    them: "Bottom sheet (no edge option in the README props table)",
+  },
+  {
+    label: "Keyboard avoidance",
+    us: "Reads <code>visualViewport</code>; sets <code>--scrollsheet-keyboard</code>",
+    them: "<code>avoidKeyboard</code>, on by default, via Visual Viewport or Virtual Keyboard API",
+  },
+  {
+    label: "Page scale effect",
+    us: "<code>backgroundEffect</code> with <code>data-scrollsheet-background</code>",
+    them: "<code>modalEffectRootId</code>",
+  },
+  {
+    label: "Custom animation",
+    us: "<code>onTravel</code> and <code>--scrollsheet-progress</code>",
+    them: "Motion values (<code>y</code>, snap index) exposed through a ref or context",
+  },
+  {
+    label: "React versions",
+    us: "18+",
+    them: "16 and up",
+  },
+  {
+    label: "npm downloads, last week",
+    us: "241",
+    them: "199,793",
+    note: "npm downloads API, 28 Oct to 3 Nov 2026.",
+  },
+];
+
+const faqs: Faq[] = [
+  {
+    id: "rms-motion",
+    question: "I already use Motion. Does that change the choice?",
+    answerHtml: `Yes. react-modal-sheet adds about 7.9 kB compressed when Motion is already in your bundle, so the size gap mostly disappears. It also hands you Motion values to animate your own content against the sheet. scrollsheet exposes the same idea through <code>onTravel</code> and <code>--scrollsheet-progress</code>, and has a <a href="/docs/motion">guide for using it with Motion</a>.`,
+    answerText: `Yes. react-modal-sheet adds about 7.9 kB compressed when Motion is already in your bundle, so the size gap mostly disappears. It also hands you Motion values to animate your own content against the sheet. scrollsheet exposes the same idea through onTravel and --scrollsheet-progress, and has a guide for using it with Motion.`,
+  },
+  {
+    id: "rms-a11y",
+    question: "Which one handles focus and screen readers?",
+    answerHtml: `scrollsheet modal sheets use <code>showModal()</code>, so the browser contains focus and makes the rest of the page inert. react-modal-sheet leaves that to you on purpose, and its README documents a React Aria setup. Neither choice is wrong. One is built in and the other is yours to compose.`,
+    answerText: `scrollsheet modal sheets use showModal(), so the browser contains focus and makes the rest of the page inert. react-modal-sheet leaves that to you on purpose, and its README documents a React Aria setup. Neither choice is wrong. One is built in and the other is yours to compose.`,
+  },
+  {
+    id: "rms-migrate",
+    question: "How do I move from react-modal-sheet?",
+    answerHtml: `There is no adapter. Replace <code>isOpen</code> and <code>onClose</code> with <code>open</code> and <code>onOpenChange</code> on <code>Sheet.Root</code>, move your content into <code>Sheet.Content</code>, and map <code>snapPoints</code> to <code>detents</code>. See <a href="/docs/getting-started/anatomy">anatomy</a> and <a href="/docs/detents-and-control/detents">detents</a>.`,
+    answerText: `There is no adapter. Replace isOpen and onClose with open and onOpenChange on Sheet.Root, move your content into Sheet.Content, and map snapPoints to detents. See the anatomy and detents guides.`,
+  },
+];
+---
+
+<SeoPage
+  title="scrollsheet vs react-modal-sheet: React bottom sheet comparison"
+  description="react-modal-sheet and scrollsheet compared for React bottom sheets: drag engine, Motion dependency, bundle size measured the same way, modal accessibility, and API differences."
+  h1="scrollsheet vs react-modal-sheet"
+  lede="react-modal-sheet is an active bottom sheet built on Motion. scrollsheet drags with the browser's own scrolling and has no dependencies. The right pick depends mostly on whether Motion is already in your app."
+  crumbs={[{ name: "Compare", path: "/compare" }, { name: "react-modal-sheet", path: "/compare/react-modal-sheet" }]}
+  faqs={faqs}
+>
+  <h2>Side by side</h2>
+  <CompareTable themName="react-modal-sheet" rows={rows} />
+
+  <h2>Try the detents</h2>
+  <p>
+    Both libraries snap between stops. In scrollsheet the stops are CSS scroll-snap points, and
+    the handle is a slider you can move with the arrow keys.
+  </p>
+  <DocExample
+    name="snap-heights"
+    caption="Drag between 35%, 70% and full height, or focus the handle and press the arrow keys."
+  />
+
+  <h2>Choose react-modal-sheet if</h2>
+  <ul>
+    <li>Motion is already in your app, so its cost is about 7.9 kB compressed.</li>
+    <li>You want Motion values to drive your own animation as the sheet moves.</li>
+    <li>You support React older than 18.</li>
+    <li>You want to compose your own focus handling, for example with React Aria.</li>
+    <li>You want the larger user base: roughly 200 thousand weekly downloads, and releases as recent as March 2026.</li>
+  </ul>
+
+  <h2>Choose scrollsheet if</h2>
+  <ul>
+    <li>You do not use Motion and do not want to add it.</li>
+    <li>You want focus containment and an inert background without writing it.</li>
+    <li>You need side panels, a centered dialog or toasts from the same package.</li>
+    <li>You want touch dragging to be the browser's scrolling, not a gesture library's.</li>
+  </ul>
+  <p>
+    scrollsheet requires <code>&lt;dialog&gt;</code> and scroll-snap for dragging. See{" "}
+    <a href="/docs/browser-support">browser support</a> for the fallback below those versions.
+  </p>
+
+  <h2>Beyond bottom sheets</h2>
+  <DocExample
+    name="nested"
+    caption="A sheet opened from inside a sheet. The parent recedes and dims on its own."
+  />
+</SeoPage>
