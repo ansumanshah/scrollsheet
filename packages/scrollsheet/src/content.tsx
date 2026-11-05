@@ -47,8 +47,8 @@ import {
 import { fallbackSheet } from "./internal/fallback-sheet-loader";
 import { Slot, composeRefs } from "./internal/slot";
 import { injectStyles } from "./internal/styles";
-import type { ThemeColorController } from "./internal/theme-color";
-import { preloadThemeColor } from "./internal/theme-color-loader";
+import type { ThemeColorController, ThemeColorFeatureProps } from "./internal/theme-color";
+import { themeColor } from "./internal/theme-color-loader";
 import { useBackgroundEffect } from "./internal/use-background-effect";
 import { useCloseWatcher } from "./internal/use-close-watcher";
 import { contentMorph } from "./internal/content-morph-loader";
@@ -717,61 +717,12 @@ export const Content = /* @__PURE__ */ React.forwardRef<HTMLDivElement, SheetCon
     }, [ctx.open, phase]);
 
     // ── Theme-color dimming ──────────────────────────────────────────────────
-    // Lives for as long as the sheet is present at all (mount through the close
-    // animation), so `restore()` always fires on both close and unmount via the
-    // effect cleanup — there's no separate teardown path to keep in sync.
-    // The module behind the opt-in prop is code-split; kick the load at mount
+    // The module behind the opt-in prop is code-split; the load starts at mount
     // (prop set, sheet not yet open) so it is resident before a user gesture
-    // can open the sheet, instead of racing the first open.
-    React.useEffect(() => {
-      if (ctx.themeColorDimming) void preloadThemeColor();
-    }, [ctx.themeColorDimming]);
-
-    React.useEffect(() => {
-      if (!present || !ctx.themeColorDimming) return;
-      let cancelled = false;
-      let controller: ThemeColorController | null = null;
-      // Resolved from the mount-time preload's cached promise — a microtask,
-      // not a network fetch, in every case but a defaultOpen first render.
-      // The controller is only ever consumed on travel frames (themeColorRef,
-      // read by updateTravel), so a late arrival degrades to the next frame
-      // picking it up, never a missed teardown: cleanup runs on the same
-      // closure regardless of when creation resolved.
-      void preloadThemeColor().then((mod) => {
-        if (cancelled || !mod) return;
-        controller = mod.createThemeColorController({
-          getBackdropColor: () => {
-            // The attribute, not the class: the top-chrome strip shares the
-            // class and would match first in document order.
-            const backdrop = dialogRef.current?.querySelector("[data-scrollsheet-backdrop]");
-            return backdrop ? getComputedStyle(backdrop).backgroundColor : null;
-          },
-          // Already resolved by measure() onto the canvas — a style.getPropertyValue
-          // read, not a second getComputedStyle call.
-          getPanelColor: () =>
-            canvasRef.current?.style.getPropertyValue("--scrollsheet-panel-bg") || null,
-          isBottomAttached: () =>
-            ctxRef.current.side === "bottom" && !ctxRef.current.center && !detachedRef.current,
-          getBottomChromeEl: () => bottomChromeRef.current,
-          getBottomDimEl: () => bottomChromeDimRef.current,
-        });
-        themeColorRef.current = controller;
-        // The next scroll/settle frame (already in flight from the open
-        // sequence's own scrollTop assignment) calls updateTravel() and
-        // applies the current progress — no initial value computed here.
-        // EXCEPT center: it has no travel frames, so nothing ever applies a
-        // value after this resolve. Apply settled-open unconditionally —
-        // this effect only runs while the sheet is present, and dimming a
-        // frame before "opening" matches the chrome strips' own pre-state
-        // snap (iOS samples its backings at that exact first paint).
-        if (ctxRef.current.center) controller?.apply(1, true);
-      });
-      return () => {
-        cancelled = true;
-        controller?.restore();
-        themeColorRef.current = null;
-      };
-    }, [present, ctx.themeColorDimming]);
+    // can open the sheet, instead of racing the first open. The controller is
+    // only ever consumed on travel frames, so a late arrival degrades to the
+    // next frame picking it up, never a missed teardown.
+    const themeMod = themeColor.useFeature(ctx.themeColorDimming);
 
     useBackgroundEffect({
       present,
@@ -1045,7 +996,8 @@ export const Content = /* @__PURE__ */ React.forwardRef<HTMLDivElement, SheetCon
     const featureProps: UseContentMorphInput &
       UseKeyboardViewportInput &
       UsePresentationFlipInput &
-      UseNestedScrollInput = {
+      UseNestedScrollInput &
+      ThemeColorFeatureProps = {
       present,
       phase,
       phaseRef,
@@ -1080,7 +1032,10 @@ export const Content = /* @__PURE__ */ React.forwardRef<HTMLDivElement, SheetCon
       resolvedRef,
       updateTravel,
       backdropRef,
+      canvasRef,
+      detachedRef,
       topChromeRef,
+      bottomChromeRef,
       bottomChromeDimRef,
       themeColorRef,
       isAtScrollBoundary,
@@ -1204,8 +1159,11 @@ export const Content = /* @__PURE__ */ React.forwardRef<HTMLDivElement, SheetCon
     const nestedFeature =
       nestedMod && nestedNeeded ? <nestedMod.NestedScrollFeature {...featureProps} /> : null;
     const freezeFeature = freezeMod ? <freezeMod.BodyFreezeFeature active={ctx.modal} /> : null;
+    const themeFeature =
+      themeMod && ctx.themeColorDimming ? <themeMod.ThemeColorFeature {...featureProps} /> : null;
     const innerContent = (
       <>
+        {themeFeature}
         {flipFeature}
         {morphFeature}
         {kbFeature}

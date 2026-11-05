@@ -1,5 +1,7 @@
+import * as React from "react";
+
 /**
- * Minimal color parsing for theme-color dimming — no deps.
+ * Minimal color parsing for theme-color dimming.
  *
  * Supports `#rgb`, `#rgba`, `#rrggbb`, `#rrggbbaa`, and `rgb()`/`rgba()` in
  * both comma (`rgb(28, 25, 23)`) and space/slash (`rgb(28 25 23 / 0.5)`)
@@ -275,4 +277,58 @@ export function createThemeColorController(source?: ThemeColorSource): ThemeColo
       setBottomChrome(null);
     },
   };
+}
+
+export interface ThemeColorFeatureProps {
+  dialogRef: React.RefObject<HTMLElement | null>;
+  canvasRef: React.RefObject<HTMLDivElement | null>;
+  ctxRef: React.RefObject<{ side: string; center: boolean }>;
+  detachedRef: React.RefObject<boolean>;
+  bottomChromeRef: React.RefObject<HTMLDivElement | null>;
+  bottomChromeDimRef: React.RefObject<HTMLDivElement | null>;
+  themeColorRef: React.RefObject<ThemeColorController | null>;
+}
+
+/**
+ * Mounted by Content for as long as the sheet is present and the prop is set,
+ * so `restore()` always fires on close and unmount through this one cleanup.
+ */
+export function ThemeColorFeature({
+  dialogRef,
+  canvasRef,
+  ctxRef,
+  detachedRef,
+  bottomChromeRef,
+  bottomChromeDimRef,
+  themeColorRef,
+}: ThemeColorFeatureProps): null {
+  React.useEffect(() => {
+    const controller = createThemeColorController({
+      getBackdropColor: () => {
+        // The attribute, not the class: the top-chrome strip shares the
+        // class and would match first in document order.
+        const backdrop = dialogRef.current?.querySelector("[data-scrollsheet-backdrop]");
+        return backdrop ? getComputedStyle(backdrop).backgroundColor : null;
+      },
+      // Already resolved by measure() onto the canvas — a style.getPropertyValue
+      // read, not a second getComputedStyle call.
+      getPanelColor: () =>
+        canvasRef.current?.style.getPropertyValue("--scrollsheet-panel-bg") || null,
+      isBottomAttached: () =>
+        ctxRef.current.side === "bottom" && !ctxRef.current.center && !detachedRef.current,
+      getBottomChromeEl: () => bottomChromeRef.current,
+      getBottomDimEl: () => bottomChromeDimRef.current,
+    });
+    themeColorRef.current = controller;
+    // The next scroll/settle frame calls updateTravel() and applies the current
+    // progress. Center has no travel frames, so it applies settled-open here;
+    // dimming a frame before "opening" matches the chrome strips' own pre-state
+    // snap (iOS samples its backings at that exact first paint).
+    if (ctxRef.current.center) controller?.apply(1, true);
+    return () => {
+      controller?.restore();
+      themeColorRef.current = null;
+    };
+  }, []);
+  return null;
 }
