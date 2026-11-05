@@ -144,7 +144,10 @@ test.describe("picker-wheel touch", () => {
     const dialog = await openByName(page, "Pick fruit");
     const style = await dialog
       .getByRole("listbox", { name: "Fruit" })
-      .evaluate((el) => getComputedStyle(el));
+      .evaluate((el) => {
+        const { scrollSnapType, overscrollBehaviorY } = getComputedStyle(el);
+        return { scrollSnapType, overscrollBehaviorY };
+      });
     expect(style.scrollSnapType).toBe("y mandatory");
     expect(style.overscrollBehaviorY).toBe("contain");
   });
