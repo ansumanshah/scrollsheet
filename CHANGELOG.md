@@ -9,13 +9,16 @@ All notable changes to this project are documented here.
 - **`autoFocus` now works inside a sheet.** The field keeps focus through `showModal()` without firing blur, and arms the keyboard engine with a toolbar baseline taken before focus.
 - **`onActiveDetentChange` now reports the detent a mouse drag lands on.** It could previously miss the final detent after a mouse or scripted drag.
 - **Selecting text or dragging off a button no longer dismisses the sheet.** Outside dismissal now needs the press to start outside the panel too.
+- **A press during a content height change no longer dismisses the sheet.** The change holds while pressed, the press lands on its target, and the change resumes on release.
+- **`Drawer.Root` and `Dialog.Root` accept `nonce`.** Strict-CSP apps can style the no-`<dialog>` fallback through them.
+- **Lazy features retry a failed chunk on their next mount.** A failed fetch still degrades that one feature as before.
 - **Toasts stay above modal sheets.** A page-level `Toaster` no longer sits dimmed behind an open modal, and its actions work there. A third-party `<dialog>` with a `transform`, `filter`, `backdrop-filter`, `perspective`, or `contain` would clip them, so toasts stay in `document.body` behind that dialog; the Sonner migration guide notes this.
 - **Promoted toasts no longer show blank before their content appears.** Hidden content now fades in as a toast moves to the front.
 - **Four new registry components.** Mobile select, command palette, picker wheel, and action sheet install through the shadcn CLI and add no bytes to the core package. `/r/registry.json` now indexes every item.
 - **`scrollsheet-codemod` moves a project off vaul.** `npx scrollsheet-codemod vaul src` rewrites the imports and reports each prop to check, with file and line.
 - **The site has a new homepage and comparison pages.** Pages for vaul, Base UI, react-modal-sheet, and Radix Dialog include what scrollsheet does worse, alongside a React bottom sheet guide.
 - **Docs accessibility is fixed.** Faint text meets contrast in both themes, and the example tabs no longer carry an invalid role.
-- **Sizes are now reported compressed, using brotli, with whole-kB budgets.** The `Sheet` import is about 15 kB, up about 0.3 kB from 1.2.3 for the footer and the fixes above, plus a 4 kB stylesheet. Many libraries quote gzip, which runs larger, so compare like with like.
+- **The Sheet import shrank from 14.7 to 14.4 kB compressed, with the features above included.** Optional code moved behind lazy chunks, and the core stylesheet is 3.4 kB. Sizes are now reported using brotli, with whole-kB budgets. Many libraries quote gzip, which runs larger, so compare like with like.
 - **`content.tsx` is split to stay under the repository's file size limit.** Detent measurement moved to its own hook, with no public API change.
 
 ## 1.2.3 - 2026-11-04
