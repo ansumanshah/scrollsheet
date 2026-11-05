@@ -21,6 +21,7 @@
     "node": ">=20"
   },
   "scripts": {
+    "prepack": "bun run build",
     "build": "bun build src/cli.ts --target node --outfile dist/cli.js --external jscodeshift --banner '#!/usr/bin/env node' && chmod +x dist/cli.js"
   },
   "dependencies": {
