@@ -246,6 +246,7 @@ function FlickSheet({
       <Sheet.Trigger className="btn">{trigger}</Sheet.Trigger>
       <Sheet.Content className="sheet" aria-label={trigger}>
         <Sheet.Handle />
+        <div data-testid="flick-grab" style={{ height: 48 }} />
         <code data-testid="flick-active">{String(active)}</code>
         <button type="button" onClick={() => setActive(0.45)}>
           Go to second stop

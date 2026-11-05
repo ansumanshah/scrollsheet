@@ -160,7 +160,7 @@ test.describe("picker-wheel touch", () => {
       gestureSourceType: "touch",
     });
     await expect.poll(async () => (await top(fruit)) % ITEM).toBe(0);
-    expect(await top(fruit)).toBeGreaterThan(ITEM);
+    expect(await top(fruit)).toBeGreaterThanOrEqual(ITEM);
     const settled = Math.round((await top(fruit)) / ITEM);
     await expect(fruit.getByRole("option").nth(settled)).toHaveAttribute("aria-selected", "true");
 

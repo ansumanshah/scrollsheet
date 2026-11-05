@@ -12,12 +12,17 @@ const SETTLE_TIMEOUT = 10_000;
  * `scroll-snap-stop: always` handles; its feel needs a real device.
  */
 
+// Font metrics move the fixture's buttons between platforms, and a press on a
+// button never starts a drag, so aim at an element reserved for it.
+async function grabPoint(overlay: Locator) {
+  const box = await overlay.getByTestId("flick-grab").boundingBox();
+  if (!box) throw new Error("grab area has no box");
+  return { x: box.x + box.width / 2, y: box.y + box.height / 2 };
+}
+
 async function flick(page: Page, trigger: string, deltaY: number) {
   const overlay = page.getByRole("dialog", { name: trigger });
-  const box = await overlay.locator(".scrollsheet-panel").boundingBox();
-  if (!box) throw new Error("panel has no box");
-  const x = box.x + box.width / 2;
-  const y = box.y + 40;
+  const { x, y } = await grabPoint(overlay);
   await page.mouse.move(x, y);
   await page.mouse.down();
   for (let i = 1; i <= 4; i++) {
@@ -42,14 +47,11 @@ test("a release already on a stop still reports that stop as active", async ({ p
   await page.goto("/");
   const overlay = await openOverlayByTrigger(page, "Flick project");
   const track = overlay.locator(".scrollsheet-track");
-  const box = await overlay.locator(".scrollsheet-panel").boundingBox();
-  if (!box) throw new Error("panel has no box");
   const [from, to] = await track.evaluate((el) => {
     const stops = [0.25, 0.45].map((f) => f * el.clientHeight);
     return [el.scrollTop, stops[1]!];
   });
-  const x = box.x + box.width / 2;
-  const y = box.y + 40;
+  const { x, y } = await grabPoint(overlay);
   await page.mouse.move(x, y);
   await page.mouse.down();
   await page.mouse.move(x, y - (to - from), { steps: 4 });
@@ -184,10 +186,7 @@ test("step: a slow drag past a stop settles on the nearest stop", async ({ page 
   await page.goto("/");
   const overlay = await openOverlayByTrigger(page, "Flick step");
   const track = overlay.locator(".scrollsheet-track");
-  const box = await overlay.locator(".scrollsheet-panel").boundingBox();
-  if (!box) throw new Error("panel has no box");
-  const x = box.x + box.width / 2;
-  const y = box.y + 40;
+  const { x, y } = await grabPoint(overlay);
   const distance = (await stopHeight(track, 0.65)) - (await stopHeight(track, 0.25));
   await page.mouse.move(x, y);
   await page.mouse.down();
