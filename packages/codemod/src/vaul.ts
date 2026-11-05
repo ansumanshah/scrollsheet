@@ -154,13 +154,12 @@ export function transformVaul(source: string, options: TransformOptions = {}): T
   /** True when a runtime import, require or re-export of vaul survives the rewrite. */
   function stillUsesVaul(collection: Collection): boolean {
     const isRuntimeVaul = (value: unknown) =>
-      value === VAUL || (typeof value === "string" && value.startsWith("vaul/") && value !== VAUL_CSS);
+      value === VAUL ||
+      (typeof value === "string" && value.startsWith("vaul/") && value !== VAUL_CSS);
     const isTypeOnly = (decl: ImportDeclaration) =>
       decl.importKind === "type" ||
       ((decl.specifiers ?? []).length > 0 &&
-        (decl.specifiers ?? []).every(
-          (s) => (s as { importKind?: string }).importKind === "type",
-        ));
+        (decl.specifiers ?? []).every((s) => (s as { importKind?: string }).importKind === "type"));
     if (
       collection
         .find(j.ImportDeclaration)
@@ -180,7 +179,9 @@ export function transformVaul(source: string, options: TransformOptions = {}): T
     }
     return collection.find(j.CallExpression).some((p) => {
       const callee = p.node.callee;
-      if (!(callee.type === "Import" || (callee.type === "Identifier" && callee.name === "require"))) {
+      if (
+        !(callee.type === "Import" || (callee.type === "Identifier" && callee.name === "require"))
+      ) {
         return false;
       }
       const specifier = moduleSpecifier(p.node.arguments[0]);
@@ -190,7 +191,10 @@ export function transformVaul(source: string, options: TransformOptions = {}): T
 
   /** `vaul/style.css` follows the components: it moves only when nothing in the file stays on vaul. */
   function rewriteStylesheetImports(collection: Collection, vaulRemains: boolean) {
-    const keep = (node: { loc?: { start: { line: number; column: number } } | null }, subject: string) =>
+    const keep = (
+      node: { loc?: { start: { line: number; column: number } } | null },
+      subject: string,
+    ) =>
       report(
         node,
         "manual",
@@ -217,7 +221,8 @@ export function transformVaul(source: string, options: TransformOptions = {}): T
           "Left on 'vaul/style.css'. Template literals are not rewritten: switch it to 'scrollsheet/styles.css' by hand once the file is off vaul.",
         );
       }
-      if (vaulRemains) return keep(path.node, `${isRequire ? "require" : "import"}('vaul/style.css')`);
+      if (vaulRemains)
+        return keep(path.node, `${isRequire ? "require" : "import"}('vaul/style.css')`);
       path.node.arguments[0] = j.stringLiteral(SCROLLSHEET_CSS);
       changed = true;
     });
@@ -463,6 +468,7 @@ export function transformVaul(source: string, options: TransformOptions = {}): T
 
   /** `const { Root } = Drawer` and `const Comp = Drawer.Root` hide props from the JSX pass. */
   function reportIndirectUse(collection: Collection) {
+    const aliases: { loc?: { start: { line: number; column: number } } | null }[] = [];
     collection.find(j.VariableDeclarator).forEach((path) => {
       const init = path.node.init;
       if (!init) return;
@@ -476,15 +482,15 @@ export function transformVaul(source: string, options: TransformOptions = {}): T
         base = init.object.name;
       }
       if (base === null || !drawerNames.has(base) || isShadowed(path, base)) return;
-      const target = path.node.id.type === "Identifier" ? path.node.id.name : "{ ... }";
-      const subject = `const ${target} = ${init.type === "Identifier" ? base : `${base}.${text((init as { property: { name?: unknown } }).property.name)}`}`;
-      report(
-        path.node,
-        "manual",
-        subject,
-        `Not checked. Drawer members used through a variable are not scanned for props scrollsheet ignores or handles differently: check the JSX that uses it against the migration table.`,
-      );
+      aliases.push(path.node);
     });
+    if (aliases.length === 0) return;
+    report(
+      aliases[0]!,
+      "info",
+      `Drawer member aliases (${aliases.length})`,
+      "Aliases such as const X = Drawer.Y and const { Root } = Drawer keep working. Props passed through them were not checked against the lists above.",
+    );
   }
 
   function attrName(attr: JSXAttribute): string {
@@ -604,7 +610,12 @@ export function transformVaul(source: string, options: TransformOptions = {}): T
 /** The module a `require(...)` or `import(...)` names, when it is a plain string or template. */
 function moduleSpecifier(node: unknown): string | null {
   const arg = node as
-    | { type?: string; value?: unknown; quasis?: { value: { cooked?: string | null } }[]; expressions?: unknown[] }
+    | {
+        type?: string;
+        value?: unknown;
+        quasis?: { value: { cooked?: string | null } }[];
+        expressions?: unknown[];
+      }
     | undefined;
   if (!arg) return null;
   if (arg.type === "StringLiteral" || arg.type === "Literal") {

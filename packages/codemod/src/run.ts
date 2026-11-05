@@ -5,7 +5,15 @@ import { transformVaul, transformVaulCss, type Finding } from "./vaul";
 
 const SOURCE_EXTENSIONS = new Set([".ts", ".tsx", ".js", ".jsx", ".mjs", ".cjs", ".mts", ".cts"]);
 const STYLE_EXTENSIONS = new Set([".css", ".scss", ".pcss"]);
-const SKIPPED_DIRECTORIES = new Set(["node_modules", ".git", "dist", "build", ".next", ".turbo", "coverage"]);
+const SKIPPED_DIRECTORIES = new Set([
+  "node_modules",
+  ".git",
+  "dist",
+  "build",
+  ".next",
+  ".turbo",
+  "coverage",
+]);
 
 export interface RunOptions {
   dryRun?: boolean;
@@ -54,7 +62,13 @@ function* walk(path: string): Generator<string> {
 /** Runs the vaul migration over files and directories, writing in place unless `dryRun`. */
 export function runVaul(paths: string[], options: RunOptions = {}): RunResult {
   const cwd = options.cwd ?? process.cwd();
-  const result: RunResult = { scanned: 0, changedFiles: [], findings: [], errors: [], usesVaul: [] };
+  const result: RunResult = {
+    scanned: 0,
+    changedFiles: [],
+    findings: [],
+    errors: [],
+    usesVaul: [],
+  };
 
   for (const input of paths) {
     for (const absolute of walk(resolve(cwd, input))) {
@@ -66,7 +80,10 @@ export function runVaul(paths: string[], options: RunOptions = {}): RunResult {
       const rel = relative(cwd, absolute);
       const file = rel.startsWith("..") ? absolute : rel;
       const fail = (error: unknown) =>
-        result.errors.push({ file, message: error instanceof Error ? error.message : String(error) });
+        result.errors.push({
+          file,
+          message: error instanceof Error ? error.message : String(error),
+        });
 
       let source: string;
       try {

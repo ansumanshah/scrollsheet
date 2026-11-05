@@ -41,8 +41,8 @@ Each item has a kind:
 | --- | --- |
 | `ignored` | The prop is accepted and dropped. `Drawer.Root` `onDrag`, `noBodyStyles`, `container`, `nested`, `fixed`, and the other no-op props, and Radix `Drawer.Content` props such as `onEscapeKeyDown`. The message names the replacement when there is one, such as `escapeDismissible={false}` |
 | `changed` | It works, but behaves differently: `direction="left"` and `"right"` (width comes from `snapPoints`), `onRelease`'s second argument, and `Drawer.Overlay`, which renders nothing |
-| `manual` | Left alone for you to finish. Imports with no scrollsheet equivalent (`import *`, `require`, `vaul/dist/*`, template-literal specifiers), a `vaul/style.css` import kept because the file still uses `vaul`, an unquoted `@import url(vaul/style.css)`, and `const { Root } = Drawer` or `const Comp = Drawer.Root`, whose props the tool cannot follow |
-| `info` | Worth a look: spread props the tool cannot see through, `closeThreshold` alongside `snapPoints` |
+| `manual` | Left alone for you to finish. Imports with no scrollsheet equivalent (`import *`, `require`, `vaul/dist/*`, template-literal specifiers), a `vaul/style.css` import kept because the file still uses `vaul`, an unquoted `@import url(vaul/style.css)` |
+| `info` | Worth a look: spread props the tool cannot see through, aliases such as `const X = Drawer.Y` or `const { Root } = Drawer` (they keep working, one item per file), `closeThreshold` alongside `snapPoints` |
 
 The full table of differences is in
 [Migrate from vaul](https://scrollsheet.dev/docs/migrating/from-vaul).

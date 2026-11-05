@@ -69,7 +69,9 @@ function main(argv: string[]): number {
     );
   }
   if (result.errors.length > 0) {
-    console.error(`${result.errors.length} file${result.errors.length === 1 ? "" : "s"} could not be processed.`);
+    console.error(
+      `${result.errors.length} file${result.errors.length === 1 ? "" : "s"} could not be processed.`,
+    );
     return 1;
   }
   return 0;

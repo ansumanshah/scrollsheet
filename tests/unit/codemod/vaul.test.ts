@@ -40,7 +40,9 @@ describe("transformVaul fixtures", () => {
       "23:11 ignored Drawer.Content onEscapeKeyDown",
       "24:11 ignored Drawer.Content onPointerDownOutside",
     ]);
-    const escape = summary("basic").result.findings.find((f) => f.subject.endsWith("onEscapeKeyDown"));
+    const escape = summary("basic").result.findings.find((f) =>
+      f.subject.endsWith("onEscapeKeyDown"),
+    );
     expect(escape?.message).toContain("escapeDismissible={false}");
   });
 
@@ -50,10 +52,9 @@ describe("transformVaul fixtures", () => {
     expect(result.output).toContain("typeof DrawerPrimitive.Root");
     expect(lines).toEqual([
       "12:3 info Drawer.Root {...spread}",
-      "16:7 manual const DrawerTrigger = DrawerPrimitive.Trigger",
+      "16:7 info Drawer member aliases (2)",
       "22:3 changed Drawer.Overlay",
       "35:5 info Drawer.Content {...spread}",
-      "42:7 manual const DrawerPortal = DrawerPrimitive.Portal",
     ]);
   });
 
@@ -71,7 +72,9 @@ describe("transformVaul fixtures", () => {
   test("mixed: splits unsupported imports, merges into an existing scrollsheet import, handles namespaces and requires", () => {
     const { result, lines } = summary("mixed");
     expect(result.output).toContain('import { Sheet, Drawer } from "scrollsheet"');
-    expect(result.output).toContain('import { Content as DrawerContent, type DrawerProps } from "vaul"');
+    expect(result.output).toContain(
+      'import { Content as DrawerContent, type DrawerProps } from "vaul"',
+    );
     expect(result.output).toContain('import * as Vaul from "vaul"');
     expect(result.output).toContain('import("scrollsheet")');
     expect(result.output).toContain('require("vaul")');
@@ -112,7 +115,9 @@ describe("transformVaul fixtures", () => {
 
 describe("unrewritten forms", () => {
   const manual = (source: string) =>
-    transformVaul(source).findings.filter((f) => f.kind === "manual").map((f) => f.subject);
+    transformVaul(source)
+      .findings.filter((f) => f.kind === "manual")
+      .map((f) => f.subject);
 
   test("require('vaul') is reported with a line and never rewritten", () => {
     const out = transformVaul('const a = 1;\nconst v = require("vaul");\n');
@@ -161,14 +166,16 @@ describe("unrewritten forms", () => {
 
 describe("formatting and comments", () => {
   test("CRLF files stay CRLF", () => {
-    const source = 'import { Drawer } from "vaul";\r\nimport "vaul/style.css";\r\nexport const a = 1;\r\n';
+    const source =
+      'import { Drawer } from "vaul";\r\nimport "vaul/style.css";\r\nexport const a = 1;\r\n';
     const out = transformVaul(source).output;
     expect(out).toContain("\r\n");
     expect(out.replaceAll("\r\n", "")).not.toContain("\n");
   });
 
   test("CRLF survives a rewrite that reprints lines", () => {
-    const source = 'import { Sheet } from "scrollsheet";\r\nimport { Drawer } from "vaul";\r\nexport const a = 1;\r\n';
+    const source =
+      'import { Sheet } from "scrollsheet";\r\nimport { Drawer } from "vaul";\r\nexport const a = 1;\r\n';
     const out = transformVaul(source).output;
     expect(out).toContain("\r\n");
     expect(out.replaceAll("\r\n", "")).not.toContain("\n");
@@ -199,15 +206,21 @@ describe("formatting and comments", () => {
 
 describe("stylesheet follows the components", () => {
   test("a namespace import left on vaul keeps vaul/style.css and says so", () => {
-    const out = transformVaul('import * as V from "vaul";\nimport "vaul/style.css";\nexport const x = <V.Root />;\n');
+    const out = transformVaul(
+      'import * as V from "vaul";\nimport "vaul/style.css";\nexport const x = <V.Root />;\n',
+    );
     expect(out.output).toContain('import "vaul/style.css"');
     expect(out.output).not.toContain("scrollsheet");
     expect(out.usesVaul).toBe(true);
-    expect(out.findings.map((f) => `${f.kind} ${f.subject}`)).toContain("manual import 'vaul/style.css'");
+    expect(out.findings.map((f) => `${f.kind} ${f.subject}`)).toContain(
+      "manual import 'vaul/style.css'",
+    );
   });
 
   test("a require left on vaul keeps require('vaul/style.css')", () => {
-    const out = transformVaul('const v = require("vaul");\nrequire("vaul/style.css");\n', { file: "a.cjs" });
+    const out = transformVaul('const v = require("vaul");\nrequire("vaul/style.css");\n', {
+      file: "a.cjs",
+    });
     expect(out.changed).toBe(false);
     expect(out.output).toContain('require("vaul/style.css")');
     expect(out.findings.map((f) => f.subject)).toContain("require('vaul/style.css')");
@@ -219,7 +232,9 @@ describe("stylesheet follows the components", () => {
   });
 
   test("the stylesheet moves once nothing in the file stays on vaul", () => {
-    const out = transformVaul('import { Drawer } from "vaul";\nimport "vaul/style.css";\nexport const x = Drawer;\n');
+    const out = transformVaul(
+      'import { Drawer } from "vaul";\nimport "vaul/style.css";\nexport const x = Drawer;\n',
+    );
     expect(out.output).toContain('import "scrollsheet/styles.css"');
     expect(out.usesVaul).toBe(false);
   });
@@ -234,29 +249,44 @@ describe("stylesheet follows the components", () => {
 
   test("runVaul lists the files that still use vaul and the CLI says to keep the stylesheet", async () => {
     const dir = mkdtempSync(join(tmpdir(), "scrollsheet-codemod-"));
-    writeFileSync(join(dir, "a.tsx"), 'import * as V from "vaul";\nimport "vaul/style.css";\nexport const x = V;\n');
+    writeFileSync(
+      join(dir, "a.tsx"),
+      'import * as V from "vaul";\nimport "vaul/style.css";\nexport const x = V;\n',
+    );
     writeFileSync(join(dir, "b.tsx"), 'import { Drawer } from "vaul";\nexport const y = Drawer;\n');
     expect(runVaul(["."], { cwd: dir, dryRun: true }).usesVaul).toEqual(["a.tsx"]);
     const proc = Bun.spawn(
-      ["bun", join(import.meta.dir, "../../../packages/codemod/src/cli.ts"), "vaul", ".", "--dry-run"],
+      [
+        "bun",
+        join(import.meta.dir, "../../../packages/codemod/src/cli.ts"),
+        "vaul",
+        ".",
+        "--dry-run",
+      ],
       { cwd: dir, stdout: "pipe", stderr: "pipe" },
     );
     const stdout = await new Response(proc.stdout).text();
     expect(await proc.exited).toBe(0);
-    expect(stdout).toContain("1 file still imports vaul, so keep the vaul package and vaul/style.css");
+    expect(stdout).toContain(
+      "1 file still imports vaul, so keep the vaul package and vaul/style.css",
+    );
     expect(stdout).toContain("a.tsx");
   });
 });
 
 describe("output fidelity", () => {
   test("a split after a directive does not print a double semicolon", () => {
-    const out = transformVaul('"use client";\nimport { Drawer, Content } from "vaul";\nexport const a = Drawer;\n').output;
+    const out = transformVaul(
+      '"use client";\nimport { Drawer, Content } from "vaul";\nexport const a = Drawer;\n',
+    ).output;
     expect(out).not.toContain(";;");
     expect(out.startsWith('"use client";\n')).toBe(true);
   });
 
   test("a split keeps the file header comment on top", () => {
-    const out = transformVaul('// license\nimport { Drawer, Content } from "vaul";\nexport const a = Drawer;\n').output;
+    const out = transformVaul(
+      '// license\nimport { Drawer, Content } from "vaul";\nexport const a = Drawer;\n',
+    ).output;
     expect(out.startsWith("// license\n")).toBe(true);
     expect(out).toContain('import { Drawer } from "scrollsheet"');
     expect(out).toContain('import { Content } from "vaul"');
@@ -273,14 +303,28 @@ describe("output fidelity", () => {
 
 describe("silent gaps are reported", () => {
   const manual = (source: string) =>
-    transformVaul(source).findings.filter((f) => f.kind === "manual").map((f) => f.subject);
+    transformVaul(source)
+      .findings.filter((f) => f.kind === "manual")
+      .map((f) => f.subject);
   const head = 'import { Drawer } from "vaul";\n';
 
-  test("destructuring and aliasing the Drawer namespace", () => {
-    expect(manual(`${head}const { Root } = Drawer;\nconst Comp = Drawer.Root;\n`)).toEqual([
-      "const { ... } = Drawer",
-      "const Comp = Drawer.Root",
-    ]);
+  test("destructuring and aliasing the Drawer namespace is one info per file, never manual", () => {
+    const findings = transformVaul(`${head}const { Root } = Drawer;\nconst Comp = Drawer.Root;\n`).findings;
+    expect(findings.map((f) => `${f.kind} ${f.subject}`)).toEqual(["info Drawer member aliases (2)"]);
+  });
+
+  test("a shadcn-style wrapper file has no manual findings", () => {
+    const source = [
+      'import * as React from "react"',
+      'import { Drawer as DrawerPrimitive } from "vaul"',
+      "function Drawer(props: React.ComponentProps<typeof DrawerPrimitive.Root>) {",
+      "  return <DrawerPrimitive.Root data-slot=\"drawer\" {...props} />",
+      "}",
+      "",
+    ].join("\n");
+    const out = transformVaul(source);
+    expect(out.findings.filter((f) => f.kind === "manual")).toEqual([]);
+    expect(out.usesVaul).toBe(false);
   });
 
   test("template literal specifiers are left and reported", () => {
@@ -324,7 +368,10 @@ describe("runVaul", () => {
     const dir = mkdtempSync(join(tmpdir(), "scrollsheet-codemod-"));
     writeFileSync(join(dir, "a-locked.ts"), 'import { Drawer } from "vaul";\n');
     chmodSync(join(dir, "a-locked.ts"), 0o000);
-    writeFileSync(join(dir, "b-ok.ts"), 'import { Drawer } from "vaul";\nexport const x = Drawer;\n');
+    writeFileSync(
+      join(dir, "b-ok.ts"),
+      'import { Drawer } from "vaul";\nexport const x = Drawer;\n',
+    );
     const result = runVaul(["."], { cwd: dir });
     chmodSync(join(dir, "a-locked.ts"), 0o600);
     expect(result.errors.map((e) => e.file)).toEqual(["a-locked.ts"]);
@@ -363,7 +410,10 @@ describe("runVaul", () => {
   test("an unparseable file never aborts the run: it is reported by path", () => {
     const dir = project();
     for (let i = 0; i < 10; i++) {
-      writeFileSync(join(dir, "src", `ok${i}.tsx`), 'import { Drawer } from "vaul";\nexport const x = Drawer;\n');
+      writeFileSync(
+        join(dir, "src", `ok${i}.tsx`),
+        'import { Drawer } from "vaul";\nexport const x = Drawer;\n',
+      );
     }
     writeFileSync(join(dir, "src", "b.ts"), "const v = <any>vault;\n");
     writeFileSync(join(dir, "src", "broken.ts"), 'import { Drawer } from "vaul";\nconst = ;\n');
@@ -376,7 +426,10 @@ describe("runVaul", () => {
 
   test("a .ts file with an angle-bracket assertion retries with the ts parser", () => {
     const dir = project();
-    writeFileSync(join(dir, "src", "d.ts"), 'import { Drawer } from "vaul";\nconst v = <any>Drawer;\n');
+    writeFileSync(
+      join(dir, "src", "d.ts"),
+      'import { Drawer } from "vaul";\nconst v = <any>Drawer;\n',
+    );
     const result = runVaul(["src"], { cwd: dir });
     expect(result.errors).toEqual([]);
     expect(readFileSync(join(dir, "src", "d.ts"), "utf8")).toContain('"scrollsheet"');
@@ -394,7 +447,13 @@ describe("runVaul", () => {
     const dir = project();
     writeFileSync(join(dir, "src", "broken.ts"), 'import { Drawer } from "vaul";\nconst = ;\n');
     const proc = Bun.spawn(
-      ["bun", join(import.meta.dir, "../../../packages/codemod/src/cli.ts"), "vaul", "src", "--dry-run"],
+      [
+        "bun",
+        join(import.meta.dir, "../../../packages/codemod/src/cli.ts"),
+        "vaul",
+        "src",
+        "--dry-run",
+      ],
       { cwd: dir, stdout: "pipe", stderr: "pipe" },
     );
     const stderr = await new Response(proc.stderr).text();
@@ -405,7 +464,13 @@ describe("runVaul", () => {
   test("the CLI prints file:line items and exits 0", async () => {
     const dir = project();
     const proc = Bun.spawn(
-      ["bun", join(import.meta.dir, "../../../packages/codemod/src/cli.ts"), "vaul", "src", "--dry-run"],
+      [
+        "bun",
+        join(import.meta.dir, "../../../packages/codemod/src/cli.ts"),
+        "vaul",
+        "src",
+        "--dry-run",
+      ],
       { cwd: dir, stdout: "pipe", stderr: "pipe" },
     );
     const stdout = await new Response(proc.stdout).text();
