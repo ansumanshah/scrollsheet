@@ -11,10 +11,30 @@ function openModals(): Element[] {
   }
 }
 
+/** Fixed descendants of this element anchor to and clip against its box. */
+function containsFixed(el: Element): boolean {
+  const style = getComputedStyle(el);
+  return (
+    [
+      style.transform,
+      style.translate,
+      style.rotate,
+      style.scale,
+      style.filter,
+      style.backdropFilter,
+      style.perspective,
+    ].some((value) => value && value !== "none") ||
+    /layout|paint|strict|content\b|contain|transform|translate|rotate|scale|filter|perspective/.test(
+      style.contain + " " + style.willChange,
+    )
+  );
+}
+
 /**
  * The portal target for a Toaster. A modal `<dialog>` makes everything outside
  * it inert, even a popover painted above it, so the toaster has to be a
- * descendant of the topmost modal to stay clickable and announced.
+ * descendant of the topmost modal to stay clickable and announced. A modal that
+ * would clip fixed descendants is left alone: the toaster stays on body, behind it.
  *
  * The element is moved by hand because React remounts a portal's subtree when
  * its container changes. Dialogs inside a shadow root aren't observable here.
@@ -40,7 +60,20 @@ export function useToasterHost(): HTMLElement | null {
       const open = openModals();
       for (const d of shown) if (!open.includes(d)) shown.delete(d);
       for (const d of open) shown.add(d);
-      const target = [...shown].pop() ?? document.body;
+      const top = [...shown].pop();
+      let target: Element = document.body;
+      if (top) {
+        if (el.parentNode === top || !containsFixed(top)) target = top;
+        else {
+          // An entry animation's transform ends, and nothing else re-runs this.
+          const running = top.getAnimations().filter((a) => a.playState === "running");
+          if (running.length) {
+            void Promise.allSettled(running.map((a) => a.finished)).then(
+              () => el.isConnected && place(),
+            );
+          }
+        }
+      }
       if (el.parentNode !== target) target.append(el);
       // Removal only matters while inside a dialog that can take the host with
       // it, so the costlier childList watch never runs on a page with no modal.

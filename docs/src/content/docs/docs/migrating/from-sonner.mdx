@@ -76,7 +76,7 @@ disables these transitions.
 | `toast.dismiss()` with no `id` | Clears the shared queue across all toaster instances |
 | `useSonner()` | Returns every toast across every toaster, unfiltered; `<Toaster id>` filters internally |
 | Modal in a shadow root | The toaster moves into any open modal `<dialog>` to stay above it, but can't see one inside a shadow root, so it renders behind that one |
-| Your own modal `<dialog>` | The toaster becomes its last child while it's open. A `transform` or `filter` on the dialog re-anchors and clips the toasts, and `:last-child` selectors on its children stop matching |
+| Your own modal `<dialog>` | The toaster becomes its last child while it's open, so `:last-child` selectors on its children stop matching. A dialog with a `transform`, `filter`, `backdrop-filter`, `perspective` or `contain` would clip the toasts, so the toaster stays in `document.body` and renders behind that dialog. Put those styles on a child element to keep toasts on top |
 | Non-modal sheet | A `modal={false}` sheet is in the top layer, so it paints over a toast it overlaps |
 
 </div>

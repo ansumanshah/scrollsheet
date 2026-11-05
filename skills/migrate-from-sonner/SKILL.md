@@ -133,7 +133,7 @@ unsupported props may instead be rejected by TypeScript.
 | `offset` as an object (`{ top, right, bottom, left }`) | not implemented: `offset` only accepts `number \| string` |
 | `mobileOffset` as a `Toaster` prop | not implemented as a prop — the underlying breakpoint is still stylable directly via the `--scrollsheet-toast-mobile-offset` CSS custom property |
 | Modal in a shadow root | The toaster moves into any open modal `<dialog>` to stay above it, but can't see one inside a shadow root, so it renders behind that one |
-| Your own modal `<dialog>` | The toaster becomes its last child while it's open. A `transform` or `filter` on the dialog re-anchors and clips the toasts, and `:last-child` selectors on its children stop matching |
+| Your own modal `<dialog>` | The toaster becomes its last child while it's open, so `:last-child` selectors on its children stop matching. A dialog with a `transform`, `filter`, `backdrop-filter`, `perspective` or `contain` would clip the toasts, so the toaster stays in `document.body` and renders behind that dialog. Put those styles on a child element to keep toasts on top |
 | Non-modal sheet | A `modal={false}` sheet is in the top layer, so it paints over a toast it overlaps |
 
 If your app relies on any of these, stay on real `sonner` for now, or file the gap: don't assume
