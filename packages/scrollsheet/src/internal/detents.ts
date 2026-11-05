@@ -57,13 +57,14 @@ export function resolveDetents(specs: readonly DetentSpec[], ctx: DetentContext)
     // how a typo currently no-ops silently instead of erroring. Keyed by the
     // spec itself so a `detents` array with several distinct bad entries
     // gets a warning for each one, not just the first.
-    const recognized =
-      typeof spec === "number" ||
-      spec === "full" ||
-      spec === "medium" ||
-      spec === "content" ||
-      (typeof spec === "string" && spec.endsWith("px") && Number.isFinite(Number.parseFloat(spec)));
-    if (!recognized && process.env.NODE_ENV !== "production") {
+    if (
+      process.env.NODE_ENV !== "production" &&
+      typeof spec !== "number" &&
+      spec !== "full" &&
+      spec !== "medium" &&
+      spec !== "content" &&
+      !(typeof spec === "string" && spec.endsWith("px") && Number.isFinite(Number.parseFloat(spec)))
+    ) {
       const message = `scrollsheet: ${spec}: full/medium/content/number/px`;
       warnOnce(message, message);
     }
