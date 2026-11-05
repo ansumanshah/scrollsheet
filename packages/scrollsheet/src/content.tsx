@@ -971,23 +971,6 @@ export const Content = /* @__PURE__ */ React.forwardRef<HTMLDivElement, SheetCon
     }, [ctx.activeDetent, detentsKey, phase, resolveSpec, startTween]);
 
     const morphMod = contentMorph.useFeature(true);
-    const morphProps: UseContentMorphInput = {
-      phase,
-      phaseRef,
-      bodyRef,
-      trackRef,
-      ctxRef,
-      fill,
-      maxDetentRef,
-      animRef,
-      measure,
-      resolveSpec,
-      syncSnapStops,
-      startTween,
-      geometryFor,
-      mapScroll,
-      jumpScroll,
-    };
 
     // Loads on the first editable focus inside the dialog, so input-less
     // sheets never fetch the keyboard engine.
@@ -1021,31 +1004,6 @@ export const Content = /* @__PURE__ */ React.forwardRef<HTMLDivElement, SheetCon
       return () => dialog.removeEventListener("focusin", detect, { capture: true });
     }, [present, kbNeeded]);
     const kbMod = keyboardViewport.useFeature(kbNeeded);
-    const kbProps: UseKeyboardViewportInput = {
-      present,
-      markProgrammaticScroll,
-      jumpScroll,
-      initialBaselineGapRef,
-      // Center rides the inert "bottom" here ON PURPOSE and it is
-      // load-bearing: the hook's isBottom path writes --scrollsheet-vv-top/
-      // -vv-height, which the base track rule sizes off — without them a
-      // center dialog's grid box would size against the full layout viewport
-      // instead of the keyboard-shrunk visual one and miscenter under a
-      // keyboard. measure()/updateTravel() have their own center gates, so
-      // the detent-flavored branches downstream all no-op safely.
-      side: ctx.side,
-      activeDetent: ctx.activeDetent,
-      dialogRef,
-      panelRef,
-      trackRef,
-      measure,
-      resolveSpec,
-      resolvedRef,
-      updateTravel,
-      phaseRef,
-      ctxRef,
-      animRef,
-    };
 
     // desktopSide re-presenting the sheet while it's already open (see the
     // chunk's own doc comment for why the open-sequence effect above can't
@@ -1053,29 +1011,6 @@ export const Content = /* @__PURE__ */ React.forwardRef<HTMLDivElement, SheetCon
     // desktopSide; preload fires at mount, the component mounts while
     // present and reconciles a flip that landed before the chunk resolved.
     const flipMod = presentationFlip.useFeature(ctx.desktopProfile);
-    const flipProps: UsePresentationFlipInput = {
-      present,
-      phase,
-      phaseRef,
-      ctxRef,
-      side: ctx.side,
-      center: ctx.center,
-      dialogRef,
-      trackRef,
-      backdropRef,
-      topChromeRef,
-      bottomChromeDimRef,
-      themeColorRef,
-      maxDetentRef,
-      animRef,
-      measure,
-      resolveSpec,
-      updateTravel,
-      geometryFor,
-      mapScroll,
-      jumpScroll,
-      markProgrammaticScroll,
-    };
 
     useOverlayScrollbar({ present, scrollbar: ctx.scrollbar, panelRef, scrollbarRef });
 
@@ -1116,10 +1051,50 @@ export const Content = /* @__PURE__ */ React.forwardRef<HTMLDivElement, SheetCon
       return () => observer.disconnect();
     }, [present, nestedNeeded]);
     const nestedMod = nestedScroll.useFeature(nestedNeeded);
-    const nestedProps: UseNestedScrollInput = {
+
+    // One object for every lazy feature: each reads only its own fields, and
+    // object keys survive minification.
+    const featureProps: UseContentMorphInput &
+      UseKeyboardViewportInput &
+      UsePresentationFlipInput &
+      UseNestedScrollInput = {
       present,
+      phase,
+      phaseRef,
+      bodyRef,
+      trackRef,
+      ctxRef,
+      fill,
+      maxDetentRef,
+      animRef,
+      measure,
+      resolveSpec,
+      syncSnapStops,
+      startTween,
+      geometryFor,
+      mapScroll,
+      jumpScroll,
+      markProgrammaticScroll,
+      initialBaselineGapRef,
+      // Center rides the inert "bottom" here ON PURPOSE and it is
+      // load-bearing: the keyboard hook's isBottom path writes
+      // --scrollsheet-vv-top/-vv-height, which the base track rule sizes off —
+      // without them a center dialog's grid box would size against the full
+      // layout viewport instead of the keyboard-shrunk visual one and miscenter
+      // under a keyboard. measure()/updateTravel() have their own center gates,
+      // so the detent-flavored branches downstream all no-op safely.
+      side: ctx.side,
+      center: ctx.center,
+      activeDetent: ctx.activeDetent,
       scrollbar: ctx.scrollbar,
       dialogRef,
+      panelRef,
+      resolvedRef,
+      updateTravel,
+      backdropRef,
+      topChromeRef,
+      bottomChromeDimRef,
+      themeColorRef,
       isAtScrollBoundary,
       setBoolAttr,
       createThumbController,
@@ -1234,11 +1209,11 @@ export const Content = /* @__PURE__ */ React.forwardRef<HTMLDivElement, SheetCon
       target === trackRef.current || target === canvasRef.current;
     const chromeStrips = !nonModal && ctx.themeColorDimming;
     const flipFeature =
-      flipMod && ctx.desktopProfile ? <flipMod.PresentationFlipFeature {...flipProps} /> : null;
-    const morphFeature = morphMod ? <morphMod.ContentMorphFeature {...morphProps} /> : null;
-    const kbFeature = kbMod && kbNeeded ? <kbMod.KeyboardViewportFeature {...kbProps} /> : null;
+      flipMod && ctx.desktopProfile ? <flipMod.PresentationFlipFeature {...featureProps} /> : null;
+    const morphFeature = morphMod ? <morphMod.ContentMorphFeature {...featureProps} /> : null;
+    const kbFeature = kbMod && kbNeeded ? <kbMod.KeyboardViewportFeature {...featureProps} /> : null;
     const nestedFeature =
-      nestedMod && nestedNeeded ? <nestedMod.NestedScrollFeature {...nestedProps} /> : null;
+      nestedMod && nestedNeeded ? <nestedMod.NestedScrollFeature {...featureProps} /> : null;
     const freezeFeature = freezeMod ? <freezeMod.BodyFreezeFeature active={ctx.modal} /> : null;
     const innerContent = (
       <>
