@@ -147,8 +147,8 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         if: needs.changes.outputs.browsers == 'true'
       # setup-bun needs unzip, which the image lacks and a non-root user can't install.
-      - run: |
-        if: needs.changes.outputs.browsers == 'true'
+      - if: needs.changes.outputs.browsers == 'true'
+        run: |
           npm install --prefix "$HOME/bun" bun@1.4.4
           echo "$HOME/bun/node_modules/.bin" >> "$GITHUB_PATH"
       - id: bun-cache-dir
