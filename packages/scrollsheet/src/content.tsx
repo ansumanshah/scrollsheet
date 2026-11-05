@@ -1163,7 +1163,6 @@ export const Content = /* @__PURE__ */ React.forwardRef<HTMLDivElement, SheetCon
       themeMod && ctx.themeColorDimming ? <themeMod.ThemeColorFeature {...featureProps} /> : null;
     const innerContent = (
       <>
-        {themeFeature}
         {flipFeature}
         {morphFeature}
         {kbFeature}
@@ -1287,6 +1286,10 @@ export const Content = /* @__PURE__ */ React.forwardRef<HTMLDivElement, SheetCon
             {kbFadeEl}
           </div>
         </div>
+        {/* After the track: a deleted subtree runs cleanups in tree order, and a
+            nested sheet's snapshot of this meta holds this sheet's dim, so its
+            restore has to run first. */}
+        {themeFeature}
       </>
     );
 

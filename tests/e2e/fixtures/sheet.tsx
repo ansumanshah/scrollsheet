@@ -106,6 +106,69 @@ export function ThemeColorSheet() {
 }
 
 /**
+ * Two nested themeColorDimming sheets, with every way of taking them down at
+ * once reachable from the child (the only part of the page not inert). Reads
+ * the meta ThemeColorSheet provides.
+ */
+function NestedThemeColorChild({
+  closeParent,
+  unmountRoot,
+}: {
+  closeParent: () => void;
+  unmountRoot: () => void;
+}) {
+  const [open, setOpen] = React.useState(false);
+  return (
+    <Sheet.Root open={open} onOpenChange={setOpen} themeColorDimming>
+      <Sheet.Trigger className="btn">Open nested theme child</Sheet.Trigger>
+      <Sheet.Content className="sheet" aria-label="Nested theme child">
+        <div className="sheet-inner">
+          <Sheet.Title>Nested theme child</Sheet.Title>
+          <button className="btn" onClick={() => setOpen(false)}>
+            Close nested theme child
+          </button>
+          <button className="btn" onClick={closeParent}>
+            Close nested theme parent
+          </button>
+          <button
+            className="btn"
+            onClick={() => {
+              closeParent();
+              setOpen(false);
+            }}
+          >
+            Close nested theme both
+          </button>
+          <button className="btn" onClick={unmountRoot}>
+            Unmount nested theme root
+          </button>
+        </div>
+      </Sheet.Content>
+    </Sheet.Root>
+  );
+}
+
+export function NestedThemeColorSheet() {
+  const [mounted, setMounted] = React.useState(true);
+  const [open, setOpen] = React.useState(false);
+  if (!mounted) return null;
+  return (
+    <Sheet.Root open={open} onOpenChange={setOpen} themeColorDimming>
+      <Sheet.Trigger className="btn">Nested theme parent</Sheet.Trigger>
+      <Sheet.Content className="sheet" aria-label="Nested theme parent">
+        <div className="sheet-inner">
+          <Sheet.Title>Nested theme parent</Sheet.Title>
+          <NestedThemeColorChild
+            closeParent={() => setOpen(false)}
+            unmountRoot={() => setMounted(false)}
+          />
+        </div>
+      </Sheet.Content>
+    </Sheet.Root>
+  );
+}
+
+/**
  * side="center": a centered modal dialog. Carries a Handle on purpose (the
  * spec asserts center mode hides it), a fixed consumer width (the spec
  * asserts consumer sizing wins over core), and the standard Close.

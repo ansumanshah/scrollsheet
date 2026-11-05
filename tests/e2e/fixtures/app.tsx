@@ -4,6 +4,7 @@ import {
   SinglePxSideSheet,
   BasicSheet,
   ThemeColorSheet,
+  NestedThemeColorSheet,
   CenterSheet,
   ResponsiveProfileSheet,
   ResponsiveSideSheet,
@@ -116,6 +117,7 @@ export function App() {
         <FloatingHandleSheet />
         <BasicSheet />
         <ThemeColorSheet />
+        <NestedThemeColorSheet />
         <CenterSheet />
         <ResponsiveProfileSheet />
         <ResponsiveSideSheet />
