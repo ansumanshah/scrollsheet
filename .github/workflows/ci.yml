@@ -102,6 +102,12 @@ jobs:
   e2e:
     runs-on: ubuntu-latest
     timeout-minutes: 30
+    # Browsers and their system packages ship in the image; installing WebKit's
+    # took longer than its tests. tests/unit/ci-playwright-image.test.ts keeps
+    # this tag on the installed @playwright/test version.
+    container:
+      image: mcr.microsoft.com/playwright:v1.64.1-noble
+      options: --user 1001
     strategy:
       fail-fast: false
       matrix:
@@ -130,20 +136,6 @@ jobs:
           key: ${{ runner.os }}-bun-${{ hashFiles('bun.lock') }}
           restore-keys: ${{ runner.os }}-bun-
       - run: bun install --frozen-lockfile --filter=scrollsheet
-      - name: Cache Playwright browser binaries
-        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6
-        with:
-          path: ~/.cache/ms-playwright
-          # --with-deps still runs every time (it also installs OS-level apt
-          # packages, which this cache does not cover) but it skips
-          # redownloading a browser binary that's already present at the
-          # version this key resolves to.
-          key: ${{ runner.os }}-playwright-${{ matrix.browser }}-${{ hashFiles('bun.lock') }}
-          # A lockfile bump that does not move playwright still invalidates the
-          # exact key; the prefix restores the old binaries so `playwright
-          # install` re-downloads only what actually changed.
-          restore-keys: ${{ runner.os }}-playwright-${{ matrix.browser }}-
-      - run: bunx playwright install --with-deps ${{ matrix.browser }}
       - run: bun run test:e2e -- --project=${{ matrix.project }}
 
   docs:
