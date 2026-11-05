@@ -261,25 +261,14 @@ export function Root(props: DrawerRootProps) {
     activeSnapPoint,
     setActiveSnapPoint,
     onAnimationEnd,
-    autoFocus,
-    nested,
     direction,
     modal,
     shouldScaleBackground,
-    setBackgroundColorOnScale,
-    noBodyStyles,
-    disablePreventScroll,
-    preventScrollRestoration,
-    repositionInputs,
-    scrollLockTimeout,
     closeThreshold,
     fadeFromIndex,
     snapToSequentialPoint,
     handleOnly,
-    onDrag,
     onRelease,
-    container,
-    fixed,
     actionsRef,
     backdropDismissible,
     escapeDismissible,
@@ -298,23 +287,23 @@ export function Root(props: DrawerRootProps) {
   // entirely instead of just the message string.
   if (process.env.NODE_ENV !== "production") {
     const ignored = collectIgnored([
-      ["setBackgroundColorOnScale", setBackgroundColorOnScale],
-      ["noBodyStyles", noBodyStyles],
-      ["disablePreventScroll", disablePreventScroll],
-      ["preventScrollRestoration", preventScrollRestoration],
-      ["repositionInputs", repositionInputs],
-      ["scrollLockTimeout", scrollLockTimeout],
-      ["onDrag", onDrag],
-      ["container", container],
-      ["fixed", fixed],
-      ["autoFocus", autoFocus],
-      ["nested", nested],
+      ["setBackgroundColorOnScale", props.setBackgroundColorOnScale],
+      ["noBodyStyles", props.noBodyStyles],
+      ["disablePreventScroll", props.disablePreventScroll],
+      ["preventScrollRestoration", props.preventScrollRestoration],
+      ["repositionInputs", props.repositionInputs],
+      ["scrollLockTimeout", props.scrollLockTimeout],
+      ["onDrag", props.onDrag],
+      ["container", props.container],
+      ["fixed", props.fixed],
+      ["autoFocus", props.autoFocus],
+      ["nested", props.nested],
     ]);
     if (ignored.length > 0) {
       warnOnce(
         "root-ignored-props",
         `[scrollsheet Drawer] These <Drawer.Root> props from vaul have no effect in this compat layer and are ignored: ${ignored.join(", ")}. See the vaul migration notes in the README.${
-          onDrag !== undefined
+          props.onDrag !== undefined
             ? " onDrag: the native onTravel prop works on this same <Drawer.Root>."
             : ""
         }`,
@@ -354,10 +343,7 @@ export function Root(props: DrawerRootProps) {
   // React.PointerEvent<HTMLDivElement> is a type-level accommodation only,
   // so a handler typed against vaul's own declaration still compiles, not a
   // claim that the runtime value is actually a SyntheticEvent.
-  const handleRelease = onRelease
-    ? (event: PointerEvent, willRemainOpen: boolean) =>
-        onRelease(event as unknown as React.PointerEvent<HTMLDivElement>, willRemainOpen)
-    : undefined;
+  const handleRelease = onRelease as unknown as SheetRootProps["onRelease"];
 
   // See composeOpenChange's doc comment for why layering onClose on
   // SheetRoot's own onOpenChange (rather than a separate wiring) is what
@@ -459,16 +445,16 @@ export interface DrawerPortalProps {
   container?: HTMLElement | null;
 }
 
-export function Portal({ children, container }: DrawerPortalProps) {
+export function Portal(props: DrawerPortalProps) {
   if (process.env.NODE_ENV !== "production") {
-    if (container !== undefined) {
+    if (props.container !== undefined) {
       warnOnce(
         "portal-container",
         "[scrollsheet Drawer] <Drawer.Portal container> has no effect — scrollsheet's <dialog> always renders into the browser's top layer (effectively document.body), so there's no separate container to portal into.",
       );
     }
   }
-  return <>{children}</>;
+  return <>{props.children}</>;
 }
 
 /* ── Overlay ──────────────────────────────────────────────────────────── */
