@@ -124,9 +124,10 @@ jobs:
             browser: chromium
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
-      - uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2
-        with:
-          bun-version: 1.4.4
+      # setup-bun needs unzip, which the image lacks and a non-root user can't install.
+      - run: |
+          npm install --prefix "$HOME/bun" bun@1.4.4
+          echo "$HOME/bun/node_modules/.bin" >> "$GITHUB_PATH"
       - id: bun-cache-dir
         run: echo "path=$(bun pm cache)" >> "$GITHUB_OUTPUT"
       - name: Cache bun packages
