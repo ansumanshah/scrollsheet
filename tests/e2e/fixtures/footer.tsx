@@ -129,6 +129,43 @@ function FooterContentsSheet() {
   );
 }
 
+/** The footer and rows both live below Content, inside the wrapper. */
+function FooterLateForm() {
+  const [rows, setRows] = React.useState(2);
+  const [footer, setFooter] = React.useState(false);
+  return (
+    <form style={{ display: "contents" }}>
+      <Sheet.Title>Footer late contents</Sheet.Title>
+      <button type="button" onClick={() => setFooter(true)}>
+        Mount footer
+      </button>
+      <button type="button" onClick={() => setRows(8)}>
+        Eight rows
+      </button>
+      <button type="button" onClick={() => setRows(2)}>
+        Two rows
+      </button>
+      {Array.from({ length: rows }, (_, i) => (
+        <div key={i} style={{ height: 40 }}>
+          Row {i}
+        </div>
+      ))}
+      {footer && <Sheet.Footer style={{ padding: 16 }}>Total</Sheet.Footer>}
+    </form>
+  );
+}
+
+function FooterLateContentsSheet() {
+  return (
+    <Sheet.Root detents={["content"]}>
+      <Sheet.Trigger className="btn">Footer late contents</Sheet.Trigger>
+      <Sheet.Content className="sheet" aria-label="Footer late contents">
+        <FooterLateForm />
+      </Sheet.Content>
+    </Sheet.Root>
+  );
+}
+
 function FooterNestedSheet() {
   return (
     <Sheet.Root detents={[0.4]}>
@@ -148,6 +185,7 @@ export function FooterSheets() {
     <>
       <FooterMorphSheet />
       <FooterContentsSheet />
+      <FooterLateContentsSheet />
       <FooterNestedSheet />
       <FooterSheet trigger="Footer detents" detents={[0.3, 0.6, "full"]} />
       <FooterSheet trigger="Footer content" detents={["content"]} rows={3} />

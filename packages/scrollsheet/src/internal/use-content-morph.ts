@@ -70,12 +70,19 @@ export function useContentMorph({
     const track = trackRef.current;
     if (!body || !track) return;
     let raf = 0;
+    let stretched = false;
 
     const scheduleMorph = () => {
       if (raf) return;
       raf = requestAnimationFrame(() => {
         raf = 0;
         if (phaseRef.current !== "open") return;
+        // A footer mounting inside a display:contents wrapper fires no watched
+        // childList, only this resize of the still-unstretched body.
+        if (!stretched && body.querySelector("[data-scrollsheet-footer]")) {
+          observer.disconnect();
+          observeBody();
+        }
         const geometry = geometryFor(ctxRef.current.side);
         const before = maxDetentRef.current;
         // false: defer the snap-stop DOM rebuild to syncSnapStops() below,
@@ -144,7 +151,8 @@ export function useContentMorph({
       }
     };
     const observeBody = () => {
-      if (fill || body.querySelector("[data-scrollsheet-footer]")) observeChildren(body);
+      stretched = fill || !!body.querySelector("[data-scrollsheet-footer]");
+      if (stretched) observeChildren(body);
       else observer.observe(body);
     };
     mutation.observe(body, { childList: true });
