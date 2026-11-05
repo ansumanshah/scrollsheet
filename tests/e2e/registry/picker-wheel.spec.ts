@@ -165,14 +165,18 @@ test.describe("picker-wheel touch", () => {
     await expect(fruit.getByRole("option").nth(settled)).toHaveAttribute("aria-selected", "true");
 
     // Fling the other way past the first row: the wheel stops, the sheet stays.
-    await cdp.send("Input.synthesizeScrollGesture", {
-      x: Math.round(box.x + box.width / 2),
-      y: Math.round(box.y + box.height / 2),
-      yDistance: 600,
-      speed: 3000,
-      gestureSourceType: "touch",
-    });
-    await expect.poll(() => top(fruit)).toBe(0);
+    // A synthesized gesture can travel as little as one row under load, so
+    // repeat until the wheel reaches its end; the sheet must hold throughout.
+    await expect(async () => {
+      await cdp.send("Input.synthesizeScrollGesture", {
+        x: Math.round(box.x + box.width / 2),
+        y: Math.round(box.y + box.height / 2),
+        yDistance: 600,
+        speed: 3000,
+        gestureSourceType: "touch",
+      });
+      await expect.poll(() => top(fruit), { timeout: 1_500 }).toBe(0);
+    }).toPass({ timeout: 20_000 });
     const panelAfter = await panel.boundingBox();
     expect(Math.abs((panelAfter?.y ?? 0) - (panelBefore?.y ?? 0))).toBeLessThan(2);
     await expect(dialog).toHaveAttribute("data-scrollsheet-state", "open");
