@@ -513,7 +513,7 @@ async function paintToasts(t) {
   });
   tToast.at(t, T.toasts + 0.1, T.vaul - 0.12);
   rToastCode.at(t, T.toasts + 0.26, T.vaul - 0.12, 'toast("Saved Ember &amp; Oak")');
-  rToastSize.at(t, T.toasts + 0.44, T.vaul - 0.12, `${SIZE_TOAST} kB brotli if that is all you import.`);
+  rToastSize.at(t, T.toasts + 0.44, T.vaul - 0.12, `${SIZE_TOAST} kB compressed if that is all you import.`);
 }
 
 const vaulLayer = el("div", sceneLayer, { className: "layer" });
@@ -636,7 +636,7 @@ function paintSize(t) {
   device.style.visibility = "hidden";
   tSize.at(t, T.size + 0.08, T.end - 0.1);
   rSizeImport.at(t, T.size + 0.3, T.end - 0.1, 'import { Sheet } from "scrollsheet"');
-  rSizeA.at(t, T.size + 0.55, T.end - 0.1, "brotli, before CSS and lazy chunks.");
+  rSizeA.at(t, T.size + 0.55, T.end - 0.1, "compressed, before CSS and lazy chunks.");
   rSizeB.at(t, T.size + 0.85, T.end - 0.1, "No runtime dependencies.");
 }
 

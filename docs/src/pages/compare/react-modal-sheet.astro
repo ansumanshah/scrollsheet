@@ -20,7 +20,7 @@ const rows = [
     them: "<code>motion</code> as a peer (11 or newer), plus <code>react-use-measure</code>",
   },
   {
-    label: "JavaScript, brotli",
+    label: "JavaScript, compressed",
     us: `${sheetKb} kB (<code>Sheet</code> import)`,
     them: "52.65 kB with Motion bundled. 7.88 kB if your app already ships Motion",
     note: "Bundled with Bun, minified, React external, using the options in <code>scripts/lib/bundle-measure.ts</code>. react-modal-sheet 5.6.0 and motion 14.9.1, measured 5 Nov 2026. Both figures are brotli; many libraries quote gzip, which runs larger. How much of Motion an app already includes depends on which Motion features it uses, so the second figure is a floor.",
@@ -78,8 +78,8 @@ const faqs: Faq[] = [
   {
     id: "rms-motion",
     question: "I already use Motion. Does that change the choice?",
-    answerHtml: `Yes. react-modal-sheet adds about 7.9 kB brotli when Motion is already in your bundle, so the size gap mostly disappears. It also hands you Motion values to animate your own content against the sheet. scrollsheet exposes the same idea through <code>onTravel</code> and <code>--scrollsheet-progress</code>, and has a <a href="/docs/motion">guide for using it with Motion</a>.`,
-    answerText: `Yes. react-modal-sheet adds about 7.9 kB brotli when Motion is already in your bundle, so the size gap mostly disappears. It also hands you Motion values to animate your own content against the sheet. scrollsheet exposes the same idea through onTravel and --scrollsheet-progress, and has a guide for using it with Motion.`,
+    answerHtml: `Yes. react-modal-sheet adds about 7.9 kB compressed when Motion is already in your bundle, so the size gap mostly disappears. It also hands you Motion values to animate your own content against the sheet. scrollsheet exposes the same idea through <code>onTravel</code> and <code>--scrollsheet-progress</code>, and has a <a href="/docs/motion">guide for using it with Motion</a>.`,
+    answerText: `Yes. react-modal-sheet adds about 7.9 kB compressed when Motion is already in your bundle, so the size gap mostly disappears. It also hands you Motion values to animate your own content against the sheet. scrollsheet exposes the same idea through onTravel and --scrollsheet-progress, and has a guide for using it with Motion.`,
   },
   {
     id: "rms-a11y",
@@ -119,7 +119,7 @@ const faqs: Faq[] = [
 
   <h2>Choose react-modal-sheet if</h2>
   <ul>
-    <li>Motion is already in your app, so its cost is about 7.9 kB brotli.</li>
+    <li>Motion is already in your app, so its cost is about 7.9 kB compressed.</li>
     <li>You want Motion values to drive your own animation as the sheet moves.</li>
     <li>You support React older than 18.</li>
     <li>You want to compose your own focus handling, for example with React Aria.</li>

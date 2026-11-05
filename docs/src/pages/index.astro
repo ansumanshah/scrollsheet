@@ -155,14 +155,14 @@ const COMPARE_ROWS: {
     values: ["Sheets and side panels", "vaul migration", "Radix Dialog migration", "Notifications"],
   },
   {
-    label: "Initial JavaScript, brotli",
+    label: "Initial JavaScript, compressed",
     values: [
       `${BUNDLE_SIZES.index.brotliKb.toFixed(2)} kB`,
       `${BUNDLE_SIZES.drawer.brotliKb.toFixed(2)} kB`,
       `${BUNDLE_SIZES.dialog.brotliKb.toFixed(2)} kB`,
       `${BUNDLE_SIZES.toast.brotliKb.toFixed(2)} kB`,
     ],
-    note: "Measured with Bun after minification, with React excluded. Includes static imports; excludes CSS and feature chunks loaded on demand. Many libraries quote gzip, which is larger than brotli for the same code.",
+    note: "Compressed means brotli, measured with Bun after minification, with React excluded. Includes static imports; excludes CSS and feature chunks loaded on demand. Many libraries quote gzip, which runs larger for the same code.",
   },
   {
     label: "Position",
@@ -177,7 +177,7 @@ const COMPARE_ROWS: {
     values: ["Configurable", "Configurable", "Configurable", "no"],
   },
   {
-    label: "Stylesheet, brotli",
+    label: "Stylesheet, compressed",
     values: [
       `${STYLESHEET_SIZES.core.brotliKb.toFixed(2)} kB`,
       `${STYLESHEET_SIZES.core.brotliKb.toFixed(2)} kB`,
@@ -221,7 +221,7 @@ const cellParts = (value: string) => {
 };
 
 const title = "scrollsheet: native bottom sheets and drawers for React";
-const description = `React bottom sheets, drawers, dialogs, side panels, and toast notifications. Native dialog and scroll-snap for sheets; ${Math.round(BUNDLE_SIZES.index.brotliKb)} kB brotli for the Sheet import, excluding CSS and lazy chunks.`;
+const description = `React bottom sheets, drawers, dialogs, side panels, and toast notifications. Native dialog and scroll-snap for sheets; ${Math.round(BUNDLE_SIZES.index.brotliKb)} kB compressed for the Sheet import, excluding CSS and lazy chunks.`;
 ---
 
 <Base title={title} description={description}>
@@ -230,9 +230,9 @@ const description = `React bottom sheets, drawers, dialogs, side panels, and toa
   </Fragment>
   <section class="container hero">
     <div class="hero-copy">
-      <h1>Bottom sheets for React in {Math.round(BUNDLE_SIZES.index.brotliKb)}&nbsp;kB brotli</h1>
+      <h1>Bottom sheets for React in {Math.round(BUNDLE_SIZES.index.brotliKb)}&nbsp;kB compressed</h1>
       <p class="hero-lede">
-        Brotli-compressed Sheet import, with detents, nested sheets and side panels. No runtime
+        That is the Sheet import, with detents, nested sheets and side panels. No runtime
         dependencies. The Drawer export accepts common vaul props.
       </p>
       <div class="hero-actions">

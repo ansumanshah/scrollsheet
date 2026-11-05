@@ -34,7 +34,7 @@ only render after JS runs, and the stylesheet is injected before the sheet is op
 import { Sheet } from "scrollsheet/auto";
 ```
 
-The embed costs {BUNDLE_SIZES.auto.brotliKb.toFixed(1)} kB brotli for `Sheet` against the default
+The embed costs {BUNDLE_SIZES.auto.brotliKb.toFixed(1)} kB compressed for `Sheet` against the default
 entry's {BUNDLE_SIZES.index.brotliKb.toFixed(1)}. Toasts on the default entry need `scrollsheet/toast.css`; add `scrollsheet/styles.css`
 when the app also uses sheets or dialogs. Use one entry consistently to avoid duplicate
 component code and separate state instances.

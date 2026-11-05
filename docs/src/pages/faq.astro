@@ -22,8 +22,8 @@ const faqs: FaqItem[] = [
   {
     id: "how-big",
     question: "What is the bundle size?",
-    answerHtml: `The <code>Sheet</code> import is ${indexBrotli} kB brotli after bundling and minification with Bun. Most libraries quote gzip, so compare brotli to brotli. These measurements exclude React, stylesheets, and feature chunks loaded on demand. There are no runtime dependencies; <code>react</code> and <code>react-dom</code> are peers, both <code>&gt;=18</code>. See <a href="/docs/getting-started/install">Install</a>.`,
-    answerText: `The Sheet import is ${indexBrotli} kB brotli after bundling and minification with Bun. Most libraries quote gzip, so compare brotli to brotli. These measurements exclude React, stylesheets, and feature chunks loaded on demand. There are no runtime dependencies; react and react-dom are peers, both 18 or newer.`,
+    answerHtml: `The <code>Sheet</code> import is ${indexBrotli} kB compressed (brotli) after bundling and minification with Bun. Most libraries quote gzip, so compare brotli to brotli. These measurements exclude React, stylesheets, and feature chunks loaded on demand. There are no runtime dependencies; <code>react</code> and <code>react-dom</code> are peers, both <code>&gt;=18</code>. See <a href="/docs/getting-started/install">Install</a>.`,
+    answerText: `The Sheet import is ${indexBrotli} kB compressed (brotli) after bundling and minification with Bun. Most libraries quote gzip, so compare brotli to brotli. These measurements exclude React, stylesheets, and feature chunks loaded on demand. There are no runtime dependencies; react and react-dom are peers, both 18 or newer.`,
   },
   {
     id: "app-router-rsc",

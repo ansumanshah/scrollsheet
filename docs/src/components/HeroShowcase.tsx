@@ -31,7 +31,7 @@ const FEATURES = [
   "Modal and non-modal",
   "Detents and nested sheets",
   "iOS keyboard handling",
-  `${Math.round(BUNDLE_SIZES.index.brotliKb)} kB brotli Sheet import`,
+  `${Math.round(BUNDLE_SIZES.index.brotliKb)} kB compressed Sheet import`,
 ];
 
 /*
