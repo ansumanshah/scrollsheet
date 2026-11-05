@@ -160,7 +160,7 @@ export const Content = /* @__PURE__ */ React.forwardRef<HTMLDivElement, SheetCon
     const dimStartRef = React.useRef(0);
     const dimEndRef = React.useRef(0);
     const atMaxRef = React.useRef(false);
-    const pressedOutsideRef = React.useRef(true);
+    const pressedInsideRef = React.useRef(false);
     // onTravel's 3rd arg: one object + one Map, reused and mutated in place
     // every travel frame instead of allocated fresh — see TravelInfo's TSDoc.
     const travelInfoRef = React.useRef<{
@@ -699,6 +699,7 @@ export const Content = /* @__PURE__ */ React.forwardRef<HTMLDivElement, SheetCon
 
     // ── Close request ────────────────────────────────────────────────────────
     React.useEffect(() => {
+      if (!ctx.open) pressedInsideRef.current = false;
       if (!ctx.open && (phase === "opening" || phase === "open")) {
         animRef.current?.cancel();
         // Un-dim immediately so the browser chrome matches the backdrop's own
@@ -1213,10 +1214,14 @@ export const Content = /* @__PURE__ */ React.forwardRef<HTMLDivElement, SheetCon
           // A press on content released out here clicks their common ancestor.
           // Capture phase, so content that stops pointerdown can't hide it.
           onPointerDownCapture={(event) => {
-            pressedOutsideRef.current = isOutside(event.target);
+            pressedInsideRef.current = !isOutside(event.target);
           }}
           onClick={(event) => {
-            if (ctx.backdropDismissible && isOutside(event.target) && pressedOutsideRef.current) {
+            // Detail 0 is a scripted click, with no press of its own to match:
+            // the last press may have ended in a pan or drag that clicks nothing.
+            const pressedInside = pressedInsideRef.current && event.detail > 0;
+            pressedInsideRef.current = false;
+            if (ctx.backdropDismissible && isOutside(event.target) && !pressedInside) {
               ctx.setOpen(false);
             }
           }}
