@@ -41,8 +41,9 @@ import DocExample from '../../../../components/DocExample.astro';
 </div>
 
 `flick` decides where a fast release lands. `'project'` carries the velocity forward, so one flick
-can cross several detents. `'step'` moves exactly one, the way Apple's sheets do, and only a flick
-from the first detent can dismiss. A slow release settles on the nearest detent either way.
+can cross several detents. `'step'` lands on the next detent past where you let go, the way Apple's
+sheets do. Speed alone can dismiss only from the first detent; from a higher one, the release has to
+be under `closeThreshold`. A slow release settles on the nearest detent either way.
 
 ### Dismissal
 

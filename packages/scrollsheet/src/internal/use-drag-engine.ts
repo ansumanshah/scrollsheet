@@ -257,15 +257,18 @@ export function useDragEngine({
         return;
       }
       let nearest = nearestDetent(projected, resolvedRef.current);
+      if (step) {
+        // The next detent past the release, so it never moves against the flick.
+        const past = resolvedRef.current.filter(
+          (detent) => (detent.height - revealed) * revealedVelocity > 0,
+        );
+        nearest = past[revealedVelocity > 0 ? 0 : past.length - 1] ?? nearest;
+      }
       // sequentialDetents: a fast fling never skips past the neighbor of
       // the detent this drag started from, regardless of how far the
       // velocity projection carried `projected`.
       if (nearest && current.sequentialDetents) {
         nearest = clampSequentialDetent(nearest, startDetentIndex, resolvedRef.current);
-      }
-      if (step) {
-        nearest =
-          resolvedRef.current[startDetentIndex + Math.sign(revealedVelocity)] ?? nearest;
       }
       if (nearest) {
         animRef.current?.cancel();

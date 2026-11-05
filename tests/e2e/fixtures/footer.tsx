@@ -179,6 +179,7 @@ export function FlickSheets() {
       <FlickSheet flick="step" trigger="Flick step" />
       <FlickSheet trigger="Flick project" />
       <FlickSheet flick="step" trigger="Flick step non-modal" modal={false} />
+      <FlickSheet flick="step" trigger="Flick step sequential" sequentialDetents />
     </>
   );
 }
@@ -187,10 +188,12 @@ function FlickSheet({
   flick,
   trigger,
   modal,
+  sequentialDetents,
 }: {
   flick?: "step";
   trigger: string;
   modal?: boolean;
+  sequentialDetents?: boolean;
 }) {
   const [active, setActive] = React.useState<DetentSpec>(0.25);
   return (
@@ -198,6 +201,7 @@ function FlickSheet({
       detents={[0.25, 0.45, 0.65, 0.85]}
       flick={flick}
       modal={modal}
+      sequentialDetents={sequentialDetents}
       activeDetent={active}
       onActiveDetentChange={setActive}
     >
@@ -205,8 +209,14 @@ function FlickSheet({
       <Sheet.Content className="sheet" aria-label={trigger}>
         <Sheet.Handle />
         <code data-testid="flick-active">{String(active)}</code>
+        <button type="button" onClick={() => setActive(0.45)}>
+          Go to second stop
+        </button>
         <button type="button" onClick={() => setActive(0.65)}>
           Go to third stop
+        </button>
+        <button type="button" onClick={() => setActive(0.85)}>
+          Go to top stop
         </button>
       </Sheet.Content>
     </Sheet.Root>

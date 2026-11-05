@@ -1399,46 +1399,47 @@ export const Content = /* @__PURE__ */ React.forwardRef<HTMLDivElement, SheetCon
     // tradeoff for that rare engine. The shared attribute set below is
     // spread first so any per-shape attribute is a one-place edit.
     const Host = (usePopover ? "div" : "dialog") as "dialog";
-    const hostProps: React.ComponentProps<"dialog"> & { "data-scrollsheet-modal"?: string } = nonModal
-      ? {
-          popover: usePopover ? "manual" : undefined,
-          "data-scrollsheet-modal": "false",
-          role: "dialog",
-          "aria-modal": "false",
-          onKeyDown: onNonModalKeyDown,
-        }
-      : {
-          // Feature-detected: unsupported engines (Safari as of mid-2026) get
-          // no attribute at all. Never "any" — see resolveClosedBy's doc
-          // comment for why. The cancel/close handlers below are unchanged
-          // either way; this only changes which platform signals reach them.
-          closedby: hasClosedBySupport() ? resolveClosedBy(ctx.escapeDismissible) : undefined,
-          onCancel: (event) => {
-            // 'cancel' doesn't bubble in the DOM, but React still replays it up
-            // the *component* tree — so a nested <Sheet.Content> dialog's Esc
-            // reaches an ancestor sheet's onCancel too. Only react to the event
-            // when this dialog is the one that actually fired it.
-            if (event.target !== event.currentTarget) return;
-            event.preventDefault();
-            if (ctx.escapeDismissible) ctx.setOpen(false);
-          },
-          onClose: (event) => {
-            // Same non-bubbling-but-tree-replayed quirk as onCancel above.
-            if (event.target !== event.currentTarget) return;
-            // The platform closed us directly (form method="dialog", etc.).
-            if (phaseRef.current !== "closing" && phaseRef.current !== "pre") {
-              overlayOpenRef.current = false;
-              restoreFocusFallback(previousFocusRef.current);
-              previousFocusRef.current = null;
-              ctx.setOpen(false);
-              setPhase("pre");
-              // This path never reaches the exit leg (the platform already
-              // removed the dialog — there is nothing left to animate), so
-              // the leg's own completion callback can't fire for it.
-              ctx.onOpenChangeComplete?.(false);
-            }
-          },
-        };
+    const hostProps: React.ComponentProps<"dialog"> & { "data-scrollsheet-modal"?: string } =
+      nonModal
+        ? {
+            popover: usePopover ? "manual" : undefined,
+            "data-scrollsheet-modal": "false",
+            role: "dialog",
+            "aria-modal": "false",
+            onKeyDown: onNonModalKeyDown,
+          }
+        : {
+            // Feature-detected: unsupported engines (Safari as of mid-2026) get
+            // no attribute at all. Never "any" — see resolveClosedBy's doc
+            // comment for why. The cancel/close handlers below are unchanged
+            // either way; this only changes which platform signals reach them.
+            closedby: hasClosedBySupport() ? resolveClosedBy(ctx.escapeDismissible) : undefined,
+            onCancel: (event) => {
+              // 'cancel' doesn't bubble in the DOM, but React still replays it up
+              // the *component* tree — so a nested <Sheet.Content> dialog's Esc
+              // reaches an ancestor sheet's onCancel too. Only react to the event
+              // when this dialog is the one that actually fired it.
+              if (event.target !== event.currentTarget) return;
+              event.preventDefault();
+              if (ctx.escapeDismissible) ctx.setOpen(false);
+            },
+            onClose: (event) => {
+              // Same non-bubbling-but-tree-replayed quirk as onCancel above.
+              if (event.target !== event.currentTarget) return;
+              // The platform closed us directly (form method="dialog", etc.).
+              if (phaseRef.current !== "closing" && phaseRef.current !== "pre") {
+                overlayOpenRef.current = false;
+                restoreFocusFallback(previousFocusRef.current);
+                previousFocusRef.current = null;
+                ctx.setOpen(false);
+                setPhase("pre");
+                // This path never reaches the exit leg (the platform already
+                // removed the dialog — there is nothing left to animate), so
+                // the leg's own completion callback can't fire for it.
+                ctx.onOpenChangeComplete?.(false);
+              }
+            },
+          };
 
     return createPortal(
       <>

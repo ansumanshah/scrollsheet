@@ -30,6 +30,14 @@ async function flick(page: Page, trigger: string, deltaY: number) {
 const active = (page: Page, trigger: string) =>
   page.getByRole("dialog", { name: trigger }).getByTestId("flick-active");
 
+const stopHeight = (track: Locator, stop: number) =>
+  track.evaluate((el, f) => Math.round(f * el.clientHeight), stop);
+
+async function goToStop(overlay: Locator, button: string, stop: string) {
+  await overlay.getByRole("button", { name: button }).click();
+  await expect(overlay.getByTestId("flick-active")).toHaveText(stop, { timeout: SETTLE_TIMEOUT });
+}
+
 test("a release already on a stop still reports that stop as active", async ({ page }) => {
   await page.goto("/");
   const overlay = await openOverlayByTrigger(page, "Flick project");
@@ -58,10 +66,10 @@ test("project: a hard flick up crosses more than one stop", async ({ page }) => 
   await expect(active(page, "Flick project")).toHaveText(/^0\.(65|85)$/, { timeout: SETTLE_TIMEOUT });
 });
 
-test("step: the same flick moves exactly one stop", async ({ page }) => {
+test("step: the same flick stops at the next stop past the release", async ({ page }) => {
   await page.goto("/");
   await openOverlayByTrigger(page, "Flick step");
-  await flick(page, "Flick step", -380);
+  await flick(page, "Flick step", -100);
   await expect(active(page, "Flick step")).toHaveText("0.45", { timeout: SETTLE_TIMEOUT });
 });
 
@@ -72,17 +80,79 @@ test("step: a short flick still advances one stop", async ({ page }) => {
   await expect(active(page, "Flick step")).toHaveText("0.45", { timeout: SETTLE_TIMEOUT });
 });
 
-test("step: a hard flick down from a higher stop steps down instead of dismissing", async ({
+test("step: a hard flick down from a higher stop lands on the first stop instead of dismissing", async ({
   page,
 }) => {
   await page.goto("/");
   const overlay = await openOverlayByTrigger(page, "Flick step");
-  await overlay.getByRole("button", { name: "Go to third stop" }).click();
-  await expect(active(page, "Flick step")).toHaveText("0.65", { timeout: SETTLE_TIMEOUT });
+  await goToStop(overlay, "Go to third stop", "0.65");
   await page.waitForTimeout(600);
   await flick(page, "Flick step", 400);
-  await expect(active(page, "Flick step")).toHaveText("0.45", { timeout: SETTLE_TIMEOUT });
+  await expect(active(page, "Flick step")).toHaveText("0.25", { timeout: SETTLE_TIMEOUT });
   await expect(overlay).toHaveAttribute("data-scrollsheet-state", "open");
+});
+
+test("step: a flick down from a higher stop lands on the next stop below the release", async ({
+  page,
+}) => {
+  await page.goto("/");
+  const overlay = await openOverlayByTrigger(page, "Flick step");
+  await goToStop(overlay, "Go to top stop", "0.85");
+  await page.waitForTimeout(600);
+  const track = overlay.locator(".scrollsheet-track");
+  // Past two stops, just above the first: the old pick sprang back up to 0.65.
+  const top = await stopHeight(track, 0.85);
+  const release = (await stopHeight(track, 0.25)) + 56;
+  await flick(page, "Flick step", top - release);
+  await expect(active(page, "Flick step")).toHaveText("0.25", { timeout: SETTLE_TIMEOUT });
+  await expect
+    .poll(() => track.evaluate((el) => el.scrollTop), { timeout: SETTLE_TIMEOUT })
+    .toBeLessThan(release);
+});
+
+test("step: a flick up released on the top stop stays there", async ({ page }) => {
+  await page.goto("/");
+  const overlay = await openOverlayByTrigger(page, "Flick step");
+  const track = overlay.locator(".scrollsheet-track");
+  const distance = (await stopHeight(track, 0.85)) - (await stopHeight(track, 0.25));
+  await flick(page, "Flick step", -distance);
+  await expect(active(page, "Flick step")).toHaveText("0.85", { timeout: SETTLE_TIMEOUT });
+  await page.waitForTimeout(600);
+  await expect(active(page, "Flick step")).toHaveText("0.85");
+});
+
+test("step: a flick inside a gap still moves one stop that way", async ({ page }) => {
+  await page.goto("/");
+  const overlay = await openOverlayByTrigger(page, "Flick step");
+  await goToStop(overlay, "Go to top stop", "0.85");
+  await page.waitForTimeout(600);
+  await flick(page, "Flick step", 60);
+  await expect(active(page, "Flick step")).toHaveText("0.65", { timeout: SETTLE_TIMEOUT });
+});
+
+test("step with sequentialDetents: a long flick still stops at the neighbor", async ({ page }) => {
+  await page.goto("/");
+  const overlay = await openOverlayByTrigger(page, "Flick step sequential");
+  const track = overlay.locator(".scrollsheet-track");
+  const distance = (await stopHeight(track, 0.85)) - (await stopHeight(track, 0.25));
+  await flick(page, "Flick step sequential", -distance);
+  await expect(active(page, "Flick step sequential")).toHaveText("0.45", {
+    timeout: SETTLE_TIMEOUT,
+  });
+});
+
+test("step: a flick from a higher stop dismisses only when released under the threshold", async ({
+  page,
+}) => {
+  await page.goto("/");
+  const overlay = await openOverlayByTrigger(page, "Flick step");
+  await goToStop(overlay, "Go to second stop", "0.45");
+  await page.waitForTimeout(600);
+  const track = overlay.locator(".scrollsheet-track");
+  // closeThreshold defaults to half the first stop.
+  const distance = (await stopHeight(track, 0.45)) - (await stopHeight(track, 0.25)) / 4;
+  await flick(page, "Flick step", distance);
+  await expect(page.locator(".scrollsheet-dialog")).toHaveCount(0, { timeout: SETTLE_TIMEOUT });
 });
 
 test("step: a flick down from the first stop still dismisses", async ({ page }) => {
@@ -109,9 +179,6 @@ test("step stamps the attribute native snap reads; project leaves stops skippabl
     "normal",
   );
 });
-
-const stopHeight = (track: Locator, stop: number) =>
-  track.evaluate((el, f) => Math.round(f * el.clientHeight), stop);
 
 test("step: a slow drag past a stop settles on the nearest stop", async ({ page }) => {
   await page.goto("/");
