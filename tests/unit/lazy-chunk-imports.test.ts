@@ -5,7 +5,7 @@ import { describe, expect, test } from "bun:test";
  * single value import of a sheet-core module (slot.tsx, styles.ts, ...)
  * statically chains their chunk to the core chunk, and every entry that
  * shares a chunk with it stops tree-shaking — measured once as the toast
- * shape ballooning from 6.6 to 21.7 kB gzip. The size budgets would catch
+ * shape growing more than threefold. The size budgets would catch
  * that regression indirectly and confusingly; this names it.
  */
 

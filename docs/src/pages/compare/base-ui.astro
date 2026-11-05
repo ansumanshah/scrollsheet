@@ -5,8 +5,8 @@ import DocExample from "../../components/DocExample.astro";
 import { BUNDLE_SIZES, STYLESHEET_SIZES } from "../../lib/bundle-sizes.generated";
 import type { Faq } from "../../lib/jsonld";
 
-const sheetKb = BUNDLE_SIZES.index.gzipKb.toFixed(2);
-const cssKb = STYLESHEET_SIZES.core.gzipKb.toFixed(2);
+const sheetKb = BUNDLE_SIZES.index.brotliKb.toFixed(2);
+const cssKb = STYLESHEET_SIZES.core.brotliKb.toFixed(2);
 
 const rows = [
   {
@@ -28,7 +28,7 @@ const rows = [
   },
   {
     label: "Styling",
-    us: `Ships a ${cssKb} kB gzipped stylesheet. Override with CSS properties or <code>className</code>`,
+    us: `Ships a ${cssKb} kB brotli stylesheet. Override with CSS properties or <code>className</code>`,
     them: "Unstyled. You write the CSS, including the transform that follows <code>--drawer-swipe-movement-y</code>",
   },
   {
@@ -63,10 +63,10 @@ const rows = [
     them: "5, including <code>@floating-ui/react-dom</code>",
   },
   {
-    label: "JavaScript, gzip",
+    label: "JavaScript, brotli",
     us: `${sheetKb} kB (<code>Sheet</code> import)`,
-    them: "24.55 kB for seven parts (Root, Trigger, Portal, Backdrop, Popup, Title, Close). 32.11 kB with all ten Drawer parts",
-    note: "Bundled with Bun, minified, React external, using the options in <code>scripts/lib/bundle-measure.ts</code>. @base-ui/react 1.9.0, measured 4 Nov 2026. CSS is not included for either.",
+    them: "21.96 kB for seven parts (Root, Trigger, Portal, Backdrop, Popup, Title, Close). 28.66 kB with all ten Drawer parts",
+    note: "Bundled with Bun, minified, React external, using the options in <code>scripts/lib/bundle-measure.ts</code>. @base-ui/react 1.9.0, measured 5 Nov 2026. CSS is not included for either. Both figures are brotli; many libraries quote gzip, which runs larger.",
   },
   {
     label: "React versions",

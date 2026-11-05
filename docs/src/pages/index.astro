@@ -155,14 +155,14 @@ const COMPARE_ROWS: {
     values: ["Sheets and side panels", "vaul migration", "Radix Dialog migration", "Notifications"],
   },
   {
-    label: "Initial JavaScript, gzip",
+    label: "Initial JavaScript, brotli",
     values: [
-      `${BUNDLE_SIZES.index.gzipKb.toFixed(2)} kB`,
-      `${BUNDLE_SIZES.drawer.gzipKb.toFixed(2)} kB`,
-      `${BUNDLE_SIZES.dialog.gzipKb.toFixed(2)} kB`,
-      `${BUNDLE_SIZES.toast.gzipKb.toFixed(2)} kB`,
+      `${BUNDLE_SIZES.index.brotliKb.toFixed(2)} kB`,
+      `${BUNDLE_SIZES.drawer.brotliKb.toFixed(2)} kB`,
+      `${BUNDLE_SIZES.dialog.brotliKb.toFixed(2)} kB`,
+      `${BUNDLE_SIZES.toast.brotliKb.toFixed(2)} kB`,
     ],
-    note: "Measured with Bun after minification, with React excluded. Includes static imports; excludes CSS and feature chunks loaded on demand.",
+    note: "Measured with Bun after minification, with React excluded. Includes static imports; excludes CSS and feature chunks loaded on demand. Many libraries quote gzip, which is larger than brotli for the same code.",
   },
   {
     label: "Position",
@@ -177,12 +177,12 @@ const COMPARE_ROWS: {
     values: ["Configurable", "Configurable", "Configurable", "no"],
   },
   {
-    label: "Stylesheet, gzip",
+    label: "Stylesheet, brotli",
     values: [
-      `${STYLESHEET_SIZES.core.gzipKb.toFixed(2)} kB`,
-      `${STYLESHEET_SIZES.core.gzipKb.toFixed(2)} kB`,
-      `${STYLESHEET_SIZES.core.gzipKb.toFixed(2)} kB`,
-      `${STYLESHEET_SIZES.toast.gzipKb.toFixed(2)} kB`,
+      `${STYLESHEET_SIZES.core.brotliKb.toFixed(2)} kB`,
+      `${STYLESHEET_SIZES.core.brotliKb.toFixed(2)} kB`,
+      `${STYLESHEET_SIZES.core.brotliKb.toFixed(2)} kB`,
+      `${STYLESHEET_SIZES.toast.brotliKb.toFixed(2)} kB`,
     ],
     note: "Import scrollsheet/styles.css for sheets and scrollsheet/toast.css for toasts, or use scrollsheet/auto to embed the stylesheets.",
   },
@@ -221,7 +221,7 @@ const cellParts = (value: string) => {
 };
 
 const title = "scrollsheet: native bottom sheets and drawers for React";
-const description = `React bottom sheets, drawers, dialogs, side panels, and toast notifications. Native dialog and scroll-snap for sheets; ${Math.round(BUNDLE_SIZES.index.gzipKb)} kB gzipped for the Sheet import, excluding CSS and lazy chunks.`;
+const description = `React bottom sheets, drawers, dialogs, side panels, and toast notifications. Native dialog and scroll-snap for sheets; ${Math.round(BUNDLE_SIZES.index.brotliKb)} kB brotli for the Sheet import, excluding CSS and lazy chunks.`;
 ---
 
 <Base title={title} description={description}>
@@ -230,9 +230,9 @@ const description = `React bottom sheets, drawers, dialogs, side panels, and toa
   </Fragment>
   <section class="container hero">
     <div class="hero-copy">
-      <h1>Bottom sheets for React in {Math.round(BUNDLE_SIZES.index.gzipKb)}&nbsp;kB</h1>
+      <h1>Bottom sheets for React in {Math.round(BUNDLE_SIZES.index.brotliKb)}&nbsp;kB brotli</h1>
       <p class="hero-lede">
-        Gzipped Sheet import, with detents, nested sheets and side panels. No runtime
+        Brotli-compressed Sheet import, with detents, nested sheets and side panels. No runtime
         dependencies. The Drawer export accepts common vaul props.
       </p>
       <div class="hero-actions">

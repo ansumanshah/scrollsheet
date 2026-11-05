@@ -22,7 +22,7 @@ bun run build           # required before unit tests read dist/
 bun test tests/unit
 bun run test:e2e:fast    # chromium-mobile only
 bun run test:e2e --workers=3 # full browser matrix and local visual/performance projects
-bun run size            # per-import gzip budgets and size-document freshness
+bun run size            # per-import brotli budgets and size-document freshness
 bun run pack:check
 bun run check:registry
 bun run test:site         # site smoke, builds the docs site first

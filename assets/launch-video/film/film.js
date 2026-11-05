@@ -28,8 +28,8 @@ const secs = (name) => shots[name].frames.length / FPS;
 const mark = (name, key) => shots[name].marks[key] / FPS;
 
 const kb = (n) => n.toFixed(1);
-const SIZE_SHEET = kb(data.sizes.index.gzipKb);
-const SIZE_TOAST = kb(data.sizes.toast.gzipKb);
+const SIZE_SHEET = kb(data.sizes.index.brotliKb);
+const SIZE_TOAST = kb(data.sizes.toast.brotliKb);
 
 const stage = document.getElementById("stage");
 const el = (tag, parent, props = {}) => {
@@ -513,7 +513,7 @@ async function paintToasts(t) {
   });
   tToast.at(t, T.toasts + 0.1, T.vaul - 0.12);
   rToastCode.at(t, T.toasts + 0.26, T.vaul - 0.12, 'toast("Saved Ember &amp; Oak")');
-  rToastSize.at(t, T.toasts + 0.44, T.vaul - 0.12, `${SIZE_TOAST} kB if that is all you import.`);
+  rToastSize.at(t, T.toasts + 0.44, T.vaul - 0.12, `${SIZE_TOAST} kB brotli if that is all you import.`);
 }
 
 const vaulLayer = el("div", sceneLayer, { className: "layer" });
@@ -636,7 +636,7 @@ function paintSize(t) {
   device.style.visibility = "hidden";
   tSize.at(t, T.size + 0.08, T.end - 0.1);
   rSizeImport.at(t, T.size + 0.3, T.end - 0.1, 'import { Sheet } from "scrollsheet"');
-  rSizeA.at(t, T.size + 0.55, T.end - 0.1, "gzipped, before CSS and lazy chunks.");
+  rSizeA.at(t, T.size + 0.55, T.end - 0.1, "brotli, before CSS and lazy chunks.");
   rSizeB.at(t, T.size + 0.85, T.end - 0.1, "No runtime dependencies.");
 }
 

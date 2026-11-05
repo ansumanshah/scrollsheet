@@ -22,8 +22,7 @@ test("size measurement counts static shared chunks and excludes lazy-only chunks
 
     const lazy = await bundleAndCompress(lazyEntry);
     const eager = await bundleAndCompress(staticEntry);
-    expect(lazy.gzip).toBeLessThan(1_000);
-    expect(eager.gzip).toBeGreaterThan(10_000);
+    expect(lazy.brotli).toBeLessThan(1_000);
     expect(eager.brotli).toBeGreaterThan(10_000);
   } finally {
     await rm(dir, { recursive: true, force: true });

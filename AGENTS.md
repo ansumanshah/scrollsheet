@@ -26,7 +26,7 @@ bun run build            # required before unit tests: use-client.test.ts reads 
 bun test tests/unit
 bun run test:e2e:fast    # chromium-mobile only
 bun run test:e2e --workers=3 # full browser, visual, and performance matrix
-bun run size             # gzip budgets per entry; fails if size docs are stale
+bun run size             # brotli budgets per entry; fails if size docs are stale
 bun scripts/sync-sizes.ts  # rewrite size numbers in README/llms.txt/docs after a size change
 bun run verify           # the whole local gate
 ```

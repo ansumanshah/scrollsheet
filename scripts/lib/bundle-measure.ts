@@ -7,7 +7,7 @@
  * Everything ships from one entry (dist/index.mjs), so "how big is
  * scrollsheet" has no single answer: it depends on what you import. Each
  * shape below is a real import statement, bundled and minified with Bun
- * (react external) and compressed, which measures exactly what a consuming
+ * (react external) and brotli-compressed, which measures exactly what a consuming
  * app ships for that import and nothing else.
  *
  * That also makes tree-shaking a tested guarantee rather than a claim. The
@@ -68,7 +68,6 @@ export const IMPORT_SHAPES: readonly ImportShape[] = [
 export type SizeKey = ImportShape["key"];
 
 export interface BundleSizes {
-  gzip: number;
   brotli: number;
 }
 
@@ -108,15 +107,13 @@ export async function bundleAndCompress(entryAbsPath: string): Promise<BundleSiz
       }
     };
     walk(entryKey);
-    let gzip = 0;
     let brotli = 0;
     for (const key of shipped) {
       const abs = resolve(outdir, key);
       const bundled = new Uint8Array(await Bun.file(abs).arrayBuffer());
-      gzip += Bun.gzipSync(bundled).byteLength;
       brotli += brotliCompressSync(bundled).byteLength;
     }
-    return { gzip, brotli };
+    return { brotli };
   } finally {
     await rm(dir, { recursive: true, force: true });
   }
@@ -176,10 +173,7 @@ export async function measureStylesheets(): Promise<Record<StylesheetKey, Bundle
     const bytes = new Uint8Array(
       await Bun.file(join(PACKAGE_DIR, "dist", sheet.file)).arrayBuffer(),
     );
-    out[sheet.key] = {
-      gzip: Bun.gzipSync(bytes).byteLength,
-      brotli: brotliCompressSync(bytes).byteLength,
-    };
+    out[sheet.key] = { brotli: brotliCompressSync(bytes).byteLength };
   }
   return out;
 }
