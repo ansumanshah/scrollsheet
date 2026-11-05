@@ -301,6 +301,31 @@ export function ControlledSheet() {
 }
 
 /** One sheet, two views, differing content height — for the content-morph (ResizeObserver-driven detent travel) test. */
+/** A large content-height jump, with press targets that stay on screen for it. */
+export function MorphPressSheet() {
+  const [rows, setRows] = React.useState(1);
+  return (
+    <Sheet.Root detents={["content"]}>
+      <Sheet.Trigger className="btn">Morph press</Sheet.Trigger>
+      <Sheet.Content className="sheet" aria-label="Morph press">
+        <Sheet.Handle />
+        <button type="button" style={{ height: 60 }} onClick={() => setRows(12)}>
+          Grow
+        </button>
+        <button type="button" style={{ height: 60 }} onClick={() => setRows(1)}>
+          Shrink
+        </button>
+        <div data-testid="morph-spot" style={{ height: 60 }} />
+        {Array.from({ length: rows }, (_, i) => (
+          <div key={i} style={{ height: 40 }}>
+            Row {i}
+          </div>
+        ))}
+      </Sheet.Content>
+    </Sheet.Root>
+  );
+}
+
 export function MultiViewSheet() {
   const [view, setView] = React.useState<"menu" | "key">("menu");
   const [open, setOpen] = React.useState(false);

@@ -502,7 +502,7 @@ export const Content = /* @__PURE__ */ React.forwardRef<HTMLDivElement, SheetCon
         track: HTMLElement,
         target: number,
         axis: "x" | "y",
-        suspendSnap = false,
+        suspendSnap: boolean | (() => void) = false,
       ): ScrollAnimation => {
         const durationMs = TRAVEL_MS / ctxRef.current.animationSpeed;
         const animation = animateScrollTo(track, target, durationMs, axis, suspendSnap);
@@ -548,7 +548,8 @@ export const Content = /* @__PURE__ */ React.forwardRef<HTMLDivElement, SheetCon
       // re-tweens after the idle gap, and scrollend must not pre-empt it.
       if (dialogRef.current?.hasAttribute("data-scrollsheet-wheel-session")) return;
       const track = trackRef.current;
-      if (!track) return;
+      // Snap suspended: a held morph, whose position nobody chose.
+      if (!track || track.style.scrollSnapType) return;
       const current = ctxRef.current;
       const geometry = geometryFor(current.side);
       /* A phantom-flagged excursion (see PHANTOM_SCROLL_JUMP_PX) winds back

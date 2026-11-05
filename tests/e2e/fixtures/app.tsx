@@ -12,6 +12,7 @@ import {
   KeyboardSheet,
   ControlledSheet,
   MultiViewSheet,
+  MorphPressSheet,
   FillSheet,
   FullHeightSheet,
   NoTravelSheet,
@@ -130,6 +131,7 @@ export function App() {
         <KeyboardSheet />
         <ControlledSheet />
         <MultiViewSheet />
+        <MorphPressSheet />
         <FillSheet />
         <AsChildSheet />
         <ReopenSheet />

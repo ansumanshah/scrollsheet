@@ -402,7 +402,7 @@ The React-free layer the sheet runs on. Experimental: the surface may change in 
 | `spring` | `(config?: SpringConfig) => SpringCurve`. Defaults: `stiffness` 260, `damping` 30, `mass` 1, `velocity` 0, `restDelta` 0.001. Throws if the config cannot settle within 2 seconds, such as zero damping |
 | `sampleSpringAt` | `(config: SpringConfig, atMs: number) => { value: number; velocity: number }`. Position (0 to 1) and velocity of the same spring at a time, in closed form |
 | `animate` | `(el, prop, from, to, toCss: (value: number) => string, curve: SpringCurve, config: SpringConfig, extraChannels?) => AnimateHandle`. One Web Animations spring leg. `AnimateHandle` has `finished`, `settled`, `to`, `durationMs`, `stop()` (freezes the element and returns `{ value, velocity }` for a velocity-carrying next leg), and `cancel()` |
-| `animateScrollTo` | `(el, target, durationMs, axis?: 'x' \| 'y', suspendSnap?: boolean) => ScrollAnimation`. A rAF scroll tween that any pointer, wheel, or touch input cancels. `ScrollAnimation` has `cancel()` and `finished: Promise<boolean>` |
+| `animateScrollTo` | `(el, target, durationMs, axis?: 'x' \| 'y', suspendSnap?: boolean \| (() => void)) => ScrollAnimation`. A rAF scroll tween that any pointer, wheel, or touch input cancels. `ScrollAnimation` has `cancel()` and `finished: Promise<boolean>` |
 | `geometryFor` | `(side: Side) => SideGeometry`. Axis, scroll property, and sign for a side |
 | `mapScroll` | `(value, maxDetent, sign: 1 \| -1) => number`. Converts between raw scroll position and revealed px; it is its own inverse |
 | `recedeTransform` | `(geometry: SideGeometry, progress, scale) => string`. The `translate3d(...) scale(...)` a receded parent panel gets |
