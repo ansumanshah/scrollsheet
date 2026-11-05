@@ -11,23 +11,19 @@ function openModals(): Element[] {
   }
 }
 
-/** Fixed descendants of this element anchor to and clip against its box. */
+/** Fixed descendants of this element may anchor to and clip against its box. */
 function containsFixed(el: Element): boolean {
-  const style = getComputedStyle(el);
-  return (
-    [
-      style.transform,
-      style.translate,
-      style.rotate,
-      style.scale,
-      style.filter,
-      style.backdropFilter,
-      style.perspective,
-    ].some((value) => value && value !== "none") ||
-    /layout|paint|strict|content\b|contain|transform|translate|rotate|scale|filter|perspective/.test(
-      style.contain + " " + style.willChange,
-    )
-  );
+  const s = getComputedStyle(el);
+  return [
+    s.transform,
+    s.translate,
+    s.rotate,
+    s.scale,
+    s.filter,
+    s.backdropFilter,
+    s.perspective,
+    s.contain,
+  ].some((value) => value && value !== "none");
 }
 
 /**
@@ -61,18 +57,11 @@ export function useToasterHost(): HTMLElement | null {
       for (const d of shown) if (!open.includes(d)) shown.delete(d);
       for (const d of open) shown.add(d);
       const top = [...shown].pop();
-      let target: Element = document.body;
-      if (top) {
-        if (el.parentNode === top || !containsFixed(top)) target = top;
-        else {
-          // An entry animation's transform ends, and nothing else re-runs this.
-          const running = top.getAnimations().filter((a) => a.playState === "running");
-          if (running.length) {
-            void Promise.allSettled(running.map((a) => a.finished)).then(
-              () => el.isConnected && place(),
-            );
-          }
-        }
+      const target = top && (el.parentNode === top || !containsFixed(top)) ? top : document.body;
+      if (target !== top) {
+        // An entry animation's transform ends, and nothing else re-runs this.
+        top?.addEventListener("animationend", replace);
+        top?.addEventListener("transitionend", replace);
       }
       if (el.parentNode !== target) target.append(el);
       // Removal only matters while inside a dialog that can take the host with
@@ -84,6 +73,9 @@ export function useToasterHost(): HTMLElement | null {
       });
     };
 
+    const replace = () => {
+      if (el.isConnected) place();
+    };
     const observer = new MutationObserver(place);
 
     place();

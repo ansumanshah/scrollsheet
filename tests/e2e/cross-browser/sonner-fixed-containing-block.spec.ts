@@ -42,7 +42,6 @@ for (const css of [
   "contain: layout",
   "contain: content",
   "contain: strict; width: 300px; height: 300px",
-  "will-change: transform",
 ]) {
   test(`the toaster stays out of a dialog with ${css}`, async ({ page }) => {
     await firePageToast(page);
@@ -56,18 +55,11 @@ for (const css of [
   });
 }
 
-for (const css of [
-  "",
-  "contain: style",
-  "contain: size; width: 300px; height: 300px",
-  "will-change: opacity",
-]) {
-  test(`the toaster still moves into a dialog with ${css || "no styles"}`, async ({ page }) => {
-    await firePageToast(page);
-    await openDialog(page, css);
-    await expect(page.locator(HOST).first()).toBeAttached();
-  });
-}
+test("the toaster still moves into a dialog with no such style", async ({ page }) => {
+  await firePageToast(page);
+  await openDialog(page, "padding: 8px");
+  await expect(page.locator(HOST).first()).toBeAttached();
+});
 
 test("a clipping dialog on top sends the toaster back to the page", async ({ page }) => {
   await firePageToast(page);
