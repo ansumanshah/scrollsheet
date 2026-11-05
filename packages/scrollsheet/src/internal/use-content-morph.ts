@@ -70,7 +70,7 @@ export function useContentMorph({
     const track = trackRef.current;
     if (!body || !track) return;
     let raf = 0;
-    let stretched = false;
+    let stretched: unknown;
 
     const scheduleMorph = () => {
       if (raf) return;
@@ -151,7 +151,7 @@ export function useContentMorph({
       }
     };
     const observeBody = () => {
-      stretched = fill || !!body.querySelector("[data-scrollsheet-footer]");
+      stretched = fill || body.querySelector("[data-scrollsheet-footer]");
       if (stretched) observeChildren(body);
       else observer.observe(body);
     };

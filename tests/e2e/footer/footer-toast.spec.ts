@@ -14,14 +14,16 @@ for (const [fire, covered] of [
     await page.goto("/");
     const dialog = await openSheetByTrigger(page, "Footer toast: open sheet");
     await dialog.getByRole("button", { name: fire }).click();
-    await expect(page.locator(".scrollsheet-toast[data-mounted]").first()).toHaveCSS("opacity", "1", {
-      timeout: SPRING_TIMEOUT,
-    });
+    await expect(page.locator(".scrollsheet-toast[data-mounted]").first()).toHaveCSS(
+      "opacity",
+      "1",
+      {
+        timeout: SPRING_TIMEOUT,
+      },
+    );
     const onButton = await dialog.getByTestId("footer-toast-action").evaluate((el) => {
       const box = el.getBoundingClientRect();
-      return (
-        document.elementFromPoint(box.x + box.width / 2, box.y + box.height / 2) === el
-      );
+      return document.elementFromPoint(box.x + box.width / 2, box.y + box.height / 2) === el;
     });
     expect(onButton).toBe(!covered);
   });

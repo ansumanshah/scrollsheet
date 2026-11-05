@@ -160,7 +160,7 @@ export const Content = /* @__PURE__ */ React.forwardRef<HTMLDivElement, SheetCon
     const dimStartRef = React.useRef(0);
     const dimEndRef = React.useRef(0);
     const atMaxRef = React.useRef(false);
-    const pressedContentRef = React.useRef(false);
+    const pressedOutsideRef = React.useRef(true);
     // onTravel's 3rd arg: one object + one Map, reused and mutated in place
     // every travel frame instead of allocated fresh — see TravelInfo's TSDoc.
     const travelInfoRef = React.useRef<{
@@ -1291,10 +1291,10 @@ export const Content = /* @__PURE__ */ React.forwardRef<HTMLDivElement, SheetCon
           // A press on content released out here clicks their common ancestor.
           // Capture phase, so content that stops pointerdown can't hide it.
           onPointerDownCapture={(event) => {
-            pressedContentRef.current = !isOutside(event.target);
+            pressedOutsideRef.current = isOutside(event.target);
           }}
           onClick={(event) => {
-            if (ctx.backdropDismissible && isOutside(event.target) && !pressedContentRef.current) {
+            if (ctx.backdropDismissible && isOutside(event.target) && pressedOutsideRef.current) {
               ctx.setOpen(false);
             }
           }}
