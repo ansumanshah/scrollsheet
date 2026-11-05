@@ -254,6 +254,40 @@ export function SonnerModalFixture() {
   );
 }
 
+/** The pinned-footer docs' placements, against a footer's 44px button. */
+export function FooterToastFixture() {
+  const fire = (toasterId: string) => () => toast("Saved", { toasterId, duration: 60_000 });
+  return (
+    <div>
+      <Sheet.Root detents={[0.4, "full"]}>
+        <Sheet.Trigger className="btn">Footer toast: open sheet</Sheet.Trigger>
+        <Sheet.Content className="sheet" aria-label="Footer toast">
+          <div className="sheet-inner">
+            <Sheet.Title>Footer toast</Sheet.Title>
+            <button type="button" onClick={fire("footer-default")}>
+              Fire default
+            </button>
+            <button type="button" onClick={fire("footer-top")}>
+              Fire top
+            </button>
+            <button type="button" onClick={fire("footer-raised")}>
+              Fire raised
+            </button>
+          </div>
+          <Sheet.Footer style={{ padding: "12px 16px" }}>
+            <button type="button" data-testid="footer-toast-action" style={{ height: 44 }}>
+              Pay
+            </button>
+          </Sheet.Footer>
+        </Sheet.Content>
+      </Sheet.Root>
+      <Toaster toasterId="footer-default" />
+      <Toaster toasterId="footer-top" position="top-center" />
+      <Toaster toasterId="footer-raised" style={{ bottom: 84 }} />
+    </div>
+  );
+}
+
 /**
  * Non-dismissible saturation (the queue path): every visible slot held
  * by a `dismissible: false` toast has no eviction candidate, so a further
