@@ -11,6 +11,7 @@ const REPO_ROOT = fileURLToPath(new URL("..", import.meta.url));
 const CSS_FILES = [
   "packages/scrollsheet/src/internal/core.css",
   "packages/scrollsheet/src/internal/widgets.css",
+  "packages/scrollsheet/src/internal/fallback.css",
   "packages/scrollsheet/src/toast/toast.css",
 ];
 
@@ -18,7 +19,7 @@ const CSS_FILES = [
 // because touch devices have no cursor to render, not because the property
 // is missing -- .scrollsheet-handle's `cursor: grab`/`grabbing` is a
 // desktop-pointer affordance that is a silent no-op on touch, never a real
-// gap. Nothing else in the three authored sheets trips the floor above:
+// gap. Nothing else in the authored sheets trips the floor above:
 // the animation-timeline/scroll-timeline/animation-range block in
 // core.css already sits behind `@supports (animation-timeline: scroll())`,
 // @starting-style isn't used anywhere yet, and every env() call carries

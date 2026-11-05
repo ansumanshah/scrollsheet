@@ -55,7 +55,8 @@ describe("generated CORE_CSS", () => {
     // Raised to 28.6k (28473 actual) for Sheet.Footer's sticky pinning, its
     // per-side safe-area and keyboard rules, and the pre-state display rule
     // that lets a child's autoFocus land before showModal().
-    expect(CORE_CSS.length).toBeLessThan(28_600);
+    // Lowered to 24.3k once the no-<dialog> rules moved to fallback.css.
+    expect(CORE_CSS.length).toBeLessThan(24_300);
   });
 
   test("keeps brace structure balanced", () => {

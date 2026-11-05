@@ -11,18 +11,18 @@ export interface BundleSize {
 }
 
 export const BUNDLE_SIZES: Record<"index" | "drawer" | "dialog" | "toast" | "all" | "auto", BundleSize> = {
-  index: { brotliKb: 14.94 },
-  drawer: { brotliKb: 15.88 },
-  dialog: { brotliKb: 14.71 },
-  toast: { brotliKb: 6.25 },
-  all: { brotliKb: 21.09 },
-  auto: { brotliKb: 18.55 },
+  index: { brotliKb: 14.36 },
+  drawer: { brotliKb: 15.17 },
+  dialog: { brotliKb: 14.12 },
+  toast: { brotliKb: 6 },
+  all: { brotliKb: 20.36 },
+  auto: { brotliKb: 17.87 },
 };
 
 // The shipped stylesheets, brotli-compressed the same way. Consumers link these
 // separately from the JS, so any "JS + CSS" total in public copy should add
 // these rather than quote a hand-typed figure.
 export const STYLESHEET_SIZES: Record<"core" | "toast", BundleSize> = {
-  core: { brotliKb: 3.75 },
+  core: { brotliKb: 3.43 },
   toast: { brotliKb: 1.33 },
 };

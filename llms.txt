@@ -2,7 +2,7 @@
 
 React bottom sheets, drawers, dialogs, side panels, and toasts.
 
-> Sheets use native `<dialog>` and CSS scroll snap. No runtime dependencies, ~<!--size:index.brotli:0-->15<!--/size--> kB compressed (brotli), React 18+, MIT licensed.
+> Sheets use native `<dialog>` and CSS scroll snap. No runtime dependencies, ~<!--size:index.brotli:0-->14<!--/size--> kB compressed (brotli), React 18+, MIT licensed.
 
 scrollsheet renders a real `<dialog>` in the browser's top layer and drives its drag gesture
 with a native `scroll-snap-type: y mandatory` container for modal touch gestures. Desktop

@@ -2,7 +2,7 @@
 
 > React bottom sheets, drawers, dialogs, side panels, and toasts. Sheets use native
 > <dialog> and CSS scroll snap. No runtime dependencies,
-> ~<!--size:index.brotli:0-->15<!--/size--> kB compressed (brotli), React 18+, MIT licensed.
+> ~<!--size:index.brotli:0-->14<!--/size--> kB compressed (brotli), React 18+, MIT licensed.
 
 This file provides a plain-text reference for tools that cannot crawl
 https://scrollsheet.dev/docs. The site contains the guides and interactive examples.

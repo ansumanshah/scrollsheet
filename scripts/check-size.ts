@@ -44,7 +44,7 @@ const BUDGETS: Record<SizeKey, number> = {
   toast: 7 * 1024,
   // Sheet and Toaster share no bytes, so the combined shape is their sum.
   all: 21 * 1024,
-  auto: 19 * 1024,
+  auto: 18 * 1024,
 };
 
 /** Whole-kB brotli budgets for the shipped stylesheets. */

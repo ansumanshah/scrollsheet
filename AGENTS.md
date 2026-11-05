@@ -36,7 +36,7 @@ In a cloud container, Playwright's Chromium is at `/opt/pw-browsers`; do not run
 
 ## Rules
 
-- Never hand-edit `*-css.generated.ts`. Edit `core.css`, `widgets.css`, or `toast.css`, then `bun run gen:css`.
+- Never hand-edit `*-css.generated.ts`. Edit `core.css`, `widgets.css`, `fallback.css`, or `toast.css`, then `bun run gen:css`.
 - Every byte in the default `Sheet` entry is weighed. Prefer platform behavior over JS, keep new
   features small, or move optional systems behind a lazy loader like the existing `*-loader.ts`.
 - Code comments state constraints and reasons; no review narrative, dates, or consumer names.
