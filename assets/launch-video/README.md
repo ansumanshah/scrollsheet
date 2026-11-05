@@ -16,6 +16,7 @@ Writes to `docs/public/launch/`: `scrollsheet-launch.mp4` (1920x1080), `scrollsh
 | `bun assets/launch-video/build.ts --reuse-masters` | Only re-encode from the masters in `out/` |
 | `bun assets/launch-video/build.ts --draft --fps 15` | Fast drafts and contact sheets in `out/` |
 | `bun assets/launch-video/strip.ts drag 3 4.2` | Consecutive 60 fps frames of one moment, in `out/` |
+| `bun assets/launch-video/sound.ts --out <dir>` | Sound-effects cuts for social posts (default `out/sound/`) |
 
 ## How it works
 
@@ -38,5 +39,26 @@ hard-coded. Layout is a function of the frame, which is how one timeline renders
 - **The end of each drag is held.** Browser snap runs in real time and cannot be stepped, so the finger stays
   down (hidden) along a spring onto the exact snap stop and lifts there. The rest positions are the library's
   own stops, but that final curve is the film's, not the browser's snap curve.
+
+## Sound
+
+The site's film is silent. `sound.ts` muxes effects onto the published mp4s for X and vertical posting, and
+its output stays out of the repo and the site. Run the film build first. It writes
+`scrollsheet-launch-sound.mp4`, `scrollsheet-launch-vertical-sound.mp4` and `cues.json`, and needs `sfx.mjs`
+from the `motion-first` kit (`MOTION_FIRST_KIT`, default `~/.agents/skills/motion-first`).
+
+Cues come from the capture metrics and the film's own timeline, read per cut because wipe times depend on
+the frame height:
+
+| Cue | When |
+| --- | --- |
+| `click` | A drag comes within 2% of its travel from its snap stop |
+| `thump` | An opening sheet's panel comes within 2% of its rest, and the mark's last sheet on the end card |
+| `pop` | 10 frames after a toast mounts |
+| `whoosh` | Centred on the fastest moment of each wipe |
+
+The mix gets one static gain toward -14 LUFS, stopping at -2 dBTP. This material peaks first, so it lands
+near -19 LUFS. `mux.sh` from the kit is not used: its single-pass `loudnorm` lifts each sparse hit to the
+ceiling, which erases the mix, and it writes 96 kHz AAC.
 
 `STYLE.md` has the palette, type and motion rules.

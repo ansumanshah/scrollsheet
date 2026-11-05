@@ -12,20 +12,8 @@ const MIME: Record<string, string> = {
   ".jpg": "image/jpeg",
 };
 
-export interface RenderOptions {
-  out: string;
-  width: number;
-  height: number;
-  fps: number;
-  cut?: "film" | "loop";
-  crf?: number;
-  start?: number;
-  end?: number;
-}
-
-/** Steps window.seek(t) in the film page and pipes every screenshot straight into ffmpeg. */
-export async function render(opts: RenderOptions): Promise<number> {
-  mkdirSync(dirname(opts.out), { recursive: true });
+/** Serves the film folder and opens the page, ready to seek. */
+async function openFilm(width: number, height: number, cut = "film") {
   const root = resolve(HERE);
   const server = Bun.serve({
     port: 0,
@@ -41,14 +29,35 @@ export async function render(opts: RenderOptions): Promise<number> {
     },
   });
   const browser = await chromium.launch();
-  const page = await browser.newPage({
-    viewport: { width: opts.width, height: opts.height },
-    deviceScaleFactor: 1,
-  });
+  const page = await browser.newPage({ viewport: { width, height }, deviceScaleFactor: 1 });
   page.on("pageerror", (e) => console.error(`film error: ${e.message}`));
-  await page.goto(`http://localhost:${server.port}/film/index.html?cut=${opts.cut ?? "film"}`);
+  await page.goto(`http://localhost:${server.port}/film/index.html?cut=${cut}`);
   await page.waitForFunction(() => (window as unknown as { __ready?: boolean }).__ready === true);
   await page.evaluate(() => document.fonts.ready);
+  return {
+    page,
+    close: async () => {
+      await browser.close();
+      server.stop(true);
+    },
+  };
+}
+
+export interface RenderOptions {
+  out: string;
+  width: number;
+  height: number;
+  fps: number;
+  cut?: "film" | "loop";
+  crf?: number;
+  start?: number;
+  end?: number;
+}
+
+/** Steps window.seek(t) in the film page and pipes every screenshot straight into ffmpeg. */
+export async function render(opts: RenderOptions): Promise<number> {
+  mkdirSync(dirname(opts.out), { recursive: true });
+  const { page, close } = await openFilm(opts.width, opts.height, opts.cut);
   const duration = await page.evaluate(
     () => (window as unknown as { __duration: number }).__duration,
   );
@@ -101,8 +110,7 @@ export async function render(opts: RenderOptions): Promise<number> {
   }
   ff.stdin.end();
   await new Promise((r) => ff.on("close", r));
-  await browser.close();
-  server.stop(true);
+  await close();
   console.log(`  ${opts.out} in ${((Date.now() - started) / 1000).toFixed(0)}s`);
   return duration;
 }
@@ -115,28 +123,31 @@ export async function still(opts: {
   t: number;
   quality: number;
 }): Promise<void> {
-  const root = resolve(HERE);
-  const server = Bun.serve({
-    port: 0,
-    async fetch(req) {
-      const file = join(root, decodeURIComponent(new URL(req.url).pathname));
-      const f = Bun.file(file);
-      if (!(await f.exists())) return new Response("not found", { status: 404 });
-      return new Response(f, {
-        headers: { "content-type": MIME[extname(file)] ?? "application/octet-stream" },
-      });
-    },
-  });
-  const browser = await chromium.launch();
-  const page = await browser.newPage({ viewport: { width: opts.width, height: opts.height } });
-  await page.goto(`http://localhost:${server.port}/film/index.html`);
-  await page.waitForFunction(() => (window as unknown as { __ready?: boolean }).__ready === true);
-  await page.evaluate(() => document.fonts.ready);
+  const { page, close } = await openFilm(opts.width, opts.height);
   await page.evaluate(
     (t) => (window as unknown as { seek(t: number): Promise<void> }).seek(t),
     opts.t,
   );
   await page.screenshot({ path: opts.out, type: "jpeg", quality: opts.quality });
-  await browser.close();
-  server.stop(true);
+  await close();
+}
+
+export interface FilmTimeline {
+  T: Record<string, number>;
+  fps: number;
+  keyboardSkip: number;
+  wipes: number[];
+  wipeStagger: number;
+  lastMarkSheet: number;
+  duration: number;
+}
+
+/** The timeline the film computes for one cut. Wipe times depend on the frame height. */
+export async function readTimeline(width: number, height: number): Promise<FilmTimeline> {
+  const { page, close } = await openFilm(width, height);
+  const timeline = await page.evaluate(
+    () => (window as unknown as { __timeline: FilmTimeline }).__timeline,
+  );
+  await close();
+  return timeline;
 }
