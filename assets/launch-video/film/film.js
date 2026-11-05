@@ -76,6 +76,17 @@ const WIPES = [
   { at: T.size - coverDelay, color: VIOLET },
   { at: T.end - coverDelay, color: INK },
 ];
+// The wipe start depends on the frame height, so the sound build reads this per cut.
+const markDelay = (i) => 0.16 + i * 0.1;
+window.__timeline = {
+  T,
+  fps: FPS,
+  keyboardSkip: KB_SKIP,
+  wipes: WIPES.map((w) => w.at),
+  wipeStagger: WIPE_STAGGER,
+  lastMarkSheet: T.end + markDelay(2),
+  duration: window.__duration,
+};
 const wipePanels = [0.3, 0.55, 1].map((opacity) => {
   const node = el("div", wipeLayer, { className: "wipe" });
   node.style.opacity = opacity;
@@ -608,7 +619,7 @@ const tSize = makeTitle(sizeLayer, [[plain(SIZE_SHEET), plain(" kB")]], {
 const rSizeImport = makeReadout(sizeLayer, {
   x: sizeX + 8,
   y: TALL ? 516 : 172,
-  size: TALL ? 46 : 50,
+  size: TALL ? 44 : 50,
   color: "#fff",
   weight: 500,
 });
@@ -702,7 +713,7 @@ function paintEnd(t) {
   markEl.style.visibility = dt >= 0 ? "visible" : "hidden";
   markEl.style.transform = `translate3d(${endX}px, ${endY + (1 - appear) * 80}px, 0)`;
   markLayers.forEach((node, i) => {
-    const s = spring(dt - 0.16 - i * 0.1, ...DEFAULT);
+    const s = spring(dt - markDelay(i), ...DEFAULT);
     const y = MARK_LAYERS[i].y * u + (1 - s) * markSize;
     node.style.transform = `translate3d(0, ${y}px, 0)`;
   });
