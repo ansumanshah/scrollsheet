@@ -30,6 +30,15 @@ const TARGETS: CssTarget[] = [
     header: 'import { SHEET_SPRING } from "../motion/spring";\n\n',
   },
   {
+    srcUrls: [new URL("../packages/scrollsheet/src/internal/fallback.css", import.meta.url)],
+    outUrl: new URL(
+      "../packages/scrollsheet/src/internal/fallback-css.generated.ts",
+      import.meta.url,
+    ),
+    exportName: "FALLBACK_CSS",
+    srcBasename: "fallback.css",
+  },
+  {
     srcUrls: [new URL("../packages/scrollsheet/src/toast/toast.css", import.meta.url)],
     outUrl: new URL("../packages/scrollsheet/src/toast/toast-css.generated.ts", import.meta.url),
     exportName: "TOAST_CSS",

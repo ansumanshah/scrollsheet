@@ -99,6 +99,20 @@ describe("generated CORE_CSS", () => {
     ).text();
     expect(generated).toContain(`export const CORE_CSS = \`${minifyCss(`${core}\n${widgets}`)}\`;`);
   });
+
+  test("fallback-css.generated.ts is fresh against fallback.css (run scripts/gen-css.ts if this fails)", async () => {
+    const authored = await Bun.file(
+      new URL("../../packages/scrollsheet/src/internal/fallback.css", import.meta.url),
+    ).text();
+    const generated = await Bun.file(
+      new URL("../../packages/scrollsheet/src/internal/fallback-css.generated.ts", import.meta.url),
+    ).text();
+    expect(generated).toContain(`export const FALLBACK_CSS = \`${minifyCss(authored)}\`;`);
+  });
+
+  test("the no-<dialog> rules stay out of the shipped core stylesheet", () => {
+    expect(CORE_CSS).not.toContain("scrollsheet-fallback");
+  });
 });
 
 // TOAST_CSS is the sonner compat layer's own stylesheet — same authored-CSS →

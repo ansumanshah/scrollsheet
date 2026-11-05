@@ -1233,141 +1233,6 @@
 }
 
 /*
- * ── No-<dialog> degradation path ─────────────────────────────────────────
- * Rendered by internal/fallback-sheet.tsx on the ~3% of browsers with no
- * real <dialog> (Opera Mini, some old in-app WebViews, iOS <=15.3). Kept in
- * its own class namespace rather than reusing .scrollsheet-dialog's: every
- * rule there assumes the scroll-snap track (absolute panel, translate
- * resting transforms, visual-viewport pinning) that this path deliberately
- * does not build.
- *
- * The THEMING custom properties are shared on purpose — --scrollsheet-bg,
- * -fg, -radius, -shadow, -backdrop and -safe-area all resolve here exactly
- * as they do on the main path, so a consumer who themed their sheet gets
- * that theming in the fallback without writing a second set of rules.
- */
-.scrollsheet-fallback {
-  position: fixed;
-  inset: 0;
-  z-index: 2147483647;
-  display: flex;
-  /* No top layer here, so this element is subject to normal stacking and to
-     ancestor clipping. Portaled to <body> (fallback-sheet.tsx) to dodge the
-     clipping; the max z-index is the best available answer to the stacking
-     half. Documented as a known limitation, not papered over. */
-}
-/* Non-modal: only the panel is a hit target, matching the main path's rule
-   so a click outside still reaches the page behind. */
-.scrollsheet-fallback[data-scrollsheet-modal="false"] {
-  pointer-events: none;
-}
-.scrollsheet-fallback[data-scrollsheet-modal="false"] .scrollsheet-fallback-panel {
-  pointer-events: auto;
-}
-
-.scrollsheet-fallback-backdrop {
-  position: fixed;
-  inset: 0;
-  background: var(--scrollsheet-backdrop, rgb(0 0 0 / 0.32));
-}
-
-:where(.scrollsheet-fallback-panel) {
-  --scrollsheet-radius: 20px;
-  position: relative;
-  background: var(--scrollsheet-bg, #fff);
-  color: var(--scrollsheet-fg, #1d1d1f);
-  box-shadow: var(--scrollsheet-shadow, 0 -8px 32px rgb(0 0 0 / 0.16));
-  outline: none;
-  overflow-y: auto;
-  overscroll-behavior: contain;
-  -webkit-overflow-scrolling: touch;
-}
-/* Same light-default, opt-in-dark contract as the panel block above. */
-:where([data-scrollsheet-theme="dark"]) :where(.scrollsheet-fallback-panel) {
-  background: var(--scrollsheet-bg, #1c1c1e);
-  color: var(--scrollsheet-fg, #f5f5f7);
-}
-@media (prefers-color-scheme: dark) {
-  :where([data-scrollsheet-theme="system"]) :where(.scrollsheet-fallback-panel) {
-    background: var(--scrollsheet-bg, #1c1c1e);
-    color: var(--scrollsheet-fg, #f5f5f7);
-  }
-}
-
-/* Per-side anchoring. Heights are capped rather than detent-resolved: there
-   is no measurement pass on this path, so the panel sizes to its content up
-   to a cap and scrolls internally past it. */
-.scrollsheet-fallback[data-scrollsheet-side="bottom"] {
-  align-items: flex-end;
-}
-.scrollsheet-fallback[data-scrollsheet-side="bottom"] :where(.scrollsheet-fallback-panel) {
-  width: 100%;
-  max-height: 85%;
-  border-radius: var(--scrollsheet-radius) var(--scrollsheet-radius) 0 0;
-  padding-bottom: max(var(--scrollsheet-safe-area, env(safe-area-inset-bottom, 0px)), 0px);
-}
-.scrollsheet-fallback[data-scrollsheet-side="top"] {
-  align-items: flex-start;
-}
-.scrollsheet-fallback[data-scrollsheet-side="top"] :where(.scrollsheet-fallback-panel) {
-  width: 100%;
-  max-height: 85%;
-  border-radius: 0 0 var(--scrollsheet-radius) var(--scrollsheet-radius);
-  box-shadow: var(--scrollsheet-shadow, 0 8px 32px rgb(0 0 0 / 0.16));
-  padding-top: max(var(--scrollsheet-safe-area-top, env(safe-area-inset-top, 0px)), 0px);
-}
-/* Centered variant: the degraded shape of side="center" (and every Dialog
-   compat consumer). Same max-inline guard vars as the real center panel so
-   consumer overrides carry across the degradation. */
-.scrollsheet-fallback[data-scrollsheet-side="center"] {
-  align-items: center;
-  justify-content: center;
-}
-.scrollsheet-fallback[data-scrollsheet-side="center"] :where(.scrollsheet-fallback-panel) {
-  max-inline-size: var(--scrollsheet-center-max-inline, min(560px, calc(100% - 40px)));
-  max-height: 85%;
-  border-radius: var(--scrollsheet-radius);
-  box-shadow: var(--scrollsheet-shadow, 0 8px 32px rgb(0 0 0 / 0.16));
-}
-
-.scrollsheet-fallback[data-scrollsheet-side="left"] {
-  justify-content: flex-start;
-}
-.scrollsheet-fallback[data-scrollsheet-side="right"] {
-  justify-content: flex-end;
-}
-.scrollsheet-fallback:is([data-scrollsheet-side="left"], [data-scrollsheet-side="right"])
-  :where(.scrollsheet-fallback-panel) {
-  height: 100%;
-  max-width: 85%;
-  border-radius: 0;
-  padding-top: max(var(--scrollsheet-safe-area-top, env(safe-area-inset-top, 0px)), 0px);
-  padding-bottom: max(var(--scrollsheet-safe-area, env(safe-area-inset-bottom, 0px)), 0px);
-}
-.scrollsheet-fallback[data-scrollsheet-side="left"] :where(.scrollsheet-fallback-panel) {
-  box-shadow: var(--scrollsheet-shadow, 8px 0 32px rgb(0 0 0 / 0.16));
-}
-.scrollsheet-fallback[data-scrollsheet-side="right"] :where(.scrollsheet-fallback-panel) {
-  box-shadow: var(--scrollsheet-shadow, -8px 0 32px rgb(0 0 0 / 0.16));
-}
-
-/* Desktop: same 768px breakpoint the main path's presentation uses, so a
-   browser that falls back doesn't switch layout at a different width. */
-@media (min-width: 768px) {
-  .scrollsheet-fallback[data-scrollsheet-side="bottom"] :where(.scrollsheet-fallback-panel),
-  .scrollsheet-fallback[data-scrollsheet-side="top"] :where(.scrollsheet-fallback-panel) {
-    max-width: var(--scrollsheet-max-inline, 640px);
-    margin-inline: auto;
-  }
-}
-
-/* The drag handle is a gesture affordance and there are no gestures here —
-   showing one advertises an interaction that does nothing. */
-.scrollsheet-fallback [data-scrollsheet-handle] {
-  display: none;
-}
-
-/*
  * ── Forced colors (Windows High Contrast, `forced-colors: active`) ────────
  * Verified against real forced-colors emulation, not assumed: box-shadow is
  * discarded outright (computes to none regardless of its value), and a
@@ -1375,24 +1240,21 @@
  * browser's forced palette while the alpha channel survives — so the
  * backdrop and the panel behind it resolve to the SAME forced color, and a
  * same-color layer stacked at any opacity over an identical background
- * produces no visible dimming at all. Applies to both the main path and the
- * no-<dialog> fallback panel above, in one block since the treatment is
- * identical.
+ * produces no visible dimming at all. fallback.css repeats the treatment for
+ * the no-<dialog> path.
  */
 @media (forced-colors: active) {
   /* The backdrop carries no text and conveys no information by color alone —
      forced-color-adjust: none keeps its authored translucent black instead
      of losing the dimming cue to the RGB-forcing described above. */
-  :where(.scrollsheet-backdrop),
-  :where(.scrollsheet-fallback-backdrop) {
+  :where(.scrollsheet-backdrop) {
     forced-color-adjust: none;
   }
 
   /* Panel vs page: both would otherwise resolve to the identical forced
      Canvas, and box-shadow is discarded in this mode too (per above) —
      without a real border the sheet has no visible boundary at all. */
-  :where(.scrollsheet-panel),
-  :where(.scrollsheet-fallback-panel) {
+  :where(.scrollsheet-panel) {
     background: Canvas;
     color: CanvasText;
     border: 1px solid ButtonBorder;
@@ -1404,9 +1266,7 @@
      the border/background from the rule above still applies underneath
      (different property, no conflict). */
   .scrollsheet-dialog:is([data-scrollsheet-side="top"], [data-scrollsheet-side="left"], [data-scrollsheet-side="right"])
-    :where(.scrollsheet-panel),
-  .scrollsheet-fallback:is([data-scrollsheet-side="top"], [data-scrollsheet-side="left"], [data-scrollsheet-side="right"])
-    :where(.scrollsheet-fallback-panel) {
+    :where(.scrollsheet-panel) {
     box-shadow: none;
   }
 

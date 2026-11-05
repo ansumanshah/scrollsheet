@@ -1155,6 +1155,7 @@ export const Content = /* @__PURE__ */ React.forwardRef<HTMLDivElement, SheetCon
           ref={composedPanelRef}
           side={ctx.center ? "center" : ctx.side}
           modal={ctx.modal !== false}
+          nonce={ctx.nonce}
           backdropDismissible={ctx.backdropDismissible}
           escapeDismissible={ctx.escapeDismissible}
           onDismiss={() => ctx.setOpen(false)}
