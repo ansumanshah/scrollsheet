@@ -42,6 +42,8 @@ for (const css of [
   "contain: layout",
   "contain: content",
   "contain: strict; width: 300px; height: 300px",
+  "will-change: transform",
+  "will-change: opacity, filter",
 ]) {
   test(`the toaster stays out of a dialog with ${css}`, async ({ page }) => {
     await firePageToast(page);
@@ -101,4 +103,67 @@ test("a transform that outlasts the entry animation keeps the toaster out", asyn
   );
   await settled(page);
   await expect(page.locator(HOST)).toHaveCount(0);
+});
+
+test("will-change on a property that doesn't clip leaves the toaster free to move in", async ({
+  page,
+}) => {
+  await firePageToast(page);
+  await openDialog(page, "will-change: opacity");
+  await expect(page.locator(HOST).first()).toBeAttached();
+});
+
+/** Each ends a clip that was only temporary, with no animationend or transitionend. */
+for (const [name, end] of [
+  [
+    "a WAAPI entry",
+    (dialog: HTMLElement) => {
+      dialog.animate([{ transform: "scale(0.9)" }, { transform: "none" }], { duration: 300 });
+    },
+  ],
+  [
+    "a JS transform written back to none",
+    (dialog: HTMLElement) => {
+      dialog.style.transform = "translateY(10px)";
+      setTimeout(() => (dialog.style.transform = "none"), 300);
+    },
+  ],
+  [
+    "a CSS animation cancelled partway",
+    (dialog: HTMLElement) => {
+      dialog.style.animation = "enter 60s";
+      setTimeout(() => (dialog.style.animation = "none"), 300);
+    },
+  ],
+] as const) {
+  test(`${name} doesn't strand the toaster behind the modal`, async ({ page }) => {
+    await firePageToast(page);
+    await page.addStyleTag({ content: ENTER });
+    await page.evaluate(
+      ([end]) => {
+        const d = document.createElement("dialog");
+        d.id = "dialog";
+        document.body.append(d);
+        d.showModal();
+        // Past the toaster's first look at the open modal.
+        new Function("dialog", `(${end})(dialog)`)(d);
+      },
+      [end.toString()],
+    );
+    await expect(page.locator(HOST)).toHaveCount(0);
+    await expect(page.locator(HOST).first()).toBeAttached();
+  });
+}
+
+test("a clipping modal removed without close() hands the toaster to the one below", async ({
+  page,
+}) => {
+  await firePageToast(page);
+  await openDialog(page, "", "below");
+  await expect(page.locator("#below [data-sonner-toaster]").first()).toBeAttached();
+  await openDialog(page, "transform: translateX(10px)");
+  await settled(page);
+  await expect(page.locator("dialog [data-sonner-toaster]")).toHaveCount(0);
+  await page.evaluate(() => document.getElementById("dialog")!.remove());
+  await expect(page.locator("#below [data-sonner-toaster]").first()).toBeAttached();
 });
