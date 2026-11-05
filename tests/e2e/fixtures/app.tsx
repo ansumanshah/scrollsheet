@@ -60,6 +60,7 @@ import {
   DrawerContentAsChildFragmentSheet,
   DrawerSelectableTextSheet,
   DrawerNonceSheet,
+  DrawerOnReleaseFalseSheet,
 } from "./drawer";
 import { DialogAcceptanceModal, DialogNonceModal } from "./dialog";
 import { FlickSheets, FooterSheets } from "./footer";
@@ -130,6 +131,7 @@ export function App() {
         />
         <DialogNonceModal />
         <DrawerNonceSheet />
+        <DrawerOnReleaseFalseSheet />
         <ThreeDetentSheet />
         <KeyboardSheet />
         <ControlledSheet />
