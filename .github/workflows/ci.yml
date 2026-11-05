@@ -92,13 +92,9 @@ jobs:
       - run: bun run test
 
   # One job per Playwright project so webkit/firefox run alongside chromium
-  # instead of after it. playwright.config.ts pins workers to 1 under CI, so
-  # multiple --project flags in a single job run each test one at a time —
-  # measured locally with CI=1 forced, chromium-mobile alone (154 tests) took
-  # ~5 minutes this way, not the ~30s a multi-worker local run suggests.
-  # Splitting across matrix jobs can't remove that per-project floor (workers
-  # is still 1 inside each job — that setting lives in playwright.config.ts,
-  # outside this file), but it does parallelize the projects against
+  # instead of after it. The CI worker count lives in playwright.config.ts, so
+  # matrix jobs can't lower the per-project floor, but they do parallelize the
+  # projects against
   # each other across separate GitHub-hosted runners instead of summing them
   # in one job, and each job now installs only the one browser engine it
   # needs. tests/e2e/fixtures/ bundles straight from ../../src (see serve.ts),
@@ -106,6 +102,12 @@ jobs:
   e2e:
     runs-on: ubuntu-latest
     timeout-minutes: 30
+    # Browsers and their system packages ship in the image; installing WebKit's
+    # took longer than its tests. tests/unit/ci-playwright-image.test.ts keeps
+    # this tag on the installed @playwright/test version.
+    container:
+      image: mcr.microsoft.com/playwright:v1.64.1-noble
+      options: --user 1001
     strategy:
       fail-fast: false
       matrix:
@@ -122,9 +124,10 @@ jobs:
             browser: chromium
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
-      - uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2
-        with:
-          bun-version: 1.4.4
+      # setup-bun needs unzip, which the image lacks and a non-root user can't install.
+      - run: |
+          npm install --prefix "$HOME/bun" bun@1.4.4
+          echo "$HOME/bun/node_modules/.bin" >> "$GITHUB_PATH"
       - id: bun-cache-dir
         run: echo "path=$(bun pm cache)" >> "$GITHUB_OUTPUT"
       - name: Cache bun packages
@@ -134,20 +137,6 @@ jobs:
           key: ${{ runner.os }}-bun-${{ hashFiles('bun.lock') }}
           restore-keys: ${{ runner.os }}-bun-
       - run: bun install --frozen-lockfile --filter=scrollsheet
-      - name: Cache Playwright browser binaries
-        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6
-        with:
-          path: ~/.cache/ms-playwright
-          # --with-deps still runs every time (it also installs OS-level apt
-          # packages, which this cache does not cover) but it skips
-          # redownloading a browser binary that's already present at the
-          # version this key resolves to.
-          key: ${{ runner.os }}-playwright-${{ matrix.browser }}-${{ hashFiles('bun.lock') }}
-          # A lockfile bump that does not move playwright still invalidates the
-          # exact key; the prefix restores the old binaries so `playwright
-          # install` re-downloads only what actually changed.
-          restore-keys: ${{ runner.os }}-playwright-${{ matrix.browser }}-
-      - run: bunx playwright install --with-deps ${{ matrix.browser }}
       - run: bun run test:e2e -- --project=${{ matrix.project }}
 
   docs:

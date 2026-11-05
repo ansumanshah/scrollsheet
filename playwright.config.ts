@@ -56,7 +56,7 @@ export default defineConfig({
   retries: process.env.CI ? 2 : 0,
   // Playwright's local default is half the cores (5 on this M4); the suite is
   // I/O-light and dialog-heavy, and 75% measured faster without flaking.
-  workers: process.env.CI ? 1 : "75%",
+  workers: process.env.CI ? 2 : "75%",
   reporter: "list",
   use: {
     baseURL: `http://localhost:${PORT}`,
