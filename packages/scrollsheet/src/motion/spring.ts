@@ -55,43 +55,43 @@ function createSpringSolver(
 ): (t: number) => SpringSample {
   const undampedAngularFreq = Math.sqrt(stiffness / mass);
   const dampingRatio = damping / (2 * Math.sqrt(stiffness * mass));
-  const target = 1;
-  const initialDelta = 1; // target(1) − origin(0), fixed by this library's progress convention
+  // Target 1 and initial delta 1 (origin 0) are fixed by this library's progress
+  // convention, so they are folded out of the forms below.
   // The closed forms below solve for x'(0) in terms of -velocity; negating here
   // is what makes resolveAt(0).velocity come back out as the caller's velocity.
   const v0 = -velocity;
 
   if (dampingRatio < 1) {
     const angularFreq = undampedAngularFreq * Math.sqrt(1 - dampingRatio * dampingRatio);
-    const A = (v0 + dampingRatio * undampedAngularFreq * initialDelta) / angularFreq;
-    const sinCoeff = dampingRatio * undampedAngularFreq * A + initialDelta * angularFreq;
-    const cosCoeff = dampingRatio * undampedAngularFreq * initialDelta - A * angularFreq;
+    const A = (v0 + dampingRatio * undampedAngularFreq) / angularFreq;
+    const sinCoeff = dampingRatio * undampedAngularFreq * A + angularFreq;
+    const cosCoeff = dampingRatio * undampedAngularFreq - A * angularFreq;
     return (t) => {
       const envelope = Math.exp(-dampingRatio * undampedAngularFreq * t);
       const sin = Math.sin(angularFreq * t);
       const cos = Math.cos(angularFreq * t);
       return {
-        value: target - envelope * (A * sin + initialDelta * cos),
+        value: 1 - envelope * (A * sin + cos),
         velocity: envelope * (sinCoeff * sin + cosCoeff * cos),
       };
     };
   }
 
   if (dampingRatio === 1) {
-    const C = v0 + undampedAngularFreq * initialDelta;
+    const C = v0 + undampedAngularFreq;
     return (t) => {
       const envelope = Math.exp(-undampedAngularFreq * t);
       return {
-        value: target - envelope * (initialDelta + C * t),
+        value: 1 - envelope * (1 + C * t),
         velocity: envelope * (undampedAngularFreq * C * t - v0),
       };
     };
   }
 
   const dampedAngularFreq = undampedAngularFreq * Math.sqrt(dampingRatio * dampingRatio - 1);
-  const P = (v0 + dampingRatio * undampedAngularFreq * initialDelta) / dampedAngularFreq;
-  const sinhCoeff = dampingRatio * undampedAngularFreq * P - initialDelta * dampedAngularFreq;
-  const coshCoeff = dampingRatio * undampedAngularFreq * initialDelta - P * dampedAngularFreq;
+  const P = (v0 + dampingRatio * undampedAngularFreq) / dampedAngularFreq;
+  const sinhCoeff = dampingRatio * undampedAngularFreq * P - dampedAngularFreq;
+  const coshCoeff = dampingRatio * undampedAngularFreq - P * dampedAngularFreq;
   return (t) => {
     const envelope = Math.exp(-dampingRatio * undampedAngularFreq * t);
     // sinh/cosh overflow past ~710; capping keeps this finite once envelope has already collapsed the term to ~0
@@ -99,7 +99,7 @@ function createSpringSolver(
     const sinh = Math.sinh(freqForT);
     const cosh = Math.cosh(freqForT);
     return {
-      value: target - envelope * (P * sinh + initialDelta * cosh),
+      value: 1 - envelope * (P * sinh + cosh),
       velocity: envelope * (sinhCoeff * sinh + coshCoeff * cosh),
     };
   };
@@ -117,7 +117,6 @@ export function spring(config: SpringConfig = {}): SpringCurve {
   // Each step reads the closed form directly (O(1) eval), not a
   // forward-integration estimate — the search costs one eval per 1/240s and
   // never drifts from the true curve.
-  const step = 1 / 240;
   let t = 0;
   let settled = false;
   while (t < MAX_MS / 1000) {
@@ -126,21 +125,22 @@ export function spring(config: SpringConfig = {}): SpringCurve {
       settled = true;
       break;
     }
-    t += step;
+    t += 1 / 240;
   }
   if (!settled) {
     // Fail loudly rather than truncate: a linear() curve whose last keyframe
     // hasn't reached rest visibly pops instead of settling. Only fires for a
     // genuinely broken config (near-zero or negative damping/stiffness).
     throw new Error(
-      `spring() did not settle within ${MAX_MS}ms (stiffness=${stiffness}, damping=${damping}, ` +
-        `mass=${mass}, restDelta=${restDelta}) — check for near-zero damping/stiffness or an ` +
-        `unreachable restDelta.`,
+      process.env.NODE_ENV === "production"
+        ? "spring() did not settle"
+        : `spring() did not settle within ${MAX_MS}ms (stiffness=${stiffness}, damping=${damping}, ` +
+            `mass=${mass}, restDelta=${restDelta}) — check for near-zero damping/stiffness or an ` +
+            `unreachable restDelta.`,
     );
   }
 
   const durationMs = Math.round(t * 1000);
-  const durationSec = t;
   const samples = Math.max(2, Math.round((durationMs / 1000) * SAMPLE_HZ));
 
   // Dense, evenly spaced candidates first; then adaptive simplification
@@ -150,9 +150,8 @@ export function spring(config: SpringConfig = {}): SpringCurve {
   const candidates: Array<{ p: number; y: number }> = [];
   for (let i = 0; i <= samples; i++) {
     const p = i / samples;
-    candidates.push({ p, y: resolveAt(p * durationSec).value });
+    candidates.push({ p, y: resolveAt(p * t).value });
   }
-  const TOLERANCE = 0.0015;
   const keep = new Array<boolean>(candidates.length).fill(false);
   keep[0] = keep[candidates.length - 1] = true;
   const stack: Array<[number, number]> = [[0, candidates.length - 1]];
@@ -162,7 +161,7 @@ export function spring(config: SpringConfig = {}): SpringCurve {
     const a = candidates[lo]!;
     const b = candidates[hi]!;
     let worst = -1;
-    let worstError = TOLERANCE;
+    let worstError = 0.0015;
     for (let i = lo + 1; i < hi; i++) {
       const c = candidates[i]!;
       const predicted = a.y + ((b.y - a.y) * (c.p - a.p)) / (b.p - a.p);
