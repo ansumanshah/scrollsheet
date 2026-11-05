@@ -14,7 +14,7 @@
   "keywords": ["scrollsheet", "vaul", "codemod", "migration", "jscodeshift", "drawer"],
   "type": "module",
   "bin": {
-    "scrollsheet-codemod": "./dist/cli.js"
+    "scrollsheet-codemod": "dist/cli.js"
   },
   "files": ["dist"],
   "engines": {

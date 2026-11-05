@@ -82,6 +82,8 @@ test("a scripted track click dismisses after a drag on content, which clicks not
   await page.mouse.move(from.x, from.y - 40);
   await page.mouse.down();
   await page.mouse.move(from.x, from.y - 20, { steps: 4 });
+  // Without a pause this reads as a flick, which may dismiss by velocity.
+  await page.waitForTimeout(150);
   await page.mouse.up();
   await page.waitForTimeout(600);
   await expect(overlay).toHaveAttribute("data-scrollsheet-state", "open");
