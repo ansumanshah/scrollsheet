@@ -366,6 +366,7 @@
      base rule's bottom clearance for top clearance. */
   padding-bottom: 0;
   padding-top: max(var(--scrollsheet-safe-area-top, env(safe-area-inset-top, 0px)), 0px);
+  flex-direction: column;
 }
 /* Shared full-height side geometry; each side then adds only its own
    anchor edge, travel direction, and notch clearance. Full-height panels
@@ -384,6 +385,7 @@
   left: var(--scrollsheet-inset-left, 0px);
   transform: translate3d(-100%, 0, 0);
   padding-left: max(var(--scrollsheet-safe-area-left, env(safe-area-inset-left, 0px)), 0px);
+  flex-direction: row;
 }
 .scrollsheet-dialog[data-scrollsheet-side="right"] .scrollsheet-panel {
   left: auto;
@@ -409,12 +411,6 @@
   display: flex;
   justify-content: flex-end;
 }
-.scrollsheet-dialog[data-scrollsheet-side="top"] .scrollsheet-panel {
-  flex-direction: column;
-}
-.scrollsheet-dialog[data-scrollsheet-side="left"] .scrollsheet-panel {
-  flex-direction: row;
-}
 /* The far-edge anchor must not shrink content narrower than the panel:
    an intrinsic-width body in a wider detent left a blank stripe on the
    panel's near edge at rest. Full-basis keeps the anchor for the reveal
@@ -426,20 +422,13 @@
 
 /* Cosmetic default — :where() so a consumer className on Sheet.Content can
    restore a visible scrollbar at normal specificity, e.g.
-   .my-sheet { scrollbar-width: thin }. The track already hides its own. */
-:where(.scrollsheet-panel) {
+   .my-sheet { scrollbar-width: thin }. The track already hides its own.
+   Nested-scroll markers get the same default (opted out below for
+   scrollbar='native'). */
+:where(.scrollsheet-panel, [data-scrollsheet-nested-scroll]) {
   scrollbar-width: none;
 }
-:where(.scrollsheet-panel)::-webkit-scrollbar {
-  display: none;
-}
-
-/* Nested-scroll markers get the same native-scrollbar-hide default as the
-   panel (opted out below for scrollbar='native'). */
-:where([data-scrollsheet-nested-scroll]) {
-  scrollbar-width: none;
-}
-:where([data-scrollsheet-nested-scroll])::-webkit-scrollbar {
+:where(.scrollsheet-panel, [data-scrollsheet-nested-scroll])::-webkit-scrollbar {
   display: none;
 }
 /* Containing block for the injected thumb (use-nested-scroll.ts), scoped
@@ -680,17 +669,12 @@
 
 /* scrollbar='native': opt out of both the hidden-native-scrollbar default
    above and the overlay thumb (which simply isn't rendered in this mode). */
-.scrollsheet-dialog[data-scrollsheet-scrollbar="native"] .scrollsheet-panel {
-  scrollbar-width: auto;
-}
-.scrollsheet-dialog[data-scrollsheet-scrollbar="native"] .scrollsheet-panel::-webkit-scrollbar {
-  display: block;
-}
-.scrollsheet-dialog[data-scrollsheet-scrollbar="native"] [data-scrollsheet-nested-scroll] {
+.scrollsheet-dialog[data-scrollsheet-scrollbar="native"]
+  :is(.scrollsheet-panel, [data-scrollsheet-nested-scroll]) {
   scrollbar-width: auto;
 }
 .scrollsheet-dialog[data-scrollsheet-scrollbar="native"]
-  [data-scrollsheet-nested-scroll]::-webkit-scrollbar {
+  :is(.scrollsheet-panel, [data-scrollsheet-nested-scroll])::-webkit-scrollbar {
   display: block;
 }
 /* Resting transforms only — each state's value is the *end* of its
@@ -698,8 +682,8 @@
    driven from content.tsx (interruptible, velocity-carrying), not a CSS
    transition. If that animation can't run (no WAAPI at all), these resting
    values still land the sheet in the right place, just without the travel. */
-.scrollsheet-dialog[data-scrollsheet-state="opening"] .scrollsheet-panel,
-.scrollsheet-dialog[data-scrollsheet-state="open"] .scrollsheet-panel {
+.scrollsheet-dialog:is([data-scrollsheet-state="opening"], [data-scrollsheet-state="open"])
+  .scrollsheet-panel {
   transform: translate3d(0, 0, 0);
 }
 .scrollsheet-dialog[data-scrollsheet-state="closing"] .scrollsheet-panel {
@@ -829,8 +813,8 @@
  * panel's content back to its own top edge doesn't chain into track's native
  * scroll and re-open the drag handleOnly/disableDrag are meant to block.
  */
-.scrollsheet-dialog[data-scrollsheet-handle-only] .scrollsheet-panel,
-.scrollsheet-dialog[data-scrollsheet-disable-drag] .scrollsheet-panel {
+.scrollsheet-dialog:is([data-scrollsheet-handle-only], [data-scrollsheet-disable-drag])
+  .scrollsheet-panel {
   touch-action: pan-y;
 }
 /*
@@ -841,9 +825,9 @@
  * scoping, so the handleOnly/disableDrag guarantee holds outside a live
  * marked-element touch).
  */
-.scrollsheet-dialog[data-scrollsheet-handle-only]:not([data-scrollsheet-at-nested-boundary])
-  .scrollsheet-panel,
-.scrollsheet-dialog[data-scrollsheet-disable-drag]:not([data-scrollsheet-at-nested-boundary])
+.scrollsheet-dialog:is([data-scrollsheet-handle-only], [data-scrollsheet-disable-drag]):not(
+    [data-scrollsheet-at-nested-boundary]
+  )
   .scrollsheet-panel {
   overscroll-behavior: contain;
 }
@@ -857,18 +841,11 @@
  * direction follows the sheet's own travel axis, same split as the
  * left/right track/canvas rules further up.
  */
-.scrollsheet-dialog[data-scrollsheet-at-nested-boundary] .scrollsheet-track,
-.scrollsheet-dialog[data-scrollsheet-at-nested-boundary] .scrollsheet-canvas {
+.scrollsheet-dialog[data-scrollsheet-at-nested-boundary] :is(.scrollsheet-track, .scrollsheet-canvas) {
   touch-action: pan-y;
 }
-.scrollsheet-dialog[data-scrollsheet-side="left"][data-scrollsheet-at-nested-boundary]
-  .scrollsheet-track,
-.scrollsheet-dialog[data-scrollsheet-side="left"][data-scrollsheet-at-nested-boundary]
-  .scrollsheet-canvas,
-.scrollsheet-dialog[data-scrollsheet-side="right"][data-scrollsheet-at-nested-boundary]
-  .scrollsheet-track,
-.scrollsheet-dialog[data-scrollsheet-side="right"][data-scrollsheet-at-nested-boundary]
-  .scrollsheet-canvas {
+.scrollsheet-dialog:is([data-scrollsheet-side="left"], [data-scrollsheet-side="right"])[data-scrollsheet-at-nested-boundary]
+  :is(.scrollsheet-track, .scrollsheet-canvas) {
   touch-action: pan-x;
 }
 
