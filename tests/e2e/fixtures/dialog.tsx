@@ -37,3 +37,14 @@ export function DialogAcceptanceModal({
     </Dialog.Root>
   );
 }
+
+export function DialogNonceModal() {
+  return (
+    <Dialog.Root nonce="e2e-nonce">
+      <Dialog.Trigger className="btn">Dialog nonce modal</Dialog.Trigger>
+      <Dialog.Content className="sheet fixture-dialog-panel" aria-label="Dialog nonce modal">
+        <Dialog.Title>Nonce</Dialog.Title>
+      </Dialog.Content>
+    </Dialog.Root>
+  );
+}

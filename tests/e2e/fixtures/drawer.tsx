@@ -277,3 +277,14 @@ export function DrawerSelectableTextSheet({
     </Drawer.Root>
   );
 }
+
+export function DrawerNonceSheet() {
+  return (
+    <Drawer.Root nonce="e2e-nonce">
+      <Drawer.Trigger className="btn">Drawer nonce sheet</Drawer.Trigger>
+      <Drawer.Content className="sheet" aria-label="Drawer nonce sheet">
+        <Drawer.Title>Nonce</Drawer.Title>
+      </Drawer.Content>
+    </Drawer.Root>
+  );
+}

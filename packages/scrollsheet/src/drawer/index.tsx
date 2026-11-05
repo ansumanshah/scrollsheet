@@ -146,7 +146,7 @@ export function composeOpenChange(
  * Radix onPointerDownOutside/onInteractOutside preventDefault idiom),
  * `escapeDismissible` (same for onEscapeKeyDown), `flick`, `keyboardExpands`,
  * `onTravel` (the live counterpart of vaul's ignored `onDrag`), `scrollbar`,
- * `animationSpeed`, and `actionsRef`. Only props with no vaul name-collision are forwarded —
+ * `animationSpeed`, `nonce`, and `actionsRef`. Only props with no vaul name-collision are forwarded —
  * anything vaul also has (`closeThreshold`, `modal`, `dismissible`, …) keeps
  * its translated vaul semantics above.
  */
@@ -158,6 +158,7 @@ export interface DrawerRootProps extends Pick<
   | "escapeDismissible"
   | "keyboardExpands"
   | "flick"
+  | "nonce"
   | "onTravel"
   | "scrollbar"
 > {
@@ -277,6 +278,7 @@ export function Root(props: DrawerRootProps) {
     onTravel,
     scrollbar,
     animationSpeed,
+    nonce,
   } = props;
 
   // Fires during render (not an effect) so it also surfaces on the server —
@@ -410,6 +412,7 @@ export function Root(props: DrawerRootProps) {
         onTravel={onTravel}
         scrollbar={scrollbar}
         animationSpeed={animationSpeed}
+        nonce={nonce}
       >
         {children}
       </SheetRoot>

@@ -59,8 +59,9 @@ import {
   DrawerContentAsChildSheet,
   DrawerContentAsChildFragmentSheet,
   DrawerSelectableTextSheet,
+  DrawerNonceSheet,
 } from "./drawer";
-import { DialogAcceptanceModal } from "./dialog";
+import { DialogAcceptanceModal, DialogNonceModal } from "./dialog";
 import { FlickSheets, FooterSheets } from "./footer";
 import {
   SonnerFixture,
@@ -127,6 +128,8 @@ export function App() {
           trigger="Dialog acceptance modal (backdrop blocked)"
           backdropDismissible={false}
         />
+        <DialogNonceModal />
+        <DrawerNonceSheet />
         <ThreeDetentSheet />
         <KeyboardSheet />
         <ControlledSheet />
