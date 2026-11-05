@@ -44,7 +44,7 @@ import {
   warnCoreStylesMissing,
   warnMissingDialogSupport,
 } from "./internal/env";
-import { preloadFallbackSheet } from "./internal/fallback-sheet-loader";
+import { fallbackSheet } from "./internal/fallback-sheet-loader";
 import { Slot, composeRefs } from "./internal/slot";
 import { injectStyles } from "./internal/styles";
 import type { ThemeColorController } from "./internal/theme-color";
@@ -299,19 +299,7 @@ export const Content = /* @__PURE__ */ React.forwardRef<HTMLDivElement, SheetCon
     // it. Keyed on the platform probe at MOUNT (not on open) so the module
     // is resident before the first open on the platforms that need it; a
     // defaultOpen first render there shows the modal one microtask late.
-    const [LoadedFallbackSheet, setLoadedFallbackSheet] = React.useState<
-      typeof import("./internal/fallback-sheet").FallbackSheet | null
-    >(null);
-    React.useEffect(() => {
-      if (dialogOk || !mounted || LoadedFallbackSheet) return;
-      let alive = true;
-      void preloadFallbackSheet().then((mod) => {
-        if (alive && mod) setLoadedFallbackSheet(() => mod.FallbackSheet);
-      });
-      return () => {
-        alive = false;
-      };
-    }, [dialogOk, mounted, LoadedFallbackSheet]);
+    const fallbackMod = fallbackSheet.useFeature(!dialogOk && mounted);
 
     // panelRef never changes identity, so this only re-composes when the
     // consumer's own ref does.
@@ -1149,9 +1137,9 @@ export const Content = /* @__PURE__ */ React.forwardRef<HTMLDivElement, SheetCon
       // state-driven open. The forwarded ref reaches the fallback panel so
       // compat layers that bridge attributes off the panel node (Dialog's
       // data-state) keep working on this path.
-      if (!LoadedFallbackSheet) return null;
+      if (!fallbackMod) return null;
       return (
-        <LoadedFallbackSheet
+        <fallbackMod.FallbackSheet
           ref={composedPanelRef}
           side={ctx.center ? "center" : ctx.side}
           modal={ctx.modal !== false}
@@ -1165,7 +1153,7 @@ export const Content = /* @__PURE__ */ React.forwardRef<HTMLDivElement, SheetCon
           panelProps={panelProps}
         >
           {children}
-        </LoadedFallbackSheet>
+        </fallbackMod.FallbackSheet>
       );
     }
 

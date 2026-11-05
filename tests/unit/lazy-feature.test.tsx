@@ -95,4 +95,17 @@ describe("createFeatureLoader", () => {
     expect(seen.at(-1)).toBe(null);
     await expect(loader.preload()).resolves.toBe(null);
   });
+
+  test("a failed import retries on the next preload", async () => {
+    let calls = 0;
+    const mod = { name: "kb" };
+    const loader = lazyFeature.createFeatureLoader<FakeModule>(async () => {
+      calls += 1;
+      if (calls === 1) throw new Error("offline");
+      return mod;
+    });
+    await expect(loader.preload()).resolves.toBe(null);
+    await expect(loader.preload()).resolves.toBe(mod);
+    expect(calls).toBe(2);
+  });
 });
