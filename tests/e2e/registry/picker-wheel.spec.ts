@@ -139,9 +139,25 @@ test.describe("picker-wheel", () => {
 });
 
 test.describe("picker-wheel touch", () => {
-  test.skip(({ browserName }) => browserName !== "chromium", "needs CDP scroll gestures");
+  test("a wheel snaps its own rows and keeps overscroll from the sheet", async ({ page }) => {
+    await page.goto("/registry");
+    const dialog = await openByName(page, "Pick fruit");
+    const style = await dialog
+      .getByRole("listbox", { name: "Fruit" })
+      .evaluate((el) => getComputedStyle(el));
+    expect(style.scrollSnapType).toBe("y mandatory");
+    expect(style.overscrollBehaviorY).toBe("contain");
+  });
 
-  test("flinging a wheel snaps to a row and never moves the sheet", async ({ page }) => {
+  test("flinging a wheel snaps to a row and never moves the sheet", async ({
+    page,
+    browserName,
+  }) => {
+    // Synthesized touch gestures leave the wheel unmoved on headless Linux.
+    test.skip(
+      browserName !== "chromium" || process.platform === "linux",
+      "needs CDP scroll gestures that reach the wheel",
+    );
     await page.goto("/registry");
     const dialog = await openByName(page, "Pick fruit");
     const fruit = dialog.getByRole("listbox", { name: "Fruit" });
