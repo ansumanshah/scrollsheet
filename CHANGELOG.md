@@ -5,16 +5,17 @@ All notable changes to this project are documented here.
 ## 1.3.0 - 2026-11-05
 
 - **`Sheet.Footer` stays on the sheet's visible bottom edge at every detent and above the keyboard.** It absorbs the bottom safe-area inset and is also available as `Drawer.Footer`.
-- **`flick="step"` moves exactly one detent on a fast release.** A slow release settles to the nearest detent, as it does without `flick`. Only a flick from the first detent can dismiss. The default stays velocity projection.
+- **`flick="step"` lands on the next detent past the release point.** It never moves against the flick. A slow release settles on the nearest detent, as it does without `flick`. Speed alone can dismiss only from the first detent. The default stays velocity projection.
 - **`autoFocus` now works inside a sheet.** The field keeps focus through `showModal()` without firing blur, and arms the keyboard engine with a toolbar baseline taken before focus.
 - **`onActiveDetentChange` now reports the detent a mouse drag lands on.** It could previously miss the final detent after a mouse or scripted drag.
-- **Toasts stay above modal sheets.** A page-level `Toaster` no longer sits dimmed behind an open modal, and its actions work there. Inside a third-party `<dialog>` that has a CSS `transform`, toasts position against that dialog; the Sonner migration guide notes this.
+- **Selecting text or dragging off a button no longer dismisses the sheet.** Outside dismissal now needs the press to start outside the panel too.
+- **Toasts stay above modal sheets.** A page-level `Toaster` no longer sits dimmed behind an open modal, and its actions work there. A third-party `<dialog>` with a `transform`, `filter`, `backdrop-filter`, `perspective`, or `contain` would clip them, so toasts stay in `document.body` behind that dialog; the Sonner migration guide notes this.
 - **Promoted toasts no longer show blank before their content appears.** Hidden content now fades in as a toast moves to the front.
 - **Four new registry components.** Mobile select, command palette, picker wheel, and action sheet install through the shadcn CLI and add no bytes to the core package. `/r/registry.json` now indexes every item.
 - **`scrollsheet-codemod` moves a project off vaul.** `npx scrollsheet-codemod vaul src` rewrites the imports and reports each prop to check, with file and line.
 - **The site has a new homepage and comparison pages.** Pages for vaul, Base UI, react-modal-sheet, and Radix Dialog include what scrollsheet does worse, alongside a React bottom sheet guide.
 - **Docs accessibility is fixed.** Faint text meets contrast in both themes, and the example tabs no longer carry an invalid role.
-- **The Sheet entry grew from 16.3 to 16.7 kB gzip, with the core stylesheet at 4.2 kB.** The footer and the fixes above account for it. Drawer and Dialog budgets rose by 0.2 kB, the `auto` entry by 0.1 kB, and the combined import by 0.4 kB.
+- **Sizes are now reported compressed, using brotli, with whole-kB budgets.** The `Sheet` import is about 15 kB, up about 0.3 kB from 1.2.3 for the footer and the fixes above, plus a 4 kB stylesheet. Many libraries quote gzip, which runs larger, so compare like with like.
 - **`content.tsx` is split to stay under the repository's file size limit.** Detent measurement moved to its own hook, with no public API change.
 
 ## 1.2.3 - 2026-11-04

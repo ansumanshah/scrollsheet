@@ -11,12 +11,12 @@ export interface BundleSize {
 }
 
 export const BUNDLE_SIZES: Record<"index" | "drawer" | "dialog" | "toast" | "all" | "auto", BundleSize> = {
-  index: { brotliKb: 14.93 },
-  drawer: { brotliKb: 15.86 },
-  dialog: { brotliKb: 14.74 },
-  toast: { brotliKb: 6.18 },
-  all: { brotliKb: 20.98 },
-  auto: { brotliKb: 18.59 },
+  index: { brotliKb: 14.94 },
+  drawer: { brotliKb: 15.88 },
+  dialog: { brotliKb: 14.71 },
+  toast: { brotliKb: 6.25 },
+  all: { brotliKb: 21.09 },
+  auto: { brotliKb: 18.55 },
 };
 
 // The shipped stylesheets, brotli-compressed the same way. Consumers link these
