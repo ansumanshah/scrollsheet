@@ -92,13 +92,9 @@ jobs:
       - run: bun run test
 
   # One job per Playwright project so webkit/firefox run alongside chromium
-  # instead of after it. playwright.config.ts pins workers to 1 under CI, so
-  # multiple --project flags in a single job run each test one at a time —
-  # measured locally with CI=1 forced, chromium-mobile alone (154 tests) took
-  # ~5 minutes this way, not the ~30s a multi-worker local run suggests.
-  # Splitting across matrix jobs can't remove that per-project floor (workers
-  # is still 1 inside each job — that setting lives in playwright.config.ts,
-  # outside this file), but it does parallelize the projects against
+  # instead of after it. The CI worker count lives in playwright.config.ts, so
+  # matrix jobs can't lower the per-project floor, but they do parallelize the
+  # projects against
   # each other across separate GitHub-hosted runners instead of summing them
   # in one job, and each job now installs only the one browser engine it
   # needs. tests/e2e/fixtures/ bundles straight from ../../src (see serve.ts),
