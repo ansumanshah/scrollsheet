@@ -160,6 +160,7 @@ export const Content = /* @__PURE__ */ React.forwardRef<HTMLDivElement, SheetCon
     const dimStartRef = React.useRef(0);
     const dimEndRef = React.useRef(0);
     const atMaxRef = React.useRef(false);
+    const pressedContentRef = React.useRef(false);
     // onTravel's 3rd arg: one object + one Map, reused and mutated in place
     // every travel frame instead of allocated fresh — see TravelInfo's TSDoc.
     const travelInfoRef = React.useRef<{
@@ -1229,6 +1230,8 @@ export const Content = /* @__PURE__ */ React.forwardRef<HTMLDivElement, SheetCon
         <div className="scrollsheet-kb-fade" aria-hidden="true" />
       ) : null;
 
+    const isOutside = (target: EventTarget) =>
+      target === trackRef.current || target === canvasRef.current;
     const chromeStrips = !nonModal && ctx.themeColorDimming;
     const flipFeature =
       flipMod && ctx.desktopProfile ? <flipMod.PresentationFlipFeature {...flipProps} /> : null;
@@ -1285,9 +1288,13 @@ export const Content = /* @__PURE__ */ React.forwardRef<HTMLDivElement, SheetCon
           ref={trackRef}
           className="scrollsheet-track"
           role="presentation"
+          // A press on content released out here clicks their common ancestor.
+          // Capture phase, so content that stops pointerdown can't hide it.
+          onPointerDownCapture={(event) => {
+            pressedContentRef.current = !isOutside(event.target);
+          }}
           onClick={(event) => {
-            if (!ctx.backdropDismissible) return;
-            if (event.target === trackRef.current || event.target === canvasRef.current) {
+            if (ctx.backdropDismissible && isOutside(event.target) && !pressedContentRef.current) {
               ctx.setOpen(false);
             }
           }}
