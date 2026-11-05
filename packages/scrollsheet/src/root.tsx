@@ -197,8 +197,9 @@ export interface SheetRootProps {
   sequentialDetents?: boolean;
   /**
    * How a fast release picks its detent. `'project'` carries the velocity
-   * forward, which can cross several detents. `'step'` moves exactly one. A
-   * slow release settles on the nearest detent either way.
+   * forward, which can cross several detents. `'step'` lands on the next detent
+   * past the release point. A slow release settles on the nearest detent either
+   * way.
    * @default 'project'
    */
   flick?: "step" | "project";

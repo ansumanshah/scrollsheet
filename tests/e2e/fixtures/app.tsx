@@ -62,6 +62,7 @@ import { DialogAcceptanceModal } from "./dialog";
 import { FlickSheets, FooterSheets } from "./footer";
 import {
   SonnerFixture,
+  FooterToastFixture,
   SonnerModalFixture,
   SonnerQueueFixture,
   SonnerShrinkFixture,
@@ -174,6 +175,7 @@ export function App() {
         <SonnerQueueFixture />
         <SonnerShrinkFixture />
         <SonnerModalFixture />
+        <FooterToastFixture />
       </div>
       <section className="filler">
         {Array.from({ length: 20 }, (_, i) => (

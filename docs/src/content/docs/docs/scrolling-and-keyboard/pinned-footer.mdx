@@ -53,6 +53,21 @@ your own `padding` alone. Override the amount with `--scrollsheet-safe-area`, as
 
 The background defaults to the panel's color. Set your own on the footer's class.
 
+## Toasts
+
+A bottom toast lands on the footer's button on a phone, and it takes the tap. Move the stack to the
+top:
+
+```tsx
+<Toaster position="top-center" />
+```
+
+Or lift it clear of the footer. A 44px button with 12px of footer padding needs about 84px:
+
+```tsx
+<Toaster style={{ bottom: 84 }} />
+```
+
 ## What it changes
 
 - A `content` detent counts the footer's height.

@@ -11,10 +11,26 @@ function openModals(): Element[] {
   }
 }
 
+/** Fixed descendants of this element may anchor to and clip against its box. */
+function containsFixed(el: Element): boolean {
+  const s = getComputedStyle(el);
+  return [
+    s.transform,
+    s.translate,
+    s.rotate,
+    s.scale,
+    s.filter,
+    s.backdropFilter,
+    s.perspective,
+    s.contain,
+  ].some((value) => value && value !== "none");
+}
+
 /**
  * The portal target for a Toaster. A modal `<dialog>` makes everything outside
  * it inert, even a popover painted above it, so the toaster has to be a
- * descendant of the topmost modal to stay clickable and announced.
+ * descendant of the topmost modal to stay clickable and announced. A modal that
+ * would clip fixed descendants is left alone: the toaster stays on body, behind it.
  *
  * The element is moved by hand because React remounts a portal's subtree when
  * its container changes. Dialogs inside a shadow root aren't observable here.
@@ -40,7 +56,13 @@ export function useToasterHost(): HTMLElement | null {
       const open = openModals();
       for (const d of shown) if (!open.includes(d)) shown.delete(d);
       for (const d of open) shown.add(d);
-      const target = [...shown].pop() ?? document.body;
+      const top = [...shown].pop();
+      const target = top && (el.parentNode === top || !containsFixed(top)) ? top : document.body;
+      if (target !== top) {
+        // An entry animation's transform ends, and nothing else re-runs this.
+        top?.addEventListener("animationend", replace);
+        top?.addEventListener("transitionend", replace);
+      }
       if (el.parentNode !== target) target.append(el);
       // Removal only matters while inside a dialog that can take the host with
       // it, so the costlier childList watch never runs on a page with no modal.
@@ -51,6 +73,9 @@ export function useToasterHost(): HTMLElement | null {
       });
     };
 
+    const replace = () => {
+      if (el.isConnected) place();
+    };
     const observer = new MutationObserver(place);
 
     place();

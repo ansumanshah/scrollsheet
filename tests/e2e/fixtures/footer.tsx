@@ -129,6 +129,43 @@ function FooterContentsSheet() {
   );
 }
 
+/** The footer and rows both live below Content, inside the wrapper. */
+function FooterLateForm() {
+  const [rows, setRows] = React.useState(2);
+  const [footer, setFooter] = React.useState(false);
+  return (
+    <form style={{ display: "contents" }}>
+      <Sheet.Title>Footer late contents</Sheet.Title>
+      <button type="button" onClick={() => setFooter(true)}>
+        Mount footer
+      </button>
+      <button type="button" onClick={() => setRows(8)}>
+        Eight rows
+      </button>
+      <button type="button" onClick={() => setRows(2)}>
+        Two rows
+      </button>
+      {Array.from({ length: rows }, (_, i) => (
+        <div key={i} style={{ height: 40 }}>
+          Row {i}
+        </div>
+      ))}
+      {footer && <Sheet.Footer style={{ padding: 16 }}>Total</Sheet.Footer>}
+    </form>
+  );
+}
+
+function FooterLateContentsSheet() {
+  return (
+    <Sheet.Root detents={["content"]}>
+      <Sheet.Trigger className="btn">Footer late contents</Sheet.Trigger>
+      <Sheet.Content className="sheet" aria-label="Footer late contents">
+        <FooterLateForm />
+      </Sheet.Content>
+    </Sheet.Root>
+  );
+}
+
 function FooterNestedSheet() {
   return (
     <Sheet.Root detents={[0.4]}>
@@ -148,6 +185,7 @@ export function FooterSheets() {
     <>
       <FooterMorphSheet />
       <FooterContentsSheet />
+      <FooterLateContentsSheet />
       <FooterNestedSheet />
       <FooterSheet trigger="Footer detents" detents={[0.3, 0.6, "full"]} />
       <FooterSheet trigger="Footer content" detents={["content"]} rows={3} />
@@ -179,6 +217,7 @@ export function FlickSheets() {
       <FlickSheet flick="step" trigger="Flick step" />
       <FlickSheet trigger="Flick project" />
       <FlickSheet flick="step" trigger="Flick step non-modal" modal={false} />
+      <FlickSheet flick="step" trigger="Flick step sequential" sequentialDetents />
     </>
   );
 }
@@ -187,10 +226,12 @@ function FlickSheet({
   flick,
   trigger,
   modal,
+  sequentialDetents,
 }: {
   flick?: "step";
   trigger: string;
   modal?: boolean;
+  sequentialDetents?: boolean;
 }) {
   const [active, setActive] = React.useState<DetentSpec>(0.25);
   return (
@@ -198,6 +239,7 @@ function FlickSheet({
       detents={[0.25, 0.45, 0.65, 0.85]}
       flick={flick}
       modal={modal}
+      sequentialDetents={sequentialDetents}
       activeDetent={active}
       onActiveDetentChange={setActive}
     >
@@ -205,8 +247,14 @@ function FlickSheet({
       <Sheet.Content className="sheet" aria-label={trigger}>
         <Sheet.Handle />
         <code data-testid="flick-active">{String(active)}</code>
+        <button type="button" onClick={() => setActive(0.45)}>
+          Go to second stop
+        </button>
         <button type="button" onClick={() => setActive(0.65)}>
           Go to third stop
+        </button>
+        <button type="button" onClick={() => setActive(0.85)}>
+          Go to top stop
         </button>
       </Sheet.Content>
     </Sheet.Root>
