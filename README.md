@@ -75,6 +75,8 @@ Full reference: [API docs](https://scrollsheet.dev/docs/reference/api).
 bunx shadcn@latest add https://scrollsheet.dev/r/drawer.json
 ```
 
+[Browse the registry](https://scrollsheet.dev/docs/getting-started/install/#shadcnui) · [Registry index](https://scrollsheet.dev/r/registry.json)
+
 Swap `drawer` for `sheet`, `dialog`, `confirm`, `share-sheet`, `sidebar`, `toast`, `mobile-select`, `command-palette`, `picker-wheel`, or `action-sheet`.
 
 ## Browser support

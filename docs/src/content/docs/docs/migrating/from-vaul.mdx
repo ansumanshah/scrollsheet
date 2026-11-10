@@ -24,6 +24,10 @@ Add `--dry-run` to preview.
 The `Drawer.*` namespace translates supported Vaul props onto `Sheet.*`. Nesting is automatic;
 `NestedRoot` remains available as an alias of `Root`. Check the differences below before removing Vaul.
 
+If you want to install a fresh shadcn drawer wrapper, use the
+[Scrollsheet registry drawer](/docs/recipes/#drawer). For an existing drawer with local
+styling or behavior, run the codemod on your existing wrapper.
+
 <DocExample
   name="sidebar"
   caption="A side drawer built with Sheet, which Drawer.* maps onto. Open it and click through its sections."
