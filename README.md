@@ -22,7 +22,7 @@ Coming from vaul? Its [README](https://github.com/emilkowalski/vaul#readme) says
 + import 'scrollsheet/styles.css';
 ```
 
-`npx scrollsheet-codemod vaul src` makes that change and lists every prop to check. Read the [differences](https://scrollsheet.dev/docs/migrating/from-vaul) before you remove vaul.
+Run `npx scrollsheet-codemod vaul src --dry-run` to preview the import changes and see which props need review. Follow the [migration guide](https://scrollsheet.dev/docs/migrating/from-vaul/) before removing vaul.
 
 <p align="center">
   <a href="https://scrollsheet.dev/">
@@ -74,6 +74,8 @@ Full reference: [API docs](https://scrollsheet.dev/docs/reference/api).
 ```sh
 bunx shadcn@latest add https://scrollsheet.dev/r/drawer.json
 ```
+
+Load `scrollsheet/styles.css` for the drawer. If you install the toast wrapper, load `scrollsheet/toast.css` for toasts.
 
 [Browse the registry](https://scrollsheet.dev/docs/getting-started/install/#shadcnui) · [Registry index](https://scrollsheet.dev/r/registry.json)
 

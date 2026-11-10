@@ -158,6 +158,7 @@ export default defineConfig({
             { slug: "docs/presentation/responsive-profiles" },
             { slug: "docs/presentation/page-transitions" },
             { slug: "docs/presentation/trigger-morph" },
+            { slug: "docs/presentation/lightbox" },
           ],
         },
         { slug: "docs/toasts" },

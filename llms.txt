@@ -26,15 +26,22 @@ yourself), `scrollsheet/auto` (same exports, stylesheets embedded, injected on f
 
 ## Docs
 
-- [Docs](https://scrollsheet.dev/docs): Install, the styling model, detents, keyboard handling, desktop drag, nesting and content morph, migrating from vaul, Radix Dialog, and Sonner, browser support, and the full API reference. One page per topic.
+- [Install](https://scrollsheet.dev/docs/getting-started/install/): Package and stylesheet imports, plus shadcn CLI install commands.
+- [API reference](https://scrollsheet.dev/docs/reference/api/): Props, component parts, and styling hooks.
+- [Migrate from vaul](https://scrollsheet.dev/docs/migrating/from-vaul/): Start with `npx scrollsheet-codemod vaul src --dry-run`, then review the import changes and behavior differences.
+- [How to build a photo lightbox](https://scrollsheet.dev/docs/presentation/lightbox/): Live recipe composing `Sheet` with scroll-snap paging, zoom, and a photo morph.
+- [Browser support](https://scrollsheet.dev/docs/browser-support/): Native dialog, gesture, and animation fallbacks.
+- [Compare](https://scrollsheet.dev/compare/): Trade-offs against vaul, Base UI, react-modal-sheet, and Radix Dialog.
 
-- [Migrate from vaul](https://scrollsheet.dev/docs/migrating/from-vaul): `npx scrollsheet-codemod vaul src` rewrites the imports and lists every prop to check.
-- [Compare](https://scrollsheet.dev/compare): scrollsheet against vaul, Base UI, react-modal-sheet, and Radix Dialog, including what scrollsheet does worse.
+## Registry and migration tools
+
+- [shadcn registry index](https://scrollsheet.dev/r/registry.json): Available items. Install a drawer with `npx shadcn@latest add https://scrollsheet.dev/r/drawer.json`.
+- [Agent skills](https://github.com/ansumanshah/scrollsheet/tree/main/skills): Instructions for building with Sheet and migrating from vaul, Radix Dialog, or Sonner.
 
 ## Optional
 
-- [Homepage & examples gallery](https://scrollsheet.dev/): Live, editable demos, basic sheet, detents, multi-view with content morph, nested sheets, inset card, long list with scroll handoff, non-dismissible confirm, custom backdrop, keyboard sheet, desktop drag.
-- [GitHub repository](https://github.com/ansumanshah/scrollsheet): Source, issues, and the shadcn/ui registry entry.
+- [Homepage & examples gallery](https://scrollsheet.dev/#examples): Live demos with source, including detents, nested sheets, and scroll handoff.
+- [GitHub repository](https://github.com/ansumanshah/scrollsheet): Source and issues.
 - [npm package](https://www.npmjs.com/package/scrollsheet): Install and version history.
 - [Changelog](https://scrollsheet.dev/changelog): Release notes, generated from the repo's CHANGELOG.md.
 - [Full docs text](https://scrollsheet.dev/llms-full.txt): A plain-text reference for tools that cannot crawl the site.

@@ -9,7 +9,7 @@ Two-step migration. Do step 1 first, always. Step 2 is optional and separate.
 
 ## Step 1: change the import and stylesheet
 
-`npx scrollsheet-codemod vaul src` makes this change and reports each prop to check, with file and line. It leaves `import * as`, `require("vaul")` and anything else it cannot map on vaul and reports them, and it moves `vaul/style.css` only in files that no longer import vaul. Keep the vaul package and stylesheet until the summary lists no file that still uses vaul. By hand:
+Install `scrollsheet`. Run `npx scrollsheet-codemod vaul src --dry-run` on a clean working tree, then remove `--dry-run` to apply it. Replace `src` with the directory containing the drawer wrappers. Review the diff and each `file:line` report. The codemod leaves namespace imports and `require("vaul")` in place and reports them. Keep vaul and its stylesheet while any remaining imports need them. By hand:
 
 ```diff
 - import { Drawer } from 'vaul';
@@ -70,7 +70,7 @@ accepts `fill`, and `Drawer.Root` forwards `onTravel` with its `TravelInfo` argu
 
 `Drawer.Root` forwards these untranslated (no vaul equivalent, no name collision):
 `backdropDismissible`, `escapeDismissible`, `keyboardExpands`, `onTravel`, `scrollbar`,
-`actionsRef`, `animationSpeed`. Reach for them when you need one scrollsheet feature without converting the
+`actionsRef`, `animationSpeed`, `flick`, `nonce`. Reach for them when you need one scrollsheet feature without converting the
 whole tree to native `Sheet.*`.
 
 ### snapPoints to detents value conversion

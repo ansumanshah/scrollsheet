@@ -28,6 +28,15 @@ scrollsheet/motion (experimental React-free spring, WAAPI, and scroll-tween core
 default entry and /auto in one app. Sheet.* is client-only: in Next.js App Router, add 'use client'
 to the file that renders it.
 
+## shadcn registry
+
+    npx shadcn@latest add https://scrollsheet.dev/r/drawer.json
+
+The index at https://scrollsheet.dev/r/registry.json lists all items. Use the public item URL
+in the install command. Load scrollsheet/styles.css for the drawer and scrollsheet/toast.css
+if you install the toast wrapper. To keep a custom vaul wrapper, migrate its imports instead.
+See https://scrollsheet.dev/docs/getting-started/install/#shadcnui for the other install commands.
+
 ## Styling
 
     .sheet {
@@ -234,10 +243,30 @@ like a stack. 'parallax' shifts the wrapper instead of scaling it. Read
 --scrollsheet-stack-progress on a parent sheet's own panel for the equivalent effect between
 nested sheets.
 
+## Photo lightbox recipe
+
+See the interactive guide at https://scrollsheet.dev/docs/presentation/lightbox/.
+Use a controlled Sheet.Root with detents={['full']}, disableDrag, and backgroundEffect="none".
+Give Sheet.Content an accessible name. Set --scrollsheet-travel: none so the example's photo
+morph or opacity fade owns entry and exit. The gallery, zoom, and pull gesture live in the example.
+Horizontal scroll snap pages at 1x. When zoomed, pan the active photo. Pulling to dismiss waits
+until the track settles and the photo is back at 1x. Close morphs to the active thumbnail,
+while focus returns to the opening thumbnail.
+
 ## Migrate from vaul
 
+    npm install scrollsheet
+    npx scrollsheet-codemod vaul src --dry-run
+    npx scrollsheet-codemod vaul src
+
+Review the diff and file:line report. Keep Vaul and its stylesheet until remaining imports
+are reviewed. The migration skill is at
+https://github.com/ansumanshah/scrollsheet/tree/main/skills/migrate-from-vaul.
+
     - import { Drawer } from 'vaul';
+    - import 'vaul/style.css';
     + import { Drawer } from 'scrollsheet';
+    + import 'scrollsheet/styles.css';
 
 scrollsheet's Vaul adapter maps the common Drawer.* parts onto
 Sheet.*. snapPoints, activeSnapPoint, direction (all four edges), modal={false},
@@ -269,7 +298,7 @@ snapPoints is set, even on a release that dismisses the drawer.
 Lifecycle callbacks: onAnimationEnd(open) fires once the transition visually finishes (the native
 prop is onOpenChangeComplete), and onClose fires on every dismiss path, layered on onOpenChange.
 Scrollsheet-native props with no vaul counterpart (backdropDismissible, escapeDismissible,
-keyboardExpands, onTravel, scrollbar, actionsRef, animationSpeed) forward through Drawer.Root
+keyboardExpands, onTravel, scrollbar, actionsRef, animationSpeed, flick, nonce) forward through Drawer.Root
 untranslated.
 
 ## Migrate from Radix Dialog
@@ -366,6 +395,7 @@ Full reference with every default: https://scrollsheet.dev/docs/reference/api
 | activeDetent | DetentSpec | detents[0] ?? 'content' when uncontrolled |
 | onActiveDetentChange | (detent: DetentSpec) => void | |
 | sequentialDetents | boolean | false |
+| flick | 'step' \| 'project' | 'project' |
 | dismissible | boolean | true |
 | escapeDismissible | boolean | dismissible |
 | backdropDismissible | boolean | dismissible |
