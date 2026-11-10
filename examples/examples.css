@@ -1537,7 +1537,9 @@
 
 .ex-lb-grid {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
+  box-sizing: border-box;
+  width: 100%;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 6px;
   padding: 12px;
 }
@@ -1563,54 +1565,48 @@
 }
 
 .ex-lb-panel {
+  --scrollsheet-travel: none;
+  --scrollsheet-desktop-margin: 0px;
+  --scrollsheet-max-inline: none;
+  --scrollsheet-radius: 0px;
+  --scrollsheet-shadow: none;
+  --scrollsheet-safe-area: 0px;
+  --scrollsheet-bg: transparent;
   display: flex;
   flex-direction: column;
+  width: 100%;
+  margin-inline: 0;
   padding: 0;
-  background: #000;
-  --scrollsheet-safe-area: 0px;
+  background: transparent;
 }
-/* The library wraps Content's children in its own [data-scrollsheet-body]
-   div (a block box sized by content, since the 'content' detent measures
-   its natural height) — .ex-lb-track's own flex:1 does nothing unless that
-   wrapper is a flex column too, or the track settles to its image's
-   intrinsic aspect ratio instead of the panel's full height. */
+.scrollsheet-dialog:has(.ex-lb-panel) {
+  --scrollsheet-backdrop: #000;
+}
+.scrollsheet-dialog[data-scrollsheet-state="open"]:has(.scrollsheet-panel.ex-lb-panel) .scrollsheet-backdrop {
+  /* The gallery owns dimming at rest and during a pull. */
+  animation: none;
+  opacity: 1;
+  transition: opacity var(--ex-lb-morph-dur) var(--ex-lb-morph-ease);
+}
+.scrollsheet-dialog[data-scrollsheet-state="open"]:has(.ex-lb-panel):not(:has(.ex-lb-track)) .scrollsheet-backdrop {
+  opacity: 0;
+  transition: none;
+}
+@starting-style {
+  .scrollsheet-dialog[data-scrollsheet-state="open"] .ex-lb-panel:not(.ex-lb-morph) {
+    opacity: 0;
+  }
+}
+@media (prefers-reduced-motion: no-preference) {
+  .ex-lb-panel:not(.ex-lb-morph) {
+    transition: opacity var(--ex-lb-fade-dur) ease-out;
+  }
+}
 .ex-lb-panel [data-scrollsheet-body] {
   display: flex;
   flex-direction: column;
   flex: 1;
   min-height: 0;
-}
-/* Desktop: present as a centered lightbox card instead of the library's
-   default right-docked drawer. Two library levers, no new API:
-   --scrollsheet-inset-bottom (already read by measure() to flag the sheet
-   data-scrollsheet-detached, which centers it vertically for a single
-   detents={['full']} panel for free) plus overriding the dock's left/right/
-   width back to a max-width + auto-margin center, the same recipe core.css's
-   own top-side desktop rule uses. Only correct for a single ['full'] detent
-   with disableDrag, exactly what this example uses — a shorter detent stays
-   bottom-anchored inside the floating region instead of centering, since the
-   panel's near edge is fixed and only its far edge moves. */
-@media (min-width: 768px) {
-  .ex-lb-panel {
-    --scrollsheet-inset-bottom: var(--scrollsheet-desktop-margin, 24px);
-    left: var(--scrollsheet-inset-x, 0px);
-    right: var(--scrollsheet-inset-x, 0px);
-    width: auto;
-    max-width: min(480px, calc(100% - 2 * var(--scrollsheet-desktop-margin, 24px)));
-    margin-inline: auto;
-  }
-  /* The card hugs the photo instead of standing full-viewport-tall with
-     dead space under it. Doubled class outranks the injected core rule's
-     height (same specificity would lose on source order — core.css loads
-     after this file). It stays anchored to the floating region's bottom
-     edge — the panel's coordinate space is the canvas (viewport plus
-     detent runway), so viewport-centering tricks land in the wrong space.
-     Safe only because this sheet is single-['full']-detent with
-     disableDrag: nothing reads the panel height for snap math. */
-  .ex-panel.ex-lb-panel {
-    height: fit-content;
-    max-height: calc(100% - 2 * var(--scrollsheet-desktop-margin, 24px));
-  }
 }
 /* Horizontal scroll-snap paging track: swipes get browser momentum and
    snap natively. Axis-orthogonal to the sheet's own vertical engine, so the
@@ -1623,6 +1619,13 @@
   overscroll-behavior-x: contain;
   scroll-snap-type: x mandatory;
   scrollbar-width: none;
+  margin-block: calc(64px + env(safe-area-inset-top, 0px))
+    calc(80px + env(safe-area-inset-bottom, 0px));
+}
+@media (min-width: 768px) {
+  .ex-lb-track {
+    margin-bottom: calc(124px + env(safe-area-inset-bottom, 0px));
+  }
 }
 .ex-lb-track::-webkit-scrollbar {
   display: none;
@@ -1632,6 +1635,7 @@
   min-width: 100%;
   display: flex;
   scroll-snap-align: center;
+  scroll-snap-stop: always;
 }
 /* While a shot is zoomed (or a pinch is in flight) the track stops paging,
    so horizontal pans stay inside the photo. */
@@ -1646,6 +1650,7 @@
   min-height: 0;
   overflow: hidden;
   touch-action: pan-x;
+  container-type: size;
   cursor: zoom-in;
   scrollbar-width: none;
 }
@@ -1658,24 +1663,34 @@
   cursor: zoom-out;
 }
 .ex-lb-zoom-sizer {
+  display: grid;
+  place-items: center;
   width: 100%;
   height: 100%;
-  translate: var(--ex-lb-pull, none);
-  transition: translate var(--ex-lb-morph-dur) var(--ex-lb-morph-ease);
 }
-.ex-lb-zoom[data-pulling] .ex-lb-zoom-sizer {
-  transition: none;
-}
-@media (prefers-reduced-motion: reduce) {
-  .ex-lb-zoom-sizer {
-    transition: none;
-  }
+.ex-lb-media {
+  width: calc(min(100cqw, 100cqh * 1000 / 667) * var(--ex-lb-scale, 1));
+  aspect-ratio: 1000 / 667;
+  transition: transform var(--ex-lb-morph-dur) var(--ex-lb-morph-ease);
 }
 .ex-lb-full {
   width: 100%;
   height: 100%;
   display: block;
+  border-radius: 8px;
   object-fit: cover;
+  user-select: none;
+  -webkit-user-drag: none;
+}
+.scrollsheet-dialog[data-ex-lb-pulling][data-scrollsheet-state="open"]:has(.ex-lb-panel) .scrollsheet-backdrop,
+[data-ex-lb-pulling] .ex-lb-media {
+  transition: none;
+}
+@media (prefers-reduced-motion: reduce) {
+  .scrollsheet-dialog[data-scrollsheet-state="open"]:has(.scrollsheet-panel.ex-lb-panel) .scrollsheet-backdrop,
+  .ex-lb-media {
+    transition: none;
+  }
 }
 /* Thumbnail-to-viewer morph (View Transitions API, progressive). The
    custom properties come from lightbox.tsx's MORPH_SPRING — a linear()
@@ -1688,16 +1703,32 @@
   animation-duration: var(--ex-lb-morph-dur, 280ms);
   animation-timing-function: var(--ex-lb-morph-ease, cubic-bezier(0.16, 1, 0.3, 1));
 }
-/* While the morph carries the entrance, the sheet's own slide-in would
-   tell a second story — the class is only applied when the browser can
-   actually morph, so non-supporting browsers keep the travel. */
-.ex-lb-morph {
-  --scrollsheet-travel: none;
+:root[data-ex-lb-exiting]::view-transition-group(ex-lb-shot) {
+  animation-duration: var(--ex-lb-exit-dur);
+  animation-timing-function: cubic-bezier(0.44, 0.58, 0, 1);
+}
+:root[data-ex-lb-exiting]::view-transition-old(root),
+:root[data-ex-lb-exiting]::view-transition-new(root) {
+  animation-duration: var(--ex-lb-exit-dur);
+  animation-timing-function: cubic-bezier(0.16, 1, 0.3, 1);
+}
+:root[data-ex-lb-exiting]::view-transition-image-pair(ex-lb-shot) {
+  overflow: clip;
+  border-radius: 10px;
+}
+:root[data-ex-lb-exiting]::view-transition-old(ex-lb-shot) {
+  animation: none;
+  inline-size: 100%;
+  block-size: 100%;
+  object-fit: cover;
+  mix-blend-mode: normal;
+}
+:root[data-ex-lb-exiting]::view-transition-new(ex-lb-shot) {
+  display: none;
 }
 /* Top/bottom chrome bars: named view-transition targets, scoped to
    .ex-lb-morph so non-supporting browsers fall back to a plain mount (no
-   view-transition-name, no animation, chrome just appears with the sheet's
-   own travel). Both bars only ever exist on one side of a transition —
+   view-transition-name). Both bars only ever exist on one side of a transition —
    mounted with the viewer, gone with the grid — so unlike the photo's
    MORPH_NAME handoff there's no name collision to manage in JS; the CSS
    scoping is enough. `pointer-events: none` on the bar and `auto` on its
@@ -1715,8 +1746,7 @@
    around a subject already mid-flight instead of racing it. Exit: no
    delay, under half the duration — chrome should clear fast, not linger
    while the photo shrinks back to its thumbnail. Same spring curve as the
-   photo morph on the way in for one consistent character; a plain ease-in
-   on the way out is fine since nothing is being watched leave. */
+   photo morph on the way in. */
 @keyframes ex-lb-bar-in-top {
   from {
     opacity: 0;
@@ -1746,21 +1776,15 @@
     var(--ex-lb-morph-ease, cubic-bezier(0.16, 1, 0.3, 1)) calc(var(--ex-lb-morph-dur, 280ms) * 0.3) both;
 }
 ::view-transition-old(ex-lb-topbar) {
-  animation: ex-lb-bar-out-top calc(var(--ex-lb-morph-dur, 280ms) * 0.4) ease-in both;
+  animation: ex-lb-bar-out-top 120ms ease-out both;
 }
 ::view-transition-new(ex-lb-bottombar) {
   animation: ex-lb-bar-in-bottom calc(var(--ex-lb-morph-dur, 280ms) * 0.6)
     var(--ex-lb-morph-ease, cubic-bezier(0.16, 1, 0.3, 1)) calc(var(--ex-lb-morph-dur, 280ms) * 0.3) both;
 }
 ::view-transition-old(ex-lb-bottombar) {
-  animation: ex-lb-bar-out-bottom calc(var(--ex-lb-morph-dur, 280ms) * 0.4) ease-in both;
+  animation: ex-lb-bar-out-bottom 120ms ease-out both;
 }
-/* The bar itself: full-width, top-anchored gradient matte (mirrors
-   .ex-lb-caption's own gradient, flipped) so the close button and counter
-   stay legible over a bright photo. Padding clears the safe-area inset
-   directly — .ex-lb-panel zeroes the library's own safe-area handling for
-   a full-bleed photo, so nothing else insets this for a notch/Dynamic
-   Island. */
 .ex-lb-topbar {
   position: absolute;
   top: 0;
@@ -1770,59 +1794,81 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: calc(14px + env(safe-area-inset-top, 0px)) 14px 28px;
-  background: linear-gradient(rgb(0 0 0 / 0.55), rgb(0 0 0 / 0));
+  padding: calc(10px + env(safe-area-inset-top, 0px)) 14px 0;
   pointer-events: none;
 }
 .ex-lb-topbar > * {
   pointer-events: auto;
 }
-.ex-lb-close {
+.ex-lb-tools {
+  display: flex;
+  gap: 8px;
+}
+.ex-lb-zoom-tools {
+  display: flex;
+  border: 1px solid rgb(255 255 255 / 0.22);
+  border-radius: 999px;
+  background: #151515;
+}
+.ex-lb-tool,
+.ex-lb-nav {
   display: grid;
   place-items: center;
-  width: 34px;
-  height: 34px;
-  border: none;
+  width: 44px;
+  height: 44px;
+  padding: 0;
+  border: 1px solid rgb(255 255 255 / 0.22);
   border-radius: 50%;
-  color: #fff;
-  background: rgb(0 0 0 / 0.45);
+  color: #f5f5f5;
+  background: #151515;
   cursor: pointer;
 }
-.ex-lb-close:hover {
-  background: rgb(0 0 0 / 0.6);
+.ex-lb-tool svg,
+.ex-lb-nav svg {
+  width: 18px;
+  height: 18px;
+}
+.ex-lb-zoom-tools .ex-lb-tool {
+  width: 43px;
+  height: 42px;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+}
+.ex-lb-zoom-tools .ex-lb-tool:first-child {
+  border-radius: 999px 0 0 999px;
+  border-right: 1px solid rgb(255 255 255 / 0.14);
+}
+.ex-lb-zoom-tools .ex-lb-tool:last-child {
+  border-radius: 0 999px 999px 0;
+}
+@media (hover: hover) and (pointer: fine) {
+  .ex-lb-panel :is(.ex-lb-tool, .ex-lb-nav):hover:not(:disabled) {
+    background: #2c2c2c;
+  }
+}
+.ex-lb-panel button:focus-visible {
+  outline: 2px solid white;
+  outline-offset: 3px;
+}
+.ex-lb-tool:disabled,
+.ex-lb-nav:disabled {
+  color: #737373;
+  cursor: default;
 }
 .ex-lb-count {
-  padding: 4px 10px;
+  padding: 5px 10px;
   border-radius: 999px;
   font-size: 12px;
   font-variant-numeric: tabular-nums;
-  color: #fff;
-  background: rgb(0 0 0 / 0.45);
+  color: #ddd;
+  background: #151515;
 }
 .ex-lb-nav {
   position: absolute;
   top: 50%;
   z-index: 1;
   translate: 0 -50%;
-  display: grid;
-  place-items: center;
-  width: 40px;
-  height: 40px;
-  border: none;
-  border-radius: 50%;
-  color: #fff;
-  background: rgb(0 0 0 / 0.4);
-  cursor: pointer;
-}
-.ex-lb-nav:hover {
-  background: rgb(0 0 0 / 0.6);
-}
-.ex-lb-nav:disabled {
-  opacity: 0.35;
-  cursor: default;
-}
-.ex-lb-nav:disabled:hover {
-  background: rgb(0 0 0 / 0.4);
 }
 .ex-lb-prev {
   left: 12px;
@@ -1830,17 +1876,68 @@
 .ex-lb-next {
   right: 12px;
 }
+.ex-lb-prev svg {
+  rotate: 90deg;
+}
+.ex-lb-next svg {
+  rotate: -90deg;
+}
+@media (max-width: 767px) {
+  .ex-lb-nav {
+    top: auto;
+    bottom: calc(10px + env(safe-area-inset-bottom, 0px));
+    width: 44px;
+    height: 44px;
+    translate: none;
+  }
+}
 .ex-lb-caption {
   position: absolute;
   left: 0;
   right: 0;
   bottom: 0;
-  padding: 18px 20px calc(18px + env(safe-area-inset-bottom, 0px));
-  background: linear-gradient(rgb(0 0 0 / 0), rgb(0 0 0 / 0.6));
+  padding: 0 20px calc(12px + env(safe-area-inset-bottom, 0px));
+  text-align: center;
   color: #fff;
 }
 .ex-lb-caption .ex-row-sub {
-  color: rgb(255 255 255 / 0.75);
+  color: #aaa;
+}
+
+.ex-lb-strip {
+  display: none;
+}
+@media (min-width: 768px) {
+  .ex-lb-strip {
+    display: flex;
+    justify-content: center;
+    gap: 8px;
+    margin-top: 8px;
+  }
+  .ex-lb-strip button {
+    padding: 2px;
+    border: 2px solid transparent;
+    border-radius: 8px;
+    background: none;
+    cursor: pointer;
+  }
+  .ex-lb-strip button:not([aria-current="true"]) img {
+    opacity: 0.65;
+  }
+  .ex-lb-strip button[aria-current="true"] {
+    border-color: #fff;
+  }
+  .ex-lb-strip img {
+    display: block;
+    width: 56px;
+    height: 44px;
+    border-radius: 4px;
+    object-fit: cover;
+  }
+}
+[data-ex-lb-pulling] :is(.ex-lb-topbar, .ex-lb-nav, .ex-lb-caption) {
+  opacity: 0;
+  visibility: hidden;
 }
 
 /* Collapse control on the expanded player. Sits over the artwork's top-left
