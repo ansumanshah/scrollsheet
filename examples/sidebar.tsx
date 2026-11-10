@@ -53,10 +53,10 @@ export default function SidebarExample() {
       <Sheet.Trigger className="ex-trigger">Menu</Sheet.Trigger>
       <Sheet.Content className="ex-panel ex-sidebar" aria-label="Navigation">
         <div className="ex-sidebar-header">
-          <span className="ex-avatar">NA</span>
+          <span className="ex-avatar">AS</span>
           <div>
-            <div className="ex-row-title">NoodleApps</div>
-            <div className="ex-row-sub">ansh@noodleapps.dev</div>
+            <div className="ex-row-title">Ansuman Shah</div>
+            <div className="ex-row-sub">@ansumanshah</div>
           </div>
         </div>
         <nav className="ex-sidebar-body">
