@@ -16,5 +16,6 @@ packages/scrollsheet/README.md
 packages/scrollsheet/LICENSE
 
 # Machine-local agent configuration and hooks
+.agents/skills/
 .codex/
 .worktrees/
