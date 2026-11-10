@@ -13,16 +13,27 @@ import DocExample from '../../../../components/DocExample.astro';
 + import 'scrollsheet/styles.css';
 ```
 
-To do the import swap for you and list what needs a human, run
-`npx scrollsheet-codemod vaul src` (or `bunx`). It rewrites `Drawer` imports from `vaul`,
-including aliased ones like shadcn's `DrawerPrimitive`, and prints a `file:line` report of every
-prop that is ignored or behaves differently. `import * as`, `require("vaul")` and other forms it
-cannot map are left on `vaul` and reported. `vaul/style.css` moves only in files that no longer
-import `vaul`; the summary lists any file that still does, so keep the stylesheet until it is empty.
-Add `--dry-run` to preview.
+## Preview and apply the migration
+
+Install `scrollsheet`, then preview the changes on a clean working tree. Pass the directory that contains your drawer wrappers.
+
+```sh
+npm install scrollsheet
+npx scrollsheet-codemod vaul src --dry-run
+```
+
+Read the `file:line` report for props that are ignored or behave differently. When you're ready,
+run `npx scrollsheet-codemod vaul src` and review the diff. The codemod rewrites `Drawer`
+imports, including aliases like shadcn's `DrawerPrimitive`.
+Namespace imports and `require("vaul")` stay in place and appear in the report.
+Keep Vaul and its stylesheet until you have reviewed the remaining imports.
 
 The `Drawer.*` namespace translates supported Vaul props onto `Sheet.*`. Nesting is automatic;
 `NestedRoot` remains available as an alias of `Root`. Check the differences below before removing Vaul.
+
+If you want to install a fresh shadcn drawer wrapper, use the
+[Scrollsheet registry drawer](/docs/recipes/#drawer). For an existing drawer with local
+styling or behavior, run the codemod on your existing wrapper.
 
 <DocExample
   name="sidebar"
@@ -45,7 +56,7 @@ The `Drawer.*` namespace translates supported Vaul props onto `Sheet.*`. Nesting
 </div>
 
 Scrollsheet-native props with no vaul counterpart (`backdropDismissible`, `escapeDismissible`,
-`keyboardExpands`, `onTravel`, `scrollbar`, `actionsRef`, `animationSpeed`, `nonce`) forward through `Drawer.Root`
+`keyboardExpands`, `onTravel`, `scrollbar`, `actionsRef`, `animationSpeed`, `flick`, `nonce`) forward through `Drawer.Root`
 unchanged. You can use them without converting to `Sheet.*`.
 
 ## Width

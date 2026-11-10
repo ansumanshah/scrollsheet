@@ -1,0 +1,45 @@
+---
+title: How to build a photo lightbox
+description: Compose a full-screen photo viewer with Sheet, native swipe paging, zoom, and a thumbnail morph.
+---
+
+import DocExample from '../../../../components/DocExample.astro';
+
+Open a photo, swipe to the next one, then pull down at 1× to close. The viewer returns to the thumbnail for the photo you were looking at.
+
+<DocExample
+  name="lightbox"
+  caption="Open a photo. Swipe to page, pinch to zoom, or pull down at 1×. On desktop, try the thumbnail strip."
+/>
+
+This recipe uses `Sheet` from `scrollsheet`. The gallery, zoom, and pull gesture live in the [example component](https://github.com/ansumanshah/scrollsheet/blob/main/examples/lightbox.tsx). The example’s `.ex-lb-*` rules live in [examples.css](https://github.com/ansumanshah/scrollsheet/blob/main/examples/examples.css).
+
+## 1. Give the gallery a modal shell
+
+Use a controlled `Sheet.Root` with `detents={['full']}` and `disableDrag`. Give `Sheet.Content` an accessible name and include a labeled `Sheet.Close`. Route its close request, Escape, and the gallery’s pull gesture through the same close handler.
+
+Set `backgroundEffect="none"` so the page and thumbnail grid stay in place behind the viewer. Set `--scrollsheet-travel: none` on the panel so the photo morph or fade handles the entrance and exit. Use `--scrollsheet-desktop-margin: 0px` and `--scrollsheet-max-inline: none` for a full-width panel on desktop.
+
+## 2. Give paging, zoom, and dismissal separate jobs
+
+Place full-width slides in a horizontal scroll-snap track. Read the active index from the track’s scroll position so the counter, caption, and thumbnail strip follow a swipe. Put the zoom scroller inside each slide and fit the image to the available area at its original aspect ratio. Apply the pull transform to the photo inside the slide so the snap point stays put.
+
+| Viewer state | Gesture behavior |
+| --- | --- |
+| At 1× and settled | Swipe horizontally to page. Pull down on touch or use vertical trackpad scrolling to dismiss. A short pull springs back. |
+| Zoomed | Pan the current photo. Pull-to-dismiss and swipe paging wait until the photo returns to 1×. |
+| Paging in progress | Wait for the track to settle before starting a pull or zoom. |
+
+Arrow keys page at 1× and pan when zoomed. Use `+` and `-` to zoom, `0` to reset, and Escape to close. The viewer returns focus to the thumbnail that opened it.
+
+## 3. Morph the active photo back to its thumbnail
+
+Use the same source image and aspect ratio for the thumbnail and viewer, even if the square grid crops the thumbnail in CSS. Warm the full image before opening so the View Transition can capture decoded pixels.
+
+On close, give the thumbnail for the **active** photo the shared transition name. Keep the sheet mounted until the transition finishes. Let the page fade back in under the opaque photo as it shrinks, then close the sheet. For the naming and capture sequence, see [Morph a trigger into a sheet](/docs/presentation/trigger-morph/).
+
+## Troubleshoot the viewer
+
+- **The grid shifts on open.** Set `backgroundEffect="none"`. A full-height mobile sheet can otherwise scale a page marked with `data-scrollsheet-background`.
+- **The photo flashes blank.** Check that the viewer image has decoded before the new snapshot and that only one rendered element has the transition name per snapshot.
+- **The browser has no View Transitions API.** Use the example’s opacity fallback. With reduced motion enabled, the example skips the shared-element morph.
