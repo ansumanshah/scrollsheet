@@ -19,6 +19,8 @@ import { SkipBackIcon, SkipForwardIcon, XIcon } from "./icons";
  * (a width/height on the slide's inner box); panning the zoomed shot is the
  * browser's own two-axis scroll, momentum included. While a shot is zoomed
  * the track stops paging, so horizontal pans stay inside the photo.
+ * At 1x, a downward touch drag moves the photo. Short pulls return to
+ * rest with the morph spring. Longer pulls use the same close path as Esc.
  *
  * Open and close morph the shot between its grid thumbnail and the viewer
  * via the View Transitions API where supported; everywhere else the sheet's
@@ -138,6 +140,8 @@ function ShotPhoto({ shot, size, className, style, loading }: ShotPhotoProps) {
 const MORPH_NAME = "ex-lb-shot";
 const MAX_ZOOM = 3.5;
 const TAP_ZOOM = 2.4;
+const PULL_SLOP = 10;
+const PULL_DISMISS_DISTANCE = 112;
 // Longest the open waits on a slow connection before starting the morph
 // anyway. A cap, not a guarantee: past it the entrance can still flash an
 // undecoded frame, which beats leaving the tap unanswered. In practice this
@@ -198,6 +202,7 @@ interface ZoomShotProps {
   shot: Shot;
   active: boolean;
   onZoomChange: (zoomed: boolean) => void;
+  onDismiss: () => void;
 }
 
 /**
@@ -206,14 +211,27 @@ interface ZoomShotProps {
  * instead of going through state — per-frame setState would re-render the
  * whole gallery at gesture rate for nothing.
  */
-function ZoomShot({ shot, active, onZoomChange }: ZoomShotProps) {
+function ZoomShot({ shot, active, onZoomChange, onDismiss }: ZoomShotProps) {
   const scrollerRef = React.useRef<HTMLDivElement | null>(null);
   const sizerRef = React.useRef<HTMLDivElement | null>(null);
   const scaleRef = React.useRef(1);
-  const pointers = React.useRef(new Map<number, { x: number; y: number }>());
+  const pointers = React.useRef(new Map<number, {
+    x: number;
+    y: number;
+    startX: number;
+    startY: number;
+    moved: boolean;
+  }>());
   const pinchStart = React.useRef<{ dist: number; scale: number } | null>(null);
   const lastTap = React.useRef<{ t: number; x: number; y: number } | null>(null);
+  const pull = React.useRef<{ id: number; x: number; y: number; dragging: boolean } | null>(null);
   const [zoomed, setZoomed] = React.useState(false);
+
+  const resetPull = (scroller: HTMLElement) => {
+    pull.current = null;
+    delete scroller.dataset.pulling;
+    scroller.style.removeProperty("--ex-lb-pull");
+  };
 
   const applyScale = (next: number, focus?: { x: number; y: number }) => {
     const scroller = scrollerRef.current;
@@ -238,7 +256,7 @@ function ZoomShot({ shot, active, onZoomChange }: ZoomShotProps) {
     }
     const isZoomed = next > 1.001;
     setZoomed(isZoomed);
-    onZoomChange(isZoomed);
+    if (active) onZoomChange(isZoomed || pinchStart.current !== null);
   };
 
   // Swiping to another slide hands its zoom back.
@@ -250,10 +268,17 @@ function ZoomShot({ shot, active, onZoomChange }: ZoomShotProps) {
     applyScale(scaleRef.current > 1.001 ? 1 : TAP_ZOOM, { x, y });
   };
 
-  const onPointerDown = (event: React.PointerEvent) => {
-    pointers.current.set(event.pointerId, { x: event.clientX, y: event.clientY });
+  const onPointerDown = (event: React.PointerEvent<HTMLDivElement>) => {
+    const { clientX: x, clientY: y } = event;
+    pointers.current.set(event.pointerId, { x, y, startX: x, startY: y, moved: false });
+    if (active && event.pointerType === "touch" && pointers.current.size === 1 && !zoomed) {
+      pull.current = { id: event.pointerId, x: event.clientX, y: event.clientY, dragging: false };
+    }
     if (pointers.current.size === 2) {
+      resetPull(event.currentTarget);
+      lastTap.current = null;
       const [a, b] = [...pointers.current.values()];
+      a.moved = b.moved = true;
       pinchStart.current = {
         dist: Math.hypot(a.x - b.x, a.y - b.y),
         scale: scaleRef.current,
@@ -263,11 +288,29 @@ function ZoomShot({ shot, active, onZoomChange }: ZoomShotProps) {
     }
   };
 
-  const onPointerMove = (event: React.PointerEvent) => {
+  const onPointerMove = (event: React.PointerEvent<HTMLDivElement>) => {
     const entry = pointers.current.get(event.pointerId);
     if (!entry) return;
     entry.x = event.clientX;
     entry.y = event.clientY;
+    entry.moved ||= Math.hypot(entry.x - entry.startX, entry.y - entry.startY) >= PULL_SLOP;
+    const gesture = pull.current;
+    if (gesture?.id === event.pointerId) {
+      const dx = event.clientX - gesture.x;
+      const dy = event.clientY - gesture.y;
+      if (!gesture.dragging && Math.hypot(dx, dy) >= PULL_SLOP) {
+        if (dy > Math.abs(dx)) gesture.dragging = true;
+        else {
+          pull.current = null;
+          lastTap.current = null;
+        }
+      }
+      if (gesture.dragging) {
+        const scroller = event.currentTarget;
+        scroller.dataset.pulling = "";
+        scroller.style.setProperty("--ex-lb-pull", `0 ${Math.max(0, dy) * 0.7}px`);
+      }
+    }
     const start = pinchStart.current;
     const scroller = scrollerRef.current;
     if (!start || !scroller || pointers.current.size < 2) return;
@@ -277,14 +320,25 @@ function ZoomShot({ shot, active, onZoomChange }: ZoomShotProps) {
     const dist = Math.hypot(a.x - b.x, a.y - b.y);
     // Under-zoom to 0.7 is allowed live so the release has something to
     // rubber-band back from.
-    const next = Math.min(MAX_ZOOM, Math.max(0.7, (start.scale * dist) / start.dist));
+    const next = Math.min(MAX_ZOOM, Math.max(0.7, (start.scale * dist) / Math.max(1, start.dist)));
     applyScale(next, mid);
   };
 
-  const endPointer = (event: React.PointerEvent) => {
+  const endPointer = (event: React.PointerEvent<HTMLDivElement>) => {
     const wasPinch = pinchStart.current !== null;
-    const hadPointer = pointers.current.has(event.pointerId);
+    const pointer = pointers.current.get(event.pointerId);
     pointers.current.delete(event.pointerId);
+    const gesture = pull.current;
+    const pulled = gesture?.id === event.pointerId && gesture.dragging;
+    if (gesture?.id === event.pointerId) {
+      if (pulled && event.type === "pointerup" && event.clientY - gesture.y >= PULL_DISMISS_DISTANCE) {
+        pull.current = null;
+        lastTap.current = null;
+        onDismiss();
+        return;
+      }
+      resetPull(event.currentTarget);
+    }
     if (wasPinch && pointers.current.size < 2) {
       pinchStart.current = null;
       if (scaleRef.current < 1.15) applyScale(1);
@@ -292,7 +346,8 @@ function ZoomShot({ shot, active, onZoomChange }: ZoomShotProps) {
     }
     // Double-tap (touch): two quick releases in nearly the same spot.
     // Mouse and trackpad go through onDoubleClick instead.
-    if (!wasPinch && hadPointer && event.pointerType === "touch") {
+    if (pointer?.moved || event.type !== "pointerup") lastTap.current = null;
+    if (pointer && !pointer.moved && !wasPinch && event.type === "pointerup" && event.pointerType === "touch") {
       const scroller = scrollerRef.current;
       if (!scroller) return;
       const rect = scroller.getBoundingClientRect();
@@ -439,7 +494,7 @@ export default function LightboxExample() {
   const onTrackScroll = (event: React.UIEvent<HTMLDivElement>) => {
     const track = event.currentTarget;
     if (track.clientWidth === 0) return;
-    const nearest = Math.round(track.scrollLeft / track.clientWidth);
+    const nearest = Math.min(SHOTS.length - 1, Math.max(0, Math.round(track.scrollLeft / track.clientWidth)));
     setIndex((current) => (current === null || nearest === current ? current : nearest));
   };
 
@@ -447,7 +502,7 @@ export default function LightboxExample() {
     const track = trackRef.current;
     if (!track || index === null) return;
     const next = Math.min(SHOTS.length - 1, Math.max(0, index + delta));
-    track.scrollTo({ left: track.clientWidth * next, behavior: "smooth" });
+    track.scrollTo({ left: track.clientWidth * next, behavior: reducedMotion() ? "instant" : "smooth" });
   };
 
   // Arrow keys page the gallery. Bound on the panel rather than the document
@@ -502,7 +557,12 @@ export default function LightboxExample() {
               >
                 {SHOTS.map((item) => (
                   <div key={item.id} className="ex-lb-slide" aria-hidden={item.id !== shot.id}>
-                    <ZoomShot shot={item} active={item.id === shot.id} onZoomChange={setZoomed} />
+                    <ZoomShot
+                      shot={item}
+                      active={item.id === shot.id}
+                      onZoomChange={setZoomed}
+                      onDismiss={closeViewer}
+                    />
                   </div>
                 ))}
               </div>

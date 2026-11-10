@@ -44,6 +44,51 @@ async function clickClose(page: Page) {
   await page.evaluate(() => document.querySelector<HTMLButtonElement>(".ex-lb-close")?.click());
 }
 
+test("touch swipes page, short pulls spring back, and long pulls dismiss", async ({ page }) => {
+  await page.goto("/#lightbox");
+  await page.getByRole("button", { name: "Open Frangipani" }).click();
+  await waitForNoActiveTransition(page);
+  const viewer = page.getByRole("dialog", { name: "Photo viewer" });
+  const photo = viewer.locator('.ex-lb-slide[aria-hidden="false"] .ex-lb-zoom');
+  const session = await page.context().newCDPSession(page);
+
+  async function drag(dx: number, dy: number, duringDrag?: () => Promise<void>) {
+    const box = await photo.boundingBox();
+    if (!box) throw new Error("Active photo is missing");
+    const x = Math.round(box.x + box.width / 2);
+    const y = Math.round(box.y + box.height / 2);
+    await session.send("Input.dispatchTouchEvent", { type: "touchStart", touchPoints: [{ x, y }] });
+    for (let step = 1; step <= 8; step++) {
+      await session.send("Input.dispatchTouchEvent", {
+        type: "touchMove",
+        touchPoints: [{ x: x + (dx * step) / 8, y: y + (dy * step) / 8 }],
+      });
+    }
+    await duringDrag?.();
+    await session.send("Input.dispatchTouchEvent", { type: "touchEnd", touchPoints: [] });
+  }
+
+  await drag(-170, 0);
+  await expect(viewer.locator(".ex-lb-count")).toHaveText("2 / 6");
+  await expect.poll(() => viewer.locator(".ex-lb-track").evaluate((track) =>
+    Math.abs(track.scrollLeft - track.clientWidth),
+  )).toBeLessThan(2);
+  await drag(0, 60, async () => {
+    await expect(photo).toHaveAttribute("data-pulling", "");
+  });
+  await expect(photo.locator(".ex-lb-zoom-sizer")).toHaveCSS("translate", "none");
+  await expect(viewer).toBeVisible();
+
+  await photo.dblclick();
+  await expect(photo).toHaveAttribute("data-zoomed", "true");
+  await drag(0, 155);
+  await expect(viewer).toBeVisible();
+  await photo.dblclick();
+  await expect(photo).not.toHaveAttribute("data-zoomed");
+  await drag(0, 155);
+  await expect(viewer).toHaveCount(0, { timeout: MORPH_TIMEOUT });
+});
+
 test("close keeps the sheet's surface open until the photo finishes traveling back to the grid", async ({
   page,
 }) => {

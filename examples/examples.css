@@ -1638,16 +1638,14 @@
 .ex-lb-track[data-zoomed] {
   overflow-x: hidden;
 }
-/* Zoom scroller: pinch and double-tap set only the inner box's size; a
-   zoomed shot pans with the browser's own two-axis scroll. pan-x pan-y
-   without the pinch-zoom token keeps two-finger input out of the browser's
-   page zoom and delivers it as pointer events instead. */
+/* At 1x, horizontal swipes page natively and vertical pulls dismiss.
+   Zoomed photos pan with the browser's own two-axis scroll. */
 .ex-lb-zoom {
   flex: 1;
   min-width: 0;
   min-height: 0;
   overflow: hidden;
-  touch-action: pan-x pan-y;
+  touch-action: pan-x;
   cursor: zoom-in;
   scrollbar-width: none;
 }
@@ -1656,11 +1654,22 @@
 }
 .ex-lb-zoom[data-zoomed] {
   overflow: auto;
+  touch-action: pan-x pan-y;
   cursor: zoom-out;
 }
 .ex-lb-zoom-sizer {
   width: 100%;
   height: 100%;
+  translate: var(--ex-lb-pull, none);
+  transition: translate var(--ex-lb-morph-dur) var(--ex-lb-morph-ease);
+}
+.ex-lb-zoom[data-pulling] .ex-lb-zoom-sizer {
+  transition: none;
+}
+@media (prefers-reduced-motion: reduce) {
+  .ex-lb-zoom-sizer {
+    transition: none;
+  }
 }
 .ex-lb-full {
   width: 100%;
